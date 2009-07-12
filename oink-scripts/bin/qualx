@@ -1,0 +1,78 @@
+#!/usr/bin/perl
+
+# $Id$
+
+package QTool::Qqual;
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::RealBin/../lib";
+use QTool ':all';
+use base 'QTool';
+
+sub Init {
+    my ($self) = @_;
+
+    $self->{TOOL} = $QUAL;
+    $self->{OPT_NOSRZ} = '-fq-no-compactify-graph';
+    $self->{ARCHIVE_SRZ_EXT_PFX} = 'q';
+
+    $self->{CPP_CMD} .= " -DOINK -DOINK_QUAL";
+
+    $self->{DEFAULT_VARIANT} = 'B';
+    $self->{ALLOWED_VARIANTS} = [qw(A B C)];
+
+    # increase the maximum stack size to 32 MB (default on Linux is 8 MB;
+    # results of stack overflow are ugly)
+    $self->{MIN_STACKSIZE} = 32;
+}
+
+sub ApplyVariant {
+    my ($self) = @_;
+    $self->{CMD} .= " -q-config $CONFIG";
+    # $self->{CMD} .= " -fq-no-names"; # obsolete
+
+    $self->{CMD} .= " -fq-poly";
+
+    ## -fq-casts-preserve should be irrelevant now with [casts-preserve] on the
+    ## $tainted lattice
+    # $CMD .= " -fq-casts-preserve";
+    ## dsw says: this doesn't work in qual because it doesnt match up the
+    ## parameter types (?)
+    $self->{CMD} .= " -fq-casts-preserve-below-functions";
+
+    if ($self->{variant} eq 'A') {
+        $self->{CMD} .= " -fq-no-flow-compoundDown";
+        $self->{CMD} .= " -fq-no-flow-pointDown";
+        $self->{CMD} .= " -fq-no-flow-compoundUp";
+        $self->{CMD} .= " -fq-no-flow-pointUp";
+        $self->{CMD} .= " -fo-no-array-index-flows";
+    } elsif ($self->{variant} eq 'B') {
+        $self->{CMD} .= " -fq-flow-compoundDown"; # handles fread/memcpy
+        $self->{CMD} .= " -fq-flow-pointDown";
+        $self->{CMD} .= " -fq-no-flow-compoundUp";
+        $self->{CMD} .= " -fq-no-flow-pointUp";
+        $self->{CMD} .= " -fo-no-array-index-flows";
+    } elsif ($self->{variant} eq 'C') {
+        $self->{CMD} .= " -fq-flow-compoundDown"; # handles fread/memcpy
+        $self->{CMD} .= " -fq-flow-pointDown";
+        $self->{CMD} .= " -fq-no-flow-compoundUp";
+        $self->{CMD} .= " -fq-no-flow-pointUp";
+        $self->{CMD} .= " -fo-array-index-flows"; # handles inlined toupper
+    } else {
+        die;
+    }
+
+    if ($self->{variant} eq 'XXX') {
+        # $self->{CMD} .= " -fo-instance-sensitive";
+    } else {
+        $self->{CMD} .= " -fo-no-instance-sensitive";
+    }
+
+    $self->{CMD} .= " -q-max-errors 20";
+}
+
+my $qtool = __PACKAGE__->new();
+$qtool->Run();

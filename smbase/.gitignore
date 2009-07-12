@@ -1,0 +1,52 @@
+# configuration
+Makefile
+config.status
+config.summary
+
+# dependency files
+*.d
+# objects
+*.o
+# archives
+*.a
+
+# Test output
+*.dSYM
+*.tmp
+
+# Test programs
+nonport
+voidlist
+tobjlist
+bit2d
+growbuf
+testmalloc
+mypopen
+strdict
+svdict
+str
+strutil
+trdelete
+bflatten
+mysig
+testmalloc
+mypopen
+tobjpool
+strhash
+cycles
+tsobjlist
+crc
+srcloc
+hashline
+gprintf
+smregexp
+vptrmap
+vdtllist
+pprint
+boxprint
+tarrayqueue
+testarray
+taillist_test
+autofile
+bitarray
+d2vector

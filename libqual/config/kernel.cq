@@ -1,0 +1,27 @@
+/* see License.txt for copyright and terms of use */
+
+typedef struct {
+  volatile unsigned int lock;
+} spinlock_t;
+spinlock_t dcache_lock = ($unlocked spinlock_t) { 1 };
+spinlock_t files_lock = ($unlocked spinlock_t) { 1 };
+spinlock_t tqueue_lock = ($unlocked spinlock_t) { 1 };
+spinlock_t runqueue_lock = ($unlocked spinlock_t) { 1 };
+spinlock_t rtc_lock = ($unlocked spinlock_t) { 1 };
+spinlock_t global_bh_lock = ($unlocked spinlock_t) { 1 };
+spinlock_t kernel_flag = ($unlocked spinlock_t) { 1 };
+spinlock_t console_lock = ($unlocked spinlock_t) { 1 };
+spinlock_t dma_spin_lock = ($unlocked spinlock_t) { 1 };
+spinlock_t io_request_lock = ($unlocked spinlock_t) { 1 };
+
+static void lock_kernel(void)
+{
+  assert_type(kernel_flag, $unlocked spinlock_t);
+  change_type(kernel_flag, $locked spinlock_t);
+}
+
+static void unlock_kernel(void)
+{
+  assert_type(kernel_flag, $locked spinlock_t);
+  change_type(kernel_flag, $unlocked spinlock_t);
+}

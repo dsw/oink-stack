@@ -1,0 +1,16 @@
+#!/bin/sh
+# see License.txt for copyright and terms of use
+
+# $Id: qual_graph_prune_empty 1576 2006-03-11 02:25:02Z quarl $
+
+# remove nodes without edges
+
+t=/tmp/$$
+
+cp /dev/stdin $t
+(
+    head -1 $t
+    grep -e "->" $t
+    tail -1 $t
+)
+

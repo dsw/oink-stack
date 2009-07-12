@@ -1,0 +1,7 @@
+
+"FAKEBUILTIN" denotes a function "foo" which has an equivalent GCC builtin
+"__builtin_foo" which has exactly the same semantics (but gcc could optimize
+it better by it not being a function).
+
+To help Elsa find these builtins in order to declare them properly, we mark
+them with FAKEBUILTIN.

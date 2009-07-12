@@ -1,0 +1,3 @@
+F:main
+Test/func_gran2.cc:4:8:c0 SIG void ()(/*m*/ )
+super-main

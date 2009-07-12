@@ -1,0 +1,229 @@
+# $Id$
+
+.PHONY: prereqs all-build
+prereqs: HAVE-RUN-CONFIGURE HAVE-COMPILER-CC
+all-build: prereqs all-oz oz-linkcheck all-qz qz-linkcheck link control-files
+
+include $(TOPLEVEL)/make-lib/abspath.mk
+
+OINK_SCRIPTS = $(TOPLEVEL)/../oink-scripts
+# TODO: use path found in configure
+
+CPPFLAGS = -I$(TOPLEVEL)/include -I../include -DGLIBCFS_IGNORE_INCOMPLETE
+
+COMPILER_CC = gcc-3.4
+COMPILER_CPPFLAGS = -DCOMPILE_GCC -DELIDE_QUALIFIERS
+COMPILER_CFLAGS = -W -Wall -Wno-return-type -Wno-unused-parameter # -Werror
+COMPILER_CXXFLAGS = $(COMPILER_CFLAGS) -Wno-deprecated
+
+QUAL_CPP = $(TOPLEVEL)/cpp-extra cpp-3.4
+QUAL_CC = $(call myabspath,$(OINK_SCRIPTS)/bin/qualx)
+
+QUAL_CPPFLAGS =
+QUAL_CFLAGS = --two-pass -fo-no-report-link-errors -tr permissive
+QUAL_LDFLAGS = -fo-report-link-errors
+
+OINK_CPP = $(TOPLEVEL)/cpp-extra cpp-3.4
+OINK_CC = $(call myabspath,$(OINK_SCRIPTS)/bin/oinkx)
+OINK_CPPFLAGS = -DELIDE_QUALIFIERS
+OINK_CFLAGS = -fo-no-report-link-errors -tr permissive
+OINK_LDFLAGS = -fo-report-link-errors
+
+# either dir or z; so we have qdir/qz, odir/oz
+ARCHIVE_SRZ_EXT_SFX = $(shell perl -ne '/^archive_srz_ext_sfx=(.*)/ && print $$1' $(TOPLEVEL)/config.status)
+
+TARGET_OZ = $(TARGET_BASE).o$(ARCHIVE_SRZ_EXT_SFX)
+TARGET_QZ = $(TARGET_BASE).q$(ARCHIVE_SRZ_EXT_SFX)
+TARGET_FGCFG = $(TARGET_BASE).fgcfg
+
+ifeq ($(OINK_CC),)
+  $(error "Couldn't find oinkx in $(TOPLEVEL)/..")
+endif
+
+ifeq ($(QUAL_CC),)
+  $(error "Couldn't find qualx in $(TOPLEVEL)/..")
+endif
+
+
+.SUFFIXES: .c .cc .ii .o .qz .oz .qdir .odir
+
+C_FILES0 = $(shell find . \( -name .svn -o -name .backup -o -name .TRASH \) -prune -o \( -name \*.c -o -name \*.cc \) -size +0c -print | sort )
+C_FILES1 = $(shell cat Manifest)
+C_FILES = $(C_FILES1) $(C_FILES_EXTRA)
+QUAL_I_FILES = $(filter %.i,$(C_FILES:%.c=%.qual.i)) $(filter %.ii,$(C_FILES:%.cc=%.qual.ii))
+OINK_I_FILES = $(filter %.i,$(C_FILES:%.c=%.qual.i)) $(filter %.ii,$(C_FILES:%.cc=%.qual.ii))
+I_FILES = $(QUAL_I_FILES) $(OINK_I_FILES)
+O_FILES = $(filter %.o,$(C_FILES:%.c=%.o) $(C_FILES:%.cc=%.o))
+OZ_FILES = $(filter %.o$(ARCHIVE_SRZ_EXT_SFX),$(C_FILES:%.c=%.o$(ARCHIVE_SRZ_EXT_SFX)) $(C_FILES:%.cc=%.o$(ARCHIVE_SRZ_EXT_SFX)))
+QZ_FILES = $(filter %.q$(ARCHIVE_SRZ_EXT_SFX),$(C_FILES:%.c=%.q$(ARCHIVE_SRZ_EXT_SFX)) $(C_FILES:%.cc=%.q$(ARCHIVE_SRZ_EXT_SFX)))
+
+.o:
+	mkdir .o
+
+.PRECIOUS: %/announce
+%/announce:
+	@echo "-- $*"
+
+print_run = @printf '      %-9s %-15s -> %s\n' "$(1)" "$(2)" "$(3)"
+
+ifeq ($(VERBOSE),)
+quiet = @$(1)
+else
+quiet = $(1)
+endif
+
+# run the gcc check again to give a friendly error message in case the user
+# didn't run ./configure.
+.PHONY: HAVE-COMPILER-CC
+HAVE-COMPILER-CC:
+	@which $(COMPILER_CC) >/dev/null 2>/dev/null || { echo; echo "I couldn't find $(COMPILER_CC); please see platform-model/doc/gcc.txt."; echo; exit 1; }
+
+.PHONY: HAVE-RUN-CONFIGURE
+HAVE-RUN-CONFIGURE:
+	@test -f $(TOPLEVEL)/config.status || { echo; echo "Please first run ./configure in platform-model."; echo; exit 1; }
+
+%.o : %.c
+#	@mkdir -p $(shell dirname $@)
+	$(call print_run,gcc,$<,$@)
+	$(call quiet,$(COMPILER_CC) $(CPPFLAGS) $(COMPILER_CPPFLAGS) $(COMPILER_CFLAGS) -c $< -o $@)
+
+%.o : %.cc
+#	@mkdir -p $(shell dirname $@)
+	$(call print_run,gcc,$<,$@)
+	$(call quiet,$(COMPILER_CC) $(CPPFLAGS) $(COMPILER_CPPFLAGS) $(COMPILER_CXXFLAGS) -c $< -o $@)
+
+%.qual.i : %.c
+	$(call print_run,cpp,$<,$@)
+	$(call quiet,$(QUAL_CPP) $(CPPFLAGS) $(QUAL_CPPFLAGS) $< > $@)
+
+%.qual.ii : %.cc
+	$(call print_run,cpp,$<,$@)
+	$(call quiet,$(QUAL_CPP) $(CPPFLAGS) $(QUAL_CPPFLAGS) $< > $@)
+
+%.oink.i : %.c
+	$(call print_run,cpp,$<,$@)
+	$(call quiet,$(OINK_CPP) $(CPPFLAGS) $(OINK_CPPFLAGS) $< > $@)
+
+%.oink.ii : %.cc
+	$(call print_run,cpp,$<,$@)
+	$(call quiet,$(OINK_CPP) $(CPPFLAGS) $(OINK_CPPFLAGS) $< > $@)
+
+# Note: use abspath when invoking qual, so that the abspath is serialized --
+# this is important if we run in the subdirectory; sys/time.c would get
+# serialized as 'time.c' just like bits/time.c => error when deserializing.
+%.qdir %.qz : %.c/announce %.o %.qual.i
+	$(call print_run,qualx,$*.qual.i,$@)
+	@test -f "$(call myabspath,$*.qual.i)"
+	$(call quiet,$(QUAL_CC) $(QUAL_CFLAGS)  "$(call myabspath,$*.qual.i)" -o-srz $@ || (rm -rf $@; exit 1))
+	@test -e $@
+
+%.qdir %.qz : %.c/announce %.o %.qual.ii
+	$(call print_run,qualx,$*.qual.ii,$@)
+	@test -f "$(call myabspath,$*.qual.ii)"
+	$(call quiet,$(QUAL_CC) $(QUAL_CFLAGS)  "$(call myabspath,$*.qual.ii)" -o-srz $@ || (rm -f $@; exit 1))
+	@test -e $@
+
+%.odir %.oz : %.c/announce %.o %.oink.i
+	$(call print_run,oinkx,$*.oink.i,$@)
+	@test -f "$(call myabspath,$*.oink.i)"
+	$(call quiet,$(OINK_CC) $(OINK_CFLAGS)  "$(call myabspath,$*.oink.i)" -o-srz $@ || (rm -f $@; exit 1))
+	@test -e $@
+
+%.odir %.oz : %.c/announce %.o %.oink.ii
+	$(call print_run,oinkx,$*.oink.ii,$@)
+	@test -f "$(call myabspath,$*.oink.ii)"
+	$(call quiet,$(OINK_CC) $(OINK_CFLAGS)  "$(call myabspath,$*.oink.ii)" -o-srz $@ || (rm -f $@; exit 1))
+	@test -e $@
+
+.PHONY: link
+link: $(TARGET_OZ) $(TARGET_QZ) $(TARGET_FGCFG)
+
+# at this point we don't want to report that 'main' is not defined, though it
+# would be nice to report whether anything else is undefined.
+$(TARGET_OZ): $(OZ_FILES)
+	@echo "-- link $(TARGET_OZ)"
+	$(OINK_CC) -fo-no-report-link-errors $(OZ_FILES) -o-srz $@ -fo-print-stages
+	@echo; echo "*** Sucessfully built $@"; echo
+
+$(TARGET_QZ): $(QZ_FILES)
+	@echo "-- link $(TARGET_QZ)"
+	$(QUAL_CC) -fo-no-report-link-errors $(QZ_FILES) -q-srz $@ -fo-print-stages
+	@echo; echo "*** Sucessfully built $@"; echo
+
+$(TARGET_FGCFG): $(QUAL_I_FILES)
+	@echo "-- funcgran $(TARGET_FGCFG)"
+	$(QUAL_CC) $(QUAL_I_FILES) -fo-func-gran -o-srz $@
+	@echo; echo "*** Sucessfully built $@"; echo
+
+# dsw: I removed this so that these targets can be actual files so
+# that these tests are only run when the build has done something
+# rather than every time someone types make all, even if there is
+# nothing to build.
+#
+# .PHONY: qz-linkcheck oz-linkcheck
+
+# at this point we DO want to report whether anything is undefined.  See
+# QUAL_LDFLAGS.
+oz-linkcheck: $(TARGET_OZ) $(TOPLEVEL)/test/dummy_main.c
+	$(OINK_CC) $(OINK_LDFLAGS) $^
+	@touch $@
+
+qz-linkcheck: $(TARGET_QZ) $(TOPLEVEL)/test/dummy_main.c
+	$(QUAL_CC) $(QUAL_LDFLAGS) $^
+	@touch $@
+
+CONTROL_FILES = $(addsuffix .ctl,$(TARGET_OZ) $(TARGET_QZ))
+control-files: $(CONTROL_FILES)
+
+# `/bin/pwd` returns the directory after following symlinks.  Same as a
+# shell's builtin `pwd -P` when supported.
+%.ctl : $(TOPLEVEL)/weak.ctl.in
+	sed 's,$$PATH,$(call myabspath,$(shell /bin/pwd)/$*),' $^ > $@.tmp
+	mv $@.tmp $@
+
+.PHONY: all-o all-qz all-oz all-i
+all-o: HAVE-COMPILER-CC $(O_FILES)
+all-qz: $(QZ_FILES)
+all-oz: $(OZ_FILES)
+all-i: $(I_FILES)
+
+.PHONY: clean do-clean find-unclean
+clean: do-clean find-unclean
+
+do-clean:
+	rm -rf $(TARGET_QZ) $(TARGET_OZ)
+	rm -f oz-linkcheck qz-linkcheck
+	rm -f $(I_FILES)
+	rm -f $(O_FILES)
+# qz_files may be directories
+	rm -rf $(QZ_FILES)
+	rm -rf $(OZ_FILES)
+	rm -f $(CONTROL_FILES)
+
+find-unclean:
+	@find . \( -name '.TRASH' -prune \) -o \( -name '*.qz' -o -name '*.oz' -o -name '*.o' \) -print
+
+O_FILES:
+	@echo $(O_FILES) |xargs -n 1
+
+C_FILES0:
+	@echo $(C_FILES0) |xargs -n 1
+
+C_FILES:
+	@echo $(C_FILES) |xargs -n 1
+
+QZ_FILES:
+	@echo $(QZ_FILES) |xargs -n 1
+
+OZ_FILES:
+	@echo $(OZ_FILES) |xargs -n 1
+
+I_FILES:
+	@echo $(I_FILES) |xargs -n 1
+
+update-manifest:
+	echo $(C_FILES0) | xargs -n 1 |grep -v builtin-definitions.c | sed 's,^[.]/,,' > Manifest
+
+
+ARCHIVE_SRZ_EXT_SFX:
+	@echo $(ARCHIVE_SRZ_EXT_SFX)

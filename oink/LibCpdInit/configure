@@ -1,0 +1,5 @@
+#!/bin/bash
+#-*-sh-*-
+# see License.txt for copyright and terms of use
+
+echo "Configure does nothing for now."

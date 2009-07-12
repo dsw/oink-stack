@@ -1,0 +1,133 @@
+// gcom.gr
+// parser for guarded command example language
+
+verbatim {
+  #include "str.h"        // stringf
+  #include <stdlib.h>     // getenv, atoi, putenv
+  #include <stdio.h>      // printf
+  #include <string.h>     // strdup
+}
+
+// the parser context class is useful in large examples;
+// an empty one will suffice here
+context_class GCom : public UserActions {
+public:
+  // empty for now
+};
+
+// pull in the tokens generated from lexer.h
+terminals {
+  include("tokens.tok")
+
+  // declare token sval types
+  token(int) TOK_LITERAL;
+  token(char*) TOK_IDENTIFIER;
+
+  precedence {           
+    // high precedence
+    left  60 "*";
+    left  50 "+" "-";
+    left  40 "!";        // ! has higher precedence than /\ and \/
+    left  30 TOK_AND;    // /\ has higher precedence than \/
+    left  20 TOK_OR;
+    left  10 ";" "#";    // precedence is irrelvant
+    // low precedence
+  }
+}
+
+
+// now the grammar; the first symbol is the start symbol
+nonterm Start {
+  -> Stmt;
+}
+
+
+nonterm(int) AExp {
+  -> n:TOK_LITERAL         { return n; }
+  -> a1:AExp "+" a2:AExp   { return a1 + a2; }
+  -> a1:AExp "-" a2:AExp   { return a1 - a2; }
+  -> a1:AExp "*" a2:AExp   { return a1 * a2; }
+  -> "(" a:AExp ")"        { return a; }
+
+  // interpret identifiers using environment variables; it's
+  // a bit of a hack, and we'll do something better later
+  -> x:TOK_IDENTIFIER {
+       char const *envp = getenv(x);
+       if (envp) {
+         return atoi(envp);
+       }
+       else {
+         return 0;      // not defined, call it 0
+       }
+     }
+}
+        
+
+nonterm(bool) BExp {
+  -> "true"                     { return true; }
+  -> "false"                    { return false; }
+  -> a1:AExp "=" a2:AExp        { return a1 == a2; }
+  -> a1:AExp "<" a2:AExp        { return a1 < a2; }
+  -> "!" b:BExp                 { return !b; }
+  -> b1:BExp TOK_AND b2:BExp    { return b1 && b2; }
+  -> b1:BExp TOK_OR  b2:BExp    { return b1 || b2; }
+  -> "(" b:BExp ")"             { return b; }
+}
+
+           
+nonterm Stmt {
+  -> "skip" {
+       // no-op
+     }
+
+  -> "abort" {
+       printf("abort command executed\n");
+       exit(0);
+     }
+
+  -> "print" x:TOK_IDENTIFIER {
+       char const *envp = getenv(x);
+       printf("%s is %d\n", x, envp? atoi(envp) : 0);
+     }
+
+  -> x:TOK_IDENTIFIER ":=" a:AExp {
+       // like above, use the environment variables
+       putenv(strdup(stringf("%s=%d", x, a).c_str()));
+     }
+
+  -> Stmt ";" Stmt {
+       // sequencing is automatic
+     }
+
+  -> "if" g:GCom "fi" {
+       if (!g) {
+         printf("'if' command had no enabled alternatives; aborting\n");
+         exit(0);
+       }
+     }
+
+  -> "do" GCom "od" {
+       // There's no way to get the parser to loop; that's not its job.
+       // For now, we'll just treat it like an 'if' that doesn't mind
+       // when no alternative is enabled.  Later, we'll build a tree
+       // and do this right.
+     }
+}
+
+                  
+// a guarded command returns true if it found an enabled guard, and
+// false otherwise
+nonterm(bool) GCom {
+  -> b:BExp "->" Stmt {
+       // Like for 'do', there is no way to tell the parser not to
+       // parse part of its input, so the statement will be executed
+       // regardless of the value of 'b'.  Again, this will be fixed
+       // in a later version of this example.  For now, we can at
+       // least indicate whether the guard succeeded.
+       return b;
+     }
+     
+  -> g1:GCom "#" g2:GCom {
+       return g1 || g2;
+     }
+}

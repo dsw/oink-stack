@@ -1,0 +1,17 @@
+# see License.txt for copyright and terms of use
+
+                  Readme for libregion by David Gay
+
+This is a version of David Gay's regions library that was backported
+to remove dependencies on automake, autoconf, and libtool by Daniel
+Wilkerson and Rob Johnson.
+
+Todo:
+
+We need to add configure time options to turn on optimization and to
+set flags in the Makefile for 64 bit machines etc.
+
+Fix this.
+pages.c:334: warning: use of compound expressions as lvalues is deprecated
+
+

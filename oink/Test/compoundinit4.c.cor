@@ -1,0 +1,17 @@
+Analyzing test/compoundinit4.c
+File test/compoundinit4.c:
+a: fun (void) -> void
+x: ptr ($tainted int)
+y: ptr (int)
+w: ptr (int)
+u: ptr (union u1)
+z: ptr ($tainted int)
+s: ptr (struct s1)
+b: fun (void) -> void
+xb: ptr (int)
+yb: ptr ($tainted int)
+wb: ptr (int)
+ub: ptr (union u1b)
+zb: ptr (int)
+sb: ptr (struct s1b)
+

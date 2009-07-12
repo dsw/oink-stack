@@ -1,0 +1,58 @@
+// expressions
+
+typedef struct page { int x; } page;
+
+// interesting: g++ allows both of the following, 
+// but gcc allows neither
+//typedef struct page page;
+//typedef struct page page;
+
+typedef struct pte_t { int y; } pte_t;
+
+typedef struct Mystruct {
+  int a;
+  float b;
+  char c;
+} Mystruct;
+
+void putc(int);
+int get_pte_fast();
+
+int x;
+
+int foo ( )
+{
+  int dest, a, b;
+  int nr;
+  int pmd;
+  //enum E { a,b,c };
+  Mystruct *p;
+  pte_t * page = (pte_t *) get_pte_fast();
+
+  putc(-1);
+  //printf("foo\n");
+  sizeof(x);
+  //return 1 + 2 * 3 ;
+
+  ( dest )  = ( a )  & ( b ) ;     // AMBIGUOUS (no longer!)
+
+  sizeof(dest);
+  //sizeof(bar);
+  sizeof(Mystruct);
+
+  nr = ((((  nr  )+ (8*sizeof(long)) -1)/ (8*sizeof(long)) ) *sizeof(long)) ;   // AMBIGUOUS
+
+  // this one is harder because there is a local definition
+  // of 'page' as a variable, and a global definition of it
+  // as a type
+
+  //(( *pmd ).pmd)  = (0x001  | 0x002  | 0x020  | 0x040 )
+  //  + ((unsigned long)( page )- ((unsigned long)(0xC0000000 ) ) ) ;   // AMBIGUOUS
+
+
+  sizeof(*p);
+  sizeof(p);
+
+  return sizeof(Mystruct);
+}
+

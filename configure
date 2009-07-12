@@ -1,0 +1,6 @@
+#! /bin/sh
+# dsw: Scott's configure startup script
+
+# thunk
+
+exec perl -wS ./configure.pl ${1+"$@"}

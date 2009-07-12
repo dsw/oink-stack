@@ -1,0 +1,8 @@
+F:A::constructor-special SIG ()(struct A const &)
+F:A::~A SIG ()(/*m*/ )
+F:f SIG void ()()
+F:g SIG void ()()
+F:i SIG void ()()
+F:main
+Test/func_gran1.cc:20:3:constructor-special SIG ()()
+super-main

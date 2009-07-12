@@ -1,0 +1,56 @@
+// sless.gr
+// example of scannerless operation in Elkhound
+
+context_class Scannerless : public UserActions {
+public:
+};
+
+terminals {
+   0: CHAR_EOF;
+  10: CHAR_NEWLINE;
+  32: CHAR_SPACE;
+  40: CHAR_LPAREN      "(";
+  41: CHAR_RPAREN      ")";
+  97: CHAR_A           "a";
+ 102: CHAR_F           "f";
+ 105: CHAR_I           "i";
+}
+
+nonterm Start {
+  -> WS Prog;
+}
+
+nonterm Prog {
+  -> empty;
+  -> Prog IDENT;
+  -> Prog IF Prog FI;
+  -> Prog LPAREN Prog RPAREN;
+}
+
+nonterm Ident {
+  fun maximal() {}          // use maximal munch disambiguation
+  -> "f";
+  -> "i";
+  -> "f" Ident;
+  -> "i" Ident;
+  subsets If, Fi;           // prefer keywords to identifiers
+}
+
+// keywords
+nonterm If -> "i" "f";
+nonterm Fi -> "f" "i";
+
+// tokens, with whitespace following
+nonterm IDENT -> Ident WS;
+nonterm IF -> If WS;
+nonterm FI -> Fi WS;
+nonterm LPAREN -> "(" WS;
+nonterm RPAREN -> ")" WS;
+
+// whitespace
+nonterm WS {
+  -> empty;
+  -> CHAR_SPACE WS;
+  -> CHAR_NEWLINE WS;
+}
+

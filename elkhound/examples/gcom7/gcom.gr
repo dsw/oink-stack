@@ -1,0 +1,130 @@
+// gcom.gr
+// parser for guarded command example language
+
+verbatim {
+  #include "str.h"        // stringf
+  #include "ast.h"        // AST declarations
+
+  #include <stdlib.h>     // getenv, atoi, putenv
+  #include <stdio.h>      // printf
+}
+
+// the parser context class is useful in large examples;
+// an empty one will suffice here
+context_class GComContext : public UserActions {
+public:
+  // given a lexer-allocated string, make a 'string', and
+  // deallocate the lexer-created copy
+  static inline string copyAndFree(char *x)
+  {
+    string ret(x);
+    delete x;
+    return ret;
+  }
+  
+  // for run-time precedence/associativity
+  static int precedence(AExp *a)
+  {
+    if (!a->isA_bin())       { return 20; }      // unary
+
+    A_bin *ab = a->asA_bin();
+    if (ab->op == AO_TIMES)  { return 10; }      // *
+    else                     { return 0;  }      // +,-
+  }
+};
+
+// pull in the tokens generated from lexer.h
+terminals {
+  include("tokens.tok")
+
+  // declare token sval types
+  token(int) TOK_LITERAL {
+    fun dup(n) { return n; }     // nothing special to do for ints
+    fun del(n) {}
+  }
+  token(char*) TOK_IDENTIFIER {
+    fun dup(x) { return strdup(x); }     // make a copy
+    fun del(x) { free(x); }              // delete a copy
+  }
+
+  precedence {           
+    // high precedence
+    //left  60 "*";
+    //left  50 "+" "-";
+    left  40 "!";        // ! has higher precedence than /\ and \/
+    left  30 TOK_AND;    // /\ has higher precedence than \/
+    left  20 TOK_OR;
+    left  10 ";" "#";    // precedence is irrelvant
+    // low precedence
+  }
+}
+
+
+// now the grammar; the first symbol is the start symbol
+nonterm(Stmt*) Start {
+  -> s:Stmt                       { return s; }
+}
+
+
+nonterm(AExp*) AExp {
+  fun dup(a) { return a->clone(); }     // deep copy
+  fun del(a) { delete a; }              // deep delete
+
+  // implemented precedence/associativity at run time
+  fun merge(a1,a2) {
+    if (precedence(a1) < precedence(a2))
+      { delete a2; return a1; }         // lowest precedence goes on top
+    if (precedence(a1) > precedence(a2))
+      { delete a1; return a2; }
+
+    // equal precedence, must be binary operators
+    A_bin *ab1 = a1->asA_bin();         // cast to A_bin*
+    A_bin *ab2 = a2->asA_bin();
+
+    // same precedence; associates to the left; that means
+    // that the RHS must use a higher-precedence operator
+    if (precedence(ab1) < precedence(ab1->a2))
+      { delete ab2; return ab1; }       // high-prec exp on right
+    if (precedence(ab2) < precedence(ab2->a2))
+      { delete ab1; return ab2; }       // high-prec exp on right
+
+    printf("failed to disambiguate!\n");
+    delete ab2; return ab1;             // pick arbitrarily
+  }
+  
+  -> n:TOK_LITERAL                { return new A_lit(n); }
+  -> x:TOK_IDENTIFIER             { return new A_var(copyAndFree(x)); }
+  -> a1:AExp "+" a2:AExp          { return new A_bin(a1, AO_PLUS, a2); }
+  -> a1:AExp "-" a2:AExp          { return new A_bin(a1, AO_MINUS, a2); }
+  -> a1:AExp "*" a2:AExp          { return new A_bin(a1, AO_TIMES, a2); }
+  -> "(" a:AExp ")"               { return new A_group(a); }
+}
+
+
+nonterm(BExp*) BExp {
+  -> "true"                       { return new B_lit(true); }
+  -> "false"                      { return new B_lit(false); }
+  -> a1:AExp "=" a2:AExp          { return new B_pred(a1, BP_EQUAL, a2); }
+  -> a1:AExp "<" a2:AExp          { return new B_pred(a1, BP_LESS, a2); }
+  -> "!" b:BExp                   { return new B_not(b); }
+  -> b1:BExp TOK_AND b2:BExp      { return new B_bin(b1, BO_AND, b2); }
+  -> b1:BExp TOK_OR  b2:BExp      { return new B_bin(b1, BO_OR, b2); }
+  -> "(" b:BExp ")"               { return b; }
+}
+
+
+nonterm(Stmt*) Stmt {
+  -> "skip"                       { return new S_skip; }
+  -> "abort"                      { return new S_abort; }
+  -> "print" x:TOK_IDENTIFIER     { return new S_print(copyAndFree(x)); }
+  -> x:TOK_IDENTIFIER ":=" a:AExp { return new S_assign(copyAndFree(x), a); }
+  -> s1:Stmt ";" s2:Stmt          { return new S_seq(s1, s2); }
+  -> "if" g:GCom "fi"             { return new S_if(g); }
+  -> "do" g:GCom "od"             { return new S_do(g); }
+}
+
+
+nonterm(GCom*) GCom {
+  -> b:BExp "->" s:Stmt           { return new G_stmt(b, s); }
+  -> g1:GCom "#" g2:GCom          { return new G_seq(g1, g2); }
+}

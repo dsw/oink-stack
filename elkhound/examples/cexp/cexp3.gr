@@ -1,0 +1,87 @@
+// cexp3.gr
+// another go at C expressions, with user-supplied actions
+
+verbatim {
+  #include <iostream.h>            // cout
+  #include "cexp3ast.ast.gen.h"    // Exp
+  #include "trace.h"               // trace
+  #include "useract.h"             // UserActions
+
+  #define D(msg) \
+    trace("exptree") << msg << endl
+}
+
+context_class Cexp3 : public UserActions {
+};
+
+impl_verbatim {
+  class CCLang;
+  UserActions *makeUserActions(StringTable &, CCLang &)
+  {
+    return new Cexp3;
+  }
+
+  ParseTables *make_Cexp3_tables();
+  ParseTables *makeParseTables()
+  {
+    return (new Cexp3 /*leaked..*/)->makeTables();
+  }
+}
+
+/*
+  // this says that anyplace below where I say "[int]", the dup
+  // and del functions should be as specified
+  typemap [int] {
+    dup(i) {}
+    del(i) {}
+    // no merge provided, it should never be needed
+  }
+
+  typemap [Exp*] {
+    dup(p) { return p->deepCopy(); }
+    del(p) { delete p; }
+    merge(p1, p2) { return Exp::mergeAlts(p1, p2); }
+  }
+*/
+
+terminals {
+  // grab the lexer's token list
+  include("../../c/c.tok")
+
+  // annotate some with semantic types
+  token[int] L2_INT_LITERAL {
+    fun dup(i) [ return i; ]
+    fun del()  []
+    // no merge provided, it should never be needed
+  }
+  
+  // precedence and associativity
+  // I mark with 'PREC' lines to be removed to yield a version
+  // which disambiguates using 'merge'
+  precedence {
+    // high precedence
+    left 20 "*";                  // PREC
+    left 10 "+";                  // PREC
+    // low precedence
+  }
+}
+
+nonterm[int] Start {
+  -> e:Exp             [ int ret = e->eval();
+                         cout << "reduced Start: " << ret << endl;
+                         e->decRefCt();
+                         return ret;]
+}
+
+nonterm[Exp*] Exp {
+  fun dup(p) [ D("dup " << p); p->incRefCt(); return p; ]
+  fun del(p) [ D("del " << p); p->decRefCt(); ]
+  fun merge(p1, p2) [ D("merge " << p1 << " and " << p2);
+                      return Exp::mergeAlts(p1, p2); ]
+
+  -> i:L2_INT_LITERAL  [ D("literal: " << i);
+                         return new E_int(i); ]
+  -> e1:Exp "+" e2:Exp [ return new E_op('+', e1, e2); ]
+  -> e1:Exp "*" e2:Exp [ return new E_op('*', e1, e2); ]
+}
+

@@ -1,0 +1,515 @@
+<html>
+<head>
+<title>Oink</title>
+</head>
+<body bgcolor=white>
+
+<h1>Oink: a Collaboration of C++ Static Analysis Tools</h1>
+
+<p><b>Maintainer:</b> <a href="http://www.cs.berkeley.edu/~dsw/">Daniel S. Wilkerson</a>
+<br><b>Developer:</b> <a href="http://www.cs.berkeley.edu/~quarl/">Karl Chen</a>
+<br><b>Developer:</b> <a href="http://www.cs.berkeley.edu/~smcpeak/">Scott McPeak</a>
+
+<p><font size=+2>Welcome to Oink!</font> &nbsp; &nbsp; To get started
+quickly using Oink/Cqual++ to find bugs in your own code go the <a
+href=quickstart.html>Cqual++ Quick-Start Instructions</a>.
+
+<h3>Directory contents</h3>
+
+<ul>
+
+<li><a href=index.html>Oink Main Documentation [this document]</a> Introduction to
+Oink.
+
+<li><a href=oink_help.html>Annotated Oink Help Output</a> The output
+of ./oink --help annotated with further details on their meaning.
+
+<li><a href=quickstart.html>Cqual++ Quick-Start Instructions</a> The
+shortest path to findings bugs in your code.
+
+<li><a href="qual.html">Cqual++ Documentation</a> Documentation on the
+main Oink tool.
+
+<li><a href=qual_help.html>Annotated Qual Help Output</a> The output
+of ./qual --help (minus the oink --help output) annotated with further
+details on their meaning.
+
+<li><a href=manifest.html>Oink Manifest</a> A top-down view of the
+aspects of Oink, which files participate in each aspect, and
+documentation on each file.
+
+<li><a href=coding.html>Oink Coding Style</a> The Oink coding
+guidelines; also provided is some elisp for putting emacs into the
+mode I use when editing it.
+
+<li><a href="features_of_elsa.html">Features of Elsa</a> The elsa
+documentation is extensive; I simply point out a few useful features
+that users of Oink/Cqual++ should know about.
+
+</ul>
+
+<h3>Page contents</h3>
+
+<ul>
+
+<li><a href=#introduction>Introduction</a>: Introducing Oink.
+
+<li><a href=#oink-stack>Oink-Stack</a>: The Oink-Stack subversion
+repository and how to get it.
+
+<li><a href=#licensing>Licensing</a>: The licensing under which Oink
+and its sub-projects are released.
+
+<li><a href=#dependencies>Dependencies</a>: Dependencies on other tools that I could
+think of.
+
+<li><a href=#tools>Tools of Oink</a>: List of tools that are built in the Oink framework.
+
+</ul>
+
+<hr>
+<a name=introduction>
+<h2>Introduction</h2>
+</a>
+
+<p>Welcome to Oink! Oink is a collaboration of C++ static analysis
+tools.  The C/C++ front-end for Oink is <a
+href="http://www.cs.berkeley.edu/~smcpeak/elkhound/sources/elsa/">Elsa</a>
+by <a href="http://www.cs.berkeley.edu/~smcpeak/">Scott McPeak</a>.
+Currently the main tool provided by Oink is Cqual++, a polymorphic
+whole-program dataflow analysis for C++.  Cqual++ was inspired by <a
+href="http://www.cs.umd.edu/~jfoster/">Jeff Foster's</a> and <a
+href="http://www.cs.umd.edu/~jfoster/cqual/">Cqual</a> tool and shares
+the backend solver with it.
+</p>
+
+<p>Oink aims to be<ol>
+
+<li><em>industrial-strength</em> for immediate utility in finding bugs,
+
+<li><em>extensible</em> for ease in adding backends, and
+
+<li><em>composable</em> for ease in combining existing backends.
+
+</ol>
+
+<p>Oink computes both <ol>
+
+<li>expression-level and type-level dataflow, and
+
+<li>statement-level intra-procedural controlflow [by delegating to Elsa].
+
+</ol>
+
+<p>It easy to get started by using the two demo backends that print
+graphs of these flows.  Oink also comes with a client of the dataflow
+analysis that does type qualifier inference: Cqual++, a C/C++ frontend
+for <a href=http://www.cs.umd.edu/~jfoster/cqual>Cqual</a>.
+Whole-program analyses may be attempted using the linker imitator.
+
+
+<h3>History and previous work</h3>
+
+<p>The primary tool in Oink is Cqual++.  <a
+href="http://www.cs.umd.edu/~jfoster/cqual/">Cqual</a> was the
+original tool that lead to the development of Oink/Cqual++.  Cqual++
+is not really a fork or a second version of Cqual as everything was
+completely re-written; however the design was informed by the close
+connection with the Cqual developers and we appreciate their
+co-operation.
+
+<p>The oink front-end, <a
+href="http://www.cs.berkeley.edu/~smcpeak/elkhound/sources/elsa/">
+elsa</a>, is completely original work by <a
+href="http://www.cs.berkeley.edu/~smcpeak/">Scott McPeak</a>, whereas
+the Cqual front-end was a version of gcc 2.8.1 hacked by <a
+href="http://berkeley.intel-research.net/dgay/"> David Gay</a>.  The
+qualifier dataflow backend, libqual, is a polymorphic
+re-implementation by <a href="http://www.cs.sunysb.edu/~rtjohnso/">Rob
+Johnson</a> of <a href="http://www.cs.umd.edu/~jfoster/">Jeff
+Foster</a> monomorphic backend.  The oink dataflow analysis was
+written by <a href="http://www.cs.berkeley.edu/~dsw/"> Daniel
+S. Wilkerson</a> and is separate from the libqual backend so that it
+can be re-used.  Only David Gay's libregion library was re-used as-is.
+Significant testing, bug fixes, and optimizations and generalizations
+were made by <a href="http://www.cs.berkeley.edu/~quarl/"> Karl
+Chen</a> starting late February 2006 making Oink much more industrial
+strength.
+
+<p>The original work on Cqual was supported by <a
+href="http://theory.stanford.edu/~aiken/">Alex Aiken</a>.  The work on
+Oink and Cqual++ was supported by Alex Aiken and <a
+href="http://www.cs.berkeley.edu/~daw/">David Wagner</a>.  Without
+their ongoing support the project would not have happened.
+
+
+<h3>Talks on Oink</h3>
+
+<ul>
+
+<li><a href=http://www.cs.berkeley.edu/~dsw/elsa_cqual_codecon.ppt>Here</a>
+are the slides for the talk on Elsa/Oink/Cqual++ that Scott McPeak and
+I gave at the 2006 <a href="http://www.codecon.org/2006/">CodeCon</a>.
+
+<li><a href=http://www.cs.berkeley.edu/~dsw/pragmatic_analysis.ps>Here</a>
+are the slides to a talk I gave on at the <a
+href="http://osq.cs.berkeley.edu/">OSQ</a> lunch on 28 January 2005 on
+using Oink and other tools below.
+
+</ul>
+
+
+<h3>Blog/Web comments on Oink</h3>
+
+<ul>
+
+<li>Robert O'Callahan, September 14, 2006: <a
+href=http://weblogs.mozillazine.org/roc/archives/2006/09/static_analysis_and_scary_head.html>Well,
+I'm Back: Static Analysis And Scary Headlines</a>
+
+<li>Brendan Eich, October 13, 2006: <a
+href=http://weblogs.mozillazine.org/roadmap/archives/2006/10/mozilla_2.html>
+Brendan's Roadmap Updates: Mozilla 2</a>
+
+</ul>
+
+<h3>Articles using Oink</h3>
+
+<p>The following articles used the Oink infrastructure.  There is no
+Oink article to cite (yet?), which is why you may not see a citation
+for it.  If you use Oink and want to cite it, please cite this URL: <a
+href=http://freshmeat.net/projects/oink/>http://freshmeat.net/projects/oink/</a>
+
+<ul>
+
+<li><a href=http://www.cs.berkeley.edu/~nks/scrash/index.html>"Scrash:
+A System for Generating Secure Crash Information."</a> Pete Broadwell,
+Matthew Harren, and Naveen Sastry. 12th USENIX Security Symposium,
+August 2003.
+
+</ul>
+
+
+<h3>Companion projects</h3>
+
+<ul>
+
+<li><a href="http://delta.tigris.org/">Delta</a> assists you in
+minimizing "interesting" files subject to a test of their
+interestingness. A common such situation is when attempting to isolate
+a small failure-inducing substring of a large input that causes your
+program to exhibit a bug.
+
+<li><a href="http://build-interceptor.tigris.org/">Build Interceptor</a>
+captures the .i files of any project while it is built from source
+using the gcc tool-chain.
+
+<li><b>Compound Init</b> is a small package for implementing the
+semantics of Compound Initializer syntax as described in the C99
+standard, section 6.7.8, including Designated Initializers and the gcc
+Range Initializer extension to the syntax.  That is, Compound Init
+maps from 1) a type tree and 2) a compound initializer abstract syntax
+tree to a sequence of pairs of leaf types and leaf initializers.
+Compound Init is designed for maximum ease of inclusion into an
+existing compiler.  It was a separate project, but is now just the
+LibCpdInit subdirectory of oink.
+
+</ul>
+
+<hr>
+<a name=oink-stack>
+<h2>The Oink-Stack subversion repository</h2>
+</a>
+
+<p>You need an entire collection of repositories in order to build
+oink.  In order to facilitate operating on them as one unit, there is
+a "container" subversion repository called "oink-stack".  Oink-stack
+is empty of content other than a meta-configure script and a
+meta-makefile.  Using a feature of subversion where one repository
+may "soft-link" to others with the 'svn:externals' property it
+includes all of the repositories below, which is the minimum
+collection of software necessary to build and run Oink. </p>
+
+<ul>
+
+<li><b><a
+href="http://www.cs.berkeley.edu/~smcpeak/elkhound/sources/smbase/">smbase</a></b>:
+Scott McPeak's replacement for the C++ container and string
+libraries.</li>
+
+<li><b><a href="http://www.cs.berkeley.edu/~smcpeak/elkhound/sources/ast/">ast</a></b>:
+Scott McPeak's tool for generating AST classes from a specification
+language.</li>
+
+<li><b><a href="http://www.cs.berkeley.edu/~smcpeak/elkhound/">
+elkhound</a></b>: Scott McPeak's tool for generating a parser for a
+GLR grammar.</li>
+
+<li><b><a href="http://www.cs.berkeley.edu/~smcpeak/elkhound/sources/elsa/">
+elsa</a></b>: <a href="http://www.cs.berkeley.edu/~smcpeak/">Scott
+McPeak</a>'s C and C++ front-end.</li>
+
+<li><b>libregion</b>: <a href="http://berkeley.intel-research.net/dgay/"> David Gay</a>'s C
+region-based memory management library.</li>
+
+<li><b>libqual</b>: <a href="http://www.cs.sunysb.edu/~rtjohnso/">Rob
+Johnson</a>'s serializable polymorphic type qualifier inference engine
+based on <a href="http://www.cs.umd.edu/~jfoster/">Jeff Foster</a>'s
+original monomorphic type qualifier inference engine, <a
+href="http://www.cs.umd.edu/~jfoster/cqual/">cqual</a>.</li>
+
+<li><b>platform-model</b>: <a
+href="http://www.cs.berkeley.edu/~quarl/"> Karl Chen</a>'s static
+model of libc and libstdc++.</li>
+
+<li><b><a
+href="http://www.cubewano.org/oink/">oink</a></b>: <a
+href="http://www.cs.berkeley.edu/~dsw/"> Daniel S. Wilkerson</a>'s
+join-point for front-end and back-end coordination. Client
+applications are built in this directory. In particular, contains
+Cqual++.</li>
+
+    <!-- <h2>Documentation</h2> -->
+
+    <!-- <ul> -->
+
+    <!--   <li><a href="http://www.cs.berkeley.edu/~smcpeak/elkhound/sources/smbase/"> -->
+    <!--       Documentation for smbase</a></li> -->
+
+    <!--   <li><a href="http://www.cs.berkeley.edu/~smcpeak/elkhound/sources/ast/"> -->
+    <!--       Documentation for ast</a></li> -->
+
+    <!--   <li><a href="http://www.cs.berkeley.edu/~smcpeak/elkhound/sources/elkhound/"> -->
+    <!--       Documentation for elkhound</a></li> -->
+
+    <!--   <li><a href="http://www.cs.berkeley.edu/~smcpeak/elkhound/sources/elsa/"> -->
+    <!--       Documentation for elsa</a></li> -->
+
+    <!--   <li><a href="http://www.cubewano.org/oink-stack/oink/"> -->
+    <!--       Documentation for oink</a></li> -->
+    <!--   <\!-- Todo: make this work locally -\-> -->
+    <!-- </ul> -->
+
+</ul>
+
+<p>More generally, the Oink-Stack repository is what we call a
+"software stack": it is a collection of repositories that together
+form one large project of composable parts.  The name is reminiscent
+of the TCP/IP networking stack, which we think of as being organized
+this way. </p>
+
+<h3>Getting the code</h3>
+
+<p>To check out oink-stack, install Subversion, then type:
+
+<blockquote>
+   <tt>svn checkout https://svn.cubewano.org/repos/oink-stack/trunk oink-stack</tt>
+</blockquote>
+
+<p>This single command will get oink-stack and its 8 component
+repositories, which are soft-linked via the <tt>svn:externals</tt>
+feature.  NOTE: We have a report that TortoiseSVN is not working; use
+the command-line svn utility.</p>
+
+<p> <a href="http://www.cubewano.org/oink/releases/">Tarball
+releases</a> are also available.  There was a very old version of oink
+called oink_all-2004.11.19.tar.gz; it is now retired.  If you have a
+copy, please delete it.  If your friends have a copy, break into their
+computer and delete that.
+
+
+<h3>Building</h3>
+
+<p>See above for dependencies.  To build everything, in <tt>oink-stack/</tt> type:
+
+<blockquote><tt>
+  ./configure && make clean all check
+</tt></blockquote>
+
+<p>Upon successful build, you should see
+
+<blockquote><tt>
+  ================================================================<br/>
+  DONE in all directories: check<br/>
+  ================================================================<br/>
+</tt></blockquote>
+
+<p>The <tt>oink-stack</tt> repository has a meta-configure file that
+will allow you to specify a configuration "mode" for the whole
+project.  When it is run all of the sub-repository configure scripts
+are then called with arguments such that the whole project is built in
+one way consistent with that mode.<ul>
+
+<li>The default mode is <tt>fastdebug</tt>, which is what you want for
+debugging: the resulting code is reasonably fast and can still be run
+in gdb.
+
+<li>To build for performance, use the <tt>perform</tt> mode.
+
+</ul>
+
+<p>There are other modes; for an exhaustive and a usage message, in
+<tt>oink-stack</tt> run <tt>./configure -h</tt>
+
+<p>If you have problems with the platform-model tests failing with a
+segmentation fault, this seems to often be due to problems with
+libzipios++ and zlib.  Make sure that your version of these libraries
+was built with the same version of the compiler that you are building
+Oink with.  Another solution is to just turn off zip archiving,
+falling back to a more primitive method.  Do this from the oink-stack
+directory as follows.
+
+<blockquote><tt>
+  ./configure +platform-model:--archive-srz=dir +oink:-require-no-archive-srz-zip
+</tt></blockquote>
+
+
+<hr>
+<a name=licensing>
+<h2>Licensing</h2>
+</a>
+
+<p>See <a href="License.txt">License.txt</a> for the the copyright and
+terms of use of the software in oink-stack.
+
+
+<hr>
+<a name=dependencies>
+<h2>Dependencies</h2>
+</a>
+
+<p>Dependencies required to compile Oink:
+
+<ul>
+
+ <li> gcc: 2.95.3, 3.2, 3.4, 4.0, 4.1 known to work.
+
+ <li> flex: 2.5.4, 2.5.31, 2.5.33 known to work.
+
+ <li> bison: 1.35, 2.1, 2.3 known to work.
+
+</ul>
+
+<p>The following are optional; you get extended functionality if you
+have them.
+
+<ul>
+
+ <li> dot: 1.8.10, 2.7 known to work; Get dot from here: <a
+ href="http://www.graphviz.org/">http://www.graphviz.org/</a>.  You do
+ not need dot for the base functionality of the system.  If we have an
+ internal graph to print out, such as the output of
+ -fq-print-quals-graph, it will be rendered out in dot format and you
+ will need dot to convert that to postscript.
+
+ <li> gcc-3.4 to use platform-model for C++ (Elsa does not support STL
+   headers from g++ 4.0 or g++ 3.3; please
+   see <tt>platform-model/doc/gcc.txt</tt>.</li>
+
+ <li> libzipios++ and zlib: libzipios++ 0.1.5.9 known to work, zlib 1.2.3
+      known to work.  Enable loading and saving .qz archive
+   files, in addition to .qdir archive directories.</li>
+</ul>
+
+<p><b>The oink-stack/platform-model repository is built by default so
+the out-of-the-box build will fail unless you have gcc-3.4.</b>
+If you don't have gcc-3.4, you can just hack oink-stack/Makefile to not
+build platform-model, but then you will have to provide your own
+annotations for the platform libraries.  If the parts of your code
+that talk to external libraries are small, you can annotate them
+instead and you might get along just fine.  You will also have to use
+raw oink-stack/oink/qual instead of the wrapper script
+oink-stack/oink-scripts/bin/qualx.
+
+<hr>
+<a name=tools>
+<h2>Tools of Oink</h2>
+</a>
+
+<p>Oink is a framework in which to build tools.  To make Oink easy to
+learn and build-upon, I have written some small examples.  Each sample
+tool is a stand-alone executable and does not share infrastructure
+with other unrelated tools, making it smaller and easier to
+understand.  Oink also provides the Cqual++ tool, a polymorphic
+whole-program dataflow analysis for C++.
+
+<h3>Oink tool</h3>
+
+<p>The Oink tool, oink/oink, is the empty analysis: it does nothing.
+Its features and command-line flags are shared by all other tools.
+For an exhaustive list of the oink/oink flags and a short description
+of each, just type: <tt>./oink --help</tt>
+
+<h3>StaticPrint tool</h3>
+
+<p>The StaticPrint tool, oink/staticprint, is intended to print out
+various facts about a program that can be obtained statically.
+Currently it prints the inheritance tree and a histogram of AST nodes.
+Run 'make staticprint-check-print' and then view
+Test/staticprint1.cc.ihg.dot.ps in a postscript viewer and compare
+with the source code in Test/staticprint1.cc.  See the
+<code>staticprint_test.incl.mk</code> makefile for other examples.
+Note that currently this tree is translation-unit-local since
+staticprint has no linker imitator.
+
+<h3>DfgPrint tool</h3>
+
+<p>The Dfgprint tool, oink/dfgprint, prints the data flow graph of a
+C++ program.  It is purposefully small and simple so it is easy to see
+the essentials of writing a dataflow tool.  It should be easy to get
+started on a dataflow analysis by simply copying dfgprint and hacking
+it.  Run 'make dfgprint-check-print' and then view
+Test/dfgprint1.c.dfg.dot.ps in a postscript viewer and compare with
+the source code in Test/dfgprint1.c .  Note that the graph generation
+requires that you have the graph layout program 'dot'.
+
+<p>Note that dfgprint prints 'expression-level' dataflow.  The
+dataflow used by the Cqual++ analysis (described below) is the more
+detailed 'type-level' flow; you can get a graph of that flow by
+running Cqual++ with the flag -fprint-quals-graph and then running
+'dot' on the resulting quals.dot file.
+
+<h3>CfgPrint tool</h3>
+
+<p>The Cfgprint tool, oink/cfgprint, prints the intra-procedural
+control flow graph of a C++ program (by delegating to that
+functionality in Elsa).  Similarly to dfgprint it also is purposefully
+small and simple.  Run 'make cfgprint-check-print' and then view
+Test/cfgprint1.c.cfg.dot.ps in a postscript viewer and compare with
+the source code in Test/cfgprint1.c .
+
+<p>Note that cfgprint prints a statement-level control flow graph; a
+more precise expression-level graph could be implemented as (mostly) a
+refinement of the statement-level flow, but this is not done yet.  (It
+would not be a strict refinement due to the possibility of using a
+goto to jump out of a gnu expression statement; Yes there is an
+example of this in the Red Hat 9 source tree.)  We don't compute the
+(inter-procedural) call graph as to do that properly really requires
+including also a points-to analysis and a dataflow analysis.
+
+<a name=qual>
+<h3>Cqual++ tool [<a href="qual.html">further documentation</a>]</h3>
+</a>
+
+<p>
+  The major tool of the current Oink distribution is Cqual++,
+  oink/qual, which checks static assertions about C++ programs that
+  can be expressed as a polymorphic dataflow of type qualifiers.
+  Cqual++ uses libqual to do the inference.  Please see the <a
+  href="qual.html">Cqual++ Documentation</a> for more information.
+</p>
+
+<hr>
+
+<p>Enjoy.<br/><br/>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- Daniel
+</p>
+
+<hr>
+<p>&copy; 2002-2006 Daniel S. Wilkerson
+</p>
+
+<h2>&nbsp;</h2>
+
+</body>
+</html>

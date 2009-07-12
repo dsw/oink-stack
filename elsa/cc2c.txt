@@ -1,0 +1,103 @@
+cc2c.txt
+Design notes for Elsa C++ to C translator
+
+
+Introduction
+------------
+
+  input: TranslationUnit
+
+  output: TranslationUnit with restricted forms
+
+[TODO: Write more about the motivation and overall design.]
+
+NOTE: This is very much work in progress.  Only a small fragment of
+the C++ language is translated at the moment.  Also, I have no idea
+how fast this project will move; it's just a spare-time thing.
+
+
+Output restrictions
+-------------------
+
+The output of cc2c is a TranslationUnit, with the following constructs
+disallowed:
+
+  TF_template
+  TF_explicitInst
+  TF_linkage
+  TF_one_linkage
+  TF_namespaceDefn
+  TF_namespaceDecl
+  MemberInit
+  PQ_qualifier
+  PQ_operator
+  PQ_template
+  TS_name with 'typenameUsed'
+  TI_Class
+  BaseClassSpec
+  MR_func
+  MR_access
+  MR_usingDecl
+  MR_template
+  D_reference
+  D_func with 'cv' other than CV_NONE
+  D_ptrToMember
+  ExceptionSpec
+  OperatorName
+  S_try
+  S_namespaceDecl
+  CN_decl
+  Handler
+  E_this
+  E_constructor
+  BIN_DOT_STAR
+  BIN_ARROW_STAR
+  E_new
+  E_delete
+  E_throw
+  E_keywordCast
+  E_typeidExpr
+  E_typeidType
+  IN_ctor
+  TemplateDeclaration
+  TemplateParameter
+  TemplateArgument
+  NamespaceDecl
+
+
+Declarators from scratch
+------------------------
+
+When generating declarations, cc2c does not use the input
+TypeSpecifier and Declarator structure.  Instead, it generates a new
+TypeSpecifier that contains the entire type, and then a simple D_name
+Declarator.  For function definitions it must use D_func, but that too
+is generated from the Type, not the input syntax.
+
+There are two reasons for doing this:
+
+1. The intent of Elsa and its type checker is that client analyses
+will ignore the syntactic description of types and variables, and
+instead only use the Type/Variable semantic interpretation.  For cc2c
+to be a useful test of that part of the type checker, it too must act
+like a client analysis and ignore the input syntax.
+
+2. Most types *could* be translated in a purely syntactic fashion, but
+pointer to member cannot.  For example:
+
+  int C::*p;
+  ^^^ ^^^^^
+  ts    d
+
+must be translated to:
+
+  ptm__i__C p;
+  ^^^^^^^^^ ^
+     ts     d
+
+A straightforward syntactic transformation can't do this, because
+information from the Declarator is used to make the TypeSpecifier.
+
+
+
+EOF

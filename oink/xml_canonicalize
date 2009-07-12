@@ -1,0 +1,30 @@
+#!/usr/bin/perl -w
+# see License.txt for copyright and terms of use
+
+use strict;
+
+# Filter out the addresses in the xml output so that it is canonical.
+# Implements an equivalence relation such that an xml file should be
+# xml_canonicalize-equivalent to the file you get by reading it in and
+# serializing it out again.  That is, reading then writing XML should
+# be idempotent on the set of XML files modulo xml_canonicalize.
+
+while(<STDIN>) {
+  # mod out by ids
+  s/\"AST[0-9]+\"/\"AST\"/g;
+  s/\"TY[0-9]+\"/\"TY\"/g;
+  s/\"BC[0-9]+\"/\"BC\"/g;
+  s/\"OL[0-9]+\"/\"OL\"/g;
+  s/\"NM[0-9]+\"/\"NM\"/g;
+  s/\"VL[0-9]+\"/\"VL\"/g;
+
+  # remove references to AST
+#   next if /syntax="ADDR"/;      # CompoundType
+#   next if /value="ADDR"/;       # Variable
+#   next if /funcDefn="ADDR"/;    # Variable
+  # haven't hit these yet
+#  next if /rest="ADDR"/;        # DependentQType
+#  next if /sta="ADDR"/;         # STemplateArgument
+
+  print;
+}

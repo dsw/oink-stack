@@ -1,0 +1,6 @@
+link[0].length = 11;
+link[0].to = 1;
+link[1].length = 22;
+link[1].to = 2;
+link[2].length = 33;
+link[2].to = 3;

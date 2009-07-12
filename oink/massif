@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+# see License.txt for copyright and terms of use
+
+use strict;
+use warnings;
+
+my @ALLOC_FN = qw(
+  debug_ralloc_using_malloc
+  __rc_ralloc_small0 __rc_rstralloc __rc_typed_ralloc __rc_typed_rarrayalloc
+  __rc_rstrdup
+);
+
+# my $PSVIEWER = 'xpdf';
+my $PSVIEWER = 'evince';
+
+my @old = (<massif.*.ps>, <massif.*.txt>);
+system('tdel', @old) if @old;
+
+system('valgrind', '--tool=massif',
+       (map { "--alloc-fn=$_" } @ALLOC_FN),
+       @ARGV);
+
+my @ps = (<massif.*.ps>);
+system($PSVIEWER, $ps[0]) if @ps;

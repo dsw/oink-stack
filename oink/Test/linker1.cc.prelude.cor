@@ -1,0 +1,198 @@
+'<dependentTypeVar>'	none
+'<dependentVar>'	none
+'<errorTypeVar>'	none
+'<errorVar>'	none
+'bad_alloc'	none
+'sz'	none
+'operator new'	none
+'sz'	none
+'operator new[]'	none
+'p'	none
+'operator delete'	none
+'p'	none
+'operator delete[]'	none
+'p'	none
+'__builtin_next_arg'	none
+'__builtin_constant_p'	none
+'__getStandardConversion'	none
+'__getImplicitConversion'	none
+'__testOverload'	none
+'<dependentTypeVar>'	none
+'<dependentVar>'	none
+'<errorTypeVar>'	none
+'<errorVar>'	none
+'bad_alloc'	none
+'sz'	none
+'operator new'	none
+'sz'	none
+'operator new[]'	none
+'p'	none
+'operator delete'	none
+'p'	none
+'operator delete[]'	none
+'p'	none
+'__builtin_next_arg'	none
+'__builtin_constant_p'	none
+'__getStandardConversion'	none
+'__getImplicitConversion'	none
+'__testOverload'	none
+'<dependentTypeVar>'	none
+'<dependentVar>'	none
+'<errorTypeVar>'	none
+'<errorVar>'	none
+'bad_alloc'	none
+'sz'	none
+'operator new'	none
+'sz'	none
+'operator new[]'	none
+'p'	none
+'operator delete'	none
+'p'	none
+'operator delete[]'	none
+'p'	none
+'__builtin_next_arg'	none
+'__builtin_constant_p'	none
+'__getStandardConversion'	none
+'__getImplicitConversion'	none
+'__testOverload'	none
+test/linker_prelude1.cc:3:12 'x'	_SAME_
+test/linker_prelude1.cc:4:12 'x_static'	_SAME_
+test/linker_prelude1.cc:6:13 'y'	none
+test/linker_prelude1.cc:6:23 'z'	none
+test/linker_prelude1.cc:6:5 'foo'	_SAME_
+test/linker_prelude1.cc:7:27 'y'	none
+test/linker_prelude1.cc:7:37 'z'	none
+test/linker_prelude1.cc:7:12 'foo_static'	_SAME_
+test/linker_prelude1.cc:9:13 'int_typedef'	none
+test/linker_prelude1.cc:11:1 'C'	none
+test/linker_prelude1.cc:12:7 'privC1'	_SAME_
+test/linker_prelude1.cc:14:7 'x'	_SAME_
+test/linker_prelude1.cc:15:7 'c1'	_SAME_
+test/linker_prelude1.cc:16:15 'y'	none
+test/linker_prelude1.cc:16:25 'z'	none
+test/linker_prelude1.cc:16:7 'this'	none
+test/linker_prelude1.cc:16:7 'foo'	_SAME_
+test/linker_prelude1.cc:17:16 'y'	none
+test/linker_prelude1.cc:17:7 'this'	none
+test/linker_prelude1.cc:17:7 'foo2'	_SAME_
+test/linker_prelude1.cc:18:16 'y'	none
+test/linker_prelude1.cc:18:26 'z'	none
+test/linker_prelude1.cc:18:7 'this'	none
+test/linker_prelude1.cc:18:7 'foo2'	_SAME_
+test/linker_prelude1.cc:19:3 'D'	none
+test/linker_prelude1.cc:20:9 'privD1'	_SAME_
+test/linker_prelude1.cc:22:9 'x'	_SAME_
+test/linker_prelude1.cc:23:9 'd1'	_SAME_
+test/linker_prelude1.cc:24:17 'y'	none
+test/linker_prelude1.cc:24:27 'z'	none
+test/linker_prelude1.cc:24:9 'this'	none
+test/linker_prelude1.cc:24:9 'foo'	_SAME_
+test/linker_prelude1.cc:25:18 'y'	none
+test/linker_prelude1.cc:25:9 'this'	none
+test/linker_prelude1.cc:25:9 'foo2'	_SAME_
+test/linker_prelude1.cc:26:18 'y'	none
+test/linker_prelude1.cc:26:28 'z'	none
+test/linker_prelude1.cc:26:9 'this'	none
+test/linker_prelude1.cc:26:9 'foo2'	_SAME_
+test/linker_prelude1.cc:19:3 '~D'	_SAME_
+test/linker_prelude1.cc:11:1 '~C'	_SAME_
+test/linker_prelude1.cc:30:6 'red'	_SAME_
+test/linker_prelude1.cc:31:3 'E'	none
+test/linker_prelude1.cc:32:10 'this'	none
+test/linker_prelude1.cc:32:10 'blue'	none
+test/linker_prelude1.cc:31:3 '~E'	none
+test/linker_prelude1.cc:32:10 'this'	none
+test/linker1.cc:3:12 'x'	test/linker_prelude1.cc:3:12 'x'
+test/linker1.cc:4:12 'x_static'	test/linker_prelude1.cc:4:12 'x_static'
+test/linker1.cc:6:13 'y'	none
+test/linker1.cc:6:23 'z'	none
+test/linker1.cc:6:5 'foo'	test/linker_prelude1.cc:6:5 'foo'
+test/linker1.cc:7:27 'y'	none
+test/linker1.cc:7:37 'z'	none
+test/linker1.cc:7:12 'foo_static'	test/linker_prelude1.cc:7:12 'foo_static'
+test/linker1.cc:9:13 'int_typedef'	none
+test/linker1.cc:11:1 'C'	none
+test/linker1.cc:12:7 'privC1'	test/linker_prelude1.cc:12:7 'privC1'
+test/linker1.cc:14:7 'x'	test/linker_prelude1.cc:14:7 'x'
+test/linker1.cc:15:7 'c1'	test/linker_prelude1.cc:15:7 'c1'
+test/linker1.cc:16:15 'y'	none
+test/linker1.cc:16:25 'z'	none
+test/linker1.cc:16:7 'this'	none
+test/linker1.cc:16:7 'foo'	test/linker_prelude1.cc:16:7 'foo'
+test/linker1.cc:17:16 'y'	none
+test/linker1.cc:17:7 'this'	none
+test/linker1.cc:17:7 'foo2'	test/linker_prelude1.cc:17:7 'foo2'
+test/linker1.cc:18:16 'y'	none
+test/linker1.cc:18:26 'z'	none
+test/linker1.cc:18:7 'this'	none
+test/linker1.cc:18:7 'foo2'	test/linker_prelude1.cc:18:7 'foo2'
+test/linker1.cc:19:3 'D'	none
+test/linker1.cc:20:9 'privD1'	test/linker_prelude1.cc:20:9 'privD1'
+test/linker1.cc:22:9 'x'	test/linker_prelude1.cc:22:9 'x'
+test/linker1.cc:23:9 'd1'	test/linker_prelude1.cc:23:9 'd1'
+test/linker1.cc:24:17 'y'	none
+test/linker1.cc:24:27 'z'	none
+test/linker1.cc:24:9 'this'	none
+test/linker1.cc:24:9 'foo'	test/linker_prelude1.cc:24:9 'foo'
+test/linker1.cc:25:18 'y'	none
+test/linker1.cc:25:9 'this'	none
+test/linker1.cc:25:9 'foo2'	test/linker_prelude1.cc:25:9 'foo2'
+test/linker1.cc:26:18 'y'	none
+test/linker1.cc:26:28 'z'	none
+test/linker1.cc:26:9 'this'	none
+test/linker1.cc:26:9 'foo2'	test/linker_prelude1.cc:26:9 'foo2'
+test/linker1.cc:19:3 '~D'	test/linker_prelude1.cc:19:3 '~D'
+test/linker1.cc:11:1 '~C'	test/linker_prelude1.cc:11:1 '~C'
+test/linker1.cc:30:6 'red'	test/linker_prelude1.cc:30:6 'red'
+test/linker1.cc:31:3 'E'	none
+test/linker1.cc:32:10 'this'	none
+test/linker1.cc:32:10 'blue'	none
+test/linker1.cc:31:3 '~E'	none
+test/linker1.cc:32:10 'this'	none
+test/linker2.cc:4:5 'x'	test/linker_prelude1.cc:3:12 'x'
+test/linker2.cc:5:12 'x_static'	test/linker_prelude1.cc:4:12 'x_static'
+test/linker2.cc:7:13 'y'	none
+test/linker2.cc:7:23 'z'	none
+test/linker2.cc:7:5 'foo'	test/linker_prelude1.cc:6:5 'foo'
+test/linker2.cc:8:7 'w'	none
+test/linker2.cc:12:27 'y'	none
+test/linker2.cc:12:37 'z'	none
+test/linker2.cc:12:12 'foo_static'	test/linker_prelude1.cc:7:12 'foo_static'
+test/linker2.cc:13:7 'q'	none
+test/linker2.cc:18:13 'int_typedef'	none
+test/linker2.cc:20:1 'C'	none
+test/linker2.cc:21:7 'privC1'	test/linker_prelude1.cc:12:7 'privC1'
+test/linker2.cc:23:7 'x'	test/linker_prelude1.cc:14:7 'x'
+test/linker2.cc:24:7 'c1'	test/linker_prelude1.cc:15:7 'c1'
+test/linker2.cc:25:15 'y'	none
+test/linker2.cc:25:25 'z'	none
+test/linker2.cc:25:7 'this'	none
+test/linker2.cc:25:7 'foo'	test/linker_prelude1.cc:16:7 'foo'
+test/linker2.cc:26:16 'y'	none
+test/linker2.cc:26:7 'this'	none
+test/linker2.cc:26:7 'foo2'	test/linker_prelude1.cc:17:7 'foo2'
+test/linker2.cc:31:16 'y'	none
+test/linker2.cc:31:26 'z'	none
+test/linker2.cc:31:7 'this'	none
+test/linker2.cc:31:7 'foo2'	test/linker_prelude1.cc:18:7 'foo2'
+test/linker2.cc:32:3 'D'	none
+test/linker2.cc:33:9 'privD1'	test/linker_prelude1.cc:20:9 'privD1'
+test/linker2.cc:35:9 'x'	test/linker_prelude1.cc:22:9 'x'
+test/linker2.cc:36:9 'd1'	test/linker_prelude1.cc:23:9 'd1'
+test/linker2.cc:37:17 'y'	none
+test/linker2.cc:37:27 'z'	none
+test/linker2.cc:37:9 'this'	none
+test/linker2.cc:37:9 'foo'	test/linker_prelude1.cc:24:9 'foo'
+test/linker2.cc:38:18 'y'	none
+test/linker2.cc:38:9 'this'	none
+test/linker2.cc:38:9 'foo2'	test/linker_prelude1.cc:25:9 'foo2'
+test/linker2.cc:39:18 'y'	none
+test/linker2.cc:39:28 'z'	none
+test/linker2.cc:39:9 'this'	none
+test/linker2.cc:39:9 'foo2'	test/linker_prelude1.cc:26:9 'foo2'
+test/linker2.cc:32:3 '~D'	test/linker_prelude1.cc:19:3 '~D'
+test/linker2.cc:20:1 '~C'	test/linker_prelude1.cc:11:1 '~C'
+test/linker2.cc:26:16 'y'	none
+test/linker2.cc:26:7 'this'	none
+test/linker2.cc:27:9 'r'	none
+test/linker2.cc:28:16 'rr'	none

@@ -1,0 +1,3 @@
+/* see License.txt for copyright and terms of use */
+
+unsigned long fake_interrupt_status = ($enabled unsigned long) (1);

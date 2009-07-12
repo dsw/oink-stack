@@ -1,0 +1,54 @@
+// see License.txt for copyright and terms of use
+
+// Extensions to the AST to allow for Value annotations to the AST.
+
+// NOTE: the comments are from those on the Type fields in
+// elsa/cc_tcheck.ast
+
+verbatim {
+  class Value;
+  #include "value.h"
+}
+
+impl_verbatim {
+  //#include "value.h"
+}
+
+class Expression {
+  // type computed for this expression; might be a SimpleType for
+  // ST_ERROR, in which case a subsequent attempt to typecheck the
+  // same expression should stop and look for an ambiguous alt.
+  public(owner) Value *abstrValue = NULL;
+  public bool hasAbstrValue();
+  public Value *getAbstrValue();
+
+  // FIX: I think this will fail if we ever build with GNU support
+  // off; don't know a way to do ifdefs in astgen
+  -> E_compoundLit {
+    // this variable is needed so that we have something to give to
+    // the compound initializers infrastructure
+    public(xml_TY,xmlShouldSerialize) Variable *cpdInitVarForRval = NULL;
+    public Variable_O *getVarForRval();
+  }
+}
+
+// FIX: both the Function::abstrValue and Declarator::abstrValue can
+// be removed; I have added comments throughout saying what to do;
+// they are marked with REMOVE_FUNC_DECL_VALUE.  I have already tried
+// implementing it, and the result is that there is a problem for
+// functions that are declared with no parameters but then are defined
+// with some; built-ins are currently this way, but even if that were
+// fixed, the user could just do the same.  The problem is that
+// without extra abstrValues-s on Function and Declarator, there are
+// never two FunctionValues that are seperate but then unified one one
+// of them forcing the other to have a full compliment of parameters
+// as they are unified.  Instead I suppose FunctionValues could be
+// changed to have their parameter lists be extendable or something.
+// I leave that for the more energetic contributor.
+class Function {
+  public(owner) Value *abstrValue = NULL;
+}
+
+class Declarator {
+  public(owner) Value *abstrValue = NULL;
+}

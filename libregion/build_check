@@ -1,0 +1,26 @@
+#!/bin/sh
+# see License.txt for copyright and terms of use
+
+# This script is for checking what variables actually occur in the
+# build transcript
+
+echo  NMEMDEBUG;  grep NMEMDEBUG Transcript; echo
+echo  DUPLICATES;  grep DUPLICATES Transcript; echo
+echo  USE_MMAP ; grep USE_MMAP Transcript; echo
+echo  MAP_ANONYMOUS ; grep MAP_ANONYMOUS Transcript; echo
+echo  MAP_ANON ; grep MAP_ANON Transcript; echo
+echo  SIZEOF_VOIDP ; grep SIZEOF_VOIDP Transcript; echo
+echo  __GNUC__ ; grep __GNUC__ Transcript; echo
+echo  __OPTIMIZE__ ; grep __OPTIMIZE__ Transcript; echo
+echo  REGION_PROFILE ; grep REGION_PROFILE Transcript; echo
+echo  REGION_PROFILE_DEPTH ; grep REGION_PROFILE_DEPTH Transcript; echo
+echo  TRACE_STACK ; grep TRACE_STACK Transcript; echo
+echo  PRECLEAR ; grep PRECLEAR Transcript; echo
+echo  RPAGESIZE ; grep RPAGESIZE Transcript; echo
+echo  DEBUG_RALLOC ; grep DEBUG_RALLOC Transcript; echo
+echo  RCPAIRS ; grep RCPAIRS Transcript; echo
+echo  sparc ; grep sparc Transcript; echo
+echo  i386 ; grep i386 Transcript; echo
+echo  linux ; grep linux Transcript; echo
+echo  CONFIG_X86_TSC ; grep CONFIG_X86_TSC Transcript; echo
+echo  tsc ; grep tsc Transcript; echo

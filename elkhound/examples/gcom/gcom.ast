@@ -1,0 +1,67 @@
+// gcom.ast
+// AST for guarded command language
+
+verbatim {
+  class Env;       // eval.h
+
+  // binary arithmetic operators
+  enum AOp {
+    AO_PLUS,
+    AO_MINUS,
+    AO_TIMES
+  };
+
+  // binary boolean predicates over arithmetic expressions
+  enum BPred {
+    BP_EQUAL,
+    BP_LESS
+  };
+
+  // binary boolean operators
+  enum BOp {
+    BO_AND,
+    BO_OR
+  };
+}
+
+
+// arithmetic expressions
+class AExp {
+  pure_virtual int eval(Env &env);
+
+  -> A_lit(int n);
+  -> A_var(string x);
+  -> A_bin(AExp a1, AOp op, AExp a2);
+}
+
+// boolean expressions
+class BExp {
+  pure_virtual bool eval(Env &env);
+
+  -> B_lit(bool b);
+  -> B_pred(AExp a1, BPred op, AExp a2);
+  -> B_not(BExp b);
+  -> B_bin(BExp b1, BOp op, BExp b2);
+}
+
+// statements
+class Stmt {
+  pure_virtual void eval(Env &env);
+
+  -> S_skip();
+  -> S_abort();
+  -> S_print(string x);
+  -> S_assign(string x, AExp a);
+  -> S_seq(Stmt s1, Stmt s2);
+  -> S_if(GCom g);
+  -> S_do(GCom g);
+}
+
+// guarded commands
+class GCom {                       
+  // returns true if it finds an enabled alternative, false o.w.
+  pure_virtual bool eval(Env &env);
+
+  -> G_stmt(BExp b, Stmt s);
+  -> G_seq(GCom g1, GCom g2);
+}

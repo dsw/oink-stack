@@ -1,0 +1,63 @@
+# -*-sh-*-
+# see License.txt for copyright and terms of use
+
+# Tokens used in the XML serialization language for the Value classes.
+
+# Value nodes
+Value
+CVAtomicValue
+PointerValue
+ReferenceValue
+FunctionValue
+ArrayValue
+PointerToMemberValue
+FVEllipsisHolder
+
+# Other
+Variable_O
+# NOTE: might bring this back, but for now is serialized as user1
+# hasFuncDefn
+
+# fields
+abstrValue0
+atValue
+atVoid
+ellipsis
+ellipsisHolder
+loc
+params
+ptrToMe
+refToMe
+retValue
+retVar
+type
+
+# Some containers; I no longer care about order
+#   SObjList
+List_FunctionValue_params
+List_externVars
+
+BucketOValues
+nameToValue
+NameMap_BucketOValues_nameToValue
+ufLinkForEquivRelOfDomOfMapToBucket
+bucket
+usedInDataflow
+
+# **** Qual stuff that should be seperated from Oink eventually
+
+# Value
+CVAtomicValue_Q
+PointerValue_Q
+ReferenceValue_Q
+FunctionValue_Q
+ArrayValue_Q
+PointerToMemberValue_Q
+
+# Variable
+Variable_Q
+
+# FIX: I needed to put this here but I don't think it is actually
+# necessary; there is some bug in the way the serialization code is
+# being generated.
+QLiterals

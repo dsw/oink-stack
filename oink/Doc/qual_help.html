@@ -1,0 +1,530 @@
+<html>
+<head>
+<title>Annotated Qual Help Output</title>
+</head>
+<body bgcolor=white>
+
+<h1>Annotated Qual Help Output</h1>
+
+<p>Running <tt>./qual --help</tt> will produce output resembling the
+command-line flag summary below, except that it will be preceded by
+the oink --help output, which is documented <a href=oink_help.html>on
+its own page</a>.  On this page I expand on the meaning of the various
+flags.
+
+<h3>Directory contents</h3>
+
+<ul>
+
+<li><a href=index.html>Oink Main Documentation</a> Introduction to
+Oink.
+
+<li><a href=oink_help.html>Annotated Oink Help Output</a> The output
+of ./oink --help annotated with further details on their meaning.
+
+<li><a href=quickstart.html>Cqual++ Quick-Start Instructions</a> The
+shortest path to findings bugs in your code.
+
+<li><a href="qual.html">Cqual++ Documentation</a> Documentation on the
+main Oink tool.
+
+<li><a href=qual_help.html>Annotated Qual Help Output [this
+document]</a> The output of ./qual --help (minus the oink --help
+output) annotated with further details on their meaning.
+
+<li><a href=manifest.html>Oink Manifest</a> A top-down view of the
+aspects of Oink, which files participate in each aspect, and
+documentation on each file.
+
+<li><a href=coding.html>Oink Coding Style</a> The Oink coding
+guidelines; also provided is some elisp for putting emacs into the
+mode I use when editing it.
+
+<li><a href="features_of_elsa.html">Features of Elsa</a> The elsa
+documentation is extensive; I simply point out a few useful features
+that users of Oink/Cqual++ should know about.
+
+</ul>
+
+<hr>
+
+<h3>Help output</h3>
+
+<p>Note that the defaults can be found in oink/qual_cmd.cc; look for
+the constructor which starts QualCmd::QualCmd(); flag names have their
+'-q-' or '-fq-' prefix removed and have their dashes replace with
+underscores.
+
+<pre><b><font size=+1>
+qual/legacy-cqual flags that take an argument:
+</font></b></pre>
+
+<p>
+
+<pre><b><font size=+1>
+-q-config FILE           : set the configuration file to FILE
+                               (can also set $QUALCC_CONFIG)
+</font></b></pre>
+
+<p>Cqual++ allows users to annotate the dataflow with various "colors"
+or qualifier literals.  Cqual++ can flow these colors around in the
+dataflow graph, but it needs to know what the semantics are when two
+colors meet: is it an error, or do they turn into a third color, etc.
+The semantics is defined in a configuration file given to this
+command-line argument.
+
+<pre><b><font size=+1>
+-q-hotspots NUM          : set the number of hotspots to NUM
+</font></b></pre>
+
+<p>This is some ancient flag internal to libqual; ask Rob Johnson or
+Jeff Foster what it means.
+
+<pre><b><font size=+1>
+qual/legacy-cqual boolean flags; precede by '-fq-no-' for the negative sense.
+</font></b></pre>
+
+<p>Note that, as with the Oink flags, the default may be the 'no'
+version of the flag.
+
+<pre><b><font size=+1>
+-fq-print-quals-graph    : print out quals.dot of inference graph
+</font></b></pre>
+
+<p>If you are debugging the dataflow graph, it is sometimes helpful to
+be able to see it visually.  If you set this flag, a quals.dot file
+will be produced in the local directory.  This file can be given to
+the <a href="http://www.graphviz.org/">'dot'</a> program which will
+produce a human-readable post-script file of the graph.  This is only
+useful on small examples or the graph is simply unreadable; to help
+with this problem, before sending it to dot, the graph can be filtered
+down to one connected component by using the script
+'qual_graph_component'.  This makefile target in
+oink/qual_result_test.incl.mk shows how to use them all together.
+
+<pre>
+TEST_TOCLEAN += *.dot
+TEST_TOCLEAN += *.ps
+.PHONY: qual-graph
+qual-graph:
+	rm -f quals.dot Test/*.dot Test/*.ps
+	$(QUALCFG) -fq-name-with-serialno -fq-casts-preserve -fq-name-with-loc -fq-print-quals-graph -fq-ugly -fq-no-ret-inf $(GRAPH_TARGET)
+	dot -Tps -o $(GRAPH_OUT)-cc.ps quals.dot
+	./qual_graph_component -root '$$tainted'   < quals.dot > $(GRAPH_OUT)-tainted.dot
+	dot -Tps -o $(GRAPH_OUT)-tainted.cc.ps   $(GRAPH_OUT)-tainted.dot
+	./qual_graph_component -root '$$untainted' < quals.dot > $(GRAPH_OUT)-untainted.dot
+	dot -Tps -o $(GRAPH_OUT)-untainted.cc.ps $(GRAPH_OUT)-untainted.dot
+</pre>
+
+<p>You probably want to use <b>-fq-name-with-loc</b> with this flag to
+print out the source location information in each node.  The resulting
+graph is much easier to follow as you can just look for source
+location line number changes instead of following the tedious details
+of each expression's node.  In fact, it would be useful to have a
+utility that would squash together adjacent nodes in the graph that
+all have the same source location information, which would serve the
+same purpose.
+
+<pre><b><font size=+1>
+-fq-strict-const         : enforce const, rather than allow const inference
+</font></b></pre>
+
+<p>There is a qualifier called 'const' that can be used to annotate
+types in C and C++.  Const is just a special case of the kind of type
+qualifier that Cqual++ implements.  With a usual C or C++ compiler,
+const does not 'flow' automatically: the programmer must manually
+annotate const everywhere that it is needed or else there will be an
+error.  With this flag on, Cqual++ behaves just as a normal C or C++
+compiler in this respect.  The alternative is that const would be
+flowed just as any other qualifier and so the programmer could use
+const but not have to type it everywhere.  <b>Note:</b> I haven't ever
+used this flag so who knows if this still works.
+
+<pre><b><font size=+1>
+-fq-casts-preserve       : don't notify the libqual backend about flow through a cast
+</font></b></pre>
+
+<p>Cqual++ uses the type-system as a model of your program.  Casts
+break the type-system and so also break the model and are therefore
+generally a problem for Cqual++.  The libqual backend knows about
+casts and whether the dataflow should flow through them or not
+depending on the properties of the qualifier lattice that is being
+used; see <b>-q-config FILE</b> above for how the config file is
+supplied.  Sometimes however we do not want the backend to even know
+about the cast; to do that set this flag.  The only place that it
+makes a difference is in oink/qual_dataflow_ty.cc which is quoted
+below.
+
+<pre>
+void mkLeq
+  (LibQual::Type_qualifier *src, LibQual::Type_qualifier *tgt, SourceLoc loc,
+   bool isCast,
+   bool useMI, LibQual::polarity miPolCqual, int fcId)
+{
+  . . .
+  LibQual::qual_gate *qgate = isCast
+    ? &LibQual::casts_preserve_qgate
+    : &LibQual::open_qgate;
+  // NOTE: This is probably an obsolete flag, but I keep it
+  // implemented for testing purposes.
+  if (qualCmd->casts_preserve) qgate = &LibQual::open_qgate;
+</pre>
+
+<pre><b><font size=+1>
+-fq-use-const-subtyping  : no back edge below pointers if pointing to const
+</font></b></pre>
+
+<p>Cqual++ puts a dataflow edge anytime data *might* flow.  Consider this program.
+
+<pre>
+void f(int *x) {
+  int *y = *x;
+  . . .
+}
+</pre>
+
+<p>Consider the following four questions about the dataflow.<ol>
+
+<li>Is data is flowing from "x" to "y" ?  We say yes because bits are
+actually copied; you might as well think of x and y as ints instead of
+pointers.
+
+<li>Is data flowing from "y" to "x" ?  We say no because "x" is really
+unaffected by the fact that it has just been copied to "y".
+
+<li>Is data flowing from "*x" to "*y" ?  Immediately, no, but we say
+yes because although "*x" wasn't copied to "*y", a later *read* from
+"*y" *could* give the value of "*x", and definitely would unless
+something changes in between.
+
+<li>Now, is data flowing from "*y" to "*x" ?  Immediately, no, but we
+say yes because recall that "*y" is an L-value (for C programmers) or
+a reference (for C++ programmers).  That is, "*y" can be written to,
+and a later *write* to "*y" *could* change the value of "*x", and
+definitely would unless something changes in between.
+
+<p>Unless one thing: unless "*y" is const.  In this case "*y" cannot
+be written to.  Therefore in this fourth case when "*y" is const we
+could make the analysis more precise by not putting a dataflow edge
+backwards from "*y" to "*x".  Setting the flag above turns this
+feature on.
+
+<p>This does not work if combined with const inference because the
+const-ness or not of "*y" would not be available until after the
+analysis.  However, if a program uses const and goes through a usual C
+or C++ compiler, then "*y" must already be annotated with const if it
+is const, and so this flag would be ok to use.
+
+</ol>
+
+<pre><b><font size=+1>
+-fq-ugly                 : put address of qvar into quals.dot node names
+</font></b></pre>
+
+<p>Use this flag when using <b>-fq-print-quals-graph</b> above so that
+two variables with the same name show up as distinct nodes in the
+'dot' output.  It is off by default in Jeff Foster's Cqual, but I have
+broken tradition and turned it on as it is very confusing to see a
+graph where two nodes have been accidentally merged.
+
+<pre><b><font size=+1>
+-fq-poly                 : do polymorphic analysis
+</font></b></pre>
+
+<p>Consider this example.
+
+<pre>
+int identity(int a) {return a;}
+
+void f() {
+  int $tainted x;
+  int y = identity(x);
+}
+
+void g() {
+  int x2;
+  int $untainted y2 = identity(x2);
+}
+</pre>
+
+<p>This program is, in reality, quite fine; that is, we can just tell
+from looking at it that at runtime $tainted cannot flow to $untainted.
+
+<p>However, a simple-minded analysis will think that something is
+wrong.  It will flow the $tainted x from the first call to 'identity'
+in 'f' into the 'a' in 'identity' and then return it to *all* of the
+call sites to identity.  In particular, it will return it to the
+second call to 'identity' in g(), where the $tainted will flow into
+$untainted y2.  This is a false positive report of an error.
+
+<p>This behavior is what Jeff Foster's original Cqual did; it is
+called a monomorphic dataflow, which is the kind of dataflow you
+expect if you just look at a program and draw arrows where you think
+data is flowing.
+
+<p>Now instead imagine being more clever.  Whenever we flow data down
+into a function call, let's label the edge of the flow graph with an
+open-parenthesis; similarly when data flows back up at a function
+return, we will use a close-parenthesis.  Further, number each call
+site to a function and number all of the open and close parentheses
+generated at that call site with the same number.  In particular it is
+important that two different call sites to the same function generate
+parentheses of different numbers.
+
+<p>Now when we find a path in the dataflow graph from $tainted to
+$untainted, we do not count it as a legal path unless the string of
+parentheses along the path 1) is balanced: closes match opens, and 2)
+when a close matches an open, they have the same call-site number.
+Finding such paths is called in general Context Free Reachability in a
+graph.  As you can see, this feature would prevent the false positive
+above.
+
+<p>The monomorphic analysis we started with generated too many false
+positive for Rob Johnson, so he implemented the context free
+reachability refinement above, which when applied to dataflow and
+function call sites is called polymorphic dataflow analysis.  His
+polymorphic backend is what we use in Cqual++ and is in
+oink-stack/libqual.  It can be used in monomorphic mode or polymorphic
+mode; to get polymorphic mode, turn on this flag.
+
+<pre><b><font size=+1>
+qual flags that take an argument:
+</font></b></pre>
+
+<pre><b><font size=+1>
+-q-catch-qual QLIT       : attach qualifier literal QLIT to the global exception var
+</font></b></pre>
+
+<p>All thrown exceptions flow into one global exception variable.  You
+may ask why we don't just match up the throws and catches, but this is
+harder than you might think so this is the approximation we have for
+now.  You can annotate the global exception variable with a qualifier
+literal by passing that literal on the command line using this flag.
+For example, if you annotated it as $untainted, you would find any
+possibility of $tainted qualifiers flowing into the expression of a
+throw.
+
+<pre><b><font size=+1>
+-q-max-errors            : max errors to print; 0 for unlimited (default 80)
+</font></b></pre>
+
+<p>Cqual++ attempts to combine errors and show you only the ones you
+are mostly likely to want to see, which I think is just the shortest
+paths that don't overlap each other.  This flag allows you to limit
+the number of errors that Cqual++ will print in case you are just
+getting too many overall.
+
+<pre><b><font size=+1>
+qual boolean flags; preceded by '-fq-no-' for the negative sense.
+</font></b></pre>
+
+<pre><b><font size=+1>
+-fq-inference            : do inference
+</font></b></pre>
+
+<p>You may at times want to run Cqual++ without it actually doing any
+inference; you can use the negative version of this flag to turn
+inference off; it is of course on by default.
+
+<p>If you are not doing inference the main difference on the behavior
+of Cqual++ is that the low-level functions which normally send
+dataflow edges to the libqual backend, 'mkLeq' and 'unify' in
+oink/qual_dataflow_ty.cc, instead do not send anything to the backend.
+
+<p>If you are doing inference, a configure file must be supplied using
+<b>-q-config FILE</b> above; otherwise, one is not needed.  
+
+<pre><b><font size=+1>
+-fq-print-trans-qual     : in pretty printing, annotate inferred qualifiers
+</font></b></pre>
+
+<p>If you use <b>-fo-pretty-print</b> and you do inference with
+qualifiers then when the file is pretty-printed back out the
+consequences of transitive qualifier flow will be annotated on all of
+the expressions.  The syntax used is the gcc __attribute__(()) syntax
+so they should be parse-able by other tools (such as CIL when it is a C
+program; see below).  Note that the qualifier literals used in the
+printed attributes are an extended format beyond just annotations with
+$tainted or $untainted.  For example a variable may be annotated as
+"GE_tainted" which means it is greater than or equal to $tainted in
+the lattice; similarly for "LE_" as less than or equal to and "EQ_"
+for equal to.
+
+<p>This feature was used in the paper "Scrash: A System for Generating
+Secure Crash Information" mentioned on the main oink page.  The
+authors annotated any user-private data with $tainted and then used
+Cqual++ -fo-pretty-print -fq-print-trans-qual to flow the
+$tainted-ness around and print the program back out.  They then used
+another tool, CIL (which only works on C; this was a C program), to
+modify the program to keep all the user-private data in a special
+section of the heap.  If the program crashed before sending a crash
+report to the developers, this section of the heap could be cleared,
+preventing user-private data from being disclosed while still
+providing information on the failed program state to the developers
+for debugging purposes.
+
+<pre><b><font size=+1>
+-fq-name-expressions     : name expressions
+-fq-name-vars            : name variables
+-fq-name-if-missing      : name otherwise unnamed objects
+-fq-names                : control all other -fq-name flags
+</font></b></pre>
+
+<p>When Cqual++ reports an error to the user it is in the form of a
+path from an expression annotated with one qualifier, say $tainted, to
+another, say $untainted.  The nodes along this path can be expressions
+or variables.  This path will always have source locations for such
+path nodes, but they can also be annotated with a pretty-print of an
+expression or the name of a type variable.
+
+<p>Note that the names name specific parts of a type tree and so are
+more refined than the usual names of, say, variables containing C
+data.  Consider this program.
+
+<pre>
+void f() {
+  int *x;
+  ... x ...
+}
+</pre>
+
+The expression x has really three type variables associated with it.
+We list them below and also the refined names that they are given in
+Cqual++ output. <ol>
+
+<li><b>x</b>: x as an L-value or reference,
+
+<li><b>x'</b>: x as an R-value pointer data value, this turns out to be the same
+as *x as an L-value or or reference to integer data value, and
+
+<li><b>x''</b>: *x as an R-value integer value.
+
+</ol>
+
+<p>
+
+<pre><b><font size=+1>
+-fq-casts-preserve-below-functions : -fcasts-preserve works below functions
+</font></b></pre>
+
+<p>It is a big space saving in the backend if we can omit naming
+qualifier variables ("qvars") in the dataflow graph; however doing
+that makes the output less readable.  These flags control exactly when
+qvars get names.
+
+<pre><b><font size=+1>
+-fq-flow-compoundUp      : insert var to container edges
+-fq-flow-compoundDown    : insert container to var edges
+-fq-flow-pointUp         : insert value to pointer/array edges
+-fq-flow-pointDown       : insert pointer/array to value edges
+-fq-flow-refUp           : insert value to ref edges
+-fq-flow-refDown         : insert ref to value edges
+</font></b></pre>
+
+<p>Sometimes you might want dataflow edges to flow between a container
+and what it contains.  For the purposes of Oink dataflow there are
+three kinds of such container/contained relationships: <ul>
+
+<li>A compound type (a struct, class, or union) and its members,
+
+<li>A pointer (or array) and the thing pointed to, and
+
+<li>A reference and the thing referenced.
+
+</ul>
+
+<p>The flags above specify respectively which kind of container
+relationship and which way the edges should flow.  Any combination is
+possible; you just get more edges.
+
+<pre><b><font size=+1>
+-fq-explain-errors       : print bad dataflow path when one is found
+</font></b></pre>
+
+<p>When this flag is set, which it is by default, then the path from
+the $tainted to the $untainted will be printed to the console.  It is
+off by default for most of the Cqual++ tests.  Most of these tests are
+small corner-case situations where there is only one way for the path
+from $tainted to $untainted to connect and we just want to know that
+it does or doesn't as the case should be.  By turning this flag off
+the tests run faster and produce much less output.
+
+<p>The syntax of the path has been carefully done to attempt to match
+that of gcc output so that if you look at it in compile mode in emacs
+you can just say C-x backtick and emacs will take you from one point
+in the path to the next, just as you can go from one compiler error to
+the next when compiling with gcc.
+
+<pre><b><font size=+1>
+-fq-ret-inf              : return the inference result in the exit code
+</font></b></pre>
+
+<p>When a bad dataflow path is found, such as $tainted flowing to
+$untainted, Cqual++ will return with exit code 32.  This makes it easy
+to write tests where all you want to know is that the dataflow path
+connects or does not.
+
+<pre><b><font size=+1>
+-fq-name-with-loc        : put location info on qualifier variable names
+</font></b></pre>
+
+<p>If this flag is on, source location information is printed in the
+qualifier name itself.  This is not normally needed as the source
+location is already printed in any bad path shown to the user, per
+<b>-fq-explain-errors</b> above.  However, if you are using
+<b>-fq-print-quals-graph</b> you want to also use this flag; see the
+discussion at the documentation for that flag.
+
+<pre><b><font size=+1>
+-fq-merge-ref-ptr-qvars  : merge qvars of refs and ptrs (vs unify)
+</font></b></pre>
+
+<p>This flag controls a very technical detail that most users can
+ignore.  Every AbstractValue node "x" that is L-valuable (C
+terminology) or has a reference (C++ terminology) gets a separate
+reference AbstractValue node that points at "x".  However, if there is
+also a pointer pointing at "x" then the pointer gets an AbstractValue
+node pointing at it as well.  This reference and pointer should be
+merged so that <a
+href=qual.html#ref-and-value-level-qualifiers>certain kinds of
+dataflow analyses called "reference level" analyses</a> (such as const
+analysis) are done correctly.  See the example in
+<b>-fq-use-const-subtyping</b>.  This flag controls how this merging
+is done in the backend: I think if the nodes are unified they show up
+as the same node in the qual.dot graph (<b>-fq-print-quals-graph</b>)
+and if they are just merged then they show up as two nodes and the
+edge between them shows up.  I think I just put this in for debugging.
+
+<pre><b><font size=+1>
+-fq-compactify-graph     : compactify graph before serialization
+-fq-compactify-graph=always : compactify graph even if not serializing
+</font></b></pre>
+
+<p>Serialization allows you to mirror the build process: you can
+analyze or "compile" each .i file into a .qz file (or .qdir) and then
+"link" them together.  The reason we did this in the first place was
+that Rob Johnson wanted to analyze the whole Linux kernel and we
+couldn't fit that in memory.  By serializing the graph and reading it
+back in, we just have the graph, the AbstractValues and the Types, the
+AST and other artifacts of parsing and typechecking are gone.
+
+<p>However, what we really care about isn't the dataflow graph in the
+.qz file: what we really care about is the implied connections (or
+not) that it provides between the external symbols in the file.  If
+another graph provides the same connections between external symbols,
+it is just as good.  If that other graph is smaller, it is even
+better.  Rob found that by doing a bunch of local graph compaction
+steps that clearly preserved locally the connectivity of a a path
+without introducing new connectivity, that he was able to get the
+graph to be about a factor of ten smaller.  These flags control that
+process.  You can turn it off just in case you think there is a bug
+and you want to test if it is in the compactify stage.
+
+<hr>
+<p>&copy; 2002-2006 Daniel S. Wilkerson
+</p>
+
+<h2>&nbsp;</h2>
+
+</body>
+</html>

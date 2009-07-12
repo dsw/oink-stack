@@ -1,0 +1,7 @@
+gb.f3b.x3b = 1;
+gb.f3b.y3b = 2;
+gb.f4b.x4b = 6;
+gb.f4b.y4b = 7;
+gb.zb[0] = 3;
+gb.zb[1] = 4;
+gb.zb[2] = 5;

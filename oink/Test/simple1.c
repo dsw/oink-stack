@@ -1,0 +1,1 @@
+int $tainted x;

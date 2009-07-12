@@ -1,0 +1,37 @@
+-*- text -*-
+
+Testing framework:
+
+Selecting tests:
+     
+    Multiple lines "//@@ TESTS: X Y Z" each orthogonally define a set of
+    cpp-defines to select.
+     
+    For example,
+        //@@ TESTS: A B
+        //@@ TESTS: X Y
+     
+    Will test with
+        -DA -DX, -DA -DY, -DB -DX, -DB -DY
+
+Selecting output expectation:
+
+    "EXPECT_TAINT_WARNINGS" (after cpp) says to expect taint warnings
+    "EXPECT_NO_WARNINGS" (after cpp) says to expect no warnings.
+
+    Exactly one must be specified.
+
+Test files are first checked with gcc/g++ to make sure they compile cleanly.
+
+Tests run in both C and C++ mode.
+
+
+See stdio/file1.c for an introductory example.
+
+
+
+
+TODO:
+- Test different gcc optimization flags
+
+- Test different oink flags

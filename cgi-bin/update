@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+$ENV{PATH} = '/usr/bin:/bin';
+$ENV{HOME} = '/home/oink-www';
+
+print "content-type: text/plain\n\n";
+
+chdir("/home/oink-www/proj/oink-stack") || die "couldn't chdir";
+
+my $pwd = `pwd`; chomp $pwd;
+print "Updating in $pwd:\n";
+
+system("/usr/bin/svn", "update");
+
+print "\nDONE UPDATING.\n";

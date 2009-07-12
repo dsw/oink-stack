@@ -1,0 +1,11 @@
+// -*-c++-*-
+char  $tainted  __attribute__((EQ_tainted))  __attribute__((GE_untainted)) *getenv(char const  __attribute__((GE_nonconst))  __attribute__((EQ_const)) *name);
+int printf(char const  $untainted  __attribute__((LE_tainted))  __attribute__((EQ_untainted))  __attribute__((GE_nonconst))  __attribute__((EQ_const)) *fmt, ... /*anon*/);
+
+int main() {
+  char  __attribute__((EQ_tainted))  __attribute__((EQ_untainted)) * __attribute__((EQ_nonconst))  __attribute__((LE_const)) s;
+  char  __attribute__((EQ_tainted))  __attribute__((EQ_untainted)) * __attribute__((EQ_nonconst))  __attribute__((LE_const)) t;
+   ( (s)= ( (getenv) ( ("LD_LIBRARY_PATH"))));
+   ( (t)= (s));
+   ( (printf) ( (t)));
+}

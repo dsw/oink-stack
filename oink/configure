@@ -1,0 +1,7 @@
+#! /bin/sh
+# see License.txt for copyright and terms of use
+# Taken from elsa/configure by Scott McPeak
+
+# thunk
+
+exec perl -wS ./configure.pl ${1+"$@"}

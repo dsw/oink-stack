@@ -1,0 +1,20 @@
+// cc_eeb.gr
+// EEb example from CC04 submission
+
+context_class EEB : public UserActions {};
+
+terminals {
+  0: TOK_EOF;
+  1: TOK_PLUS "+";
+  2: TOK_B "b";
+  token(int) TOK_B;      // "b" sval is an int
+}
+
+nonterm(Node*) E {
+  fun dup(n)     { n->incRefCt(); }
+  fun del(n)     { n->delRefCt(); }
+  fun merge(a,b) { return pickLeftAssocTree(a,b); }
+
+  -> e1:E "+" e2:E       { return new PlusNode(e1, e2); }
+  -> b:"b"               { return new LeafNode(b); }
+}

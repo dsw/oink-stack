@@ -1,0 +1,757 @@
+# -*-makefile-*-
+# see License.txt for copyright and terms of use
+
+# Included makefile for building everything.
+
+ifndef TOP_LEVEL_MAKEFILE
+$(error This makefile should be included in the top-level Makefile, not used stand-alone)
+endif
+
+CXX := g++
+
+# Makefile for building Oink
+
+.PHONY: build-prereqs exe
+build-prereqs: tmpdir
+
+some: build-prereqs qual oink
+
+all: exe
+exe: build-prereqs
+
+build-prereqs: patched_files
+
+build-prereqs: ElsaHeaders.links
+
+# ****
+
+FRONTEND_EXE :=
+FRONTEND_EXE += oink
+FRONTEND_EXE += staticprint
+FRONTEND_EXE += dfgprint
+FRONTEND_EXE += cfgprint
+FRONTEND_EXE += qual
+exe: $(FRONTEND_EXE)
+
+# $(FRONTEND_EXE): build-prereqs
+
+TEST_EXE := 
+TEST_EXE += cpdinit_test 
+TEST_EXE += Lib/union_find_test
+TEST_EXE += alloc_test
+TEST_EXE += archive_srz_test
+exe: $(TEST_EXE)
+
+# apply codepatch to elsa files ****************
+
+# The Oink versions of these files are created by copying+modifying
+# the Elsa versions, using a script that is interpreted by
+# $(SMBASE_DIR)/codepatch.pl.  The name of the script that modifies
+# a file is that file's name, with ".cpatch" appended.
+
+PATCHED_FILES := 
+PATCHED_FILES += cc_print.h
+PATCHED_FILES += cc_print.cc
+PATCHED_FILES += cc_type.h
+PATCHED_FILES += xml_type_id.h
+
+TOCLEAN += $(PATCHED_FILES)
+$(PATCHED_FILES): %: $(ELSA_DIR)/% %.cpatch
+	rm -f $@
+	perl $(SMBASE_DIR)/codepatch.pl -o $@ $(ELSA_DIR)/$* $*.cpatch
+	chmod a-w $@
+
+.PHONY: patched_files
+patched_files: $(PATCHED_FILES)
+
+# create local links to all non-generated elsa headers ****************
+
+TOCLEAN_DIR += ElsaHeaders
+ElsaHeaders:
+	mkdir $@
+
+ELSA_HEADERS := $(filter-out %/cc_tokens.h,$(filter-out %.gen.h,$(wildcard $(ELSA_DIR)/*.h)))
+
+# remove from $(ELSA_HEADERS) any files in $(PATCHED_FILES)
+ELSA_HEADERS := $(filter-out $(patsubst %,$(ELSA_DIR)/%,$(PATCHED_FILES)),$(ELSA_HEADERS))
+
+MY_ELSA_HEADERS := $(subst $(ELSA_DIR)/,ElsaHeaders/,$(ELSA_HEADERS))
+
+# quarl 2006-05-30: link each header as an individual 'make' target so that
+# when new headers appear in elsa, we see them.
+ElsaHeaders/%: $(ELSA_DIR)/%
+	cd ElsaHeaders && ln -s ../$(subst ElsaHeaders/,$(ELSA_DIR)/,$@) .
+
+.PHONY: ElsaHeaders.links
+ElsaHeaders.links: ElsaHeaders $(MY_ELSA_HEADERS)
+
+# build lexer files ****************
+
+# elsa frontend lexer, extended locally
+
+LEXER_STEMS := oink qual
+
+LEXER_MODS :=
+LEXER_MODS += $(ELSA_DIR)/cc.lex
+LEXER_MODS += $(ELSA_DIR)/gnu.lex
+LEXER_MODS += oink_ext.lex
+oink.lex: $(LEXER_MODS)
+LEXER_MODS += qual_ext.lex
+qual.lex: $(LEXER_MODS)
+
+TOCLEAN += $(addsuffix .lex,$(LEXER_STEMS))
+$(addsuffix .lex,$(LEXER_STEMS)): %.lex:
+	rm -f $@
+	perl $(ELSA_DIR)/merge-lexer-exts.pl $^ > $@
+	chmod a-w $@
+
+# run flex on the lexer description
+
+TOCLEAN += $(addsuffix _lexer.yy.cc,$(LEXER_STEMS))
+$(addsuffix _lexer.yy.cc,$(LEXER_STEMS)): %_lexer.yy.cc: %.lex
+	rm -f $@
+	perl $(SMBASE_DIR)/run-flex.pl -copies -o$@ $<
+	chmod a-w $@
+
+# compiling *_lexer.yy.cc requires that cc_tokens.h be built
+# oink_lexer.yy.o: oink_tokens.h
+# qual_lexer.yy.o: qual_tokens.h
+oink_lexer.yy.o: cc_tokens.h
+qual_lexer.yy.o: cc_tokens.h
+
+# token descriptions
+
+# oink.tok: $(ELSA_DIR)/cc_tokens.tok $(ELSA_DIR)/gnu_ext.tok oink_ext.tok
+# qual.tok: $(ELSA_DIR)/cc_tokens.tok $(ELSA_DIR)/gnu_ext.tok oink_ext.tok qual_ext.tok
+cc.tok: $(ELSA_DIR)/cc_tokens.tok $(ELSA_DIR)/gnu_ext.tok oink_ext.tok qual_ext.tok
+
+# TOCLEAN += $(addsuffix .tok,$(LEXER_STEMS))
+# $(addsuffix .tok,$(LEXER_STEMS)): %.tok:
+TOCLEAN += cc.tok
+cc.tok: %.tok:
+	rm -f $@
+	cat $^ > $@
+	chmod a-w $@
+
+# generate token lists
+
+# cc_tokens.h gets incorporated into all of Elsa's token-aware code,
+# e.g. lexer.cc
+
+# OINK_TOK_FILES := oink_tokens.h oink_tokens.cc oink_tokens.ids
+# QUAL_TOK_FILES := qual_tokens.h qual_tokens.cc qual_tokens.ids
+
+# For now we combine them all, as I think it will work out
+CC_TOK_FILES := cc_tokens.h cc_tokens.cc cc_tokens.ids
+TOCLEAN += $(CC_TOK_FILES)
+$(CC_TOK_FILES): cc.tok
+	rm -f $(CC_TOK_FILES)
+	$(ELSA_DIR)/make-token-files -o cc_tokens $(filter %.tok,$^)
+	chmod a-w $(CC_TOK_FILES)
+
+
+# build ast ****************
+
+# NOTE: We could build many AST's but for now it is easier and faster
+# to just build one that has the functionality of all.
+
+TOCLEAN += *.ast.gen.cc *.ast.gen.h
+.PRECIOUS: %.ast.gen.h %.ast.gen.cc
+
+CC_AST :=
+
+# **** all analyses need this
+CC_AST += $(ELSA_DIR)/cc.ast
+CC_AST += $(ELSA_DIR)/cc_tcheck.ast
+CC_AST += $(ELSA_DIR)/cc_print.ast
+CC_AST += $(ELSA_DIR)/cfg.ast
+CC_AST += $(ELSA_DIR)/cc_elaborate.ast
+CC_AST += $(ELSA_DIR)/gnu.ast
+CC_AST += $(ELSA_DIR)/kandr.ast
+CC_AST += oink.ast
+
+# NOTE: we only build one AST for now; see above.
+# oink.ast.gen.cc: $(CC_AST)
+
+# **** analyses that use dataflow/abstract values need this
+CC_AST += value.ast
+
+# **** qual analysis needs this
+CC_AST += qual.ast
+# NOTE: can not have space after the -o
+# qual.ast.gen.cc: $(CC_AST)
+# cc.ast.gen.stamp cc.ast.gen.h cc.ast.gen.cc: $(CC_AST)
+
+# Make sure the .ast.gen files get built.  Note that these don't
+# participate in linking because I filter them with $(filter-out
+# %.h,$(filter-out %.cc,$^))
+
+# quarl 2006-05-25
+#   cc.ast.gen.{cc,h} do not depend on astgen because astgen often changes
+#   without the output changing; instead just use a stamp file to make sure it
+#   gets re-run as appropriate (just don't requiring touching
+#   cc.ast.gen.{cc,h})
+
+TOCLEAN += cc.ast.gen.stamp
+.PRECIOUS: cc.ast.gen.stamp
+build-prereqs: cc.ast.gen.stamp
+
+cc.ast.gen.stamp: $(CC_AST) $(AST_DIR)/astgen
+	$(AST_DIR)/astgen -occ.ast.gen $(filter-out $(AST_DIR)/astgen,$^) || ( rm -f cc.ast.gen.h cc.ast.gen.cc cc.ast.gen.stamp; exit 1 )
+	chmod a-w cc.ast.gen.h cc.ast.gen.cc
+	touch cc.ast.gen.stamp
+
+# build parser ****************
+
+TOCLEAN += *.gr.gen.cc *.gr.gen.h *.gr.gen.stamp
+.PRECIOUS: %.gr.gen.cc %.gr.gen.h %.gr.gen.stamp
+build-prereqs: oink.gr.gen.stamp qual.gr.gen.stamp
+
+# oink.gr.gen.cc: $(ELSA_DIR)/cc.gr $(ELSA_DIR)/gnu.gr oink.gr oink_tokens.ids cc.ast.gen.cc
+# qual.gr.gen.cc: $(ELSA_DIR)/cc.gr $(ELSA_DIR)/gnu.gr oink.gr qual.gr qual_tokens.ids cc.ast.gen.cc
+
+# GR_GEN := oink.gr.gen qual.gr.gen
+# oink.gr.gen.h: oink.gr.gen.cc
+# qual.gr.gen.h: qual.gr.gen.cc
+# $(addsuffix .h,$(GR_GEN)): %.h: %.cc
+# oink.gr.gen.cc: $(ELSA_DIR)/cc.gr $(ELSA_DIR)/gnu.gr $(ELSA_DIR)/kandr.gr oink.gr         cc_tokens.ids cc.ast.gen.cc
+# qual.gr.gen.cc: $(ELSA_DIR)/cc.gr $(ELSA_DIR)/gnu.gr $(ELSA_DIR)/kandr.gr oink.gr qual.gr cc_tokens.ids cc.ast.gen.cc
+
+oink.gr.gen.stamp: $(ELSA_DIR)/cc.gr $(ELSA_DIR)/gnu.gr $(ELSA_DIR)/kandr.gr oink.gr         cc_tokens.ids cc.ast.gen.cc
+qual.gr.gen.stamp: $(ELSA_DIR)/cc.gr $(ELSA_DIR)/gnu.gr $(ELSA_DIR)/kandr.gr oink.gr qual.gr cc_tokens.ids cc.ast.gen.cc
+
+# NOTE: creates %.gr.gen.cc, %.gr.gen.h
+# $(addsuffix .stamp,$(GR_GEN)):
+oink.gr.gen.stamp qual.gr.gen.stamp:
+	-chmod a+w $(@:.stamp=.cc) $(@:.stamp=.h) 
+	$(EHD_DIR)/elkhound -tr lrtable -v -o $(@:.stamp=) $(filter %.gr,$^) || (rm -f $(@:.stamp=.cc) $(@:.stamp=.h) $@; exit 1)
+	chmod a-w $(@:.stamp=.cc) $(@:.stamp=.h)
+	touch $@
+
+# # Make sure the .gr.gen files get built.  Note that these don't
+# # participate in linking because I filter them with $(filter-out
+# # %.h,$(filter-out %.cc,$^))
+# oink.o oink_main.o cpdinit_test.o cpdinit_test_main.o: oink.gr.gen.h
+# staticprint.o staticprint_main.o: oink.gr.gen.h
+# dfgprint.o dfgprint_main.o cfgprint.o cfgprint_main.o: oink.gr.gen.h
+
+# qual_main.o qual.o: qual.gr.gen.h
+
+
+# build C++ files ****************
+
+C_AND_CC_FLAGS :=
+# C_AND_CC_FLAGS += -D__LINUX__ -D__UNIX__
+# C_AND_CC_FLAGS += -Werror
+C_AND_CC_FLAGS += @CFLAGS_EXTRA@
+
+C_AND_CC_FLAGS += -Wcast-align
+
+# sm: I removed this flag because (1) it is only useful for
+# performance tuning, and (2) it produces mountains of useless
+# reports on gcc-2.95.3
+#C_AND_CC_FLAGS += -Winline
+
+C_AND_CC_FLAGS += -Wno-char-subscripts
+# -Wshadow
+# -Wpointer-arith
+# -Wredundant-decls
+# -Wconversion
+
+C_AND_CC_FLAGS += -Wall
+#C_AND_CC_FLAGS += -g
+#C_AND_CC_FLAGS += -pg
+#C_AND_CC_FLAGS += -O2 -DNDEBUG
+C_AND_CC_FLAGS += @CFLAGS_EXTRA@
+
+# sm: I had to remove -Wredundant-decls because that complains about
+# the repeated 'isatty' prototype in lexer.yy.cc ...
+CCFLAGS := $(C_AND_CC_FLAGS) -Wconversion -Wpointer-arith -Woverloaded-virtual -Wno-deprecated
+
+# Manpage is broken: cc1plus: Invalid option `-Wenum-clash'
+# -Wenum-clash
+
+INCL_CC :=
+
+# Inhibit the current directory from being searched?  Why do we do
+# this?  Be sure you understand it before you change it because you
+# have to be really careful to not get files that have the same name
+# but are in the elsa directory when we really want files here.
+INCL_CC += -I-
+
+INCL_CC += -I.
+INCL_CC += -I$(SMBASE_DIR)
+INCL_CC += -I$(AST_DIR)
+INCL_CC += -I$(EHD_DIR)
+
+# We now omit this directory due to the changed rules in where .h
+# files are searched for.  The elsa headers we need are now linked in.
+# INCL_CC += -I$(ELSA_DIR)
+INCL_CC += -IElsaHeaders
+
+INCL_CC += -ILibCpdInit
+
+# The libqual and libregion libraries are used explicitly from the
+# stackdir; would like to do the same for elsa etc. but Scott's build
+# process and include files don't work that way.
+INCL_CC += -I$(STACK_DIR)
+
+DEP_INCL_CC := $(filter-out -I-,$(INCL_CC))
+
+# build local C++ .o files ****
+
+# All analyses need these
+BASIC_LOCAL_CC_O :=
+
+# utilities
+BASIC_LOCAL_CC_O += oink_file.o
+BASIC_LOCAL_CC_O += oink_util.o
+BASIC_LOCAL_CC_O += oink_control.o
+# BASIC_LOCAL_CC_O += oink_srz.o
+BASIC_LOCAL_CC_O += archive_srz.o
+BASIC_LOCAL_CC_O += archive_srz_format.o
+BASIC_LOCAL_CC_O += dbg_util.o
+BASIC_LOCAL_CC_O += warning_mgr.o
+
+# lexing and parsing
+# NOTE: Remove when get separate token files working
+BASIC_LOCAL_CC_O += cc_tokens.o
+# NOTE: Remove when get separate ast-s working
+BASIC_LOCAL_CC_O += cc.ast.gen.o
+BASIC_LOCAL_CC_O += oink_ast_aux.o
+
+# typechecking
+BASIC_LOCAL_CC_O += oink_type.o
+BASIC_LOCAL_CC_O += oink_type_children.o
+BASIC_LOCAL_CC_O += oink_tcheck.o
+BASIC_LOCAL_CC_O += oink_tcheck_env.o
+BASIC_LOCAL_CC_O += oink_tcheck_env_clbk.o
+BASIC_LOCAL_CC_O += oink_var.o
+BASIC_LOCAL_CC_O += oink_integrity.o
+
+# abstract value
+BASIC_LOCAL_CC_O += value.o
+BASIC_LOCAL_CC_O += value_ast_visitor.o
+BASIC_LOCAL_CC_O += xml_value_reader.o
+BASIC_LOCAL_CC_O += xml_value_writer.o
+
+# walks
+BASIC_LOCAL_CC_O += cc_print.o
+BASIC_LOCAL_CC_O += value_print.o
+
+# whole
+BASIC_LOCAL_CC_O += oink_global.o
+BASIC_LOCAL_CC_O += oink_cmd.o
+BASIC_LOCAL_CC_O += oink.o
+
+# ****
+
+# dataflow functionality
+DATAFLOW_LOCAL_CC_O :=
+
+DATAFLOW_LOCAL_CC_O += dataflow_cpdinit_clbk.o
+DATAFLOW_LOCAL_CC_O += dataflow_visitor.o
+DATAFLOW_LOCAL_CC_O += dataflow_ex.o
+DATAFLOW_LOCAL_CC_O += dataflow_ty.o
+
+# ****
+
+# additional files that the oink executable depends on
+OINK_LOCAL_CC_O :=
+
+OINK_LOCAL_CC_O += oink_lexer.yy.o
+OINK_LOCAL_CC_O += oink.gr.gen.o
+
+# additional files that cpdinit_test depends on beyond basic besides
+# oink lexer and parser extensions
+CPDINIT_TEST_LOCAL_O :=
+CPDINIT_TEST_LOCAL_O += cpdinit_test.o
+CPDINIT_TEST_LOCAL_O += cpdinit_test_visitor.o
+CPDINIT_TEST_LOCAL_O += cpdinit_test_clbk.o
+
+# additional files that staticprint depends on beyond basic besides
+# oink lexer and parser extensions
+STATICPRINT_LOCAL_CC_O :=
+STATICPRINT_LOCAL_CC_O += staticprint_cmd.o
+STATICPRINT_LOCAL_CC_O += staticprint_global.o
+STATICPRINT_LOCAL_CC_O += staticprint.o
+
+# additional files that dfgprint depends on beyond basic besides oink
+# lexer and parser extensions
+DFGPRINT_LOCAL_CC_O :=
+DFGPRINT_LOCAL_CC_O += dfgprint_cmd.o
+DFGPRINT_LOCAL_CC_O += dfgprint_global.o
+DFGPRINT_LOCAL_CC_O += dfgprint.o
+
+# additional files that cfgprint depends on beyond basic besides oink
+# lexer and parser extensions
+CFGPRINT_LOCAL_CC_O :=
+CFGPRINT_LOCAL_CC_O += cfgprint_cmd.o
+CFGPRINT_LOCAL_CC_O += cfgprint_global.o
+CFGPRINT_LOCAL_CC_O += cfgprint.o
+
+# additional files qual depends on beyond basic; NOTE that qual
+# DOES extend the lexer and parser and so we DO include those
+# extensions here, whereas other executables that do not simply
+# include OINK_LOCAL_CC_O instead
+QUAL_LOCAL_CC_O :=
+
+# lexer and parser extensions; this makes QUAL_LOCAL_CC_O mutually
+# exclusive with OINK_LOCAL_CC_O
+QUAL_LOCAL_CC_O += qual_lexer.yy.o
+QUAL_LOCAL_CC_O += qual.gr.gen.o
+
+QUAL_LOCAL_CC_O += libc_missing.o
+QUAL_LOCAL_CC_O += qual_ast_aux.o
+QUAL_LOCAL_CC_O += qual_literal.o
+QUAL_LOCAL_CC_O += qual_funky.o
+QUAL_LOCAL_CC_O += qual_annot.o
+QUAL_LOCAL_CC_O += qual_var.o
+QUAL_LOCAL_CC_O += qual_dataflow_visitor.o
+QUAL_LOCAL_CC_O += qual_dataflow_ex.o
+QUAL_LOCAL_CC_O += qual_dataflow_ty.o
+QUAL_LOCAL_CC_O += qual_cmd.o
+QUAL_LOCAL_CC_O += qual_global.o
+QUAL_LOCAL_CC_O += qual_value_children.o
+QUAL_LOCAL_CC_O += qual_value_print.o
+QUAL_LOCAL_CC_O += qual_xml_value_reader.o
+QUAL_LOCAL_CC_O += qual_xml_value_writer.o
+QUAL_LOCAL_CC_O += qual.o
+
+# interface to libqual backend
+QUAL_LOCAL_CC_O += qual_libqual_iface.o
+QUAL_LOCAL_CC_O += region_cxx.o
+
+# all local files to be built
+LOCAL_CC_O :=
+LOCAL_CC_O += $(BASIC_LOCAL_CC_O)
+LOCAL_CC_O += $(OINK_LOCAL_CC_O)
+LOCAL_CC_O += $(DATAFLOW_LOCAL_CC_O)
+LOCAL_CC_O += $(CPDINIT_TEST_LOCAL_O)
+LOCAL_CC_O += $(STATICPRINT_LOCAL_CC_O)
+LOCAL_CC_O += $(DFGPRINT_LOCAL_CC_O)
+LOCAL_CC_O += $(CFGPRINT_LOCAL_CC_O)
+LOCAL_CC_O += $(QUAL_LOCAL_CC_O)
+
+LOCAL_CC_O += oink_main.o
+LOCAL_CC_O += cpdinit_test_main.o
+LOCAL_CC_O += staticprint_main.o
+LOCAL_CC_O += dfgprint_main.o
+LOCAL_CC_O += cfgprint_main.o
+LOCAL_CC_O += qual_main.o
+
+LOCAL_CC_O += Lib/union_find_test.o
+LOCAL_CC_O += alloc_test.o
+LOCAL_CC_O += archive_srz_test.o
+
+# ****
+
+INCL_MACRO_FLAGS :=
+INCL_MACRO_FLAGS += -DCPDINIT_LIB_HEADERS='"cpdinit_headers.h"'
+INCL_MACRO_FLAGS += -DTYPE_CLASS_FILE='"oink_type.h"'
+# This is necessary since depend.pl runs the compilation line through
+# the shell one more time.  We gratefully acknowledge Wes Weimer for
+# assistance with the quoting.
+INCL_MACRO_FLAGS_D :=
+INCL_MACRO_FLAGS_D += -DCPDINIT_LIB_HEADERS='\"cpdinit_headers.h\"'
+INCL_MACRO_FLAGS_D += -DTYPE_CLASS_FILE='\"oink_type.h\"'
+
+# This is here because, due to the special preprocessor include trick
+# used in cc_type.h, no dependency gets generated for it on
+# oink_type.h even though it does depend on it.  NOTE: This used to
+# say ElsaHeaders/cc_type.h, but with the patch file mechanism
+# cc_type.h is now in oink, not oink/ElsaHeaders.
+cc_type.h: oink_type.h
+# You need put put this rule back if the other rule for updating
+# cc_type.h using the codepatch mechanism is removed; for now since
+# there is already a rule (due to the codepatch mechanism) with an
+# action for this dependency, we just add one more dependency to it.
+#	touch $@
+
+# Same preprocessor trick used in another place.
+LibCmdInit/cpdinit.h LibCpdInit/member_type_iter.h: cpdinit_headers.h
+	touch $@
+
+TOCLEAN += *.d
+TOCLEAN += $(LOCAL_CC_O) $(LOCAL_CC_O:.o=.d)
+$(LOCAL_CC_O): %.o: %.cc
+	$(CXX) -c -o $@ -DOINK $(INCL_MACRO_FLAGS)   $(CCFLAGS) $(INCL_CC)     $<
+	@$(DEP)   -o $@ -DOINK $(INCL_MACRO_FLAGS_D) $(CCFLAGS) $(DEP_INCL_CC) $< > $*.d
+-include $(LOCAL_CC_O:.o=.d)
+
+# built from the LibCpdInit tree
+CPDINIT_O :=
+CPDINIT_O += cpdinit.o
+CPDINIT_O += member_type_iter.o
+
+$(CPDINIT_O): %.o: LibCpdInit/%.cc
+	$(CXX) -c -o $@ -DOINK $(INCL_MACRO_FLAGS)   $(CCFLAGS) $(INCL_CC)     $<
+	@$(DEP)   -o $@ -DOINK $(INCL_MACRO_FLAGS_D) $(CCFLAGS) $(DEP_INCL_CC) $< > $*.d
+-include $(CPDINIT_O:.o=.d)
+
+
+# xml serialization / de-serialization ****************
+
+# NOTE: this section is taken verbatim from elsa/Makefile.in; it
+# should remain the same as that section except for minor changes
+# involving adding abstract Value serialization
+
+#### single-source of lexing token definitions:
+
+# basic, file, and typesystem xml lexer files generated by token.pl;
+# the ast tokens are generated by astgen elsewhere
+
+TOKENS_FILES :=
+TOKENS_FILES += $(ELSA_DIR)/xml_basic.tokens
+TOKENS_FILES += $(ELSA_DIR)/xml_file.tokens
+TOKENS_FILES += $(ELSA_DIR)/xml_type.tokens
+# NOTE: this is a generated file, therefore do not use the one in elsa
+TOKENS_FILES += xml_ast.gen.tokens
+# ADDED
+TOKENS_FILES += xml_value.tokens
+
+XML_TYPE_LEXER :=
+XML_TYPE_LEXER += xml_enum_1.gen.h
+XML_TYPE_LEXER += xml_lex_1.gen.lex
+XML_TYPE_LEXER += xml_name_1.gen.cc
+
+TOCLEAN += $(XML_TYPE_LEXER)
+$(XML_TYPE_LEXER): $(TOKENS_FILES)
+# elsa/token.pl makes all three files at once, so this is run only
+# once, so it is required to delete them all, rather than some of them
+	rm -f $(XML_TYPE_LEXER)
+	$(PERL) $(ELSA_DIR)/token.pl $^
+	chmod a-w $(XML_TYPE_LEXER)
+
+
+#### LEX: flex-generated lexer
+
+# ast xml lexer/parser files generated by astgen
+XML_ASTGEN :=
+XML_ASTGEN += xml_ast.gen.tokens
+XML_ASTGEN += xml_ast_reader_0decl.gen.h
+XML_ASTGEN += xml_ast_reader_1defn.gen.cc
+XML_ASTGEN += xml_ast_reader_2ctrc.gen.cc
+XML_ASTGEN += xml_ast_reader_3regc.gen.cc
+
+TOCLEAN += $(XML_ASTGEN)
+$(XML_ASTGEN): $(CC_AST_MODS) $(AST_DIR)/astgen
+	rm -f $(XML_ASTGEN)
+	$(AST_DIR)/astgen -tr no_ast.gen,xmlParser $(CC_AST)
+	chmod a-w $(XML_ASTGEN)
+
+# generate .lex file
+TOCLEAN += xml_lex.gen.lex
+xml_lex.gen.lex: $(ELSA_DIR)/xml_lex_0top.lex xml_lex_1.gen.lex $(ELSA_DIR)/xml_lex_2bot.lex
+	rm -f $@
+	cat $^ > $@
+	chmod a-w $@
+
+# run flex on the lexer description for ast xml parser
+TOCLEAN += xml_lex.gen.yy.cc
+xml_lex.gen.yy.cc: xml_lex.gen.lex ElsaHeaders/xml_lexer.h
+	rm -f $@
+	perl $(SMBASE_DIR)/run-flex.pl -copies -o$@ xml_lex.gen.lex
+	chmod a-w $@
+
+# when building the ast xml lexer, delete the methods that would
+# otherwise conflict with methods in lexer.yy.cc; they have identical
+# implementations
+xml_lex.gen.yy.o: %.o: %.cc
+	$(CXX) -c -o $@ -DOINK $(INCL_MACRO_FLAGS)   -DNO_YYFLEXLEXER_METHODS $(CCFLAGS) $(INCL_CC)     $<
+	@$(DEP)   -o $@ -DOINK $(INCL_MACRO_FLAGS_D) -DNO_YYFLEXLEXER_METHODS $(CCFLAGS) $(DEP_INCL_CC) $< > xml_lex.gen.yy.d
+-include xml_lex.gen.yy.d
+
+#### CC client code
+
+# FIX: I do not like that I have to do this manually and I don't know
+# why it works in elsa without this and does not work in oink.  We
+# need a more general scheme than this.
+INCLUDE_XML_ENUM_H :=
+INCLUDE_XML_ENUM_H += xml_value_reader.o
+INCLUDE_XML_ENUM_H += xml_value_writer.o
+# INCLUDE_XML_ENUM_H += oink_srz.o
+$(INCLUDE_XML_ENUM_H): xml_enum_1.gen.h
+
+# all the xml-related .o files
+XML_OBJS :=
+# lex
+XML_OBJS += xml_lex.gen.yy.o
+XML_OBJS += xml_lexer.o
+# generic parse
+XML_OBJS += xml_reader.o
+XML_OBJS += xml_writer.o
+# specific parse
+XML_OBJS += xml_file_reader.o
+XML_OBJS += xml_file_writer.o
+XML_OBJS += xml_type_reader.o
+XML_OBJS += xml_type_writer.o
+XML_OBJS += xml_ast_reader.o
+# final client
+XML_OBJS += xml_do_read.o
+XML_OBJS += id_obj_dict.o
+
+# build elsa frontend .o files locally ****************
+
+ELSA_O :=
+ELSA_O += cc_lang.o
+ELSA_O += lexer.o
+ELSA_O += baselexer.o
+ELSA_O += parssppt.o
+ELSA_O += mtype.o
+ELSA_O += cc_env.o
+ELSA_O += template.o
+ELSA_O += cc_scope.o
+ELSA_O += cc_flags.o
+ELSA_O += cc_type.o
+ELSA_O += serialno.o
+ELSA_O += cc_tcheck.o
+ELSA_O += const_eval.o
+ELSA_O += cc_err.o
+ELSA_O += cc_elaborate.o
+ELSA_O += ast_build.o
+ELSA_O += cc_ast_aux.o
+ELSA_O += variable.o
+ELSA_O += ccparse.o
+ELSA_O += astvisit.o
+ELSA_O += stdconv.o
+ELSA_O += implconv.o
+ELSA_O += overload.o
+ELSA_O += typelistiter.o
+ELSA_O += builtinops.o
+ELSA_O += sprint.o
+ELSA_O += gnu.o
+ELSA_O += kandr.o
+ELSA_O += mangle.o
+ELSA_O += cfg.o
+ELSA_O += implint.o
+ELSA_O += lookupset.o
+ELSA_O += $(XML_OBJS)
+# build without optimizations
+ELSA_O += notopt.o
+
+# the elsa.o files that we want to build in the usual way
+ELSA_O_NORMALBUILD := $(filter-out notopt.o,$(ELSA_O))
+ELSA_O_NORMALBUILD := $(filter-out xml_lex.gen.yy.o,$(ELSA_O_NORMALBUILD))
+
+# must not be built with optimization; NOTE: leave the '-O0' at the
+# right end so it overrides any other flags to its left
+notopt.o: $(ELSA_DIR)/notopt.cc cc.ast.gen.h
+	$(CXX) -c -o $@ -DOINK $(INCL_MACRO_FLAGS)   $(CCFLAGS) $(INCL_CC)     -O0 $<
+	@$(DEP)   -o $@ -DOINK $(INCL_MACRO_FLAGS_D) $(CCFLAGS) $(DEP_INCL_CC) -O0 $< > notopt.d
+-include notopt.d
+
+# Note that it is very important that the cc.ast.gen.h be generated
+# before this rule is run so that include lines processed in this rule
+# will get it instead of the one in parsgen/cc.
+TOCLEAN += $(ELSA_O_NORMALBUILD) $(ELSA_O_NORMALBUILD:.o=.d)
+$(ELSA_O_NORMALBUILD): %.o: $(ELSA_DIR)/%.cc cc.ast.gen.h
+	$(CXX) -c -o $@ -DOINK $(INCL_MACRO_FLAGS)   $(CCFLAGS) $(INCL_CC)     $<
+	@$(DEP)   -o $@ -DOINK $(INCL_MACRO_FLAGS_D) $(CCFLAGS) $(DEP_INCL_CC) $< > $*.d
+-include $(ELSA_O_NORMALBUILD:.o=.d)
+
+
+# linking ****************
+
+# NOTE: Recall that in linking the order of these dependencies
+# matters.
+
+# directories where lib*.a files live
+L_FLAGS :=
+L_FLAGS += -L.
+L_FLAGS += -L$(AST_DIR)
+L_FLAGS += -L$(EHD_DIR)
+L_FLAGS += -L$(SMBASE_DIR)
+L_FLAGS += -L$(STACK_DIR)/libqual
+L_FLAGS += -L$(STACK_DIR)/libregion
+
+lib_FLAGS :=
+lib_FLAGS += -lelsa
+lib_FLAGS += -last
+lib_FLAGS += -lelkhound
+lib_FLAGS += -lsmbase
+lib_FLAGS += -lqual
+lib_FLAGS += -lregion
+
+USE_ZIPIOS := @USE_ZIPIOS@
+ifeq ($(USE_ZIPIOS),1)
+  lib_FLAGS += -lzipios
+endif
+
+# for gcov
+# CCFLAGS += -fprofile-arcs -ftest-coverage
+TOCLEAN += $(FRONTEND_EXE) $(TEST_EXE)
+$(FRONTEND_EXE) $(TEST_EXE):
+	$(CXX) -o $@ $(CCFLAGS) $(L_FLAGS) $(filter %.o,$^) $(lib_FLAGS)
+
+# ****
+
+BASIC_LIBS :=
+BASIC_LIBS += $(CPDINIT_O)
+BASIC_LIBS += $(BASIC_LOCAL_CC_O)
+BASIC_LIBS += libelsa.a
+
+oink: oink_main.o
+oink: $(DATAFLOW_LOCAL_CC_O)
+oink: $(OINK_LOCAL_CC_O)
+oink: $(BASIC_LIBS)
+
+cpdinit_test: cpdinit_test_main.o
+cpdinit_test: $(DATAFLOW_LOCAL_CC_O)
+cpdinit_test: $(CPDINIT_TEST_LOCAL_O)
+cpdinit_test: $(OINK_LOCAL_CC_O)
+cpdinit_test: $(BASIC_LIBS)
+
+alloc_test: alloc_test.o
+
+staticprint: staticprint_main.o
+staticprint: $(DATAFLOW_LOCAL_CC_O)
+staticprint: $(STATICPRINT_LOCAL_CC_O)
+staticprint: $(OINK_LOCAL_CC_O)
+staticprint: $(BASIC_LIBS)
+
+dfgprint: dfgprint_main.o
+dfgprint: $(DATAFLOW_LOCAL_CC_O)
+dfgprint: $(DFGPRINT_LOCAL_CC_O)
+dfgprint: $(OINK_LOCAL_CC_O)
+dfgprint: $(BASIC_LIBS)
+
+cfgprint: cfgprint_main.o
+cfgprint: $(DATAFLOW_LOCAL_CC_O)
+cfgprint: $(CFGPRINT_LOCAL_CC_O)
+cfgprint: $(OINK_LOCAL_CC_O)
+cfgprint: $(BASIC_LIBS)
+
+qual: qual_main.o
+qual: $(DATAFLOW_LOCAL_CC_O)
+qual: $(QUAL_LOCAL_CC_O)
+qual: $(BASIC_LIBS)
+
+# quarl 2006-05-12: Rebuild qual if libqual changes.
+qual: $(STACK_DIR)/libqual/libqual.a $(STACK_DIR)/libregion/libregion.a
+
+# quarl 2006-05-03: Rebuild qual, oink if libsmbase changes
+oink qual: $(SMBASE_DIR)/libsmbase.a
+
+archive_srz_test: archive_srz_test.o archive_srz.o oink_file.o oink_util.o
+# archive_srz_test: $(OINK_LOCAL_CC_O)
+# archive_srz_test: $(BASIC_LIBS)
+
+# ****
+
+TOCLEAN += $(TEST_EXE)
+Lib/union_find_test: Lib/union_find_test.o
+
+
+# build libraries ****************
+
+# .a files that are made locally
+LOCALLY_MADE_A_FILES :=
+LOCALLY_MADE_A_FILES += libelsa.a
+
+TOCLEAN += $(LOCALLY_MADE_A_FILES)
+$(LOCALLY_MADE_A_FILES): %.a:
+	ar r $@ $^
+	ranlib $@
+
+libelsa.a: $(ELSA_O)

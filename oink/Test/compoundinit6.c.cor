@@ -1,0 +1,8 @@
+Analyzing test/compoundinit6.c
+File test/compoundinit6.c:
+main: fun (void) -> int
+x: array (int)
+y: array ($tainted int)
+z: array ($tainted int)
+w: array ($tainted int)
+

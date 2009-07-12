@@ -1,0 +1,11 @@
+Analyzing test/compoundinit5.c
+File test/compoundinit5.c:
+funa: fun (void) -> void
+a: array ($tainted char)
+b: ptr (struct bar)
+f: ptr (struct foo)
+funb: fun (void) -> void
+a2: array ($tainted char)
+b2: ptr (struct bar2)
+f2: ptr (struct foo2)
+

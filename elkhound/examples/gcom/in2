@@ -1,0 +1,6 @@
+x := 0;
+do x < 10 ->
+  print x;
+  x := x + 1
+od;
+print x

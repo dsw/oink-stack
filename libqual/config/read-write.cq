@@ -1,0 +1,9 @@
+/* see License.txt for copyright and terms of use */
+
+typedef struct _IO_FILE FILE;
+extern FILE *fopen (__const char *__restrict __filename,
+		    __const char *__restrict __modes) ;
+extern int fclose ($open FILE * __stream) {
+  change_type(*__stream, $closed FILE);
+}
+extern int fgetc ($read FILE *__stream) {}

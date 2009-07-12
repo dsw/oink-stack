@@ -1,0 +1,21 @@
+Analyzing test/compoundinit3.c
+File test/compoundinit3.c:
+main: fun (void) -> int
+gronkA: int
+gronkB: int
+gronkC: int
+y1: array ($tainted int)
+z1: ptr (int)
+f1: ptr (struct foo1)
+y2: array (int)
+z2: ptr ($tainted int)
+f2: ptr (struct foo2)
+y3: array ($tainted int)
+z3: ptr (int)
+f3: ptr (struct foo3)
+gronkC: int
+y4: array (int)
+z4: ptr ($tainted int)
+f4: ptr (struct foo4)
+gronkC: int
+

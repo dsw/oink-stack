@@ -1,0 +1,119 @@
+// arith.gr
+// parser for a very simple language of arithmetic expressions
+
+// since this example is intended to be the user's first encounter
+// with Elkhound syntax, it includes comments that explain syntax
+// (whereas other examples typically won't)
+
+
+// "context_class" is a required section that tells the parser
+// generator which class the generated action functions should be
+// members of.  All context classes implement the UserActions
+// interface, so they inherit it.  Syntactically, the body is a
+// C++ class definition.
+context_class Arith : public UserActions {
+public:
+  // there's nothing to put in the context for this example
+};
+
+
+// syntax: The second section is a list of tokens (terminals) that the
+// lexer will yield.  The primary purpose is simply to give
+// human-readable names to the numeric codes the lexer will actually
+// use.  
+//
+// Optionally, you can associate quoted aliases, which can help to
+// make the grammar more readable.  For example, with an alias a rule
+// like
+//   E -> E TOK_PLUS E
+// can be rewritten as
+//   E -> E "+" E
+//
+// Don't be confused by the syntax: Elkhound does *not* include a
+// lexer component, and there is no necessary connection between the
+// alias you choose to give and the actual token spellings the lexer
+// might recognize.  (Obviously, for readability's sake, they should
+// correspond anyway.)
+//
+// The intent is this list will be generated automatically from some
+// other specification.  For example, the C grammar cc.gr uses the
+// list printed by the 'lexer2' module when compiled as a stand-alone
+// program.  Here, for simplicity, I'll just type it by hand the same
+// as is written in the ArithTokenCodes enumeration in arith.h.
+terminals {
+  // there's always an explicit EOF token
+  0 : TOK_EOF;
+  1 : TOK_NUMBER;              // no alias
+  2 : TOK_PLUS     "+";        // alias is "+" (including quotes)
+  3 : TOK_MINUS    "-";
+  4 : TOK_TIMES    "*";
+  5 : TOK_DIVIDE   "/";
+  6 : TOK_LPAREN   "(";
+  7 : TOK_RPAREN   ")";
+  
+  // syntax: Some terminals have useful semantic values, and those
+  // are declared here.
+  token(int) TOK_NUMBER;       // numbers have associated int-typed values
+
+  // syntax: Precedence and associativity come next.  Precedence levels
+  // are specified by explicit integers, instead of by their relative
+  // order, to make it possible for grammar extension modules to insert
+  // new tokens anywhere in the precedence ladder.
+  precedence {
+    // high precedence
+    left 20 "*" "/";
+    left 10 "+" "-";
+    // low precedence
+  }
+}
+
+
+// syntax: The third and final section is a sequence of nonterminal
+// ('nonterm') definitions.  The first nonterminal is always the start
+// symbol of the grammar.
+//
+// syntax: Nonterminal definitions can optionally include a semantic
+// value type in square brackets, then the nonterminal's name, then
+// an open-brace, productions, and finally a close-brace.
+//
+// Note: In the current implementation, semantic values are internally
+// stored in an 'unsigned long'-sized variable (32 or 64 bits,
+// typically), so the type you put here should usually be either an
+// int (long int is ok), an enum or bool, or a pointer.  The parser
+// generator will insert the appropriate casts to hide the type of the
+// underlying representation, but it cannot accomodate types that are
+// wider than that representation.  [TODO: Move this explanation to
+// someplace more global, like a user manual, and refer the user to
+// that explanation.]
+nonterm(int) Exp {
+  // syntax: Productons start with "->", then the list of right-hand
+  // side (RHS) symbols, then reduction action code.  The RHS symbols
+  // must be given tags (e.g. "e") if the action code wants to refer
+  // to their value.  The action code may be omitted, in which case
+  // it defaults to the equivalent of "return 0;".
+  //
+  // Looking at this first rule, we see that an Exp nonterminal (the
+  // block we're in) can be rewritten as a sequence of three symbols:
+  // an Exp nonterminal, a "+" token (a.k.a. TOK_PLUS), and another
+  // Exp nonterminal.  When the two Exp nonterminals are matched,
+  // their rules will yield semantic values.  To allow this rule to
+  // use those values, we give them names: e1 and e2.  Then in the
+  // action rule (enclosed in square brackets), the names 'e1' and
+  // 'e2' refer to those semantic values.  The action code will be
+  // compiled in a context where the semantic value names have the
+  // type that you associated with the nonterminal (in square brackets
+  // after the keyword "nonterm").
+  -> e1:Exp "+" e2:Exp        { return e1 + e2; }
+
+  -> e1:Exp "-" e2:Exp        [ return e1 - e2; ]
+  -> e1:Exp "*" e2:Exp        [ return e1 * e2; ]
+  -> e1:Exp "/" e2:Exp        [ return e1 / e2; ]
+  -> n:TOK_NUMBER             [ return n; ]
+  -> p:ParenthesizedExp       [ return p; ]
+}
+
+// I've separated this rule out into its own nonterminal just to
+// show an example of having more than one nonterminal in a grammar.
+nonterm[int] ParenthesizedExp {
+  -> "(" e:Exp ")"            [ return e; ]
+}

@@ -1,0 +1,140 @@
+# Xml tokens for serializing typesystem nodes
+
+# Type nodes
+Type
+CVAtomicType
+PointerType
+ReferenceType
+FunctionType
+  FunctionType_ExnSpec
+ArrayType
+PointerToMemberType
+DependentSizedArrayType
+# fields
+atomic
+atType
+retType
+eltType
+inClassNAT
+cv
+size
+sizeExpr
+
+# AtomicType nodes
+AtomicType
+NamedAtomicType
+SimpleType
+CompoundType
+EnumType
+  EnumType_Value
+TypeVariable
+PseudoInstantiation
+DependentQType
+# more fields
+typedefVar
+forward
+dataMembers
+virtualBases
+subobj
+conversionOperators
+instName
+syntax
+parameterizingScope
+selfType
+valueIndex
+nextValue
+hasNegativeValues
+primary
+first
+name
+access
+type
+bases
+args
+rest
+fullyQualifiedMangledName
+
+# Other
+Variable
+Scope
+BaseClass
+BaseClassSubobj
+OverloadSet
+STemplateArgument
+TemplateInfo
+InheritedTemplateParams
+# yet more fields
+flags
+value
+defaultParamType
+funcDefn
+scope
+# should no longer be using this: intData
+real
+maybeUsedAsAlias
+user1
+user2
+usingAlias_or_parameterizedEntity
+templInfo
+canAcceptNames
+parentScope
+scopeKind
+hasValue
+namespaceVar
+curCompound
+ct
+variables
+typeTags
+parents
+templateParams
+overload
+set
+inheritedParams
+instantiationOf
+instantiations
+specializationOf
+specializations
+arguments
+partialInstantiationOf
+partialInstantiations
+argumentsToPrimary
+defnScope
+definitionTemplateInfo
+enclosing
+instLoc
+# params
+kind
+t
+i
+v
+e
+at
+parameterOrdinal
+
+# Some containers; I no longer care about order
+#   ObjList
+List_CompoundType_bases
+List_CompoundType_virtualBases
+List_PseudoInstantiation_args
+List_TemplateInfo_inheritedParams
+List_TemplateInfo_arguments
+List_TemplateInfo_argumentsToPrimary
+List_PQ_qualifier_sargs
+List_PQ_template_sargs
+#   SObjList
+List_FunctionType_params
+List_CompoundType_dataMembers
+List_CompoundType_conversionOperators
+List_BaseClassSubobj_parents
+List_ExnSpec_types
+List_Scope_templateParams
+List_OverloadSet_set
+List_TemplateInfo_instantiations
+List_TemplateInfo_specializations
+List_TemplateInfo_partialInstantiations
+List_TemplateParams_params
+
+#   StringRefMap
+NameMap_Scope_variables
+NameMap_Scope_typeTags
+NameMap_EnumType_valueIndex

@@ -1,0 +1,168 @@
+see License.txt for copyright and terms of use
+
+                            Compound Init
+
+                         Daniel S. Wilkerson
+
+Hello!  Compound Init is a small package for implementing the
+semantics of Compound Initializer syntax as described in the C99
+standard, section 6.7.8, including Designated Initializers and the gcc
+Range Initializer extension to the syntax.  Gcc's description of
+Compound Initializers are here:
+http://gcc.gnu.org/onlinedocs/gcc-3.2.2/gcc/Compound-Literals.html#Compound%20Literals
+and Designated Initializers with the Range Initializer extension are here:
+http://gcc.gnu.org/onlinedocs/gcc-3.2.2/gcc/Designated-Inits.html#Designated%20Inits
+
+Compound Init maps from 1) a type tree and 2) a compound initializer
+abstract syntax tree to a sequence of pairs of leaf types and leaf
+initializers.
+
+**** License
+
+For all files in this directory and all subdirectories see the file
+License.txt for the distribution copyright and terms of use.
+
+**** Building
+
+The files cpdinit.h/cc and member_type_iter.h/.cc have been designed
+to be used as-is in the build process for any reasonably designed C
+compiler that is written in C++.
+
+The abstract syntax tree and type system libraries required by cpdinit
+are declared in cpdinit_lib.h.  When you first download this package,
+please type "make" to check that on your installation everything
+builds with the declarations given in cpdinit_lib.h.  Then simply
+replace cpdinit_lib.h with your own header files that support the
+classes declared in it.
+
+This header should be easy to write, as cpdinit_lib.h has been
+carefully designed to not include any inheritance or public data
+members by using accessor methods for everything.  Your existing
+classes can be used directly even if your hierarchy isn't isomorphic
+to mine.  Simply multiply inherit your existing class from new
+abstract classes with my class names that have abstract methods
+satisfying my API.  Then provide concrete methods with the same API in
+the real subclasses that answer that API.
+
+It is possible to build the code in this project as-is, with no
+modification, a practice I highly recommend if you want me to do
+anything useful for you from any bug reports you may send me.  To
+provide your own header files for your build process, simply replace
+cpdinit_lib.h.  To facilitate this the code says:
+        #include CPDINIT_LIB_HEADERS
+and the Makefile says:
+        CCFLAGS += -DCPDINIT_LIB_HEADERS='"cpdinit_lib.h"'
+Simply change your Makefile to pass in the name of your header file
+instead of cpdinit_lib.h.  Of course you make have to make a special
+header file that goes on to include multiple others since I only allow
+one.
+
+Note that you must also implement the two callback functions to pass
+in to cpdinit:
+        oneAssignment() to be called when a pairing of a leaf type
+and a leaf initializer expression is found, and
+        reportUserError() to be called when a user error is found.
+See the comments int cpdinit.h for more details.
+
+**** Organization
+
+In my system there are two roots to my class hierarchy that represents
+types: Type and AtomicType.  Types are constructed with pointer, array
+or function type constructors on top of AtomicType-s.  You don't need
+to know much about this and I have gone to lengths to remove artifacts
+of this here.
+
+I have attempted to make cpdinit_lib.h as easy as I can for you to map
+onto your class hierarchy.  In particular, note that cpdinit_lib.h
+contains no inheritance.  To do this I had to eliminate all downcasts
+and upcasts in cpdinit.cc etc. and instead use method calls that hide
+them.
+
+Please note that an Open Source implementation by Scott McPeak of the
+templatized container classes I use can be found at his elkhound web
+page in the "smbase" and "ast" packages:
+http://www.cs.berkeley.edu/~smcpeak/elkhound/
+
+An Elkhound (http://www.cs.berkeley.edu/~smcpeak/elkhound/) grammar
+that is used to build the part of the AST in question is included in
+the Grammar file.  It is from the C++ grammar of elsa
+(http://www.cs.berkeley.edu/~smcpeak/elkhound/sources/elsa/index.html),
+a C++ front end.
+
+**** Testing
+
+The directory 'Test' contains some test input.  I do not have a
+testing mechanism here however since the test harness that would be
+required would amount to a C front end.  I already maintain a C/C++
+front end in another source tree and I use it to test this code.  It
+would not be good engineering practice to duplicate that process here.
+However, you may find the test input useful.
+
+For a given .c file, the .cor ("correct") file is the output, after
+sorting, that my test produces.  The sorting is to remove order
+dependencies, which are irrelevant and might produce spurious
+differences when testing another front end on the same input.
+
+Note that I am rather sure that CompoundInit is correct since this
+output has been checked against an independently implemented C front
+end, CIL:
+    http://www.cs.berkeley.edu/~necula/
+    http://manju.CS.Berkeley.EDU/cil/
+
+**** Subtleties
+
+Note that the spec includes two exceptions: 1) a character array can
+be initialized by a string literal; 2) when iterating through a union
+you jump out after the first member.
+
+You MUST have your USER_ASSERT macro throw (by value) an instance of
+class UserError if the first boolean argument is false.  See the
+implementation in cpdinit_lib.h.
+
+If you want the error message in the USER_ASSERT to be preserved in
+the UserError() exception so that it gets passed to the
+reportUserError() function, then do as follows.
+1) Define your UserError class to take a second argument that is a
+   string,
+2) Write a function, say formatString, that takes a (char *format,
+   ...)  API and returns a newly-malloc-ed char* string using
+   vsnprintf().
+3) Change the USER_ASSERT macro to something like this:
+   #define USER_ASSERT(BOOL, LOC, ARGS...) \
+     do {if (!(BOOL)) throw UserError(1, formatString(ARGS));} while(0)
+4) In your reportUserError(), get the string out of the UserError
+   object and print it out.
+The reason I don't just add this functionality for you is that the
+natural way for me to do it uses Scott McPeak's string class since I
+use that for everything else involving strings.  I don't want to
+require you to imitate any more of my library (by filling in the shell
+cpdinit_lib.h) than you have to already.
+
+If you changed the code to call oneInitializer() directly at the top
+level (instead of going through compoundInit() like we do now) then I
+don't guarantee it would work.  For example, a UnionType paired with
+an IN_expr would not initialize the first element of the union, as it
+should.  In other words, we handle compound initializers, such as
+"type_t x = {3};", but not top level initializers that have no curlies
+at all, such as "type_t x = 3;".
+
+The C99 spec section 6.7.8 paragraph 10:
+    If an object that has automatic storage duration is not initialized
+    explicitly, its value is indeterminate.  If an object that has static
+    storage duration is not initialized explicitly, then:
+    -- if it has pointer type, it is initialized to a null pointer;
+    -- if it has arithmetic type, it is initialized to (positive or unsigned) zero;
+    -- if it is an aggregate, every member is initialized (recursively) according to these rules;
+    -- if it is a union, the first named member is initialized (recursively) according to these rules.
+The compoundInit() function does not call oneAssignment() for these
+implied "zero init" edges.  If you want them, I suggest that you do
+something like have an "initialized" with a flag that is set by your
+oneAssignment() function and then check for unset flags after
+compoundInit() is done.
+
+**** Acknowledgments
+
+We thank the following initial users for their helpful feedback:
+Andrew Begel
+
+Copyright 2002-2006 Daniel S. Wilkerson

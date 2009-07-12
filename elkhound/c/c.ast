@@ -1,0 +1,509 @@
+// c.ast            see license.txt for copyright and terms of use
+// C abstract syntax
+
+// included in generated header
+verbatim {
+  #include "sobjlist.h"      // SObjList
+  #include "c_variable.h"    // Variable
+  #include "cc_flags.h"      // CVFlags, DeclFlags, etc. (r)
+  #include "c_type.h"        // Type, FunctonType, CompoundType
+
+  class Env;                 // cc_env.h
+  class AEnv;                // aenv.h
+  class AbsValue;            // absval.ast
+  class Predicate;           // predicate.ast
+} // end verbatim
+
+// included in generated source file
+impl_verbatim {
+  //#include "cc_type.h"       // Type
+}
+
+
+// ---------------- file -------------
+// an entire file (with included stuff) of toplevel forms
+class TranslationUnit (ASTList<TopForm> topForms) {
+  // type checker
+  public void tcheck(Env &env);
+
+  // abstract interpreter
+  public void vcgen(AEnv &env) const;
+}
+
+// a toplevel form
+class TopForm (SourceLoc loc) {
+  public void tcheck(Env &env);
+  pure_virtual void itcheck(Env &env);
+  pure_virtual void vcgen(AEnv &env) const;
+
+  -> TF_decl(Declaration decl);        // includes function prototypes
+
+  // functions with bodies
+  -> TF_func(DeclFlags dflags,         // static, extern, etc.
+             TypeSpecifier retspec,    // type specifier for return value
+             Declarator nameParams,    // 1. remainder of return value type
+                                       // 2. name of function
+                                       // 3. names/types of parameters
+             S_compound body) {        // body of function
+       public FunctionType const *ftype() const;
+       public StringRef name() const;
+
+       // list of all parameters, and then all locals
+       public SObjList<Variable> params;
+       public SObjList<Variable> locals;
+
+       // list of all global variables referenced in this function;
+       // also all the struct fields referenced, since they get
+       // modeled sort of like global variables too
+       public SObjList<Variable> globalRefs;
+
+       // list of all the path starting points
+       public SObjList<Statement> roots;
+
+       // total # of paths, the sum from all roots
+       public int numPaths;
+       ctor numPaths=0;
+
+       public void printExtras(ostream &os, int indent) const;   // tcheck.cc
+       custom debugPrint { printExtras(os, indent); }
+     }
+}
+
+impl_verbatim {
+  // pulled these out of line because Declaration appears lower in .h file
+  FunctionType const *TF_func::ftype() const
+    { return &( nameParams->var->type->asFunctionTypeC() ); }
+  StringRef TF_func::name() const { return nameParams->var->name; }
+}
+
+
+// --------------- types and declarators ---------------
+// variable declaration or definition, or function declaration
+class Declaration (
+  DeclFlags dflags,                    // typedef, virtual, extern, etc.
+  TypeSpecifier spec,                  // e.g. "int"
+  ASTList<Declarator> decllist         // e.g. "x=3, y"
+) {
+  public void tcheck(Env &env);        // adds declared variables to env
+  public void vcgen(AEnv &env) const;
+}
+
+// just one complete type; appears in parameter decls and in casts
+class ASTTypeId (
+  TypeSpecifier spec,      // "int"
+  Declarator decl          // this will be abstract sometimes
+) {
+  public Type const *tcheck(Env &env);
+
+  public Type const *type;       // result of first tcheck
+  ctor { type=NULL; };
+}
+
+// a name of an "atomic" type -- one to which type constructors
+// (e.g. '*') can be applied, but which itself is not built with type
+// constructors
+// that's not quite right -- typedef'd types need not be atomic
+class TypeSpecifier {
+  public enum CVFlags cv;
+  ctor { cv=CV_NONE; };
+
+  // yield the type named by the specifier; this type may of course
+  // get refined when the declarator is considered
+  pure_virtual Type const *tcheck(Env &env);
+
+  // apply the 'cv' information
+  protected Type const *applyCV(Env &env, Type const *base);
+
+  //pure_virtual void vcgen(AEnv &env) const;
+
+  -> TS_name(StringRef name);              // a typedef'd name
+
+  -> TS_simple(SimpleTypeId id);           // int or char or float or ..
+
+  -> TS_elaborated(                        // "class Foo"
+       TypeIntr keyword,
+       StringRef name
+     );
+
+  -> TS_classSpec(                         // "class { ... }"
+       TypeIntr keyword,                     // "class", "struct", "union"
+       StringRef /*nullable*/ name,          // user-provided name, if any
+       ASTList<Declaration> members          // the fields of the struct
+     );
+
+  -> TS_enumSpec(                          // "enum { ... }"
+       StringRef /*nullable*/ name,          // name of enum, if any
+       ASTList<Enumerator> elts              // elements of the enumeration
+     );
+}
+
+// a binding of a name to a constant value
+class Enumerator (
+  SourceLoc loc,                        // location
+  StringRef name,                       // name of this constant
+  Expression /*nullable*/ expr          // constant expr, or NULL for "next"
+) {
+  public Variable *var;                 // (owner) introduction record
+  ctor var=NULL;
+  dtor delete var;
+}
+
+
+// Syntactically, a Declarator is a thing which introduces a name of a
+// declared thing, and also optionally adds type constructors to the
+// base type of the specifier.  It may have an initializing
+// expression, depending on the context.
+class Declarator (
+  IDeclarator decl,                    // syntax of type designation
+  Initializer init                     // (nullable) optional data initializer
+) {
+  public Variable *var;                // (owner) computed information: name, type, etc.
+  ctor var=NULL;
+  dtor delete var;
+
+  // returns the type denoted by the combination of 'base' and the
+  // type constructors in this declarator
+  public Type const *tcheck(Env &env, Type const *base, DeclFlags dflags);
+
+  // 'init' must be evaluated before calling this
+  public void vcgen(AEnv &env, AbsValue *initVal) const;
+}
+
+
+// inner declarator; things recursively buried inside declarators;
+// cannot have initializers; the internal structure is not analyzed
+// once typechecking determines what type is denoted;
+// type constructors are encoded as a (possibly empty) list of pointer
+// constructors, then maybe a function or array type, recursively
+class IDeclarator {
+  public ASTList<PtrOperator> stars;   // pointer constructors, left to right
+
+  // external interface; adds 'stars' before calling 'itcheck'; the
+  // toplevel 'declarator' is passed along so we can reflect the meaning
+  // back into the 'var' field
+  public void tcheck(Env &env, Type const *base,
+                     DeclFlags dflags, Declarator *declarator);
+
+  // ultimate type attached to 'declarator' is the type denoted by the
+  // combination of 'base' and the type constructors in this
+  // declarator (recursively)
+  pure_virtual void itcheck(Env &env, Type const *base,
+                            DeclFlags dflags, Declarator *declarator);
+
+  // dig down and find the name being declared; may return NULL
+  pure_virtual StringRef getName() const;
+
+  // "x" (NULL means abstract declarator or anonymous parameter)
+  -> D_name(SourceLoc loc, StringRef /*nullable*/ name,
+            ThmprvAttr attr);
+
+  // "f(int)"
+  -> D_func(SourceLoc loc, IDeclarator base,
+            ASTList<ASTTypeId> params, ASTList<FuncAnnotation> ann) {
+       // variable synthesized to give a name to the return value
+       public Variable *result;        // (owner)
+       ctor result=NULL;
+       dtor delete result;
+     }
+
+  // "a[5]" or "b[]"
+  -> D_array(IDeclarator base, Expression /*nullable*/ size);
+
+  // "c : 2"
+  -> D_bitfield(StringRef /*nullable*/ name, Expression bits);
+}
+
+// each star is associated with one of these; it's here so I can expand
+// it to include C++'s '&'
+class PtrOperator (CVFlags cv);
+
+
+// ------------------- statements -----------------
+verbatim {
+  // arguably premature optimization, I encode 'next' pointers as the
+  // pointer itself, bitwise OR'd with 1 if it's a "continue" edge,
+  // and use void* as the abstract type; essentially, every Statement
+  // is regarded as actually being two distinct CFG nodes, one reached
+  // with continue==false and the other with continue==true (except
+  // that some nodes don't have a continue==true half)
+  typedef void *NextPtr;
+
+  inline NextPtr makeNextPtr(Statement const *next, bool isContinue)
+  {
+    return (NextPtr)((long)next | !!isContinue);
+  }
+
+  inline Statement const *nextPtrStmt(NextPtr np)
+  {
+    return (Statement const*)((long)np & ~1L);
+  }
+
+  // unfortunately I don't have a good way to enforce the flow
+  // of constness.. so whatever ("NC" == "non-const")
+  inline Statement *nextPtrStmtNC(NextPtr np)
+  {
+    return (Statement*)nextPtrStmt(np);
+  }
+
+  // this is true when the 'next' edge points at a looping construct,
+  // but the flow is interpreted as a 'continue', rather than starting
+  // the loop from scratch
+  inline bool nextPtrContinue(NextPtr np)
+  {
+    return (bool)((long)np & 1);
+  }
+
+  // prints like Statement::kindLocString, with a "(c)" appended
+  // if it's the continue==true half
+  string nextPtrString(NextPtr np);
+
+  // after working with this system a while, I think it's good, so I
+  // want more support for manipulating lists of NextPtrs
+  typedef VoidList NextPtrList;
+  #define FOREACH_NEXTPTR(list, itervar) \
+    for (VoidListIter itervar(list); !itervar.isDone(); itervar.adv())
+
+  // given a function node, return a list of all the CFG nodes,
+  // in reverse postorder w.r.t. some spanning tree
+  // (implemented in postorder.cc)
+  void reversePostorder(NextPtrList &order, TF_func const &func);
+}
+
+
+verbatim {
+  // list of the parameters to Statement::vcgen; abstracted into a
+  // macro to make it easier to add/remove/change parameters
+  //   env: abstract environment
+  //   isContinue: true if we reached this statement on a 'continue' edge
+  //   path: which expression path to follow inside the statement
+  //   next: which statement will be next; may imply a predicate
+  #define STMT_VCGEN_PARAMS AEnv &env, bool isContinue, int path, Statement const *next
+}
+class Statement (SourceLoc loc) {
+  public virtual void tcheck(Env &env);
+  pure_virtual void itcheck(Env &env);
+
+  pure_virtual void vcgen(STMT_VCGEN_PARAMS) const;
+  public void vcgenPath(AEnv &env, SObjList<Statement /*const*/> &path,
+                        int index, bool isContinue) const;
+
+  // given 'facts' known at the start of this node (reached via
+  // 'isContinue'), update 'facts' to reflect the obvious facts after
+  // execution flows through this node and down the 'succPtr' edge
+  pure_virtual void factFlow(SObjList<Expression> &facts, bool isContinue,
+                             NextPtr succPtr) const;
+
+  // embedded control flow successor edge (for some constructs, like
+  // 'if', some/all of the successors are already explicit)
+  public NextPtr next;
+  ctor next=NULL;
+
+  // retrieve list of all successors of this node, given how we
+  // got to this node ('isContinue'); 'dest' should be empty beforehand
+  public virtual void getSuccessors(NextPtrList &dest, bool isContinue) const;
+  public string successorsToString() const;
+
+  // e.g. "S_if@4:5" -- kind, line, col
+  public string kindLocString() const;
+
+  // number of paths from this statement; counts all the various
+  // paths through expressions, *including* expressions within
+  // this node
+  public int numPaths;
+  ctor numPaths=0;
+
+  custom debugPrint {
+    ind(os, indent) << "numPaths=" << numPaths
+                    << ", succ=" << successorsToString()
+                    << endl;
+  }
+
+  -> S_skip();      // nop; used whenever optional Statement is not present
+  -> S_label(StringRef name, Statement s);
+  -> S_case(Expression expr, Statement s);
+  -> S_caseRange(Expression low, Expression high, Statement s);
+  -> S_default(Statement s);
+  -> S_expr(Expression expr);      // expression evaluated for side effect
+  -> S_compound(ASTList<Statement> stmts);
+  -> S_if(Expression cond, Statement thenBranch, Statement elseBranch) {
+       public virtual void getSuccessors(VoidList &dest, bool isContinue) const;
+     }
+  -> S_switch(Expression expr, Statement branches) {
+       // pointers to all of the cases (& default) in this switch
+       public SObjList<Statement> cases;
+       public virtual void getSuccessors(VoidList &dest, bool isContinue) const;
+     }
+  -> S_while(Expression cond, Statement body) {
+       public virtual void getSuccessors(VoidList &dest, bool isContinue) const;
+     }
+  -> S_doWhile(Statement body, Expression cond) {
+       public virtual void getSuccessors(VoidList &dest, bool isContinue) const;
+     }
+  -> S_for(Statement init, Expression cond,
+           Expression after, Statement body) {
+       public virtual void tcheck(Env &env);      // special handling of 'init'
+       public virtual void getSuccessors(VoidList &dest, bool isContinue) const;
+     }
+  -> S_break();
+  -> S_continue();
+  -> S_return(Expression /*nullable*/ expr);
+  -> S_goto(StringRef target);
+  -> S_decl(Declaration decl);
+
+  // theorem prover extensions
+  -> S_assert(Expression expr, bool pure);    // pure means don't look at it during inference
+  -> S_assume(Expression expr);
+  -> S_invariant(Expression expr) {
+       // this is the set of facts inferred automatically for this
+       // invariant point; it's a set of serf pointers into the AST
+       public SObjList<Expression> inferFacts;
+
+       // retrieve a predicate expressing the conjunction of expr and
+       // inferFacts
+       public Predicate *vcgenPredicate(AEnv &env) const;
+     }
+  -> S_thmprv(Statement s);
+}
+
+
+// ----------------- expressions -----------------
+// C expressions
+class Expression {
+  // type check and yield the type of the expression; this type
+  // gets automatically stored in the 'type' field
+  public Type const *tcheck(Env &env);
+  pure_virtual Type const *itcheck(Env &env);
+  public Type const *type;
+  ctor type=NULL;
+
+  // record the # of paths through this expression; 0 means the
+  // expression has no side effects (so 1 path but it doesn't
+  // count in some situations)
+  public int numPaths;
+  ctor numPaths=0;
+  public void recordSideEffect()
+    { numPaths = max(numPaths, 1); };
+  public int numPaths1() const
+    { return max(numPaths, 1); };
+
+  // print numPaths and type
+  public string extrasToString() const;
+  custom debugPrint {
+    ind(os, indent) << extrasToString() << "\n";
+  }
+
+  // try to evaluate the expression as a constant integer;
+  // this can *only* be done after the expression has been tcheck'd
+  pure_virtual int constEval(Env &env) const;
+  protected int xnonconst() const;       // throws XNonConst
+
+  // unparse the expression
+  pure_virtual string toString() const;
+
+  // given the current abstract environment, return the abstract value
+  // representing this expression's result, and also update the environment
+  // to reflect any side effects
+  pure_virtual AbsValue *vcgen(AEnv &env, int path) const;
+
+  // similar to vcgen, but in a context where a boolean value is expected,
+  // so a predicate is yielded; the returned pointer is an owner pointer
+  pure_virtual Predicate *vcgenPred(AEnv &env, int path) const;
+
+  // use 'vcgen' and just say it's not equal to 0
+  public Predicate *vcgenPredDefault(AEnv &env, int path) const;
+
+  -> E_intLit(int i);
+  -> E_floatLit(float f);
+  -> E_stringLit(StringRef s);    // not quite right b/c can't handle embedded nuls
+  -> E_charLit(char c);
+  //-> E_structLit(ASTTypeId stype, ASTList<Initializer> init);
+
+  // variable reference; scopeName can be NULL, or the name of a type
+  // of which 'name' is a member; at some point 'scopeName' will need to
+  // be extended to permit nested qualifiers
+  -> E_variable(StringRef name, StringRef scopeName) {
+       public Variable *var;      // (serf) binding introduction of this name
+       ctor var=NULL;
+     }
+  -> E_funCall(Expression func, ASTList<Expression> args);
+
+  -> E_fieldAcc(Expression obj, StringRef fieldName) {
+       public CompoundType::Field const *field;
+       ctor field = NULL;
+     }
+
+  -> E_sizeof(Expression expr) {
+       public int size;     // size of the type of expr
+       ctor size=-1;
+     }
+
+  -> E_unary(UnaryOp op, Expression expr);
+  -> E_effect(EffectOp op, Expression expr);
+  -> E_binary(Expression e1, BinaryOp op, Expression e2);
+
+  -> E_addrOf(Expression expr);
+  -> E_deref(Expression ptr);
+
+  -> E_cast(ASTTypeId ctype, Expression expr);
+  -> E_cond(Expression cond, Expression th, Expression el);
+  //-> E_gnuCond(Expression cond, Expression el);
+  -> E_comma(Expression e1, Expression e2);
+  -> E_sizeofType(ASTTypeId atype) {
+       public int size;     // size of the type
+       ctor size=-1;
+     }
+
+  -> E_new(ASTTypeId atype);
+
+  // this is a simple assignment if op==BIN_ASSIGN, otherwise it's an
+  // incremental assignment, like a += 3 (e.g. for op=BIN_PLUS)
+  -> E_assign(Expression target, BinaryOp op, Expression src);
+
+  // thmprv extensions a quantifier binds some declared variables,
+  // which are then interpreted as either universally (forall=true) or
+  // existentially (forall=false) quantified in 'pred'
+  -> E_quantifier(ASTList<Declaration> decls, Expression pred, bool forall);
+}
+
+
+// animals which appear after declarations to assign initial values
+class Initializer {
+  // when a label is present it modifies which element of the
+  // surrounding structure is being initialized
+  public InitLabel *label;      // (nullable) gnu: range or field label
+  ctor { label = NULL; };
+
+  // check that the initializer is well-typed, given the type of
+  // the thing it initializes
+  pure_virtual void tcheck(Env &env, Type const *type);
+
+  // compute an abstract value for this initializer
+  pure_virtual AbsValue *vcgen(AEnv &env, Type const *type, int path) const;
+
+  -> IN_expr(Expression e);
+  -> IN_compound(ASTList<Initializer> inits);
+}
+
+// gnu extension to attach particular elements of an initializer list
+// to particular fields of the structure or array being initialized
+class InitLabel {
+  -> IL_element(Expression index);
+  -> IL_range(Expression low, Expression high);   // inclusive
+  -> IL_field(StringRef name);
+  -> IL_elementField(Expression index, StringRef name);
+}
+
+
+// -------------- annotations ---------------
+class FuncAnnotation {
+  // the precondition can have some bindings before the predicate
+  -> FA_precondition(ASTList<Declaration> decls, Expression expr);
+  -> FA_postcondition(Expression expr);
+}
+
+// Typically a name will have associated with it a list of attributes,
+// which is wrapped up into a single attribute with the name "attr".
+// Each of these attributes can then be just a name (with empty args)
+// or a name with some attr args (and so on recursively).  It's wrapped
+// like this so unattributed names can have a simple NULL*.
+class ThmprvAttr(StringRef name, ASTList<ThmprvAttr> args);

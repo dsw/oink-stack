@@ -1,0 +1,11 @@
+main_struct.cmds = our_cmds;
+main_struct.x = 101;
+main_struct.y = 202;
+our_cmds[0].data = 1;
+our_cmds[0].name = "command 1";
+our_cmds[1].data = 2;
+our_cmds[1].name = "command 2";
+our_cmds[2].data = 3;
+our_cmds[2].name = "command 3";
+our_cmds[3].data = 5;
+our_cmds[3].name = char_p;

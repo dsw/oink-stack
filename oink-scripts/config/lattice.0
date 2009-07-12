@@ -1,0 +1,114 @@
+/*partial order {
+  const [level = ref, sign = pos]
+  $nonconst [level = ref, sign = neg]
+
+  $nonconst < const
+}*/
+
+partial order [casts-preserve] {
+  $untainted [level = value, color = "pam-color-untainted", sign = neg]
+  $tainted [level = value, color = "pam-color-tainted", sign = pos]
+
+  $untainted < $tainted
+}
+
+/*
+partial order {
+  $YYYY    [level = value, color = "pam-color-yyyy", sign = eq]
+  $YY      [level = value, color = "pam-color-yy", sign = eq]
+  $NONYEAR [level = value, color = "pam-color-nonyear", sign = eq]
+  $RCSYEAR [level = value, color = "pam-color-rcsdate", sign = eq]
+}
+
+partial order [flow-sensitive] {
+  $locked [level = value, color = "pam-color-locked", sign = eq]
+  $unlocked [level = value, color = "pam-color-unlocked", sign = eq]
+}
+
+partial order [casts-preserve] {
+  $kernel [level=value, color = "pam-color-4", sign=eq,
+           fieldptrflow=all]
+  $user [level=value, color = "pam-color-6", sign = eq,
+         ptrflow=down, fieldflow=down, fieldptrflow=all]
+}
+*/
+
+/* Lattice for modelling __init sections in Linux. */
+partial order [effect] {
+  $init [level = ref, color = "pam-color-tainted", sign = pos, 
+         fieldflow = down, fieldptrflow = all]
+  $noninit [level = ref, color = "pam-color-untainted", sign = neg, 
+            fieldflow = down, fieldptrflow = all]
+
+  $noninit < $init
+}
+
+/*
+partial order [nonprop] {
+  volatile [sign = eq, level = ref, color = "pam-color-4"]
+}
+*/
+
+/* Comment this out if you don't want to check restrict */
+/*
+partial order [nonprop] {
+  restrict [sign = eq, level = value]
+}
+*/
+
+/*
+partial order {
+  $test [level = value, color = "pam-color-4"]
+  $test1
+}
+*/
+
+/*
+partial order {
+  $mixed [sign = neg]
+  $shared
+  $nonshared
+  $nonescaping
+
+  $shared < $mixed
+  $nonshared < $mixed
+  $nonescaping < $nonshared
+}
+*/
+
+/* Qualifiers for checking file operation sequences.  This is more
+   easily understood as the product of two four point diamond lattices, but
+   the way the system is set up it's best to group them all together in
+   the same partial order. */
+/*
+partial order [flow-sensitive] {
+  $readwrite_unchecked [sign = eq, color = "pam-color-8"]
+  $read_unchecked [sign = eq, color = "pam-color-8"]
+  $write_unchecked [sign = eq, color = "pam-color-8"]
+  $open_unchecked [sign = eq, color = "pam-color-8"]
+
+  $readwrite [sign = eq, color = "pam-color-8"]
+  $read [sign = eq, color = "pam-color-8"]
+  $write [sign = eq, color = "pam-color-8"]
+  $open [sign = eq, color = "pam-color-8"]
+
+  $closed [sign = eq, color = "pam-color-8"]
+
+  $readwrite_unchecked < $read_unchecked
+  $readwrite_unchecked < $write_unchecked
+  $read_unchecked < $open_unchecked
+  $write_unchecked < $open_unchecked
+
+  $closed < $readwrite_unchecked
+
+  $readwrite < $read
+  $readwrite < $write
+  $read < $open
+  $write < $open
+
+  $open < $open_unchecked
+  $read < $read_unchecked
+  $write < $write_unchecked
+  $readwrite < $readwrite_unchecked
+}
+*/

@@ -1,0 +1,101 @@
+// c.in7
+// testcases for translator: exercise all the
+// translation code in cc.gr
+
+int fn0();
+int fn1(int g);
+int fn2(int g, int h);
+int fn3(int g, int h, int i);
+
+typedef struct S {
+  int m1;
+  int m2;
+} S;
+
+int foo()
+{
+  int a,b,c,x,y,z,arr[4];
+  S s, *sp;
+
+  a = 5;              // Literal and VariableName
+
+  x = arr[1];         // array ref
+  arr[2] = y;
+
+  x = fn0();          // fn call
+  y = fn1(x);
+  z = fn2(x, y);
+
+  a = s.m1;           // field access
+  b = sp->m2;         // deref and field access
+  
+  a = b++;            // postfix ++
+  c = z--;            // postfix --
+  
+  y = ++x;            // prefix --
+  c = --a;            // prefix ++
+  
+  b = sizeof(a);      // sizeof of expr, with built-in type
+  c = sizeof(s);      // sizeof of expr, with user-def type
+
+  b = &s;             // addr-of
+
+  b = sizeof(int);    // sizeof built-in type
+  a = sizeof(S);      // sizeof user-def type
+
+  //(int)c = x;         // cast of lval (removed)
+  b = (int)(x+y);     // cast of expr
+
+  a = b + c;          // binary expr
+  a = x && y;         // short-circuit and
+  a = z || x;         // short-circuit or
+  
+  c = x ? y : z;      // ?: with control flow
+  //c = x ?: z;         // strange crap
+  
+  a = b;              // assignment
+  x += y;             // accumulation assignment
+
+  a = (b , c);        // comma operator (lower prec. than '=' !)
+  
+myLabel: x=y;         // labeled statement
+
+  if (a++) {            // if-then
+    b = c;
+  }
+
+  if (a++) {            // if-then-else
+    b = y;
+  }
+  else {
+    c = z;
+  }
+
+  while (x++) {         // while
+    y = z;
+  }
+
+  do {                  // do-while
+    y = z;
+  } while (x++);
+
+  for (a=0; a<5; a++) { // for
+    y=z;
+  }
+  
+  // C++ only
+  //for (int i=0; i; ) {  // for with decl in initializer slot
+  //  i=7;
+  //} 
+
+  return 6;             // return with arg
+  //return;               // return w/o arg
+
+  goto myLabel;         // goto
+
+  { x=5; y=6; }         // compound
+  {}                    // empty compound
+
+  int j;                // simple decl
+  int k=6;              // initializing decl
+}

@@ -1,0 +1,72 @@
+int foo(int x)
+{
+    int $untainted u;
+    u = x;
+}
+
+int main()
+{
+    int $tainted
+        t1,
+        t2,
+        t3,
+        t4,
+        t5,
+        t6,
+        t7,
+        t8,
+        t9,
+        t10,
+        t11,
+        t12,
+        t13,
+        t14,
+        t15,
+        t16,
+        t17,
+        t18,
+        t19,
+        t20,
+        t21,
+        t22,
+        t23,
+        t24,
+        t25,
+        t26,
+        t27,
+        t28,
+        t29,
+        t30;
+
+    foo(t1);
+    foo(t2);
+    foo(t3);
+    foo(t4);
+    foo(t5);
+    foo(t6);
+    foo(t7);
+    foo(t8);
+    foo(t9);
+    foo(t10);
+    foo(t11);
+    foo(t12);
+    foo(t13);
+    foo(t14);
+    foo(t15);
+    foo(t16);
+    foo(t17);
+    foo(t18);
+    foo(t19);
+    foo(t20);
+    foo(t21);
+    foo(t22);
+    foo(t23);
+    foo(t24);
+    foo(t25);
+    foo(t26);
+    foo(t27);
+    foo(t28);
+    foo(t29);
+    foo(t30);
+
+}

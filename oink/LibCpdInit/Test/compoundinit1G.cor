@@ -1,0 +1,7 @@
+gc.f3c.x3c = 1;
+gc.f3c.y3c = 2;
+gc.f4c.x4c = 6;
+gc.f4c.y4c = 7;
+gc.zc[0] = 3;
+gc.zc[1] = 4;
+gc.zc[2] = 5;

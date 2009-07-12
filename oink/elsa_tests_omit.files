@@ -1,0 +1,7 @@
+# -*-sh-*-
+# see License.txt for copyright and terms of use
+
+# This file is a list of the elsa tests that we extract from
+# elsa/regrtest that are not passing in Oink and therefore should not
+# be run through the parsing or pretty-printing tests.  Ideally, this
+# file should be empty.

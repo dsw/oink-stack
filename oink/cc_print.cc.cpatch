@@ -1,0 +1,17 @@
+// see License.txt for copyright and terms of use
+// Oink modifications to cc_print.cc
+// codepatch.pl script to apply to Elsa's cc_print.h to
+// arrive at Oink's version of the same file
+
+
+// these functions are commented so that the implementations
+// in oink_value_print.cc will replace them
+
+comment_function
+getDeclarationRetTypeLike
+
+comment_function
+getDeclarationTypeLike
+
+
+// EOF

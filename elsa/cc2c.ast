@@ -1,0 +1,89 @@
+// cc2c.ast
+// extension of cc.ast: additional entry points for cc2c
+
+verbatim {
+  class CC2CEnv;             // cc2c.h
+}
+
+
+// TranslationUnit
+
+class TopForm {
+  // Add new topforms to 'env'.
+  public void cc2c(CC2CEnv &env) const;
+}
+
+class Function {
+  // Return translated version.
+  public Function *cc2c(CC2CEnv &env) const;
+}
+
+// MemberInit
+
+class Declaration {
+  // Translate the declaration and add it via 'addDeclaration'.
+  public void cc2c(CC2CEnv &env) const;
+}
+
+// ASTTypeId
+
+// PQName
+
+// TypeSpecifier
+
+// BaseClassSpec
+
+// Enumerator
+
+// MemberList
+
+// Member
+
+// Declarator
+
+// IDeclarator
+
+// ExceptionSpec
+
+// OperatorName
+
+class Statement {
+  // Insert translated statements via 'addStatement', etc.
+  pure_virtual void cc2c(CC2CEnv &env) const;
+}
+
+// Condition
+
+// Handler
+
+class Expression {
+  // Translate the source expression, expecting that there are no side
+  // effects.  In this context, that just means that no statements are
+  // added; things like ++ should not be here, but that is not
+  // detected nor really relevant to the translation.
+  public Expression *cc2cNoSideEffects(CC2CEnv &env) const;
+
+  // Translate the source expression.  This may prepend statements via
+  // 'env.addStatement', for example to introduce temporaries.
+  pure_virtual Expression *cc2c(CC2CEnv &env) const;
+}
+
+class FullExpression {
+  public FullExpression *cc2c(CC2CEnv &env) const;
+}
+
+// ArgExpression
+
+// ArgExpressionListOpt
+
+// Initializer
+
+// TemplateDeclaration
+
+// TemplateParameter
+
+// TemplateArgument
+
+// NamespaceDecl
+
+// EOF

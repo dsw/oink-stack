@@ -1,0 +1,9 @@
+class C {
+  double operator [] (int n) { return 2.0 * n; }
+};
+
+int main()
+{
+  C c;
+  double d = c[5];
+}

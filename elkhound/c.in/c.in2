@@ -1,0 +1,19 @@
+// slightly more complex than c.in1
+
+int y = 4;
+
+int foo (int z)
+{
+  return z + y ;
+}
+
+void bar()
+{
+  int x;
+  
+  x = y - 7;
+  y = foo(x);
+}
+
+
+

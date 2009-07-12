@@ -1,0 +1,8 @@
+Analyzing test/kernel1.c
+File test/kernel1.c:
+x: ptr ($kernel int)
+y: ptr ($user int)
+main: fun (void) -> int
+x: ptr ($kernel int)
+y: ptr ($user int)
+

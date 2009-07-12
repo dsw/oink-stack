@@ -1,0 +1,30 @@
+# configuration
+Makefile
+config.status
+config.summary
+
+# dependency files
+*.d
+# objects
+*.o
+# archives
+*.a
+
+# executables
+astgen
+ccsstr
+testcout
+
+# generated files
+*.yy.cc
+
+example.cc
+example.h
+ext1.cc
+ext1.h
+
+tmp.txt
+
+# Test output
+*.dSYM
+*.tmp

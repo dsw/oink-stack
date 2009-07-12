@@ -1,0 +1,389 @@
+<html>
+<head>
+<title>Oink Coding Style</title>
+</head>
+<body bgcolor=white>
+
+<h1>Oink Coding Style</h1>
+
+<p>Daniel S. Wilkerson
+
+<p>These are the Oink coding guidelines.  There is more to say, but I
+wasn't sure that saying it would help: it started to sound like I was
+attempting to re-write the "Mythical Man-Month".
+
+<p>Please read "The Pragmatic Programmer" by Hunt and Thomas (Addison
+Wesley) and "The Practice of Programming" by Kernighan and Pike
+(Addison Wesley).
+
+<h3>Directory contents</h3>
+
+<ul>
+
+<li><a href=index.html>Oink Main Documentation</a> Introduction to
+Oink.
+
+<li><a href=oink_help.html>Annotated Oink Help Output</a> The output
+of ./oink --help annotated with further details on their meaning.
+
+<li><a href=quickstart.html>Cqual++ Quick-Start Instructions</a> The
+shortest path to findings bugs in your code.
+
+<li><a href="qual.html">Cqual++ Documentation</a> Documentation on the
+main Oink tool.
+
+<li><a href=qual_help.html>Annotated Qual Help Output</a> The output
+of ./qual --help (minus the oink --help output) annotated with further
+details on their meaning.
+
+<li><a href=manifest.html>Oink Manifest</a> A top-down view of the
+aspects of Oink, which files participate in each aspect, and
+documentation on each file.
+
+<li><a href=coding.html>Oink Coding Style [this document]</a> The Oink coding
+guidelines; also provided is some elisp for putting emacs into the
+mode I use when editing it.
+
+<li><a href="features_of_elsa.html">Features of Elsa</a> The elsa
+documentation is extensive; I simply point out a few useful features
+that users of Oink/Cqual++ should know about.
+
+</ul>
+
+<hr>
+<h2>Syntax</h2>
+
+<p>Use two-space indentation and no tab characters.  You may find the
+following .emacs code useful if you use emacs.
+
+<pre>
+    ;; **** some .emacs bindings to make it easy to imitate the style of elsa/oink
+    ;; Make java indentation style the default for all c-like modes.
+    (setq c-default-style "java")
+    ;; indentation is 2 spaces per level for C and C++
+    (add-hook 'c++-mode-hook
+              '(lambda ()
+                 (setq c-basic-offset 2)))
+    (add-hook 'c-mode-hook
+              '(lambda ()
+                 (setq c-basic-offset 2)))
+    ;; Turn off inserting tab characters into your .emacs buffer.  Use only spaces.
+    (setq-default indent-tabs-mode nil)
+    ;; Get rid of trailing whitespace.
+    (setq-default nuke-trailing-whitespace-p t)
+</pre>
+
+<p>Please do not fight emacs; the indentation that the above gives you
+is what I use.
+
+<p>Use studly caps.
+
+<pre>
+    OK: aVarThatCountsBlonks
+    not OK: a_var_that_counts_blonks
+
+    You can use underscores as a second-level separator:
+    fooBar_stage().
+</pre>
+
+<p>Accepted usage of statement block curlies is as follows.
+
+<pre>
+    Using curlies is OK:
+    if (p) {
+      go();
+    }
+
+    If it is on one line and is simple and easy to read then OK:
+    if (p) go();
+
+    Not using curlies and not being on the same line is NOT OK:
+    if (p)
+      go();
+</pre>
+
+<p>Prefer function block curlies on the same line as the function declaration.
+
+<pre>
+    void f() {
+      go();
+    }
+</pre>
+
+<p>Unless the parameters are too long and must be put on their own
+line; then put the curly on its own line also.
+
+<pre>
+    void f
+      (int lots, int of, int parameters, int here)
+    {
+      go();
+    }
+</pre>
+
+<p>Put a space after a comma.  Do not put one before unless you are
+using my strange constructor initializer list syntax:
+
+<pre>
+    Foo()
+      : a(3)
+      , b("hello")
+      , c(57)
+    {}
+</pre>
+
+<p>Please put declarations and definitions in the same order unless
+there is a good reason not to.
+
+<p>If you make a function in a .cc file that is not used outside the
+file, then mark it as static; in general I see no reason that an
+inline function should not also be marked static unless you are doing
+something funky and taking its address and hoping the compiler does
+the right thing and makes two copies.  In that case, don't do that:
+make an external version that is a thin wrapper around the internal
+inline version.
+
+<hr>
+<h2>Design and Hacking</h2>
+
+<p>I had a Czech girlfriend and we went for a skiing vacation in the
+Jeseniky Mountains in northern Moravia.  The problem was that I didn't
+know how to ski so she introduced me to a Czech guy and said "you
+don't know how to ski and he doesn't speak English; he will teach you
+to ski and you will teach him English".  Then Blanka skied away.
+
+<p>These guys were just the local fire department; they had just run a
+tow-rope up the local hill and their sound system was a radio taped to
+the pole playing "you and me baby we ain't nothin' but mammals so
+let's do it like they do on the discovery channel".  I slid terrified
+down the hill wondering if I was going to stop before I hit the
+concrete bunker; I was greeted by some very friendly Czechs who handed
+me a beer in one hand and a shot of locally-brewed slivovice (plum
+brandy) in the other.  My instructor arched in beautifully in a
+sliding sideways stop right in front of me, and as he did, I noticed
+something.  Right behind his left heel, the core of the ski was
+broken.  It was just flopping up and down as he slid to a stop, held
+together by the laminate on the top.
+
+<p>Now I guarantee you that if you go to the U.S. Olympic Training
+Center, they might measure your diet and your bio-rhythms and your
+precise ski angle as your turn, but one thing I am sure they don't
+teach you is how to ski on a broken ski.  These guys had taught
+themselves.  These guys were ski-hackers.
+
+<p>In a Computer Science Department, they might teach you proofs and
+algorithms and design, but they won't teach you to hack.  A hacker is
+one intimate with the machine in a way that goes beyond words.  This
+is the essence of engineering.  I have yet to find a place that
+teaches it.
+
+<h3>Light and Dark</h3>
+
+<p>In Soto Zen Buddhism top-down design is called "light" and
+bottom-up hacking is called "dark". To paraphrase Shunryu Suzuki,
+sometimes you study the texts of great masters and sometimes you just
+sit and let it all get mixed together in your belly in the dark.  From
+the "Merging of Difference and Unity", the Sandokai:
+
+<blockquote>
+    <p><a href=http://www.berkeleyzencenter.org/Texts/sandokai.shtml>
+    Darkness is a word for merging upper and lower.</a>
+    <br>Light is an expression for distinguishing pure and defiled....
+
+    <p>Right in light there is darkness,
+    <br>but don't confront it as darkness.
+
+    <p>Right in darkness there is light,
+    <br>but don't see it as light.
+</blockquote>
+
+<p>That is, there is a place for design (light) and a place for just
+hacking (dark); you have to respect both.  I saw this in my xfortune
+one day:
+
+<blockquote>
+    <p>Everything should be designed top down, except the first time.
+</blockquote>
+
+<p>The problem is, with software mostly it is almost always the first
+time.  Just build it simply, write the tests, and then refactor it
+while keeping the tests working.  It seems slower, but your code will
+get built, it will work and you will spend little time in debugging.
+Until you have worked on the problem, you won't know what to design
+anyway.
+
+<hr>
+<h2>Software is code and tests working together</h2>
+
+<p>Software is code and tests working together.  If there aren't any
+tests, it isn't software; don't even check it in.
+
+<p>Many people write regression tests of this form.
+<ul>
+<li>Run the code and have it print out a very verbose representation
+of its internal state.  Save that to a file and check it in.
+<li>In the future run it again and diff.
+</ul>
+
+<p>This methodology is flawed since much of the internal state is
+present in the output, most of it irrelevant; when it changes, the
+output changes in lots of meaningless ways which have to be confirmed
+by hand; this does not scale.  In particular in the output there is
+<ul>
+<li>trivial information, and
+<li>information from multiple aspects.
+</ul>
+
+<p>A better scheme arises if you change the way you think about your
+program.  Think of it as a database with a query engine.  Whatever your
+input is, think of it as some language that your program renders into
+a database internally.  Now, augment this language with a query
+language to ask questions of that database and an assertion language
+for saying how the query should turn out.  Now when you make an input
+that is a test, embed assertions about the results of queries mixed in
+with the input.  The test is: do the assertions about the queries
+about the input all pass?  <ul>
+
+<li>This is testing an assertion about the semantics of the input,
+which should change much less frequently.
+
+<li>Additionally, it is much easier to factor the semantics into
+various aspects and test aspects separately.
+
+</ul>
+
+<p>For the Cqual++ tests, this is very easy, as there is an implicit
+query for any input: do the consequences of the resulting dataflow
+graph produce an inconsistent set of constraints?  The qual executable
+returns a different exit code to the shell depending on whether an
+inconsistency was found or not.  The simplest example is: does
+$tainted flow to $untainted?  Now instead of writing tests that print
+out what qualifier annotations end up on what variables and
+expressions, I can just write a test that takes an input where
+$tainted should flow to $untainted and check the return value to the
+shell.
+
+<p>In elsa Scott has an extension to C++ called __checkType(a, b) that
+simply asserts that a and b are of the same type.  This is a query
+against the type-annotated AST; if it fails, the typechecking pass
+fails.
+
+<h3>Do Controlled Experiments</h3>
+
+<p>Be sure to do controlled experiments; this good idea has been
+emphasized for a long time by the science community.  A
+<em>control</em> for an experiment is just another experiment where
+all the conditions are the same except for the one you think makes the
+difference.
+
+<p>I wrote a script test_filter that implements a simple preprocessor
+for doing this.  You may optionally annotate lines of code in a test
+with either '// bad' or '// good' comments.  When this test is passed
+through test_filter with the flag '-good', only the '// good' lines
+and the unannotated lines pass through; similarly with '-bad' only '//
+bad' and unannotated lines pass through.  Thus one can maintain a
+single test from which are generated two versions that differ only in
+the lines that you indicate should make a difference in the result of
+the test.
+
+<p>Scott later implemented a different take on in elsa that does an
+n-way control, but you can only add lines that should cause a failure,
+you cannot subtract them; that is, there is no equivalent of '//
+good'.
+
+<hr>
+<h2>Orthogonality and Invariants</h2>
+
+<p>Once you have the orthogonality, the factoring straight, the code
+writes itself.
+
+<blockquote>
+    <p>Show me your flowchart and conceal your tables, and I shall
+    continue to be mystified.  Show me your tables, and I won't
+    usually need your flowchart; it'll be obvious.
+
+    <p>-- Fred Brooks, The Mythical Man Month.
+</blockquote>
+
+<p>An object is an set of invariants with a box around it.  The
+methods maintain these invariants.  Comment each class saying what the
+invariants are.  Comment each data and function member in the header
+file (not the implementation file) saying why it is there.  The best
+use of a class is to contain everything related to one aspect of your
+program.  One day we will have aspect-oriented programming, but until
+then, make object-oriented as aspect-oriented as you can.
+
+<p>It is always a higher priority to refactor existing code than to
+add new features.
+
+<h3>Idiom and Good Shape</h3>
+
+<p>Factor code *bottom-up* not *top-down*.  That is the way to factor
+code is to pretend that you are pulling out common parts to make a
+reusable library.  You don't do this because you might actually re-use
+it, but because it makes your code flexible.
+
+<p>There is a concept in the Chinese board game "Go" called "Good
+Shape" (http://www.joot.com/go/shape1.html).  The game is so flexible
+that you can basically put stones anywhere just as in software you can
+basically write anything you want.  This flexibility gives you the
+opportunity to get completely tangled and make a mess.  You can't
+control the mess, but what you can do is what the Buddhists call
+"being upright" in the face of the chaos.  You don't know globally
+what the system will do, so just make sure locally, your code is in
+good shape: that at least *this* component stands alone and no matter
+what happens to it, it itself is solid.
+
+<p>Good shapes are also reminiscent of Design Patterns, but I prefer
+the term Idiom.  Good engineering is fluency with many idioms.  There
+is an ancient wisdom in the way things are done; it doesn't mean you
+can't improve things, but if something has stuck around there is
+something about it that works.  Acknowledge what works about something
+before you criticize it or throw it away.
+
+<p>Never take the flow of control away from the client.  Prefer
+libraries to frameworks.  Prefer iterators to visitor patterns.
+
+<h3>Localization of Causality</h3>
+
+<p>The essence of debugging is localization of causality.  You can't
+know what you can't see.  Therefore it is always a higher priority to
+write better debugging output/infrastructure than to debug the bug.
+*First* make sure the output is correct so you know what you are
+looking at *then* attempt to debug the bug.  Once the causality is
+clear, all bugs are obvious.
+
+<p>Difficult bugs are long-range bugs (assuming you don't have
+non-deterministic bugs); if the different parts of your code don't
+know about and don't trust each other, then it is harder to get
+long-range bugs.  Therefore, it is often faster to "take the time" to
+write more general, reusable code as it is easier to debug.
+
+<hr>
+<h2>Software is Writing</h2>
+
+<p>The way to design software is to write a letter to an intelligent
+friend who knows nothing about your project.  When you are avoiding
+working on something, just avoid it by writing a letter to yourself
+about what you *would* be doing *if* you were working on it.  Write it
+as a makefile rather than a script (or to-do list).  After a while the
+parts get so small and simple that you say "oh, I could just *do*
+that".
+
+<p>You can tell how well factored a piece of code is by attempting to
+describe in an English sentence what its purpose is.  If it is a bad
+sentence that is referring to irrelevant concepts just to say what the
+function does, then your code is tangled with some other code that it
+shouldn't be.
+
+<p>The code provides *content*; the comments provide *context*.
+Programmers can read code, so don't repeat the code; instead state the
+context that someone would need in order to understand the code.
+
+<hr>
+<p>&copy; 2002-2006 Daniel S. Wilkerson
+
+<h2>&nbsp;</h2>
+
+</body>
+</html>

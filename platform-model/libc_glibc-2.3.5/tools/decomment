@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+
+while (<>) {
+    s,//.*,,;
+  CSTYLE:
+    s,/\*.*?\*/,,g;
+    if (m,/\*,) {
+        s,/\*.*,,;
+        print $_;
+        while (<>) {
+            if (m,\*/,) {
+                s,.*?\*/,,;
+                goto CSTYLE;
+            }
+        }
+    }
+    print $_;
+}

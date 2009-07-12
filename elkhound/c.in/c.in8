@@ -1,0 +1,35 @@
+// c.in8
+// exercise type printer
+
+void *ptrToVoid;
+void const *ptrToConstVoid;
+
+int anInt;
+int const aConstInt;
+
+float aFloat;
+float volatile aVolatileFloat;
+
+typedef struct List {
+  int x;
+  struct List *next;
+} List;
+List aList;
+List const aConstList;
+
+int arrayOf5Ints[5];
+void *arrayOfPtrs[];
+
+typedef struct Union {
+  int i;
+  float f;
+} Union;
+Union aUnion;
+
+typedef enum Enum { e0, e1, e2, e7=7, e8, e4=4, e5 } Enum;
+Enum e;
+
+int twoArgFn(int x, int y);
+
+
+

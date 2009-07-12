@@ -1,0 +1,21 @@
+notcalled2 SIG void ()()
+	notcalled SIG void ()()
+
+Test/func_gran1.cc:20:3:constructor-special SIG ()()
+	g SIG void ()()
+
+main
+	i SIG void ()()
+	Test/func_gran1.cc:20:3:constructor-special SIG ()()
+	A::constructor-special SIG ()(struct A const &)
+	A::~A SIG ()(/*m*/ )
+
+Test/func_gran1.cc:23:3:constructor-special SIG ()(int)
+	notcalled SIG void ()()
+
+V:super-main
+	main
+
+g SIG void ()()
+	f SIG void ()()
+

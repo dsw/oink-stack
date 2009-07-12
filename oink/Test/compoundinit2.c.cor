@@ -1,0 +1,24 @@
+Analyzing test/compoundinit2.c
+File test/compoundinit2.c:
+main: fun (void) -> int
+fooa: ptr ($tainted int)
+foor: ptr (int)
+foox: ptr ($tainted int)
+fooy: ptr (double)
+fooz: array ($tainted int)
+foow: array ($tainted double)
+fooq: ptr (int)
+f1: array (struct foo)
+gronk1: ptr (int)
+x: ptr (int)
+y: ptr ($tainted double)
+z: array ($tainted int)
+w: ptr (int)
+f2: ptr (struct)
+gronk2: ptr (double)
+f3: array (struct foo)
+g: array (struct gronk)
+f: ptr (struct foo)
+g2: ptr (struct gronk)
+b: array (struct bar)
+

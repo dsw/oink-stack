@@ -1,0 +1,12 @@
+// -*-c++-*-
+int const  $tainted $wagaaa x;
+int  $gronk q;
+int  $Btainted * $Ctainted y;
+class MustBeMembers {
+  char  $Atainted * $barf gronk(/*m: class MustBeMembers  $snarg & */ int  $Dtainted x, char  $Etainted /*anon*/) $snarg ;
+  inline void foo(/*m: class MustBeMembers  $lurp $goink & */ ) $lurp $goink  {
+    char  $untainted * $Ftainted $gronk $foo * $blort x;
+  }
+};
+typedef int  $waga foo2;
+int  $barf $oink $urp $glop $waga z;

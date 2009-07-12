@@ -1,0 +1,1 @@
+int reboot (int howto) {}

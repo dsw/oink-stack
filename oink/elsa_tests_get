@@ -1,0 +1,97 @@
+#!/usr/bin/perl -w
+# see License.txt for copyright and terms of use
+use strict;
+
+# Filters out the tests from elsa/regrtest that we want to use in
+# oink.
+
+# data state
+my @test_names;                 # names of tests of the form "testparse NAME"
+my %omit_names;                 # names to omit
+
+# configuration state
+my $input;                      # regrtest file
+my $omit;                       # file of test names to omit
+my $start = '---- BEGIN: lots of tests ----'; # start string
+my $stop =   '---- END: lots of tests ----'; # stop string
+
+sub read_command_line {
+  # parse
+  while (@ARGV) {
+    my $arg = shift @ARGV;
+    if ($arg eq '-regrtest') {
+      $input = shift @ARGV;
+    } elsif ($arg eq '-omit') {
+      $omit = shift @ARGV;
+    } elsif ($arg eq '-start') {
+      $start = shift @ARGV;
+    } elsif ($arg eq '-stop') {
+      $stop = shift @ARGV;
+    } else {
+      die "Illegal argument $arg";
+    }
+  }
+  # validate
+  die "provide an input file" unless defined $input;
+}
+
+sub read_omit_file {
+  open (OMIT, $omit) or die "cannot open $omit: $!";
+  while (<OMIT>) {
+    chomp;
+    s/\#.*$//;                  # strip out comments
+    s/^\s*//;                   # strip initial blanks
+    s/\s*$//;                   # strip final blanks
+    next if /^\s*$/;            # skip blank lines
+    $omit_names{$_}++;
+  }
+  close (OMIT) or die;
+}
+
+sub read_regrtest_file {
+  open (IN, $input) or die "cannot open $input: $!";
+
+  # find the start
+  while (<IN>) {
+    chomp;
+    last if /$start/;
+  }
+
+  # read in the lines with test names on them
+  while (<IN>) {
+    chomp;
+    last if /$stop/;            # jump out if we are at the end
+    s/\#.*$//;                  # strip out comments
+    s/^\s*//;                   # strip initial blanks
+    next if /^\s*$/;            # skip blank lines
+
+    # this is an interesting line; now skip 'failparse' lines and
+    # other lines not of the form 'testparse'.
+    if (/^testparse\s+(\S+)/) {
+      my $name = $1;
+      chomp $name;
+      push @test_names, $name;
+    }
+  }
+
+  close (IN) or die;
+}
+
+# write out the test_names in a form the makefile likes
+sub write_makefile_include {
+  for my $name (@test_names) {
+    # subtract out files in the omit file
+    unless ($omit_names{$name}) {
+      print "IN_TESTS += $name\n";
+    }
+  }
+}
+
+# ****************
+
+read_command_line();
+if (defined $omit) {
+  read_omit_file();
+}
+read_regrtest_file();
+write_makefile_include();

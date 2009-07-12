@@ -1,0 +1,40 @@
+B3::operator= SIG struct B3 &()(/*m*/ struct B3 const &)
+	B2::operator= SIG struct B2 &()(/*m*/ struct B2 const &)
+
+main
+	Test/func_gran3.cc:12:16:k SIG void ()(/*m*/ )
+	Test/func_gran3.cc:16:3:constructor-special SIG ()()
+	Test/func_gran3.cc:5:3:constructor-special SIG ()(int)
+	B::~B SIG ()(/*m*/ )
+
+Test/func_gran3.cc:6:16:k SIG void ()(/*m*/ )
+	Test/func_gran3.cc:12:16:k SIG void ()(/*m*/ )
+	Test/func_gran3.cc:17:16:k SIG void ()(/*m*/ )
+
+B2::~B2 SIG ()(/*m*/ )
+	B::~B SIG ()(/*m*/ )
+
+B2::operator= SIG struct B2 &()(/*m*/ struct B2 const &)
+	B::operator= SIG struct B &()(/*m*/ struct B const &)
+
+Test/func_gran3.cc:11:3:constructor-special SIG ()()
+	Test/func_gran3.cc:5:3:constructor-special SIG ()(int)
+
+V:super-main
+	main
+
+B3::constructor-special SIG ()(struct B3 const &)
+	B2::constructor-special SIG ()(struct B2 const &)
+
+Test/func_gran3.cc:16:3:constructor-special SIG ()()
+	Test/func_gran3.cc:11:3:constructor-special SIG ()()
+
+Test/func_gran3.cc:12:16:k SIG void ()(/*m*/ )
+	Test/func_gran3.cc:17:16:k SIG void ()(/*m*/ )
+
+B2::constructor-special SIG ()(struct B2 const &)
+	B::constructor-special SIG ()(struct B const &)
+
+B3::~B3 SIG ()(/*m*/ )
+	B2::~B2 SIG ()(/*m*/ )
+

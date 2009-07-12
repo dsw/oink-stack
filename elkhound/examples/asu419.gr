@@ -1,0 +1,31 @@
+// asu419.gr
+// [ASU] grammar 4.19, p.222: demonstrating LR sets-of-items construction
+
+verbatim Asu419 []
+
+terminals {
+  0 : plus "+";
+  1 : times "*";
+  2 : lparen "(";
+  3 : rparen ")";
+  4 : id "id";
+  5 : eof "$";
+}
+
+nonterm[int] Start -> E "$"      [ return 0; ]
+
+nonterm[int] E {
+  -> E "+" T      [ return 0; ]
+  -> T            [ return 0; ]
+}
+
+nonterm[int] T {
+  -> T "*" F      [ return 0; ]
+  -> F            [ return 0; ]
+}
+
+nonterm[int] F {
+  -> "(" E ")"    [ return 0; ]
+  -> id           [ return 0; ]
+}
+

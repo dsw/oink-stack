@@ -1,0 +1,15 @@
+/* see License.txt for copyright and terms of use */
+
+partial order {
+  const [level = ref, sign = pos]
+  $nonconst [level = ref, sign = neg]
+
+  $nonconst < const
+}
+
+partial order [casts-preserve] {
+  $untainted [level = value, color = "pam-color-untainted", sign = neg]
+  $tainted [level = value, color = "pam-color-tainted", sign = pos]
+
+  $untainted < $tainted
+}

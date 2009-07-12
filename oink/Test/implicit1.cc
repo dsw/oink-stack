@@ -1,0 +1,6 @@
+struct S {
+};
+
+int main()
+{
+}

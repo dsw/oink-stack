@@ -1,0 +1,21 @@
+# Xml tokens for basic serialization
+
+# a list element
+_List_Item
+item
+
+# a name-map element
+_NameMap_Item
+name
+item
+
+# a map element
+_Map_Item
+key
+item
+
+# NOTE: off for now
+# an bidirectional unsatisfied link
+# __Link
+# from
+# to

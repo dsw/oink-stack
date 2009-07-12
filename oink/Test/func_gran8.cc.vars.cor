@@ -1,0 +1,3 @@
+F:main
+Test/func_gran8.cc:8:11:foo1a SIG void ((*()()))(int)
+super-main

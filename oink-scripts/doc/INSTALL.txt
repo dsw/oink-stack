@@ -1,0 +1,1 @@
+The oink-scripts repository should be a child of cqual++-stack or oink-stack.

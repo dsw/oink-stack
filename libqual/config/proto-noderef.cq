@@ -1,0 +1,160 @@
+/* see License.txt for copyright and terms of use */
+
+static inline unsigned long
+copy_from_user(void $user * $kernel to, const void   * $user from, unsigned long n);
+static inline unsigned long
+__copy_from_user(void $user * $kernel to, const void   * $user from, unsigned long n);
+unsigned long __copy_from_user_ll(void $user * $kernel to, const void   * $user from, unsigned long n);
+
+
+unsigned long __copy_to_user_ll(void   * $user to, const void * $kernel from, unsigned long n);
+static inline unsigned long
+__copy_to_user(void * $user to, const void * $kernel from, unsigned long n);
+static inline unsigned long
+copy_to_user(void  * $user to, const void * $kernel from, unsigned long n);
+
+
+
+
+
+static unsigned long
+__generic_copy_from_user_nocheck(void $user * $kernel to, const void *$user from,
+				 unsigned long n);
+static unsigned long
+__generic_copy_to_user_nocheck(void *$user to, const void *$kernel from,
+			       unsigned long n);
+unsigned long  __generic_copy_to_user(void *$user to,
+				      const void *$kernel from,
+				      unsigned long);
+unsigned long  __generic_copy_from_user(void $user * $kernel to,
+					const void *$user from,
+					unsigned long);
+static unsigned long
+__constant_copy_to_user(void *$user to, const void *$kernel from,
+			unsigned long n);
+static unsigned long
+__constant_copy_from_user(void $user * $kernel to, const void *$user from,
+			  unsigned long n);
+static unsigned long
+__constant_copy_to_user_nocheck(void *$user to, const void *$kernel from,
+				unsigned long n);
+static unsigned long
+__constant_copy_from_user_nocheck(void $user * $kernel to, const void *$user from,
+				  unsigned long n);
+
+
+
+
+long strncpy_from_user(char $user * $kernel dst, const char *$user src,
+		       long count);
+long __strncpy_from_user(char $user * $kernel dst, const char *$user src,
+			 long count);
+long strnlen_user(const char   * $user str, long n);
+
+
+
+unsigned long clear_user(void *$user mem, unsigned long len);
+unsigned long __clear_user(void *$user mem, unsigned long len);
+
+
+static
+unsigned int csum_and_copy_from_user (const char * $user src, 
+                                      char $user * $kernel dst,
+				      int len, int sum, int * $kernel err_ptr);
+static
+unsigned int csum_and_copy_to_user (const char * $kernel src, 
+                                    char * $user dst, int len, 
+                                    unsigned int sum, int * $kernel err_ptr);
+
+static
+unsigned int csum_partial_copy_from_user (const char * $user src, 
+                                          char $user * $kernel dst,
+                                          int len, int sum, 
+                                          int * $kernel err_ptr);
+
+
+int __verify_write(const void * $user, unsigned long);
+int __range_ok(void * $user addr, int size);
+static int verify_area(int type, const void * $user addr, unsigned long size);
+
+
+
+
+static inline void copy_pc_to_user(void * $user to, 
+                                   const void * $kernel from, unsigned int n);
+static inline void copy_user_to_pc(void $user * $kernel to, 
+                                   const void * $user from, unsigned int n);
+
+
+int memcmp (const void * $kernel, const void * $kernel, unsigned int);
+int __builtin_memcmp (const void * $kernel, const void * $kernel, unsigned int);
+
+
+void $_1_2 * $kernel memcpy(void $_1_2 * $kernel, const void $_1 * $kernel, 
+                            unsigned int);
+static void $_1_2 * $kernel __memcpy(void $_1_2 * $kernel to, const void $_1 * $kernel from, 
+                                     unsigned int n);
+static void $_1_2 * $kernel __constant_memcpy(void $_1_2 * $kernel to, const void $_1 * $kernel from, 
+                                        unsigned int n);
+static void $_1_2 * $kernel __constant_memcpy3d(void $_1_2 * $kernel to, const void $_1 * $kernel from, 
+				          unsigned int len);
+static void $_1_2 * $kernel __memcpy_by4(void $_1_2 * $kernel to, const void $_1 * $kernel from, 
+                                   unsigned int n);
+static void $_1_2 * $kernel __memcpy_by2(void $_1_2 * $kernel to, const void $_1 * $kernel from,  
+                                   unsigned int n);
+static void $_1_2 * $kernel __memcpy_g(void $_1_2 * $kernel to, const void $_1 * $kernel from, 
+                                 unsigned int n);
+static void $_1_2 * $kernel __memcpy3d(void $_1_2 * $kernel to, const void $_1 * $kernel from, 
+                                 unsigned int len);
+void $_1_2 * $kernel _mmx_memcpy(void $_1_2 * $kernel to, const void $_1 * $kernel from, 
+                                 unsigned int size);
+
+static void $_1_2 * $kernel memmove(void $_1_2 * $kernel dest, const void $_1 * $kernel src, 
+                                    unsigned int n);
+
+
+
+static void $_1_2 * $kernel memset(void $_1_2 * $kernel s, char $_1 c, unsigned int count);
+static void $_1_2 * $kernel __memset_generic($$a $_1_2 * $kernel s, char $_1 c, unsigned int count);
+static void $_1_2 * $kernel __constant_c_memset($$a $_1_2 * $kernel s, unsigned long $_1 c, 
+                                                unsigned int count);
+static void $_1_2 * $kernel __constant_c_and_count_memset($$a $_1_2 * $kernel s, 
+                                                          unsigned long $_1 pattern, 
+                                                          unsigned int count);
+static void $_1_2 * $kernel __memset_cc_by4(void $_1_2 * $kernel s, char $_1 c, unsigned int count);
+static void $_1_2 * $kernel __memset_cc_by2(void $_1_2 * $kernel s, char $_1 c, unsigned int count);
+static void $_1_2 * $kernel __memset_gc_by4(void $_1_2 * $kernel s, char $_1 c, unsigned int count);
+static void $_1_2 * $kernel __memset_gc_by2(void $_1_2 * $kernel s, char $_1 c, unsigned int count);
+static void $_1_2 * $kernel __memset_cg(void $_1_2 * $kernel s, char $_1 c, unsigned int count);
+static void $_1_2 * $kernel __memset_gg(void $_1_2 * $kernel s, char $_1 c,unsigned int count);
+
+
+
+static char $_1_2 * $kernel strcpy(char $_1_2 * $kernel dest, const char $_1 * $kernel src);
+static char $_1_2 * $kernel strncpy(char $_1_2 * $kernel dest, const char $_1 * $kernel src,
+                                    unsigned int count);
+static char $_1_2 * $kernel strcat(char $_1_2 * $kernel dest, const char $_1 * $kernel src);
+static char $_1_2 * $kernel strncat(char $_1_2 * $kernel dest, const char $_1 * $kernel src,
+                                    unsigned int count);
+
+
+static int strcmp(const char * $kernel cs, const char * $kernel ct);
+static int strncmp(const char * $kernel cs, const char * $kernel ct,unsigned int count);
+static char $_1 * $kernel strchr(const char $_1 * $kernel s, int c);
+static char $_1 * $kernel strrchr(const char $_1 * $kernel s, int c);
+static unsigned int strlen(const char * $kernel s);
+static unsigned int strnlen(const char * $kernel s, unsigned int count);
+
+
+static void $_1 * $kernel memchr(const void $_1 * $kernel cs,int c,unsigned int count);
+
+char $_1 * $kernel strstr(const char $_1 * $kernel cs, const char * $kernel ct);
+
+static void $_1 * $kernel memscan(void $_1 * $kernel addr, int c, unsigned int size);
+
+$$a * $kernel kmalloc(int, int);
+void kfree(const $$a $_1 * $kernel);
+void * $kernel __get_free_pages(unsigned int gfp_mask, unsigned int order);
+
+$$a _op_deref ($$a * $_1 $kernel x) $_1_2;
+

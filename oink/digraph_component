@@ -1,0 +1,147 @@
+#!/usr/bin/perl -w
+# -*-perl-*-
+# see License.txt for copyright and terms of use
+
+use strict;
+use warnings;
+
+# quarl 2006-09-15
+#     need to disable "deep recursion" warnings since we're going to go way
+#     deep in computeComponent().
+no warnings "recursion";
+
+use IO::File;
+
+
+my $root;                       # the root of the component
+my $verbose;                    # say what we are doing
+my $tgt;                        # current target
+my %deps;                       # set of current dependencies
+my %tgt2deps;                   # map target to its dependencies
+my %component;                  # set of names we find by computeComponent
+
+sub printHelp {
+  print <<"END"
+Digraph Component Finder: Finds the connected component containing a
+given root node in a directed graph presented in a Makefile-like
+syntax.
+  $0 --root=<rootOfSearch> [--verbose] <fileNames> [\@filelist]
+or to print this message
+  $0 --help
+END
+  ;
+}
+
+sub parseCmdLine {
+  my @tempargv;
+  # parse the command-line arguments
+  for my $arg (@ARGV) {
+#    print "$arg\n";
+    if (0) {
+    } elsif ($arg =~ m/^--root=(.*)$/) {
+      $root = $1;
+      chomp $root;
+#      print "root=$root\n";
+    } elsif ($arg =~ m/^--help$/) {
+      printHelp();
+      exit(0);
+    } elsif ($arg =~ m/^--verbose$/) {
+      ++$verbose;
+    } elsif ($arg =~ m/^-/) {
+      printHelp();
+      die "illegal argument: $arg\n";
+    } elsif ($arg =~ /^[@](.*)/) {
+        # read a file list
+        my $filename = $1;
+        my $f = new IO::File($filename) ||
+            die "$0: can't open file list '$filename'";
+        local $_;
+        while (<$f>) {
+            chomp;
+            push (@tempargv, $_);
+        }
+    } else {
+      push @tempargv, $arg;
+    }
+  }
+  # check the integrity of our state
+  unless (defined $root) {
+    printHelp();
+    die "you must provide a --root argument\n";
+  }
+  # set @ARGV to be only the filename arguments
+  @ARGV = @tempargv;
+}
+
+sub endParagraph {
+  return if !$tgt && !%deps;
+  die "$.:target $tgt but no dependencies" if $tgt && !%deps;
+  die "$.:dependencies but not target" if !$tgt && %deps;
+  print "$tgt: " if $verbose;
+  while (my ($dep0, $dummy) = each %deps) {
+    print "$dep0 " if $verbose;
+    ++($tgt2deps{$tgt}->{$dep0});
+  }
+  print "\n" if $verbose;
+  undef $tgt;
+  undef %deps;
+}
+
+sub readInput {
+  while (<>) {
+    my $line = $_;
+    # skip lines starting with '#'; NOTE: I don't recommend just
+    # chopping off anything coming after a '#' as perhaps that will
+    # occur in a name
+    next if $line =~ m/^\#/;
+    # skip blank linkes but they separate pargraphs
+    if ($line =~ m/^[[:blank:]]*$/) {
+      endParagraph();
+    } elsif ($line =~ m/^\t(.*)$/) {
+      # tab-indented line: element in a list of dependencies
+      my ($dep1) = ($1);
+      chomp $dep1;
+      # check for user error
+      die "$.:dependency with no target" unless $tgt;
+      ++$deps{$dep1};
+    } elsif ($line =~ m/^(.*)$/) {
+      # non-tab-indented line: starts a new target
+      endParagraph();
+      my ($tgt1) = ($1);
+      chomp $tgt1;
+      die "$.:something wrong: two targets" if $tgt;
+      die "$.:something wrong: already have dependencies" if %deps;
+      $tgt = $tgt1;
+    } else {
+      die "$.:illegal line: $line";
+    }
+  }
+  endParagraph();
+}
+
+sub computeComponent {
+  my ($tgt0) = @_;
+  print "$tgt0\n" if $verbose;
+  return if $component{$tgt0};
+  ++$component{$tgt0};
+  return unless defined $tgt2deps{$tgt0};
+  my %deps0 = %{$tgt2deps{$tgt0}};
+  while (my ($dep0, $dummy) = each(%deps0)) {
+    computeComponent($dep0);
+  }
+}
+
+sub printComponent {
+  for my $name (sort {$a cmp $b} keys %component) {
+    print "$name\n";
+  }
+}
+
+# **** main
+parseCmdLine();
+print "**** readInput\n" if $verbose;
+readInput();
+print "**** computeComponent\n" if $verbose;
+computeComponent($root);
+print "**** printComponent\n" if $verbose;
+printComponent();

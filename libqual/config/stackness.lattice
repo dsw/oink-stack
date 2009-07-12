@@ -1,0 +1,10 @@
+/* see License.txt for copyright and terms of use */
+
+/* Lattice for analysis of pointers to stack variables flowing to non-stack locations. */
+
+partial order [casts-preserve] {
+  $nonstack [level = ref, color = "pam-color-untainted", sign = neg]
+  $stack    [level = ref, color = "pam-color-tainted",   sign = pos]
+
+  $nonstack < $stack
+}

@@ -1,0 +1,28 @@
+# see License.txt for copyright and terms of use
+
+These seem to be the compile-time flags that are important to David
+Gay.  When we get around to getting rid of autoconf/automake, these
+will have to be fixed.
+
+egrep -I -n -e '#([::blank::]*)if' *
+
+NMEMDEBUG
+DUPLICATES
+USE_MMAP
+MAP_ANONYMOUS
+MAP_ANON
+SIZEOF_VOIDP
+__GNUC__
+__OPTIMIZE__
+REGION_PROFILE
+REGION_PROFILE_DEPTH
+TRACE_STACK
+PRECLEAR
+RPAGESIZE
+DEBUG_RALLOC
+RCPAIRS
+sparc
+i386
+linux
+CONFIG_X86_TSC
+tsc

@@ -1,0 +1,80 @@
+#!/usr/bin/perl -w
+# -*-cperl-*-
+# see License.txt for copyright and terms of use
+
+use strict;
+
+# A script for doing a "controlled experiment" test: generating two
+# very similar test inputs from one annotated input such that the
+# difference between them is minimal and yet should make the
+# difference in whatever feature is being tested.
+
+# Specifically, when used a filter with flavor "bad":
+#
+# 1 - Eliminates all // comments.
+#
+# 2 - When flavor is "bad", doesn't allow lines containing "// good"
+# to pass.
+#
+# If you set $flavor to good, we do the opposite.
+
+# Note: The variables are named and comments are written as if flavor
+# is "bad".
+
+# BUG: will pick up comments inside quoted strings.
+
+sub print_usage {
+  print <<EOF
+usage: $0 [-bad] [-good] [-help]
+  -help: print this message
+  There are two flavors:
+    -bad:  filter out lines that end in // good
+    -good: filter out lines that end in // bad
+EOF
+  ;
+}
+
+sub opposite_flavor {
+  my ($flavor0) = @_;
+  return "good" if ($flavor0 eq "bad");
+  return "bad" if ($flavor0 eq "good");
+  die "Illegal flavor $flavor0";
+}
+
+# global state
+my $flavor;
+my $other_flavor;
+my @comments;
+my @lines;
+
+# parse command line flags
+for my $arg(@ARGV) {
+  if ($arg eq "-bad") {$flavor = "bad"; next;}
+  if ($arg eq "-good") {$flavor = "good"; next;}
+  if ($arg eq "-h" || $arg eq "-help") {
+    print_usage();
+    exit(0);
+  }
+  die "Illegal flag $arg";
+}
+if (!defined $flavor) {
+  print "You must set a flavor.\n";
+  print_usage();
+  exit(1);
+}
+$other_flavor = opposite_flavor($flavor);
+
+# process the input
+while(<STDIN>) {
+    my ($comment) = m|(//.*$)|; # get comment
+    push (@comments, $comment) if (defined $comment);
+    s|//.*$||;                  # remove comment
+    if (defined $comment && $comment =~ /$other_flavor/i) {
+      push @lines, "\n";        # discard lines containing "good"
+    } else {
+      push @lines, $_;            # save line
+    }
+}
+
+# otherwise, print all the lines we saved
+print (join "", @lines);

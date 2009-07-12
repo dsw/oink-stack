@@ -1,0 +1,98 @@
+// -*- c++ -*-
+// see License.txt for copyright and terms of use
+
+// An AST specification file for the modifications that oink makes to
+// Elsa's AST.
+
+verbatim {
+  #include "exc.h"              // xBase
+  // FIX: needed?
+  #include "sobjlist.h"         // SObjList
+  #include "sobjstack.h"        // SObjStack
+  class Type;                   // cc_type.h
+  class Variable_O;
+
+  // FIX: needed?
+  // FIX: get rid of this; this is only for ASTPrinter_O::toString
+  class QLiterals;
+
+  class ASTPrinter_O {
+    public:
+    virtual ~ASTPrinter_O() {}
+    virtual void TypeSpecifier_printExtras
+      (TypeSpecifier const *const ts, ostream &os, int indent) const
+    {}
+    // FIX: get rid of this someday; see the comment starting "this
+    // prevents a linking error since only one cc.ast.gen.cc is
+    // generated" in qual.ast to understand why we need this
+    virtual string toString(QLiterals const * ql) const { return ""; }
+
+    // same as above: these declarations are used in qual.ast by the
+    // toXml/fromXml functions; this arrangement is because we only
+    // generate one ast not two and the oink ast therefore has these
+    // in it and needs to at least think that it knows how to
+    // serialize/deserialize them
+    virtual string toXml_QLiterals(QLiterals *ql) {
+      return stringc << "0";
+    }
+    virtual void fromXml_QLiterals(QLiterals *&ql, string str) {
+      ql = 0;
+    }
+  };
+}
+
+class TranslationUnit {
+  // I put this into elsa
+//   public Scope *globalScope = NULL;
+}
+
+class TypeSpecifier {
+  // perhaps merge this with TS_name
+  -> TS_typeVariable(StringRef name) {}
+
+  // FIX: needed?
+  public void printExtras_O(ostream &os, int indent) const;
+  custom debugPrint { printExtras_O(os, indent); }
+}
+
+class IDeclarator {
+  // FIX: needed?
+  pure_virtual SourceLoc getBaseLoc();
+}
+
+class Expression {
+  -> E_compoundLit {
+    public IN_compound *getInit();
+  }
+}
+
+// FIX: needed?
+class Initializer {
+  public SourceLoc getLoc();
+  public FakeList<Designator> *getDesignatorList();
+  -> IN_expr {
+    public Expression *getE();
+  }
+  -> IN_compound {
+    public ASTList<Initializer> &getInits();
+    public Initializer *uptoInitializer(); // an explicit upcast
+  }
+  -> IN_designated {
+    public FakeList<Designator> *getDesignatorList();
+    public Initializer *getInit();
+  }
+}
+
+// FIX: needed?
+class Designator {
+  public SourceLoc getLoc();
+  -> FieldDesignator {
+    public StringRef getId();
+  }
+  -> SubscriptDesignator {
+    public Expression *getIdx_expr();
+    public Expression *getIdx_expr2();
+    public int getIdx_computed();
+    public int getIdx_computed2();
+  }
+}

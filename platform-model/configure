@@ -1,0 +1,105 @@
+#!/bin/sh
+
+die() {
+    echo "$@" >&2
+    exit 1
+}
+
+args="$@"
+archive_srz=auto
+
+if [ "$1" = "--archive-srz=dir" ]; then
+    archive_srz=dir
+    shift
+fi
+
+if [ "$1" = "--archive-srz=zip" ]; then
+    archive_srz=zip
+    shift
+fi
+
+if [ "$1" = "--archive-srz=auto" ]; then
+    archive_srz=auto
+    shift
+fi
+
+if [ -n "$1" ]; then
+    die "unknown option $1"
+fi
+
+abspath="make-lib/abspath"
+test -x $abspath || die "can't find abspath"
+
+oink_dir=`$abspath ../oink`
+
+test -d $oink_dir || die "Must have oink in parent; try getting cqual++-stack or oink-stack"
+# TODO: allow user to specify --with-oink
+
+test -x $oink_dir/config.summary || die "Please configure oink first."
+
+
+check_oink_config()
+{
+    egrep "\b$1\b" $oink_dir/config.summary >/dev/null
+}
+
+case "$archive_srz" in
+    zip)
+        check_oink_config "CFLAGS_EXTRA:.*-DARCHIVE_SRZ_ZIP=1" || die \
+            "Please use configure --archive-srz=dir, or reconfigure oink with ARCHIVE_SRZ_ZIP support."
+        archive_srz_ext_sfx=z
+        ;;
+    dir)
+        check_oink_config "CFLAGS_EXTRA:.*-DARCHIVE_SRZ_DIR=1" || die \
+            "Please reconfigure oink with ARCHIVE_SRZ_DIR support."
+        archive_srz_ext_sfx=dir
+        ;;
+    auto)
+        if check_oink_config "CFLAGS_EXTRA:.*-DARCHIVE_SRZ_ZIP=1"; then
+            archive_srz=zip
+        elif check_oink_config "CFLAGS_EXTRA:.*-DARCHIVE_SRZ_DIR=1"; then
+            archive_srz=dir
+        else
+            die "Please rebuild oink with either ARCHIVE_SRZ_ZIP or ARCHIVE_SRZ_DIR support."
+        fi
+        ;;
+    *)
+        die "internal error 1e0d275a-7375-4dd8-8f0e-4cecf00adad4"
+        ;;
+esac
+
+case "$archive_srz" in
+    zip)
+        archive_srz_ext_sfx=z
+        ;;
+    dir)
+        archive_srz_ext_sfx=dir
+        ;;
+    *)
+        die "internal error 1e0d275a-7375-4dd8-8f0e-4cecf00adad4"
+        ;;
+esac
+
+echo "platform-model/configure: Using archive-srz=$archive_srz"
+echo "## This file created by $0 $args" > config.status
+echo "archive_srz=$archive_srz" >> config.status
+echo "archive_srz_ext_sfx=$archive_srz_ext_sfx" >> config.status
+
+gcc-3.4 -v 2>/dev/null || die "Please install gcc-3.4 (see platform-model/doc/gcc.txt)."
+
+oink_scripts_dir=`$abspath ../oink-scripts`
+
+test -d $oink_scripts_dir || die "Please install oink-scripts in parent"
+# TODO: allow user to specify --with-oink-scripts=
+
+test -x $oink_scripts_dir/bin/oinkx || die "Can't find oinkx"
+test -x $oink_scripts_dir/bin/qualx || die "Can't find qualx"
+
+(
+    echo "oink_dir=$oink_dir"
+    echo "oink_scripts_dir=$oink_scripts_dir"
+) > config.data
+
+echo "platform-model/configure: Sanity check succeeded."
+
+echo "platform-model/configure: wrote config.status."

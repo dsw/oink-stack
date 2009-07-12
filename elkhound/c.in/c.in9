@@ -1,0 +1,51 @@
+// c.in9
+// testing the lval translator
+
+typedef struct S { int f,ar[5]; } S;
+typedef struct T { struct S s; } T;
+
+void foo()
+{
+  S s,sarr[3];
+  T t;
+  int x,y,*p,arr[3];
+  float f;
+
+  // simple varref rewrite
+  x = y;
+
+  // simple deref rewrite
+  *p = y;
+
+
+  // array elt rewrite
+  arr[1] = 4;
+
+  // not simplified!
+  *(arr+1) = 4;
+
+  
+  // unassigned lval cast rewrite
+  f = (float)x;
+
+  // assigned lval cast rewrite
+  //(float)x = f;   // removed this syntax
+
+
+  // field of field
+  x = t.s.f;
+
+  // field of array elt
+  sarr[3].f = y;
+
+  // array elt of field
+  s.ar[3] = y;
+
+  // array elt of array elt
+  sarr[2].ar[1] = 8;
+
+
+  // illegal lval cast to struct
+  y = ((S)x).f;
+
+}

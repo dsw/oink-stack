@@ -1,0 +1,4 @@
+var: <global> <initialized> <definition> int a[4]
+var: <global> <initialized> <definition> int b[5]
+type: int (&)[5]
+var: int /*anon*/[]

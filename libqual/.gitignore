@@ -1,0 +1,11 @@
+# dependency files
+*.d
+# objects
+*.o
+# archives
+*.a
+
+# generated files
+lattice-lex.c
+lattice-parse.tab.c
+lattice-parse.tab.h

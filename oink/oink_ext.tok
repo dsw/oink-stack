@@ -1,0 +1,15 @@
+// see License.txt for copyright and terms of use
+// -*-c++-*-
+// this file is appended to elsa's cc_tokens.tok
+
+// Extensions oink makes to the token set.  This file is currently
+// empty as the oink empty analysis proper need make no extension to
+// the token set; this file exists just for completeness.
+
+// flags:
+//   MS(m): token has multiple spellings
+//   NS(n): token is a nonseparator; nonseparators cannot be adjacent
+//   CP(p): token is a keyword only in C++; in C it's an identifier
+
+// enumeration name      description                  : MS NS CP
+// ----------------      ---------------------------  : -- -- --

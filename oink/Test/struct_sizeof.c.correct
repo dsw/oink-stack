@@ -1,0 +1,9 @@
+// -*-c++-*-
+
+int main() {
+  struct a {
+    int a0;
+    int b0;
+  };
+  int x[8];
+}

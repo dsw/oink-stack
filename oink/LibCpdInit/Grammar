@@ -1,0 +1,151 @@
+// see License.txt for copyright and terms of use
+// -*-c++-*-
+
+// This file is Documentation in the syntax of an elkhound grammar for
+// the subset of the AST that LibCpdInit knows about; again, this is
+// just documentation.  Note that LibCpdInit will work with any
+// grammar if you provide the right interface.
+
+// Specifically, this is an elkhound
+// (http://www.cs.berkeley.edu/~smcpeak/elkhound/) grammar from the
+// elsa C++ front-end
+// (http://www.cs.berkeley.edu/~smcpeak/elkhound/sources/elsa/index.html).
+// It is used to construct the AST that is referred to in CpdInit.cc
+
+// First we have the C99 standard followed in a separate section by
+// the GNU extensions
+
+// ****************************************************************
+
+// ------ A.7 Declarators ------
+// -- declarator --
+// a declarator is the "x" in a declaration like "int x"
+
+nonterm(FakeList<Declarator>*) InitDeclaratorList {
+  -> d:InitDeclarator
+       { return FakeList<Declarator>::makeList(d); }
+  -> d:InitDeclarator "," list:InitDeclaratorList
+       { d->setNext(list->first());
+         return FakeList<Declarator>::makeList(d); }
+}
+
+// obsolete now that I've substituted it into SimpleDeclaration
+//  nonterm(FakeList<Declarator>*) InitDeclaratorListOpt {
+//    -> empty
+//         { return FakeList<Declarator>::emptyList(); }
+//    -> list:InitDeclaratorList
+//         { return list; }
+//  }
+
+
+nonterm(Declarator*) InitDeclarator {
+  // ambiguous:
+  //   int f(x *y);
+  // could be declaring a variable called "f" with ctor-initializer "(x*y)",
+  // or it could be declaring a function called "f" which accepts a pointer
+  // to an 'x' as a parameter
+  //
+  // another example:
+  //   int m(int (n));
+  // could be declaring a variable called "m" with ctor-initializer "int (n)"
+  // which itself is a call to the constructor for "int", or it could be
+  // declaring a function called "m" with an integer parameter called "n",
+  // the latter surrounded by a redundant set of parens
+  fun merge(L,R) { L->addAmbiguity(R); return L; }
+
+  -> d:Declarator                       // (int)  x
+       { return new Declarator(d, NULL); }
+
+  -> d:Declarator i:Initializer         // (int)  x = 5
+       { return new Declarator(d, i); }
+}
+
+nonterm(Initializer*) Initializer {
+  -> "=" i:SimpleInitializerClause
+       { return i; }
+
+  -> "(" args:ExpressionList ")"
+       { return new IN_ctor(args); }
+       
+  // NOTE: there is no alternative for "(" ")"!  
+  // see [cppstd. sec. 8.5 para 8]
+}
+
+nonterm(Initializer*) SimpleInitializerClause {
+  -> e:AssignmentExpression              // scalar
+       { return new IN_expr(e); }
+  -> c:CompoundInitializer               // array/structure initializer
+       { return c; }
+}
+
+// this nonterminal exists so that extensions can augment it with
+// possibilities for designated initializers
+nonterm(Initializer*) InitializerClause {
+  -> init:SimpleInitializerClause
+    { return init; }
+}
+
+nonterm(IN_compound*) CompoundInitializer {
+  // array/structure initializer
+  -> "{" list:InitializerList CommaOpt "}"  { return list; }
+
+  // zero whatever it is
+  -> "{" "}"  { return new IN_compound(NULL); }
+}
+
+// useful syntactic quirk
+nonterm CommaOpt {
+  -> empty ;
+  -> "," ;
+}
+
+nonterm(IN_compound*) InitializerList {
+  fun dup(i) { return NULL; }     // prevent multi-yield
+
+  -> init:InitializerClause
+       { IN_compound *list = new IN_compound(NULL);
+         list->inits.append(init);
+         return list; }
+
+  // destructive action on 'list'
+  -> list:InitializerList "," init:InitializerClause
+       { list->inits.append(init); return list; }
+}
+
+
+// ****************************************************************
+// NOTE: The following contains the gnu extensions to the above.  In
+// an Elkhound grammar, the same nonterminal (in this case
+// InitializerClause) can be mentioned again and have more rules
+// added.
+
+// Designated Initializers
+nonterm(Initializer*) InitializerClause {
+  // obsolescent form
+  // http://gcc.gnu.org/onlinedocs/gcc-3.2.2/gcc/Designated-Inits.html#Designated%20Inits
+  -> d:Identifier ":" init:SimpleInitializerClause
+    { return new IN_designated(FakeList<Designator>::makeList(new FieldDesignator(d)),
+                               init); }
+  // C99 official form; C99 standard section 6.7.8
+  -> dl:DesignatorList "=" init:SimpleInitializerClause
+    { return new IN_designated(dl, init); }
+}
+
+nonterm(FakeList<Designator>*) DesignatorList {
+  -> d:Designator
+    { return FakeList<Designator>::makeList(d); }
+  -> d:Designator dl:DesignatorList
+    { d->setNext(dl->first());
+    return FakeList<Designator>::makeList(d); }
+}
+
+nonterm(Designator*) Designator {
+  -> "." id:Identifier
+    { return new FieldDesignator(id); }
+  -> "[" idx_expr:ConstantExpression "]"
+    { return new SubscriptDesignator(idx_expr, NULL); }
+  // range designator "[ 1 ... 3 ] =".  This is a gcc-ism:
+  // http://gcc.gnu.org/onlinedocs/gcc-3.2.2/gcc/Designated-Inits.html#Designated%20Inits
+  -> "[" idx_expr:ConstantExpression "..." idx_expr2:ConstantExpression "]"
+    { return new SubscriptDesignator(idx_expr, idx_expr2); }
+}

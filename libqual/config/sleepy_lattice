@@ -1,0 +1,96 @@
+/* see License.txt for copyright and terms of use */
+
+partial order {
+  const [level = ref, sign = pos]
+  $nonconst [level = ref, sign = neg]
+
+  $nonconst < const
+}
+
+partial order {
+  $untainted [level = value, color = "pam-color-untainted", sign = neg]
+  $tainted [level = value, color = "pam-color-tainted", sign = pos]
+
+  $untainted < $tainted
+}
+
+partial order {
+  $YYYY    [level = value, color = "pam-color-yyyy", sign = eq]
+  $YY      [level = value, color = "pam-color-yy", sign = eq]
+  $NONYEAR [level = value, color = "pam-color-nonyear", sign = eq]
+  $RCSYEAR [level = value, color = "pam-color-rcsdate", sign = eq]
+}
+
+partial order [flow-sensitive] {
+  $enabled [level = value, color = "pam-color-locked", sign = eq]
+  $disabled [level = value, color = "pam-color-unlocked", sign = eq]
+  $unknown [level = value, color = "pam-color-unknown", sign = eq]
+
+  $enabled < $unknown
+  $disabled < $unknown
+}
+
+partial order {
+  $user [level=value, color = "pam-color-6", sign = eq]
+  $kernel [level=value, color = "pam-color-4", sign=eq]
+}
+
+partial order [nonprop] {
+  volatile [sign = eq, level = ref, color = "pam-color-4"]
+}
+
+partial order [nonprop] {
+  restrict [sign = eq, level = value]
+}
+
+partial order {
+  $test [level = value, color = "pam-color-4"]
+  $test1
+}
+
+partial order {
+  $mixed [sign = neg]
+  $shared
+  $nonshared
+  $nonescaping
+
+  $shared < $mixed
+  $nonshared < $mixed
+  $nonescaping < $nonshared
+}
+
+
+/* Qualifiers for checking file operation sequences.  This is more
+   easily understood as the product of two four point diamond lattices, but
+   the way the system is set up it's best to group them all together in
+   the same partial order. */
+partial order [flow-sensitive] {
+  $readwrite_unchecked [sign = eq, color = "pam-color-8"]
+  $read_unchecked [sign = eq, color = "pam-color-8"]
+  $write_unchecked [sign = eq, color = "pam-color-8"]
+  $open_unchecked [sign = eq, color = "pam-color-8"]
+
+  $readwrite [sign = eq, color = "pam-color-8"]
+  $read [sign = eq, color = "pam-color-8"]
+  $write [sign = eq, color = "pam-color-8"]
+  $open [sign = eq, color = "pam-color-8"]
+
+  $closed [sign = eq, color = "pam-color-8"]
+
+  $readwrite_unchecked < $read_unchecked
+  $readwrite_unchecked < $write_unchecked
+  $read_unchecked < $open_unchecked
+  $write_unchecked < $open_unchecked
+
+  $closed < $readwrite_unchecked
+
+  $readwrite < $read
+  $readwrite < $write
+  $read < $open
+  $write < $open
+
+  $open < $open_unchecked
+  $read < $read_unchecked
+  $write < $write_unchecked
+  $readwrite < $readwrite_unchecked
+}

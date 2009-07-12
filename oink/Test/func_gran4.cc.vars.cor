@@ -1,0 +1,5 @@
+F:Z::~Z SIG ()(/*m*/ )
+F:f SIG void ()()
+F:g SIG void ()()
+Test/func_gran4.cc:16:3:constructor-special SIG ()()
+super-main

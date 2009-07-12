@@ -1,0 +1,1079 @@
+<html>
+<head>
+<title>Oink Manifest</title>
+</head>
+<body bgcolor=white>
+
+<h1>Oink Manifest</h1>
+
+<p>For those who may wish to hack on Oink, I attempt here to provide
+an organized top-down view of the aspects of Oink and the purpose of
+each file.
+
+<p>Many of the files and even directories you see mentioned here are
+generated so you will not see them until you have build and tested
+oink.
+
+<p><b>NOTE: This is out of date, but mostly by omission</b>.  That is,
+there are files not mentioned here, but the ones that are should be
+documented correctly.</p>
+
+<h3>Directory contents</h3>
+
+<ul>
+
+<li><a href=index.html>Oink Main Documentation</a> Introduction to
+Oink.
+
+<li><a href=oink_help.html>Annotated Oink Help Output</a> The output
+of ./oink --help annotated with further details on their meaning.
+
+<li><a href=quickstart.html>Cqual++ Quick-Start Instructions</a> The
+shortest path to findings bugs in your code.
+
+<li><a href="qual.html">Cqual++ Documentation</a> Documentation on the
+main Oink tool.
+
+<li><a href=qual_help.html>Annotated Qual Help Output</a> The output
+of ./qual --help (minus the oink --help output) annotated with further
+details on their meaning.
+
+<li><a href=manifest.html>Oink Manifest [this document]</a> A top-down view of the
+aspects of Oink, which files participate in each aspect, and
+documentation on each file.
+
+<li><a href=coding.html>Oink Coding Style</a> The Oink coding
+guidelines; also provided is some elisp for putting emacs into the
+mode I use when editing it.
+
+<li><a href="features_of_elsa.html">Features of Elsa</a> The elsa
+documentation is extensive; I simply point out a few useful features
+that users of Oink/Cqual++ should know about.
+
+</ul>
+
+<hr>
+<h2>Documentation</h2>
+
+<p><b>
+0Readme
+</b>
+<br>Text file for pointing people to Doc/index.html.
+
+<p><b>
+License.txt
+</b>
+<br>Describes the copyright and terms of use of Oink.
+
+<p><b>
+Doc
+</b>
+
+<br>Documentation directory.
+
+<p><b>
+Doc/index.html
+</b>
+
+<br>Primary documentation.
+
+<p><b>
+Doc/manifest.html
+</b>
+
+<br>This file: a list of all the files in Oink and their purpose.
+
+<p><b>
+Doc/coding.html
+</b>
+
+<br>Requirements for those hacking on Oink: design and syntax considerations.
+
+<hr>
+<h2>Configuration</h2>
+
+<p><b>
+configure.pl
+</b>
+
+<br>Converts its command line flags into name/value pairs with which
+files named FILE.in will have '@name@' substituted by 'value' to
+produce FILE.  Generates config.status which will actually do the
+substitution.
+
+<p><b>
+configure
+</b>
+
+<br>Shell script for calling configure.pl.
+
+<p><b>
+config.status
+</b>
+
+<br>Actually do the substitution of names for values in files to be
+configured.
+
+<p><b>
+config.summary
+</b>
+
+<br>Print out the name/value pairs chosen at configuration time.
+
+<hr>
+<h2>Top level makefiles</h2>
+
+<p><b>
+Demo.mk
+</b>
+
+<br>A makefile for giving an Oink demo.
+
+<p><b>
+Makefile
+Makefile.in
+</b>
+
+<br>The top level driver makefile; implements all of the features
+usually provided by a makefile, such as building and testing.  It
+includes (possibly indirectly) many makefiles suffixed with
+'.incl.mk'.
+
+<p><b>
+Build.incl.mk
+Build.incl.mk.in
+</b>
+
+<br>Included makefile for building everything.
+
+<hr>
+<h2>Testing</h2>
+
+<p><b>
+Test
+</b>
+
+<br>Directory containing tests and temporary files generated during
+testing.
+
+<p><b>
+Test.incl.mk
+</b>
+
+<br>A included makefile for testing everything.
+
+<p><b>
+test_filter
+</b>
+
+<br>A script for doing a <em>controlled experiment</em> test:
+generating two very similar test inputs from one annotated input such
+that the difference between them is minimal and yet should make the
+difference in whatever feature is being tested.
+
+<hr>
+<h2>Elsa</h2>
+
+<p>Elsa is Scott McPeak's C++ front-end which Oink uses.  Oink builds
+its own version of elsa and so its build process is subtle, as we
+re-use much of elsa as-is but modify some of it slightly.  We rebuild
+elsa by compiling most the elsa/*.cc files in oink, so you will notice
+lots of .o and .d files in oink that do not correspond to .cc files in
+oink, but instead in elsa.
+
+<p><b>
+ElsaHeaders
+</b>
+
+<br>A generated directory which contains softlinks to the header files
+in Elsa that we need.  Our build process also builds our own version
+of a modified elsa and we use -IElsaHeaders instead of -I../elsa on
+the compile line in order to carefully exclude certain files in elsa.
+
+<p><b>
+cc.tok
+</b>
+
+<br>One of many .tok files that are the single-source of information
+about the set of lexing tokens.  Many files are generated from the
+collection of .tok files.
+
+<p><b>
+cc_tokens.cc
+cc_tokens.h
+cc_tokens.ids
+</b>
+
+<br>Files generated from the collection of .tok files for implementing
+various features of language tokens.
+
+<p><b>
+cc.ast.gen.cc
+cc.ast.gen.h
+</b>
+
+<br>The C++ implementation of the Elsa/Oink/Cqual++ AST which is
+generated from a collection of .ast files by Scott McPeak's astgen
+tool (which lives in the ../ast directory).
+
+<p><b>
+cc_type.h
+cc_type.h.cpatch
+</b>
+
+<br>The base C++ type system from elsa.
+
+<br>Note that oink/FILE.cpatch is used as a kind of diff file by
+../smbase/codepatch.pl to generate oink/FILE from elsa/FILE in a
+similar way to the utility 'patch'.
+
+<p><b>
+cc_print.cc
+cc_print.cc.cpatch
+cc_print.h
+cc_print.h.cpatch
+</b>
+
+<br>A module for pretty-printing C++ AST and Types.  It is extended by
+the value_print module to print abstract values and further by
+qual_value_print to print qualifier annotations.
+
+<br>Note that oink/FILE.cpatch is used as a kind of diff file by
+../smbase/codepatch.pl to generate oink/FILE from elsa/FILE in a
+similar way to the utility 'patch'.
+
+<p><b>
+elsa.a
+</b>
+
+<br>The version of elsa that we build, minus the main() function
+module.  It isn't really necessary that we build an archive; it just
+makes the build process a little cleaner.
+
+<p><b>
+    archive_srz_test.cc
+elsa_tests.gen.incl.mk
+elsa_tests_get
+elsa_tests_omit.files
+</b>
+
+<br>Filters out the tests from elsa/regrtest that we want to use in
+oink.  That is, elsa_tests_get generates elsa_tests.gen.incl.mk from
+../elsa/regrtest by subtracting files in elsa_tests_omit.files.  This
+mechanism is so that oink can automatically use elsa tests as they are
+added to elsa unless one of them is breaking oink.  This generation
+step is not done automatically anywhere; it is just for someone to run
+when they feel like going through all the errors that may come up; The
+resulting elsa_tests.gen.incl.mk is checked in.
+
+<p><b>
+.serialno
+</b>
+
+<br>One of the elsa debugging mechanisms is that a class may request
+to have each object get a serial number by inheriting from class
+SerialBase.  The generated file .serialno keeps these unique (up to
+integer rollover) even across multiple calls to Elsa/Oink.  This is
+handy for debugging serialized files as the state persists.
+
+<hr>
+<h2>Oink</h2>
+
+<p>Oink provides an empty-analysis that just builds from the
+infrastructure but does nothing.
+
+<p><b>
+oink_cmd.cc
+oink_cmd.h
+oink_cmd_util.h
+</b>
+
+<br>Processes command-line arguments for the oink empty-analysis
+proper.  Other tools inherit from it and re-use the command-line flags
+and their processing.
+
+<p><b>
+oink_file.cc
+oink_file.h
+</b>
+
+<br>Implement handling input files for analysis.
+
+<p><b>
+oink_control.cc
+oink_control.h
+</b>
+
+<br>Implement oink control files.  Examples are in Test/*.ctl
+
+<p><b>
+oink_global.cc
+oink_global.h
+</b>
+
+<br>All of Oink's global variables in one place.
+
+<p><b>
+oink_util.h
+</b>
+
+<br>Some basic utilities for reporting user errors with line numbers
+and other standard functionality.
+
+<p><b>
+oink_ext.tok
+</b>
+
+<p>Extensions oink makes to the token set.  This file is currently
+empty as the oink empty analysis proper need make no extension to the
+token set; this file exists just for completeness.
+
+<p><b>
+oink_ext.lex
+</b>
+
+<br>Extensions oink makes to the lexer.  This file is currently empty
+as the oink empty analysis proper need make no extension to the lexing
+rules; this file exists just for completeness.
+
+<p><b>
+oink.lex
+</b>
+
+<br>Generated lexer file for lexing the oink extensions to elsa.
+
+<p><b>
+oink_lexer.yy.cc
+</b>
+
+<br>Oink lexer generated by flex.
+
+<p><b>
+oink.gr
+oink.gr.gen.cc
+oink.gr.gen.h
+oink.gr.gen.out
+</b>
+
+<br>oink.gr is a grammar specification file for the modifications that
+oink makes to the elsa grammar.  The other files are generated from
+the collection of .gr files by elkhound.
+
+<p><b>
+oink.ast
+</b>
+
+<br>An AST specification file for the modifications that oink makes to
+Elsa's AST.
+
+<p><b>
+oink_ast_aux.cc
+</b>
+
+<br>Implementation of functions declared in the oink.ast file.
+
+<p><b>
+oink_type.cc
+oink_type.h
+oink_type_children.cc
+oink_type_children.h
+oink_var.cc
+oink_var.h
+</b>
+
+<br>Extensions/modifications made to the oink typesystem.  Note that
+oink_type.h is a strange header file that inserts a class into the
+<em>middle</em> of the Elsa Type hierarchy; this simple preprocessor
+trick prevents the need for multiple inheritance; do not include this
+header file directly, instead include cc_type.h.  You will get a
+compile-time error if you neglect to do this.
+</b>
+
+<p><b>
+oink_tcheck.cc
+oink_tcheck_env.cc
+oink_tcheck_env.h
+oink_tcheck_env_clbk.cc
+oink_tcheck_env_clbk.h
+</b>
+
+<br>Extensions and modifications by oink to the typechecker; for
+processing the nodes added by oink.ast.
+
+<p><b>
+oink_integrity.cc
+oink_integrity.h
+</b>
+
+Check the integrity of the AST after parsing, typechecking, and
+elaboration.  Not to be confused with elsa/integrity.h.
+
+<p><b>
+oink_walk.h
+</b>
+
+<br>A class AST walks may find useful to inherit from.
+
+<p><b>
+oink.h
+oink.cc
+</b>
+
+<br>The primary functionality that oink proper (not including dataflow
+or qual) adds to elsa.  Provides implementation of each stage of
+processing, but leaves it to a main() function to call those methods.
+Much here can be re-used by other analyses by inheritance.
+
+<p><b>
+oink_main.cc
+</b>
+
+<br>The main() function for the oink empty-analysis proper.
+
+<p><b>
+oink
+</b>
+
+<br>The oink executable.  Uses the infrastructure and implements the
+empty analysis.  Useful for testing that Oink's modifications to elsa
+haven't broken it.
+
+<p><b>
+oink_test.incl.mk
+</b>
+
+<br>Included makefile for testing the oink empty analysis proper which
+exhibits the basic functionality shared among all the analysis tools.
+
+<hr>
+<h2>[Abstract] Value</h2>
+
+<p>Any analysis that concerns itself with dataflow needs a notion of
+an Abstract Value.  They are isomorphic to the "constructed" subset of
+the Elsa typesystem.  These are the types that are transparent in the
+sense that two are "the same type" exactly when they have the same
+internal structure.  They are also the types that can take a const or
+volatile qualifier.  The difference of Values from Types is two int
+expressions have the same Type but different [Abstract] Values: each
+Value annotates exactly one expression, whereas Types are re-used.
+
+<p><b>
+value.ast
+</b>
+
+<br>Extensions to the AST to allow for Value annotations to the AST.
+
+<p><b>
+value.h
+value.cc
+</b>
+
+<br>An Abstract Value class.
+
+<p><b>
+value_ast_visitor.cc
+value_ast_visitor.h
+</b>
+
+<br>An AST visitor that annotates a typechecked AST with Values.
+
+<p><b>
+value_print.cc
+value_print.h
+</b>
+
+<br>A class for printing Values; inherits from elsa class TypePrinter.
+
+<hr>
+<h2>XML serialization</h2>
+
+<p>Elsa provides XML serialization functionality (thanks to me); we
+augment it here so that Oink and Qual do as well.
+
+<p><b>
+xml_ast.gen.tokens
+xml_ast_reader_0decl.gen.h
+xml_ast_reader_1defn.gen.cc
+xml_ast_reader_2ctrc.gen.cc
+xml_ast_reader_3regc.gen.cc
+</b>
+
+<br>Files generated from astgen from the collection of .ast files that
+specify how to lex (.tokens file) and parse (the rest of the files)
+XML.
+
+<p><b>
+xml_value.tokens
+</b>
+
+<br>Tokens used in the XML serialization language for the Value
+classes.
+
+<p><b>
+xml_enum_1.gen.h
+xml_lex_1.gen.lex
+xml_name_1.gen.cc
+</b>
+
+<br>Files generated by the collection of .tokens files (mostly in
+elsa) by ../elsa/token.pl for use in XML lexing and parsing.
+
+<p><b>
+xml_lex.gen.lex
+xml_lex.gen.yy.cc
+</b>
+
+<br>Respectively the generated lex file and then the XML lexer
+generated from that by flex.
+
+<p><b>
+xml_value_reader.cc
+xml_value_reader.h
+</b>
+
+<br>Specialization of the ReadXml framework that reads in XML for
+serialized Values.
+
+<p><b>
+xml_value_writer.cc
+xml_value_writer.h
+</b>
+
+<br>Implements a simple DFS XML writer for Values.  Writing is always
+easier than reading.
+
+<p><b>
+xml_canonicalize
+</b>
+
+<br>Script for canonicalizing XML output.  Implements an equivalence
+relation such that an xml file should be xml_canonicalize-equivalent
+to the file you get by reading it in and serializing it out again.
+That is, reading then writing XML should be idempotent on the set of
+XML files modulo xml_canonicalize.
+
+<hr>
+<h2>Archiving</h2>
+
+<p>
+  Classes for serializing and deserializing groups of files into an archive.
+
+  <p><b>
+    archive_srz.cc
+    archive_srz.h
+  </b>
+
+  <br>Library.
+
+  <p><b>
+    archive_srz_test.cc
+  </b>
+
+  <br>Testing.
+
+</p>
+
+<hr>
+<h2>Dataflow</h2>
+
+<p>The primary value that Oink provides over Elsa is a whole-program
+dataflow analysis.
+
+<p><b>
+dataflow_visitor.cc
+dataflow_visitor.h
+dataflow_cpdinit_clbk.cc
+dataflow_cpdinit_clbk.h
+</b>
+
+<br>An AST Visitor that computes a instance-sensitive, polymorphic,
+non-flow-sensitive, non-path-sensitive, expression granularity
+dataflow graph on a Translation Unit AST.  When a pair of expressions
+is found between which data flows, the pair is handed off to the
+dataflow_ex module below.
+
+<p><b>
+dataflow_ex.cc
+dataflow_ex.h
+</b>
+
+<br>Insert a single expression-level edge by driving a call with the
+appropriate arguments on the underlying class DataFlowTy in the
+dataflow_ty module below.
+
+<p><b>
+dataflow_ty.cc
+dataflow_ty.h
+</b>
+
+<br>Given two top-level Value trees between which data should flow,
+makes the dataflow calls between individual [Abstract] Value nodes.
+
+<hr>
+<h2>Lib: utility library</h2>
+
+<p>A library for utilities, such as useful non-standard container
+classes.
+
+<p><b>
+Lib/union_find.h
+</b>
+
+<br>Hashable-based implementation of the union find algorithm.
+
+<p><b>
+Lib/union_find_map.h
+</b>
+
+<br>A data-structure I have never had a need for before nor have I ever
+seen in any book or container library:<ul>
+<li>a map from one set of objects to another, and
+<li>a equivalence relation (implemented as a union-find) on the domain
+of the map.
+</ul>
+The invariant is that the map is well-defined when the domain is
+modded out by the equivalence-relation.  That is, the pull-back of
+anything in the range of the map is always in the same equivalence
+class in the relation.
+
+<p><b>
+Lib/union_find_test
+Lib/union_find_test.cc
+Lib/LibTest.incl.mk
+</b>
+
+<br>Code and makefile for testing union_find.  The union_find_map
+module is only tested by its usage in oink.
+
+<hr>
+<h2>LibCpdInit: compound initializers library</h2>
+
+<p>AST-agnostic and Typesystem-agnostic library for computing the
+dataflow resulting from a C99 compound initializers expression.  Does
+not work in C++ nor in instance-sensitive mode unfortunately.  Has been
+tested versus the CIL implementation by George Necula.  If you are
+writing some other C++ front-end, this module is designed to be
+re-usable in it, which is why it is a separate directory.
+
+<p><b>
+LibCpdInit/Readme
+</b>
+
+<br>Readme just for LibCpdInit.
+
+<p><b>
+LibCpdInit/configure
+</b>
+
+<br>A script that announces there is no configuration to be done.
+
+<p><b>
+LibCpdInit/Makefile
+</b>
+
+<br>For testing purposes, build a vacuous LibCpdInit against its own
+cpdinit_lib.h which specifies what the compiler writer would have to
+provide.
+
+<p><b>
+LibCpdInit/Grammar
+</b>
+
+<br>Documentation in the syntax of an elkhound grammar for the subset
+of the AST that LibCpdInit knows about; again, this is just
+documentation.  Note that LibCpdInit will work with any grammar if you
+provide the right interface.
+
+<p><b>
+LibCpdInit/cpdinit.cc
+LibCpdInit/cpdinit.h
+</b>
+
+<br>Process one Value/compound-initializer pair, generating dataflow edges.
+
+<p><b>
+LibCpdInit/member_type_iter.cc
+LibCpdInit/member_type_iter.h
+</b>
+
+<br>An iterator used by the cpdinit module to keep track of where it
+is in the compound initializer.
+
+<p><b>
+LibCpdInit/cpdinit_lib.h
+</b>
+
+<br>A vacuous header file that shows what needs to be provided by a
+compiler writer to use LibCpdInit.  Using the Makefile, LibCpdInit
+will build against this header file.
+
+<hr>
+<h2>Compound initializers testing</h2>
+
+<p><b>
+cpdinit_headers.h
+</b>
+
+<br>The Oink headers that LibCpdInit needs to build.
+
+<p><b>
+cpdinit_test_visitor.cc
+cpdinit_test_visitor.h
+cpdinit_test_clbk.cc
+cpdinit_test_clbk.h
+cpdinit_test.cc
+cpdinit_test.h
+cpdinit_test_main.cc
+cpdinit_test
+</b>
+
+<br>Visitor, callback, and testing code for generating the
+cpdinit_test executable which tests LibCpdInit.
+
+<p><b>
+cpdinit_test.incl.mk
+</b>
+
+<br>Included makefile for testing LibCpdInit.
+
+<hr>
+<h2>Staticprint</h2>
+
+<p>Static Printer: A sample Oink tool that shows how to query the AST
+and typesystem; for now it just prints the inheritance graph.  If
+there is something you always wanted a tool to tell you about your raw
+program, implement it as feature here and send it to me.
+
+<p><b>
+staticprint_cmd.cc
+staticprint_cmd.h
+</b>
+
+<br>Process command-line arguments.
+
+<p><b>
+staticprint.cc
+staticprint.h
+</b>
+
+<br>Primary functionality.
+
+<p><b>
+staticprint_global.cc
+staticprint_global.h
+</b>
+
+<br>All the globals for staticprint in one place.
+
+<p><b>
+staticprint
+staticprint_main.cc
+</b>
+
+<br>Just the main() function.
+
+<p><b>
+staticprint_test.incl.mk
+</b>
+
+<br>Included makefile for testing.
+
+<hr>
+<h2>Cfgprint</h2>
+
+<p>Control Flow Graph Printer: A sample Oink tool that shows you how
+to access the intRA-procedural control flow graph (provided by elsa).
+For now we just print it out.
+
+<p><b>
+cfgprint_cmd.cc
+cfgprint_cmd.h
+</b>
+
+<br>Process command-line arguments.
+
+<p><b>
+cfgprint.cc
+cfgprint.h
+</b>
+
+<br>Primary functionality.
+
+<p><b>
+cfgprint_global.cc
+cfgprint_global.h
+</b>
+
+<br>All the globals for cfgprint in one place.
+
+<p><b>
+cfgprint
+cfgprint_main.cc
+</b>
+
+<br>Just the main() function.
+
+<p><b>
+cfgprint_test.incl.mk
+</b>
+
+<br>Included makefile for testing.
+
+<hr>
+<h2>Dfgprint</h2>
+
+<p>Data Flow Graph Printer: A sample Oink tool that shows you how to
+access the intER-procedural data flow graph, provided by the
+dataflow_* modules.  For now we just print it out.
+
+<p><b>
+dfgprint_cmd.cc
+dfgprint_cmd.h
+</b>
+
+<br>Process command-line arguments.
+
+<p><b>
+dfgprint.cc
+dfgprint.h
+</b>
+
+<br>Primary functionality.
+
+<p><b>
+dfgprint_global.cc
+dfgprint_global.h
+</b>
+
+<br>All the globals for dfgprint in one place.
+
+<p><b>
+dfgprint
+dfgprint_main.cc
+</b>
+
+<br>Just the main() function.
+
+<p><b>
+dfgprint_test.incl.mk
+</b>
+
+<br>Included makefile for testing.
+
+<hr>
+<h2>Qual</h2>
+
+<p>Qualifier analysis: The flagship Oink tool that hooks Scott
+McPeak's C++ front-end elsa, the oink dataflow functionality, and Rob
+Johnson's libqual backend together into a polymorphic qualifier
+analysis for C and C++.
+
+<p><b>
+qual_cmd.cc
+qual_cmd.h
+</b>
+
+<br>Process command-line arguments.
+
+<p><b>
+qual_global.cc
+qual_global.h
+</b>
+
+<br>All globals in one place.
+
+<p><b>
+qual_ext.tok
+</b>
+
+<br>Qual extensions to the lexing tokens.
+
+<p><b>
+qual_ext.lex
+</b>
+
+<br>Qual extensions to the lexer.
+
+<p><b>
+qual.lex
+</b>
+
+<br>Generated lexer file for lexing the qual extensions to elsa.
+
+<p><b>
+qual_lexer.yy.cc
+</b>
+
+<br>Qual lexer generated by flex.
+
+<p><b>
+qual.gr
+qual.gr.gen.cc
+qual.gr.gen.h
+qual.gr.gen.out
+</b>
+
+<br>qual.gr is a grammar specification file for the modifications that
+qual makes to the elsa grammar (beyond those of oink).  The other
+files are generated from the collection of .gr files by elkhound.
+
+<p><b>
+qual.ast
+</b>
+
+<br>An AST specification file for the modifications that qual makes to
+Elsa's AST (beyond those of oink).
+
+<p><b>
+qual_ast_aux.cc
+qual_ast_aux.h
+</b>
+
+<br>Implementation of functions declared in the qual.ast file.
+
+<p><b>
+qual_literal.cc
+qual_literal.h
+</b>
+
+<br>Implements 1) representing the syntax and 2) providing the
+semantics of qualifier literals such as $tainted.
+
+<p><b>
+qual_funky.cc
+qual_funky.h
+</b>
+
+<br>The word "polymorphic" is seriously overloaded in the world of
+programming languages.  Implementation of the polymorphic ("funky")
+qualifier literals syntax, such as this.
+<pre>
+   char $_1 * strchr(const char $_1 * s, int c);
+</pre>
+
+<p><b>
+qual_value_children.cc
+qual_value_children.h
+</b>
+
+<br>Qual versions of the Value classes, such as this.
+<pre>
+   class CVAtomicValue_Q : public CVAtomicValue
+</pre>
+
+<p><b>
+qual_var.cc
+</b>
+
+<br>Qual extensions to the oink variable system.  These functions
+would go on a "qual annot variable" class except that there is no
+extra state so no such extra class is necessary.
+
+<p><b>
+qual_annot.cc
+qual_annot.h
+</b>
+
+<br>Annotations onto the *Value_Q types that hold the libqual backend
+annotations.  The idea is to keep the libqual backend implementation
+of the oink/qual_* modules somewhat separated from oink/qual_* itself.
+
+<p><b>
+qual_dataflow_visitor.cc
+qual_dataflow_visitor.h
+qual_dataflow_ex.cc
+qual_dataflow_ex.h
+qual_dataflow_ty.cc
+qual_dataflow_ty.h
+</b>
+
+<br>Qual subclasses of the respective dataflow modules; these classes
+inherit from the generic dataflow and modify its behavior for purposes
+of the qual analysis.
+
+<p><b>
+qual_value_print.cc
+qual_value_print.h
+</b>
+
+<br>Modifications to the Type/Value pretty-printing process to
+implement the -fq-print-trans-qual functionality.  A 'type printer'
+for oink [Abstract] Values that will also print the conclusions of the
+backend as to the qualifiers that apply at each point.
+
+<p><b>
+qual_xml_value_reader.cc/.h
+qual_xml_value_writer.cc/.h
+</b>
+
+<br>Subclasses of xml_value_reader.h and xml_value_writer.h
+respectively that serialize the *Value_Q and Variable_Q classes
+instead of their Oink versions.  These qual classes do not actually
+have additional data, so the serialization just renames the tags and
+re-uses the oink serialization.
+
+<p><b>
+qual_libqual_iface.cc
+qual_libqual_iface.h
+</b>
+
+<br>An interface to the libqual polymorphic qualifier backend.
+
+<p><b>
+qual.cc
+qual.h
+</b>
+
+<br>The primary functionality that qual adds to oink.  Provides
+implementation of each stage of processing, but leaves it to a main()
+function to call those methods.
+
+<p><b>
+qual_main.cc
+</b>
+
+<br>Just the main() function for the qual analysis proper.
+
+<p><b>
+qual
+</b>
+
+<br>The qual executable.
+
+<p><b>
+qual_taintXcasts.lattice
+</b>
+
+<br>Qual lattice file that implements a $tainted analysis that
+survives through casts.
+
+<p><b>
+quals.dot
+</b>
+
+<br>File generated by the -fq-print-quals-graph flag by the libqual backend.
+
+<p><b>
+qual_graph_component
+</b>
+
+<br>Filter the quals.dot output of the backend so that the resulting
+graph consists only of the connected component containing a single
+given root node.
+
+<p><b>
+qual_parse_test.incl.mk
+qual_result_test.incl.mk
+qual_serialization_test.incl.mk
+qual_test.incl.mk
+</b>
+
+<br>Included makefiles for testing the qual tool.
+
+<hr>
+<p>&copy; 2002-2006 Daniel S. Wilkerson
+
+<h2>&nbsp;</h2>
+
+</body>
+</html>

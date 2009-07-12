@@ -1,0 +1,236 @@
+<html>
+<head>
+<title>Cqual++ Quick-Start</title>
+</head>
+<body bgcolor=white>
+
+<h1>Cqual++ Quick-Start</h1>
+
+<p><a href=index.html>Oink Main Documentation</a>
+
+<p>On this page we show you how to use Oink/Cqual++ to find <a
+href=http://en.wikipedia.org/wiki/Format_string_vulnerabilities>printf
+format string bugs</a> in <u>your</u> code as soon as possible.  You
+can do other things with Oink as well, but we want to show you the
+end-to-end process of doing one useful thing right away.  Some of this
+information is redundant with that of the <a href=index.html>main Oink
+page</a>; I repeat it so these instructions would be self-contained.
+You need to do the following.<ul>
+
+<li><a href="#get_oink">Get Oink</a>.
+
+<li><a href="#config_build">Configure and build Oink</a>.
+
+<li><a href="#intercept">Intercept the preprocessed files</a> (.i
+files) from your own project.
+
+<li><a href="#run">Run Cqual++</a>.
+
+<li><a
+href="http://www.pokergazette.com/simpnews/singlenews.php?newsnr=941">Read
+'em and weep</a>.
+
+</ul>
+
+<a name=get_oink>
+<h2>Get Oink</h2>
+</a>
+
+<p>You can get the latest <a
+href="http://www.cubewano.org/oink/releases/">tarball release</a>.
+However I suggest instead that you get oink directly from the
+subversion repository; everything you need is actually in one single
+container repository called <tt>oink-stack</tt>.  You will need an
+ssl-enabled <a href=http://subversion.tigris.org>subversion</a>
+client.  NOTE: We have a report that TortoiseSVN is not working; use
+the command-line svn utility.
+
+<blockquote>
+   <tt>svn checkout https://svn.cubewano.org/repos/oink-stack/trunk oink-stack</tt>
+</blockquote>
+
+<a name=config_build>
+<h2>Configure and Build Oink</h2>
+</a>
+
+<p>To build everything, in <tt>oink-stack/</tt> type:
+
+<blockquote><tt>
+  ./configure && make clean all check
+</tt></blockquote>
+
+<p>Upon successful build, you should see
+
+<blockquote><tt>
+  ================================================================<br/>
+  DONE in all directories: check<br/>
+  ================================================================<br/>
+</tt></blockquote>
+
+<p>If you have problems with the platform-model tests failing with a
+segmentation fault, this seems to often be due to problems with
+libzipios++ and zlib.  Make sure that your version of these libraries
+was built with the same version of the compiler that you are building
+Oink with.  Another solution is to just turn off zip archiving,
+falling back to a more primitive method.  Do this from the oink-stack
+directory as follows.
+
+<blockquote><tt>
+  ./configure +platform-model:--archive-srz=dir +oink:-require-no-archive-srz-zip
+</tt></blockquote>
+
+<a name=intercept>
+<h2>Intercept your .i files</h2>
+</a>
+
+<p>Oink works on files that have been through the preprocessor,
+usually known as .i files.  You have to get these files from the build
+process of your project somehow.  If your project has a simple build
+process and uses gcc, you can do this by just adding
+<tt>-save-temps</tt> to the compile flags, which we will use here.
+For industrial-strength build process interception of any build
+process using gcc you may want to use <a
+href=http://build-interceptor.tigris.org/>build-interceptor</a>.
+
+<p>For demonstration purposes I have written a really simple example
+project in oink-stack/oink/Test/Quickstart1/.  All of the changes to
+the makefile needed to produce the .i files amount to these as
+follows.
+
+<pre>
+    TOCLEAN += *.i *.s
+    CFLAGS += -save-temps
+</pre>
+
+<p>Here it the build process in action.
+
+<pre>
+    cd /home/dsw/oink-stack/oink/Test/Quickstart1/
+    make clean all check
+    rm -f  *.i *.s *.o hello
+    cc -save-temps -c -o main.o main.c
+    cc -save-temps -c -o g.o g.c
+    cc -o hello main.o g.o
+    Testing.
+    HELLO='good data' ./hello
+    Hello, World!  The important data is good data
+    HELLO='evil data' ./hello
+    Hello, World!  The important data is evil data
+</pre>
+
+<a name=run>
+<h2>Run Cqual++</h2>
+</a>
+
+<p>We now want to run Oink/Cqual++, <tt>oink-stack/oink/qual</tt>, on
+the .i files.  In general, to learn more about what Oink/Cqual++ it
+can do, see <a href=qual.html>the Cqual++ documentation</a>; for more
+on its command line flags, type <tt>oink-stack/oink/qual --help</tt>.
+
+<p>To illustrate how to get started, I have added to the
+<tt>oink-stack/oink/Test/Quickstart1/Makefile</tt> a section just to
+do this for you.
+
+<pre>
+    OINK_STACK := ../../..
+    .PHONY: analyze
+    analyze: all
+            $(OINK_STACK)/oink-scripts/bin/qualx main.i g.i -lc
+</pre>
+
+<p>Here it is in action.  Note that the total time includes loading
+the libc dataflow model, so Cqual++ will seem rather slow for
+analyzing such a tiny program; I talk about this below.
+
+<pre>
+    cd /home/dsw/oink-stack/oink/Test/Quickstart1/
+    make analyze
+    ../../../oink-scripts/bin/qualx main.i g.i -lc
+    Reporting 4 of 4 errors (including anonymous)
+
+        . . . (skipping duplicate errors) . . .
+
+    main.i:1823 WARNING (4 of 4):  ( (getenv) ( ("HELLO")))' treated as $tainted and $untainted
+
+     ( (getenv) ( ("HELLO")))': $tainted $untainted 
+    /home/dsw/oink-stack/platform-model/libc_glibc-2.3.5/src/stdlib.qual.i:2178:15: $tainted <=  t149145-char
+    main.i:1631:13: <= getenv_ret'
+    main.i:1823:3: <=  ( (getenv) ( ("HELLO")))'
+    main.i:1823:3: <= data''
+    main.i:1824:3: <=  t5117-char
+    main.i:1815:6: <=  t5117-char
+    main.i:1815:6: <= data''
+    main.i:1817:5: <=  t1628-char
+    main.i:10:6: <=  t6740-char
+    g.i:918:6: <=  t8488-char
+    g.i:918:6: <= data''
+    g.i:920:3: <=  const t7909-char
+    g.i:644:12: <=  const t85944-char
+    /home/dsw/oink-stack/platform-model/libc_glibc-2.3.5/src/stdio.qual.i:1990:5: <= $untainted
+
+    make: *** [analyze] Error 32
+</pre>
+
+<p>As you can see, Cqual++ is showing you a dataflow path from
+<tt>$tainted</tt> to <tt>$untainted</tt>; note that the output format
+is designed so that in emacs compile mode, C-x backtick should take
+you from one line to the next.  Since <tt>$tainted</tt> does indeed
+flow to <tt>$untainted</tt>, Cqual++ returns error code 32, rather
+than 0.
+
+<h3>Presentation bugs</h3>
+
+<p>Please note that we do not normally use Cqual++ manually in the way
+I am illustrating (we use it wrapped with other tools etc) so in
+preparing this Quick-Start a few bugs have been revealed to us.<ul>
+
+<li>There is a long standing bug that the "same" error is often
+reported more than once.  This is harder to fix that it may at first
+appear: the backend finds many "bad" dataflow paths and it could just
+report them all, but instead it uses heuristics to try to report the
+ones you are most likely to be interested in; in this example the
+heuristics are not managing to reduce all of them down to one.
+
+<li>Per the previous point, in the output above, I have removed all
+but the last error report in order to eliminate redundancy.  If you
+actually run this example and look at all of the output you will
+notice another bug: some of the error reports do not properly print
+the names of the variables or expressions in the path.
+
+<li>We give source locations in the .i files instead of mapping them
+back to the .c files.  We can map the locations back to the .c files,
+but doing that is, right now, strangely triggering another bug.
+
+</ul>
+
+<h3>Going further</h3>
+
+<p>You may ask yourself "wow, this is awfully slow just to analyze
+such a tiny program".  The problem is that we are linking against Karl
+Chen's entire dataflow model for libc (note the flag -lc), which is
+really large.  If you would like to avoid that delay you can write
+your own annotations just for the headers that you use and include
+only them.  Doing this makes it much faster to run experiments: on a
+small program that doesn't load the libc dataflow model Cqual++
+finishes immediately.  The following examples are self-contained like
+this.<ul>
+
+<li><a href=qual.html#jeffs_example>Jeff Foster's Canonical Cqual
+Example</a> for the original and best example :-).
+
+<li>For a <a href=qual.html#horrible_example>more dramatic demo</a> on
+C++, see the horrible target in the makefile oink/Demo.mk.
+
+</ul>
+
+<p>For lots more, see the main <a href="qual.html">Cqual++
+Documentation</a>.
+
+<hr>
+<p>&copy; 2002-2006 Daniel S. Wilkerson
+</p>
+
+<h2>&nbsp;</h2>
+
+</body>
+</html>

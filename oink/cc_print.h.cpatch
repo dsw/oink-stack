@@ -1,0 +1,12 @@
+// see License.txt for copyright and terms of use
+// Oink modifications for cc_print.h
+// codepatch.pl script to apply to Elsa's cc_print.h to
+// arrive at Oink's version of the same file
+
+// remove the TypeLike placeholder typedef, because oink_type.h
+// defines the Oink version (a class)
+comment_line
+typedef Type TypeLike;
+
+
+// EOF

@@ -1,0 +1,171 @@
+# see License.txt for copyright and terms of use
+
+@CONFIGURE_SPLASH@
+
+# The top level driver makefile; implements all of the features
+# usually provided by a makefile, such as building and testing.  It
+# includes (possibly indirectly) many makefiles suffixed with
+# '.incl.mk'.
+
+# this variable allows us to check in other makefiles that they are
+# not being run stand-alone
+TOP_LEVEL_MAKEFILE := something-other-than-empty-string
+
+# FIX: To make sure that these tests are correct, should make sure
+# that noclobber is unset or use the shell redirections that override
+# it.
+
+# where things are ****
+STACK_DIR  := ..
+
+SMBASE_DIR := @SMBASE_DIR@
+AST_DIR    := @AST_DIR@
+EHD_DIR    := @EHD_DIR@
+ELSA_DIR   := @ELSA_DIR@
+LIBQUAL_DIR   := @LIBQUAL_DIR@
+
+TMP_DIR := @TMP_DIR@
+
+CFG  := $(LIBQUAL_DIR)/config/lattice
+CFGT := $(LIBQUAL_DIR)/config/taint.lattice
+DEP  := $(SMBASE_DIR)/depend.pl
+
+# programs ****
+
+SHELL := bash
+# sort 2.0.11 doesn't work; Perl rules!
+SORT := perl -e 'print sort(<>)'
+
+# all ****
+
+.SUFFIXES:
+
+.PHONY: all
+all:
+
+# 'some' is a subset of 'all' so that when debugging we don't have to make all
+# the tester programs too.
+.PHONY: some
+some:
+
+.PHONY: ANNOUNCE
+ANNOUNCE:
+	@echo "-------------------- Oink --------------------"
+
+
+.PHONY: tmpdir
+tmpdir: $(TMP_DIR)
+$(TMP_DIR):
+	mkdir -p $(TMP_DIR)
+
+# clean ****
+
+# using '+=', add to TOCLEAN things you want to get cleaned by the
+# clean: target; Note that this is an '=' variable, not a ':=' one
+TOCLEAN =
+# Some generic stuff to get rid of
+TOCLEAN += *.o *.a a.out *.gen.out
+# use TOCLEAN_DIR for directories
+TOCLEAN_DIR = $(TMP_DIR)
+.PHONY: clean
+clean: clean-check
+	rm -f $(TOCLEAN)
+	rm -rf $(TOCLEAN_DIR)
+
+# distclean ****
+
+# using '+=', add to TODISTCLEAN things you want to get cleaned by the
+# distclean: target; Note that this is an '=' variable, not a ':=' one
+TODISTCLEAN =
+# Some generic stuff to get rid of
+TODISTCLEAN +=
+# use TOCLEAN_DIR for directories
+TOCLEAN_DIR =
+.PHONY: distclean
+distclean: clean
+	rm -f $(TODISTCLEAN)
+	rm -rf $(TODISTCLEAN_DIR)
+
+# configure ****
+
+# re-create the configured files if the .in file has changed
+CONFIGURED_FILES := Makefile Build.incl.mk
+TODISTCLEAN += $(CONFIGURED_FILES)
+$(CONFIGURED_FILES): %: %.in
+	./config.status
+
+# build ****
+
+# Should come after TOCLEAN is defined above
+include Build.incl.mk
+
+# test ****
+
+# run quiet, no names (for speed)
+QUALFLAGS := 
+#QUALFLAGS :=  -fq-flow-compoundDown
+QUAL    := ./qual -fq-no-explain-errors -fq-no-names $(QUALFLAGS)
+QUALCFG  := $(QUAL) -q-config $(CFG)
+QUALCFGT := $(QUAL) -q-config $(CFGT)
+include Test.incl.mk
+
+# etags ****
+
+TOCLEAN += TAGS
+# turn this on if you want etags built for you by default; FIX: make
+# this a configure option
+# all: TAGS
+TAGS:; etags --members --typedefs *.cc *.h
+
+# count source lines ****
+
+# This should give the right answer even after a "make all", since we
+# filter the generated files.
+
+GENREGEX := '\.gen\.\|lexer\.yy\|cc_tokens'
+.PHONY: count-loc
+count-loc:
+	@echo
+	@echo "**** Count of lines of source code in this directory by file type."
+	@echo; echo "C++, C, and headers:"
+	ls *.cc *.h | grep -v $(GENREGEX) | xargs wc -l | grep total
+	@echo; echo "tok, lex, gr, and ast:"
+	ls *_ext.tok *_ext.lex *.gr *.ast | grep -v $(GENREGEX) | xargs wc -l | grep total
+	@echo; echo "sum of those:"
+	ls *.cc *.h *_ext.tok *_ext.lex *.gr *.ast | grep -v $(GENREGEX) | xargs wc -l | grep total
+	@echo; echo "Makefiles:"
+	ls Makefile.in *.incl.mk | xargs wc -l | grep total
+
+# creating "dot" format graph files ****
+
+TODOTCLEAN =
+TOCLEAN += $(TODOTCLEAN)
+dotclean:; rm -f $(TODOTCLEAN)
+
+.PHONY: %.dot.ps
+TODOTCLEAN += *.dot.ps
+%.dot.ps: %.dot
+	dot -Tps -o $@ $<
+
+.PHONY: %.cc-dot.ps
+TODOTCLEAN += *.cc-dot.ps
+%.cc-dot.ps: %.cc-dot
+	dot -Tps -o $@ $<
+
+# cqual
+.PRECIOUS: %.dot
+.PHONY: %.dot
+TODOTCLEAN += *.dot
+%.dot:
+	rm -f quals.dot
+	cqual/src/cqual -fprint-quals-graph -fugly -config $(CFG) Test/$*
+	mv quals.dot $@
+
+# qual
+.PRECIOUS: %.cc-dot
+.PHONY: %.cc-dot
+TODOTCLEAN += *.cc-dot
+%.cc-dot:
+	rm -f quals.dot
+	./qual -fprint-quals-graph -fugly -config $(CFG) Test/$*
+	mv quals.dot $@

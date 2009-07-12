@@ -1,0 +1,12 @@
+__constr_expr_0.a0 = 0;
+__constr_expr_0.a0 = 4;
+__constr_expr_0.a1 = 1;
+__constr_expr_0.a1 = 5;
+c2[0].x.a0 = 4;
+c2[0].x.a1 = 5;
+c2[1].x.a0 = 6;
+c2[1].x.a1 = 7;
+c[0].x.a0 = 0;
+c[0].x.a1 = 1;
+c[1].x.a0 = 2;
+c[1].x.a1 = 3;

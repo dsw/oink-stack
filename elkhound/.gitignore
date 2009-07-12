@@ -1,0 +1,86 @@
+# configuration
+Makefile
+config.status
+config.summary
+
+# dependency files
+*.d
+# objects
+*.o
+# archives
+*.a
+
+# executables
+elkhound
+testcout
+mlsstr
+
+# generated files
+*.gen.h
+*.gen.cc
+*.gen.out
+*.gen.y
+*.exe
+
+gramlex.yy.cc
+
+c.in/c.in4c
+c.in/c.in4d
+
+triv/*.gr
+c/c.tok
+c/cparse
+c/lexer2
+
+# temp files
+*.tmp
+tmp.txt
+test-bad-tmp.c
+
+# test output
+*.dSYM
+
+# other
+ffollow.cc
+ffollow.h
+glrconfig.h
+
+examples/arith/arith
+examples/cdecl/cdecl
+examples/cexp/cexp3
+examples/cexp/cexp3b
+examples/cexp/cexp3b.gr
+examples/crash1.cc
+examples/crash1.h
+examples/gcom/ast.cc
+examples/gcom/ast.h
+examples/gcom/gcom.cc
+examples/gcom/gcom.h
+examples/gcom/lexer
+examples/gcom/parser
+examples/gcom/tokens.tok
+examples/gcom1/gcom.cc
+examples/gcom1/gcom.h
+examples/gcom1/lexer
+examples/gcom1/parser
+examples/gcom1/tokens.tok
+examples/gcom4/gcom.cc
+examples/gcom4/gcom.h
+examples/gcom4/lexer
+examples/gcom4/parser
+examples/gcom4/tokens.tok
+examples/gcom5/gcom.cc
+examples/gcom5/gcom.h
+examples/gcom5/lexer
+examples/gcom5/parser
+examples/gcom5/tokens.tok
+examples/gcom7/ast.cc
+examples/gcom7/ast.h
+examples/gcom7/gcom.cc
+examples/gcom7/gcom.h
+examples/gcom7/lexer
+examples/gcom7/parser
+examples/gcom7/tokens.tok
+examples/scannerless/sless
+examples/scannerless/sless.cc
+examples/scannerless/sless.h

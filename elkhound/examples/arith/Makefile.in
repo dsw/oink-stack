@@ -1,0 +1,58 @@
+# Makefile for arith example
+
+
+# -------- external tools and libraries --------
+# paths to the relevant subsystems
+SMBASE        := @SMBASE@
+AST           := @AST@
+ELKHOUND      := @ELKHOUND@
+
+CXX := @CXX@
+
+# Elkhound runtime support library
+LIBELKHOUND := $(ELKHOUND)/libelkhound.a
+
+
+# -------- compiler and linker configuration --------
+# preprocessing flags
+CPPFLAGS := -I$(ELKHOUND) -I$(AST) -I$(SMBASE)
+
+CCFLAGS := @CCFLAGS@ -I$(ELKHOUND) -I$(AST) -I$(SMBASE)
+
+# linking flags
+LDFLAGS := $(LIBELKHOUND) $(SMBASE)/libsmbase.a
+
+
+# -------- targets --------
+# main target
+all: arith
+
+# tell 'make' that it cannot compile arith.cc until after
+# it has generated arith.gr.gen.h
+arith.o: arith.gr.gen.h
+
+# invoke the parser generator
+arith.gr.gen.cc arith.gr.gen.h: arith.gr
+	$(ELKHOUND)/elkhound -v -o arith.gr.gen arith.gr
+
+# invoke the lexer generator
+arithyy.cc: arith.lex
+	flex -o$@ arith.lex
+
+# compile a C++ source file
+%.o: %.cc
+	$(CXX) -c $(CCFLAGS) $(CPPFLAGS) $*.cc
+
+# link the driver code with the generated parser and lexer;
+# also run it with a test input
+arith: arith.o arithyy.o arith.gr.gen.o
+	$(CXX) -o $@ -g $^ $(LDFLAGS)
+	echo "3 + 4 * 5" | ./arith 
+	echo "3 + 4 * 5" | ./arith printTree
+
+
+clean:
+	rm -f arith *.bin *.gen.* *.o
+
+toolclean: clean
+	rm -f arithyy.cc

@@ -1,0 +1,5 @@
+void g(int x = (int) 0);
+
+void f() {
+  g();
+}

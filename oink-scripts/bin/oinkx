@@ -1,0 +1,25 @@
+#!/usr/bin/perl
+
+# $Id$
+
+package QTool::Qoink;
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::RealBin/../lib";
+use QTool ':all';
+use base 'QTool';
+
+sub Init {
+    my ($self) = @_;
+
+    $self->{TOOL} = $OINK;
+    $self->{ARCHIVE_SRZ_EXT_PFX} = 'o';
+
+    $self->{CPP_CMD} .= " -DOINK";
+}
+
+my $qtool = __PACKAGE__->new();
+$qtool->Run();

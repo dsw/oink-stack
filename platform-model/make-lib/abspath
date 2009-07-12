@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+# $Id$
+
+# helper script that prints abspath of argument
+
+import os, sys
+print os.path.abspath(sys.argv[1])

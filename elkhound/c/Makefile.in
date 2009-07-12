@@ -1,0 +1,149 @@
+# Makefile.in
+# this is the Makefile for the Elkhound-based C Parser
+
+# main target: an Elkhound-based C parser
+all: cparse
+
+# directories of other software
+SMBASE   := @SMBASE@
+AST      := @AST@
+ELKHOUND := @ELKHOUND@
+
+# stuff inside those other directories
+LIBSMBASE   := $(SMBASE)/libsmbase.a
+LIBAST      := $(AST)/libast.a
+LIBELKHOUND := $(ELKHOUND)/libelkhound.a
+
+
+# re-create the Makefile if Makefile.in has changed
+Makefile: Makefile.in
+	./config.status
+
+
+# ----------------------- compiler configuration -------------------
+# C++ preprocessor, compiler and linker
+CXX := @CXX@
+
+# flags for the C++ compiler (and preprocessor)
+CCFLAGS := @CCFLAGS@ -I$(SMBASE) -I$(AST) -I$(ELKHOUND)
+
+# flags for the linker
+libraries := $(LIBELKHOUND) $(LIBAST) $(LIBSMBASE)
+LDFLAGS := -g -Wall $(libraries)
+
+
+# compile .cc in this directory to a .o
+%.o: %.cc
+	$(CXX) -c -o $@ $< $(CCFLAGS)
+	@perl $(SMBASE)/depend.pl -o $@ $< $(CCFLAGS) >$*.d
+
+
+# ----------------------- lexer2 -------------------
+# run flex on the lexer description
+lexer1yy.cc: lexer1.lex lexer1.h
+	flex lexer1.lex
+
+
+# modules needed for lexer2 stand-alone
+LEXER2_OBJS := \
+  lexer1.o \
+  lexer1yy.o \
+  cc_lang.o
+
+# lexer2 stand-alone binary
+lexer2: lexer2.cc lexer2.h $(LEXER2_OBJS)
+	$(CXX) -o $@ -DTEST_LEXER2 $(CCFLAGS) lexer2.cc $(LEXER2_OBJS) $(LDFLAGS)
+
+
+# ------------------------- cparse ---------------------
+# run lexer2 stand-alone to generate token list
+c.tok: lexer2
+	./lexer2 -myparser >$@
+
+# run astgen to generate the AST implementation
+c.ast.gen.h c.ast.gen.cc: c.ast
+	$(AST)/astgen -oc.ast.gen c.ast
+
+
+# run elkhound to generate the parser
+c.gr.gen.h c.gr.gen.cc c.gr.gen.y: c.gr c.tok
+	$(ELKHOUND)/elkhound -tr bison -v -o c.gr.gen c.gr
+
+
+# list of modules needed for the parser
+CPARSE_OBJS := \
+  lexer1.o \
+  lexer1yy.o \
+  cc_lang.o \
+  lexer2.o \
+  parssppt.o \
+  c.ast.gen.o \
+  c_env.o \
+  cc_flags.o \
+  c_type.o \
+  cparse.o \
+  exprequal.o \
+  exprvisit.o \
+  paths.o \
+  postorder.o \
+  stubs.o \
+  tcheck.o \
+  treeout.o \
+  c_variable.o \
+  c.gr.gen.o \
+  main.o
+
+# parser binary
+cparse: $(CPARSE_OBJS)
+	$(CXX) -o $@ $(CPARSE_OBJS) $(LDFLAGS)
+	./$@ $(ELKHOUND)/c.in/c.in1
+
+
+# ----------------------- bcparse ---------------------
+# NOTE: This target ('bcparse') is not built by default because
+# I don't want the default build to require Bison.
+
+# bison parser from the same grammar; the 'sed' is because Bison
+# already interpretes 0 as EOF, and if my rule names it explicitly
+# then it gets mad
+bcparse.y: c.gr.gen.y
+	echo '%{' >$@
+	echo '#include "bcparse.h"' >>$@
+	echo '%}' >>$@
+	sed -e 's/File L2_EOF/File/' <c.gr.gen.y >>$@
+
+# run Bison; the 'sed' command is to silence a spurious warning about
+# 'yyval' being used uninitialized; I also compile here (instead of
+# relying on another pattern rule) because I want to control exactly
+# how the compilation happens (to ensure the Bison-parser is compiled
+# with flags to make it a fair performance test with my own stuff)
+%.tab.c %.tab.o %.tab.h: %.y
+	bison -d -v $*.y
+	mv $*.tab.c $*.tab.c.orig
+	sed -e 's/YYSTYPE yyval;/YYSTYPE yyval = 0;/' \
+	    -e 's/__attribute__ ((__unused__))//' \
+	  <$*.tab.c.orig >$*.tab.c
+	rm $*.tab.c.orig
+	$(CXX) -c -g -o $*.tab.o -O2 -DNDEBUG -Wall $(YYDEBUG) $*.tab.c
+
+# C-without-typedefs parser, using Bison
+bcparse-deps := bcparse.cc bcparse.tab.o lexer1.o lexer1yy.o lexer2.o cc_lang.o
+bcparse: $(bcparse-deps) $(libraries)
+	$(CXX) -o $@ $(CCFLAGS) $(bcparse-deps) $(LDFLAGS)
+	./$@ $(ELKHOUND)/c.in/c.in1
+
+
+# -------------------- clean, etc. -------------------
+clean:
+	rm -f *.o *.d *.gen.* *.tab.* *.output a.out core
+	rm -f bcparse.y c.tok
+	rm -f lexer2 cparse bcparse
+
+distclean: clean
+	rm -f Makefile config.status config.summary
+
+toolclean: clean
+	rm -f lexer1yy.cc
+
+check:
+	@echo "The C parser doesn't have an independent 'make check'."

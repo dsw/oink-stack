@@ -1,0 +1,1 @@
+int prctl (int option, ...) {}

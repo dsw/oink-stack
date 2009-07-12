@@ -1,0 +1,21 @@
+#!/usr/bin/env python2.4
+
+# $Id$
+
+# runtest input_file.i [additional args]
+
+#   - runs gcc input_file.i
+#   - runs qqual input_file.i additional args
+#   - prints PASS or FAIL to stdout and returns 0, else test is malformed
+
+from testsuite import *
+
+input_file = sys.argv[1]
+qual_args = sys.argv[2:]
+
+try:
+    runtest1(input_file, qual_args, 'C')
+except TestException, e:
+    print e
+else:
+    print 'TEST PASSED:', input_file

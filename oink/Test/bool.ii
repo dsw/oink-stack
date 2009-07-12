@@ -1,0 +1,2 @@
+//  int y;
+bool x;

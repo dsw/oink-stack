@@ -1,0 +1,92 @@
+delayed-specialization-committment.txt
+
+This document explains how Elsa does delayed committment to an
+explicit specialization, a feature (somewhat subtly) implied by cppstd
+14.7.3p6.
+
+
+The issue
+---------
+
+14.7.3p6 begins:
+
+  "If a template, a member template or the member of a class template is
+   explicitly specialized then that specialization shall be declared
+   before the first use of that specialization that would cause an
+   implicit instantiation to take place, in every translation unit in
+   which such a use occurs; no diagnostic is required."
+
+The key here the restriction to uses that "would cause an implicit
+instantiation to take place".  14.7.1 defines when implicit
+instantiation must take place, but the essence is given in the
+first paragraph:
+
+  "[...] the class template specialization is implicitly instantiated
+   when the specialization is referenced in a context that requires a
+   completely-defined object type or when the completeness of the class
+   type affects the semantics of the program."
+
+For example, in in/t0612.cc, B<int*> is initially only referred to as
+part of the declaration of a *pointer*, but a pointer need not point
+to a complete type (unless it is dereferenced; overload resolution
+will also cause instantiation if possible), so we're not supposed to
+pick an explicit specialization for B<int*> yet.  Only when B<int*>
+must be instantiated can we pick the explicit specialization.  Again
+in in/t0612.cc, that doesn't happen until after B<T*> is declared.
+
+Previously, Elsa would associate every instantiation with the most
+specific explicit specialization at the time the instantiation is
+first mentioned, even for instantiations where the definition was left
+uninstantiated (CompoundType::forward is true).  This meant that we
+would select the specialization too soon, and get examples like
+in/t0612.cc wrong.
+
+
+The solution
+------------
+
+When a class template *declaration* (i.e., not the class body) is
+"instantiated", I will forego specialization selection and instead
+pretend that the proper specialization is the template primary itself.
+
+Later, when instantiation of the definition is requested, I will do
+specialization selection then, and move the template from the primary
+to the proper specialization if necessary.  This is a little messy,
+but it shouldn't be too bad; something similar is already done for
+explicit specializations of members.
+
+Note that, because of this, whenever an instantiation is referenced, I
+need to look for it *both* in the primary and in the proper
+specialization, because I won't know in advance if its definition has
+been instantiated.  That's a little inefficient, but the inefficiency
+aspect could easily be fixed if necessary.
+
+
+GCC compatibility
+-----------------
+
+Based on a few experiments I've done, I believe that GCC maintains a
+map in the template primary from template arguments to instantiation,
+even for instantiations of specializations.  It also does not do the
+check for violation of 14.7.3p6.  That means that an explicit spec
+kicks in only after it is declared, but that erroneous preceding
+non-uses continue to not use the spec after it is declared.
+
+Achieving compatibility with that behavior in Elsa is currently a bit
+difficult, because it would mean that (in addition to weakening Elsa's
+enforcement of 14.7.3p6) Env::instantiateClassTemplateDecl would have
+to not only check the primary and the most specific spec, but also all
+the intermediate specs that match but aren't most specific (b/c an
+inst could be hiding in any of them).
+
+Alternatively, I could add the map in the primary, which would be
+slightly more efficient (due to not having to check in two places),
+but also would be that much more state to maintain.
+
+Since Intel C++ *does* enforce 14.7.3p6, hopefully it will be enough
+to point out to people that the code is invalid and rejected by
+another compiler, rather than have to hack Elsa to support it.  So
+far I haven't run into any code that falls into this gap.
+
+
+EOF

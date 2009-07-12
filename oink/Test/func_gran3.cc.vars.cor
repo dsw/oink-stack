@@ -1,0 +1,8 @@
+F:B::~B SIG ()(/*m*/ )
+F:main
+Test/func_gran3.cc:11:3:constructor-special SIG ()()
+Test/func_gran3.cc:12:16:k SIG void ()(/*m*/ )
+Test/func_gran3.cc:16:3:constructor-special SIG ()()
+Test/func_gran3.cc:17:16:k SIG void ()(/*m*/ )
+Test/func_gran3.cc:5:3:constructor-special SIG ()(int)
+super-main

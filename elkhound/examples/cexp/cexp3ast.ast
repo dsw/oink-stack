@@ -1,0 +1,52 @@
+// cexp3ast.ast
+// simple expression AST
+
+verbatim {
+  inline string toString(Exp const *e) {
+    return stringc << (void*)e;
+  }
+}
+
+class Exp {
+  // reference count
+  private int refCt;
+  public void incRefCt();
+  public void decRefCt();      // deletes when it hits 0
+  
+  // whoever creates this object initially is its first owner,
+  // hence the refct starts at 1
+  ctor { refCt=0; incRefCt(); };
+
+  // number of nodes in this subtree, including myself
+  public(func) virtual int numNodes() const = 0;
+
+  // evaluate the arithmetic value of the subtree
+  public(func) virtual int eval() const = 0;
+
+  // merge alternative interpretations
+  public static Exp *mergeAlts(Exp *p1, Exp *p2);
+
+  // expression containing simply a literal integer
+  -> E_int(int i) {
+    public int numNodes() const
+      { return 1; };
+    public int eval() const
+      { return i; };
+  }
+
+  // 'op' can be either '+' or '*' 
+  // the explicit pointer notation means "serf"
+  -> E_op(char op, Exp *left, Exp *right) {
+    dtor {
+      left->decRefCt();
+      right->decRefCt();
+    };
+    public int numNodes() const
+      { return 1 + left->numNodes() + right->numNodes(); };
+    public int eval() const {
+      int L = left->eval();
+      int R = right->eval();
+      return op=='+'? L+R : L*R;
+    };
+  }
+}

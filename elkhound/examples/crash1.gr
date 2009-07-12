@@ -1,0 +1,11 @@
+// crash1.gr
+// an example from Jeremy Condit that caused Elkhound to crash
+
+context_class Context : public UserActions {};
+
+terminals {
+    0 : T;
+    token T { fun del(s) {} }
+}
+
+nonterm foo {}

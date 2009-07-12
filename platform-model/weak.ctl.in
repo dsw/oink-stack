@@ -1,0 +1,20 @@
+# $Id$
+
+# all symbols in $PATH are considered to have weak (library) linkage.
+
+weak-def:
+        archive = $PATH
+        name = *
+
+# TODO: factor these into a separate file or rename from weak.ctl.in.
+unsound-if-used:
+        file = *
+        name = dlopen
+
+unsound-if-used:
+        file = *
+        name = dlsym
+
+unsound-if-used:
+        file = *
+        name = dlvsym

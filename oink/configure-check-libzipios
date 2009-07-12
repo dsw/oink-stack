@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+# see License.txt for copyright and terms of use
+
+# quarl 2006-11-17
+#     Refactored from configure.pl.
+
+use File::Temp;
+
+print "Checking if -lzipios works...";
+
+my $c_fh = new File::Temp(TEMPLATE => "test_zipios_XXXXXXXX", SUFFIX => '.c');
+print $c_fh "#include <zipios++/zipoutputstream.h>\nint main(){}\n";
+close($c_fh);
+my $c_fn = $c_fh->filename;
+
+my $exe_fh = new File::Temp(TEMPLATE => "test_zipios_XXXXXXXX");
+close($exe_fh);
+my $exe_fn = $exe_fh->filename;
+
+my $have = (0==system("g++ @CFLAGS_EXTRA -o $exe_fn -lzipios $c_fn 2>/dev/null"));
+
+if ($have) {
+    print " ok\n";
+} else {
+    print " failed\n";
+}
+
+exit ($have ? 0 : 1);
+

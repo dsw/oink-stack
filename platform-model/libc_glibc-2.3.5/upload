@@ -1,0 +1,1 @@
+rsync -avP libc.fgcfg libc.oz libc.qz yin:proj/cqual++-stack/platform-model/libc_glibc-2.3.5

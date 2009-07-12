@@ -1,0 +1,41 @@
+// gnu_ext.tok  -*- c++ -*-
+// extension to cc_tokens.tok, for GNU language extensions
+
+// flags:
+//   MS(m): token has multiple spellings
+//   NS(n): token is a nonseparator; nonseparators cannot be adjacent
+//   CP(p): token is a keyword only in C++; in C it's an identifier
+
+// enumeration name      description                  : MS NS CP
+// ----------------      ---------------------------  : -- -- --
+
+// GNU extensions
+TOK_BUILTIN_CONSTANT_P,  "__builtin_constant_p",      :    n
+TOK___ALIGNOF__,         "__alignof__",               :    n
+TOK___OFFSETOF__,        "__offsetof__",              :    n
+TOK___BUILTIN_OFFSETOF,  "__builtin_offsetof",        :    n
+TOK___ATTRIBUTE__,       "__attribute__",             :    n
+TOK___FUNCTION__,        "__FUNCTION__",              :    n
+TOK___LABEL__,           "__label__",                 :    n
+TOK___PRETTY_FUNCTION__, "__PRETTY_FUNCTION__",       :    n
+TOK___TYPEOF__,          "__typeof__",                :    n
+TOK___EXTENSION__,       "__extension__",             :    n
+TOK___BUILTIN_EXPECT,    "__builtin_expect",          :    n
+
+  // varargs; dsw: I think that we should make all of these their own
+  // AST node, I just don't want to deal with the parsing ambiguity
+  // with E_funCall right now
+// TOK___BUILTIN_VA_START,  "__builtin_va_start",        :    n
+// TOK___BUILTIN_VA_COPY,   "__builtin_va_copy",         :    n
+TOK___BUILTIN_VA_ARG,    "__builtin_va_arg",          :    n
+// TOK___BUILTIN_VA_END,    "__builtin_va_end",          :    n
+
+TOK_MIN_OP,              "<?",                        :
+TOK_MAX_OP,              ">?",                        :
+TOK_REAL,                "__real__",                  :    n
+TOK_IMAG,                "__imag__",                  :    n
+
+// sm: these are C99 but I'm putting them here anyway..
+TOK_RESTRICT,            "restrict",                  :    n
+TOK_COMPLEX,             "_Complex",                  :    n
+TOK_IMAGINARY,           "_Imaginary",                :    n

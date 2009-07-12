@@ -1,0 +1,4 @@
+F:functionptr1 SIG void ()()
+F:functionptr2 SIG void ()()
+F:main
+super-main

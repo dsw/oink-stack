@@ -1,0 +1,11 @@
+x := 152;
+y := 104;
+do !(x = y) ->
+  print x;
+  print y;
+  if x < y -> y := y - x #
+     y < x -> x := x - y fi
+od;
+print x
+
+

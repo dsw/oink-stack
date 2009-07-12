@@ -1,0 +1,26 @@
+// gcom.gr
+// parser for guarded command example language
+
+// the parser context class is useful in large examples;
+// an empty one will suffice here
+context_class GCom : public UserActions {
+public:
+  // empty for now
+};
+
+// pull in the tokens generated from lexer.h
+terminals {
+  include("tokens.tok")
+}
+
+// now the grammar
+
+nonterm AExp {
+  -> TOK_LITERAL;
+  -> TOK_IDENTIFIER;
+  -> AExp "+" AExp;
+  -> AExp "-" AExp;
+  -> AExp "*" AExp;
+  -> "(" AExp ")";
+}
+

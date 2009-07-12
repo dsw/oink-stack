@@ -1,0 +1,179 @@
+// bpprint.ast
+// extends cc.ast to add entry points for bpprint.h
+
+// The additional methods are called 'print', the same as for
+// cc_print.h, so they are overloaded on the basis of the type of the
+// 'env' parameter.  One reason is that 'print' is a good name for
+// their purpose.  Another is that I may want to discard cc_print
+// entirely at some point, and then we'll be back to having just one
+// 'print' per AST node type.
+
+verbatim {
+  class BPEnv;               // bpprint.h
+}
+
+
+class TranslationUnit {
+  public void print(BPEnv &bp) const;
+}
+
+
+class TopForm {
+  pure_virtual void print(BPEnv &bp) const;
+}
+
+
+class Function {
+  public void print(BPEnv &bp, bool inClassDefn = false) const;
+}
+
+
+class MemberInit {
+  public void print(BPEnv &bp) const;
+}
+
+class Declaration {
+  public void print(BPEnv &bp) const;
+}
+
+
+class ASTTypeId {
+  public void print(BPEnv &bp) const;
+}
+
+
+class PQName {
+  pure_virtual void print(BPEnv &bp) const;
+}
+
+
+class ASTTypeof {
+  pure_virtual void print(BPEnv &bp) const;
+}
+
+
+class TypeSpecifier {
+  public void print(BPEnv &bp) const;
+  pure_virtual void iprint(BPEnv &bp) const;
+}
+
+
+class BaseClassSpec {
+  public void print(BPEnv &bp) const;
+}
+
+
+class Member {
+  pure_virtual void print(BPEnv &bp) const;
+}
+
+
+class Enumerator {
+  public void print(BPEnv &bp) const;
+}
+
+
+class Declarator {
+  public void print(BPEnv &bp) const;
+}
+
+
+class IDeclarator {
+  pure_virtual void print(BPEnv &bp) const;
+}
+
+
+class ExceptionSpec {
+  public void print(BPEnv &bp) const;
+}
+
+
+class OperatorName {
+  pure_virtual void print(BPEnv &bp) const;
+}
+
+
+class Statement {
+  public void print(BPEnv &bp) const;
+  pure_virtual void iprint(BPEnv &bp) const;
+  
+  -> S_compound {
+       // print the statements separated by breaks, but don't make the
+       // box and don't print braces
+       public void printNoBraces(BPEnv &bp) const;
+     }
+}
+
+
+class Condition {
+  pure_virtual void print(BPEnv &bp) const;
+}
+
+
+class Handler {
+  public void print(BPEnv &bp) const;
+}
+
+
+class FullExpression {
+  public void print(BPEnv &bp) const;
+}
+
+
+class ArgExpression {
+  public void print(BPEnv &bp) const;
+}
+
+
+class Expression {
+  // print a subexpression of 'this', possibly parenthesizing
+  // depending on relative prec/assoc
+  protected void printSubexp(BPEnv &bp, Expression const *subexp,
+                             bool isRightChild) const;
+  protected void printSubexpL(BPEnv &bp, Expression const *subexp) const
+    { printSubexp(bp, subexp, false /*isRightChild*/); };
+  protected void printSubexpR(BPEnv &bp, Expression const *subexp) const
+    { printSubexp(bp, subexp, true /*isRightChild*/); };
+
+  // print 'this' with given enclosing prec/assoc; the codes are
+  // private to the bpprint module
+  public void printExpPA(BPEnv &bp, int parentPA,
+                         bool isRightChild = false) const;
+
+  public void print(BPEnv &bp) const;
+  pure_virtual void iprint(BPEnv &bp) const;
+}
+
+
+class Initializer {
+  pure_virtual void print(BPEnv &bp) const;
+}
+
+
+class Designator {
+  pure_virtual void print(BPEnv &bp) const;
+}
+
+
+class TemplateDeclaration {
+  public void print(BPEnv &bp) const;
+  pure_virtual void iprint(BPEnv &bp) const;
+}
+
+
+class TemplateParameter {
+  pure_virtual void print(BPEnv &bp) const;
+}
+
+
+class TemplateArgument {
+  pure_virtual void print(BPEnv &bp) const;
+}
+
+
+class NamespaceDecl {
+  pure_virtual void print(BPEnv &bp) const;
+}
+
+
+// EOF

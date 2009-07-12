@@ -1,0 +1,401 @@
+/* -*- c++ -*-
+
+readpass.c
+
+  Author: Tatu Ylonen <ylo@ssh.com>
+
+  Copyright (C) 1995 Tatu Ylonen <ylo@ssh.com>, Espoo, Finland
+  Copyright (C) 1997-2000 SSH Communications Security Corp, Helsinki, Finland
+  All rights reserved.
+
+  Created: Mon Jul 10 22:08:59 1995 ylo
+
+  Functions for reading passphrases and passwords.
+
+*/
+
+
+// sm: stuff I've added to get it through my parser
+typedef void RETSIGTYPE;
+typedef /*bool*/ int Boolean;
+typedef struct FILE {
+  int foo;
+} FILE;
+void tcsetattr(...);
+int fileno(struct FILE *f);
+struct FILE *stdin;
+struct FILE *stdout;
+struct FILE *stderr;
+int TCSANOW;
+void ioctl(...);
+int TIOCSETP;
+//typedef void (*sighandler_t)(int);
+//sighandler_t signal(int signal, sighandler_t handler);
+void kill(int pid, int sig);
+int getpid();
+struct FILE *fopen(...);
+int fprintf(...);
+void fflush(struct FILE *f);
+int snprintf(...);
+char *getenv(char *);
+//typedef void AnyFn(...);
+//AnyFn popen, pclose, tcgetattr;
+int TIOCGETP, SIGINT, ECHO, ECHOE,
+    ECHOK, ECHONL;
+int c_lflag, sg_flags;
+int errno;
+void SSH_TRACE(int flag, void *whatever);
+//AnyFn strerror, fclose, ssh_xstrdup, memset;
+int isprint(char c);
+int isspace(char c);
+int iscntrl(char c);
+int strlen(char const *s);
+char *fgets(char *s, int size, struct FILE *stream);
+char *strchr(char *s, char c);
+struct termios {
+  int c_lflag;
+};    
+typedef int size_t;
+int read(int fd, void *buf, int count);
+int strcmp(char const *s1, char const *s2);
+
+//#include "ssh2includes.h"
+//#include "readpass.h"
+
+//#define SSH_DEBUG_MODULE "SshReadPass"
+
+/* Saved old terminal mode for read_passphrase. */
+//#ifdef USING_TERMIOS
+static struct termios saved_tio  /*thmprv_addr(addrtaken)*/;
+//#endif
+//#ifdef USING_SGTTY
+//static struct sgttyb saved_tio;
+//#endif
+
+/* Old interrupt signal handler for read_passphrase. */
+static void (*old_handler)(int sig) = 0/*NULL*/;
+
+/* Interrupt signal handler for read_passphrase. */
+
+void ssh_rp_intr_handler(int sig)
+{
+  /* Restore terminal modes. */
+//#ifdef USING_TERMIOS
+  tcsetattr(fileno(stdin), TCSANOW, &saved_tio);
+//#endif
+//#ifdef USING_SGTTY
+  //ioctl(fileno(stdin), TIOCSETP, &saved_tio);
+//#endif
+  /* Restore the old signal handler. */
+  signal(sig, old_handler);
+  /* Resend the signal, with the old handler. */
+  kill(getpid(), sig);
+}
+
+/* Reads a passphrase from /dev/tty with echo turned off.  Returns the
+   passphrase (allocated with ssh_xmalloc).  Returns NULL if EOF is encountered.
+   The passphrase if read from stdin if from_stdin is true (as is the
+   case with ssh-keygen).  */
+
+char *ssh_read_passphrase(const char *prompt, int from_stdin)
+{
+  char buf[1024], *cp;
+  unsigned char quoted_prompt[512];
+  unsigned char const *p;    // sm: swapped order of 'char' and 'const'
+//#ifdef USING_TERMIOS
+  struct termios tio;
+//#endif
+//#ifdef USING_SGTTY
+  //struct sgttyb tio;
+//#endif
+  struct FILE *f;
+  int i;
+  
+  if (from_stdin)
+    {
+      f = stdin;
+    }
+  else
+    {
+      /* Read the passphrase from /dev/tty to make it possible to ask it even 
+         when stdin has been redirected. */
+      f = fopen("/dev/tty", "r");
+      if (!f)
+        {
+          if (getenv("DISPLAY"))
+            {
+              char command[512];
+              
+              fprintf(stderr,
+                      "Executing ssh-askpass to query the password...\n");
+              fflush(stdout);
+              fflush(stderr);
+              for(p = (unsigned char const *) prompt, i = 0;
+                  i < sizeof(quoted_prompt) - 5 && *p;
+                  i++, p++)
+                {
+                  if (*p == '\'')
+                    {
+                      quoted_prompt[i++] = '\'';
+                      quoted_prompt[i++] = '\\';
+                      quoted_prompt[i++] = '\'';
+                      quoted_prompt[i] = '\'';
+                    }
+                  else if (isprint(*p) || isspace(*p))
+                    quoted_prompt[i] = *p;
+                  else if (iscntrl(*p))
+                    {
+                      quoted_prompt[i++] = '^';
+                      if (*p < ' ')
+                        quoted_prompt[i] = *p + '@';
+                      else
+                        quoted_prompt[i] = '?';
+                    }
+                  else if (*p > 128)
+                    quoted_prompt[i] = *p;
+                }
+              quoted_prompt[i] = '\0';
+  
+              snprintf(command, sizeof(command),
+                       "ssh-askpass '%.400s'", quoted_prompt);
+              
+              f = popen(command, "r");
+              if (f == 0/*NULL*/)
+                {
+                  fprintf(stderr, "Could not query passphrase: '%.200s' failed.\n",
+                          command);
+                  return 0/*NULL*/;
+                }
+              if (!fgets(buf, sizeof(buf), f))
+                {
+                  pclose(f);
+                  fprintf(stderr, "No passphrase supplied.\n");
+                  return 0/*NULL*/;
+                }
+              pclose(f);
+              if (strchr(buf, '\n'))
+                *strchr(buf, '\n') = 0;
+              return ssh_xstrdup(buf);
+            }
+
+          /* No controlling terminal and no DISPLAY.  Nowhere to read. */
+          fprintf(stderr, "You have no controlling tty and no DISPLAY.  Cannot read passphrase.\n");
+          return 0/*NULL*/;
+        }
+    }
+
+  for(p = (unsigned char const *) prompt, i = 0;
+      i < sizeof(quoted_prompt) - 4 && *p; i++, p++)
+    {
+      if (isprint(*p) || isspace(*p))
+        quoted_prompt[i] = *p;
+      else if (iscntrl(*p))
+        {
+          quoted_prompt[i++] = '^';
+          if (*p < ' ')
+            quoted_prompt[i] = *p + '@';
+          else
+            quoted_prompt[i] = '?';
+        }
+      else if (*p > 128)
+        quoted_prompt[i] = *p;
+    }
+  quoted_prompt[i] = '\0';
+  
+  /* Display the prompt (on stderr because stdout might be redirected). */
+  fflush(stdout);
+  fprintf(stderr, "%s", quoted_prompt);
+  fflush(stderr);
+
+  /* Get terminal modes. */
+//#ifdef USING_TERMIOS
+  tcgetattr(fileno(f), &tio);
+//#endif
+//#ifdef USING_SGTTY
+  //ioctl(fileno(f), TIOCGETP, &tio);
+//#endif
+  saved_tio = tio;
+  /* Save signal handler and set the new handler. */
+  old_handler = signal(SIGINT, ssh_rp_intr_handler);
+
+  /* Set new terminal modes disabling all echo. */
+//#ifdef USING_TERMIOS
+  tio.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL);
+  tcsetattr(fileno(f), TCSANOW, &tio);
+//#endif
+//#ifdef USING_SGTTY
+  //tio.sg_flags &= ~(ECHO);
+  //ioctl(fileno(f), TIOCSETP, &tio);
+//#endif
+  
+  {
+    /* Read the passphrase from the terminal. */
+    int read_bytes = 0, ret = 0;
+    while ((ret = read(fileno(f), &buf[read_bytes], 1)) != 0)
+      {
+        if (ret == -1)
+          {
+            if (errno == 5/*EAGAIN*/ || errno == 6/*EWOULDBLOCK*/ || errno == 7/*EINTR*/)
+              {
+                SSH_TRACE(2, ("got errno %d, system error %s",
+                              errno, strerror(errno)));
+                /* No more data at this time, or interrupted by system
+                   call.*/
+                continue;
+              }
+            else
+              {
+                /* Got some other error. */
+                SSH_TRACE(2, ("read() returned -1, with errno %d, "
+                              "system error message %s.",
+                              errno, strerror(errno)));
+                goto read_error;
+              }
+          }
+
+        read_bytes++;
+        if (buf[read_bytes - 1] == '\n' || buf[read_bytes - 1] == '\r' ||
+            read_bytes + 1>= sizeof(buf))
+          {
+            /* Got newline, error, or buf full. */
+            buf[read_bytes] = '\0';
+            break;            
+          }
+      }
+    if (ret == 0)
+      {
+        SSH_TRACE(2, ("Received EOF."));
+      read_error:
+        /* Got EOF, or error.  Just return NULL. */
+        /* Restore terminal modes. */
+//#ifdef USING_TERMIOS
+        tcsetattr(fileno(f), TCSANOW, &saved_tio);
+//#endif
+//#ifdef USING_SGTTY
+        ioctl(fileno(f), TIOCSETP, &saved_tio);
+//#endif
+        /* Restore the signal handler. */
+        signal(SIGINT, old_handler);
+        /* Print a newline (the prompt probably didn\'t have one). */
+        fprintf(stderr, "\r\n");
+        /* Close the file. */
+        if (f != stdin)
+          fclose(f);
+        return 0/*NULL*/;
+        
+      }
+  }
+
+//#ifdef OLDXXX
+  /* Read the passphrase from the terminal. */
+  if (fgets(buf, sizeof(buf), f) == 0/*NULL*/)
+    {
+      /* Got EOF.  Just return NULL. */
+      /* Restore terminal modes. */
+//#ifdef USING_TERMIOS
+      tcsetattr(fileno(f), TCSANOW, &saved_tio);
+//#endif
+//#ifdef USING_SGTTY
+      //ioctl(fileno(f), TIOCSETP, &saved_tio);
+//#endif
+      /* Restore the signal handler. */
+      signal(SIGINT, old_handler);
+      /* Print a newline (the prompt probably didn\'t have one). */
+      fprintf(stderr, "\r\n");
+      /* Close the file. */
+      if (f != stdin)
+        fclose(f);
+      return 0/*NULL*/;
+    }
+//#endif /* OLDXXX */
+  /* Restore terminal modes. */
+//#ifdef USING_TERMIOS
+  tcsetattr(fileno(f), TCSANOW, &saved_tio);
+//#endif
+//#ifdef USING_SGTTY
+  //ioctl(fileno(f), TIOCSETP, &saved_tio);
+//#endif
+  /* Restore the signal handler. */
+  (void)signal(SIGINT, old_handler);
+  /* Remove newline from the passphrase. */
+  if (strchr(buf, '\n'))
+    *strchr(buf, '\n') = 0;
+  if (strchr(buf, '\r'))
+    *strchr(buf, '\r') = 0;
+  /* Allocate a copy of the passphrase. */
+  cp = ssh_xstrdup(buf);
+  /* Clear the buffer so we don\'t leave copies of the passphrase laying
+     around. */
+  memset(buf, 0, sizeof(buf));
+  /* Print a newline since the prompt probably didn\'t have one. */
+  fprintf(stderr, "\r\n");
+  /* Close the file. */
+  if (f != stdin)
+    fclose(f);
+  return cp;
+}
+
+
+/* Reads a yes/no confirmation from /dev/tty.  Returns TRUE if "yes" is
+   received.  Otherwise returns FALSE (also if EOF is encountered). */
+
+int ssh_read_confirmation(const char *prompt, int from_stdin)
+{
+  char buf[1024], *p;
+  struct FILE *f;
+  
+  if (from_stdin)
+    {
+      f = stdin;
+    }
+  else
+    {
+      /* Read the passphrase from /dev/tty to make it possible to ask it even 
+         when stdin has been redirected. */
+      f = fopen("/dev/tty", "r");
+      if (!f)
+        {
+          fprintf(stderr, "You have no controlling tty.  Cannot read "
+                  "confirmation.\n");
+          return 0/*FALSE*/;
+        }
+    }
+
+  /* Read the passphrase from the terminal. */
+  do
+    {
+      /* Display the prompt (on stderr because stdout might be redirected). */
+      fflush(stdout);
+      fprintf(stderr, "%s", prompt);
+      fflush(stderr);
+      /* Read line */
+      if (fgets(buf, sizeof(buf), f) == 0/*NULL*/)
+        {
+          /* Got EOF.  Just exit. */
+          /* Print a newline (the prompt probably didn\'t have one). */
+          fprintf(stderr, "\n");
+          fprintf(stderr, "Aborted by user");
+          /* Close the file. */
+          if (f != stdin)
+            fclose(f);
+          return 0/*FALSE*/;
+        }
+      p = buf + strlen(buf) - 1;
+      while (p > buf && isspace(*p))
+        *p-- = '\0';
+      p = buf;
+      while (*p && isspace(*p))
+        p++;
+      if (strcmp(p, "no") == 0)
+        {
+          /* Close the file. */
+          if (f != stdin)
+            fclose(f);
+          return 0/*FALSE*/;
+        }
+    } while (strcmp(p, "yes") != 0);
+  /* Close the file. */
+  if (f != stdin)
+    fclose(f);
+  return 1/*TRUE*/;
+}

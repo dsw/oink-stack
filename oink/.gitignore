@@ -1,0 +1,60 @@
+# configuration
+Makefile
+config.status
+config.summary
+
+# dependency files
+*.d
+# objects
+*.o
+# archives
+*.a
+
+# executables
+Lib/union_find_test
+alloc_test
+archive_srz_test
+cpdinit_test
+staticprint
+cfgprint
+dfgprint
+oink
+qual
+
+# generated files
+Build.incl.mk
+*.gen.*
+ElsaHeaders
+quals.dot
+
+cc.tok
+cc_print.cc
+cc_print.h
+cc_tokens.cc
+cc_tokens.h
+cc_tokens.ids
+cc_type.h
+oink.lex
+oink_lexer.yy.cc
+qual.lex
+qual_lexer.yy.cc
+xml_type_id.h
+
+# Test output
+LibCpdInit/Test/*.cpdout_c
+Test/*.qdir
+Test/*.odir
+Test/*.out
+Test/*.out1
+Test/*.out2
+Test/*.filter-bad.c
+Test/*.filter-good.c
+Test/*.filter-bad.cc
+Test/*.filter-good.cc
+Test/tmp_*
+Test/*.out.ctl
+
+# FIX: these have to be a bug somewhere; I can't find it right now
+
+# temporary state that has to be global across runs
+.serialno

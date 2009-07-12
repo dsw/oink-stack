@@ -1,0 +1,25 @@
+# see License.txt for copyright and terms of use
+
+                  Readme for libqual by Rob Johnson
+
+Todo:
+
+change the lex/yacc prefix to something other than yy
+
+factor this code and get rid of all the unnecessary headers
+
+rewrite this in C++
+
+stop doing this:
+typedef struct Traverse_edge
+{
+  location loc;
+  qual qual;
+  dir dir;
+} *traverse_edge;
+
+
+
+
+If you get weird segfaults in find_fwd_summaries, find_bak_summaries, then
+your stack is overflowing; use e.g. ulimit -s 20480

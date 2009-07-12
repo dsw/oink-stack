@@ -1,0 +1,8 @@
+// see License.txt for copyright and terms of use
+
+replace_line
+typedef IdentityManager_Elsa IdentityManager_T;
+with
+#include "oink_xml_type_id.h"
+
+// EOF

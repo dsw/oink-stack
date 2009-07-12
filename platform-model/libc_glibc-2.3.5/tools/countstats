@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# $Id$
+
+set -e
+
+f=/tmp/platform-model-stat.$$
+cd $(dirname $0)/../src/
+test -f complex.c
+
+files=`echo *.c */*.c |xargs -n 1 | grep -v builtin`
+
+echo files: `echo $files | wc -w`
+../tools/decomment $files > $f
+
+grepcount() {
+    echo -n "$1: "
+    grep -c "$1" $f
+}
+
+grepcount '$untainted'                              # trusting sinks
+grepcount '$tainted'                                # untrustworthy sources
+grepcount 'DO_TAINT'                                # untrustworthy sources
+grepcount '{'                                       # functions
+grepcount 'static inline'                           # helper functions
+
+rm -f $f

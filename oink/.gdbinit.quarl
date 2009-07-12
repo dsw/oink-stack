@@ -1,0 +1,164 @@
+# see License.txt for copyright and terms of use
+
+#dir $cdir:$cwd:$cdir/../qual/libqual:$cdir/../qual/libregion
+dir $cdir:$cwd:/home/quarl/proj/debfsv/analyzer/oink:/home/quarl/proj/debfsv/analyzer/qual/libqual:/home/quarl/proj/debfsv/analyzer/qual/libregion:/home/quarl/proj/debfsv/analyzer/elsa:/home/quarl/proj/debfsv/analyzer/smbase
+
+cd /home/quarl/proj/debfsv/analyzer/oink
+
+file qual
+#set args -q-config /tmp/lattice Test/poly4.c -fq-poly
+#set args -fq-no-explain-errors -o-lang GNU_Cplusplus -fq-no-inference -fo-pretty-print -fo-no-print-startstop Test/parse_mess1.cc 
+#set args -fq-no-explain-errors -q-config ../libqual/config/lattice -fo-instance-sensitive Test/instance_sensitive_srz3b.c  -q-srz Test/instance_sensitive_srz3b_isens.qdir
+#set args -fq-no-explain-errors -q-config ../libqual/config/lattice Test/unprototyped5a.c Test/unprototyped5b.c -fo-report-unsatisfied-symbols -fo-instance-sensitive 
+#set args -fq-no-explain-errors -q-config ../libqual/config/lattice -fo-instance-sensitive Test/instance_sensitive_srz2a_isens.qdir Test/instance_sensitive_srz2b_isens.qdir 
+#set args  -fq-no-explain-errors -q-config ../libqual/config/lattice -fo-instance-sensitive Test/instance_sensitive_srz2a.c Test/instance_sensitive_srz2b.c -fo-trace-link 
+#set args -fq-no-explain-errors -q-config ../libqual/config/lattice -fo-instance-sensitive Test/instance_sensitive_srz2a.c -q-srz Test/instance_sensitive_srz2a_isens.qdir -fo-trace-link -fq-no-compactify-graph
+
+#cd /home/quarl/proj/debfsv/glibc-fs/src
+#set args -fo-report-unsatisfied-symbols -o-lang SUFFIX -q-config /home/quarl/proj/debfsv/analyzer/lattice -fq-casts-preserve-below-functions -fq-poly -tr no_writeSerialNo -tr nohashline  aio.qual.qz
+
+#set args -q-config ../libqual/config/lattice Test/unprototyped5a.c Test/unprototyped5b.c -fo-instance-sensitive
+
+#set args  -q-config /tmp/lattice Test/return_func1.c
+#cd /home/quarl/proj/debfsv/glibc-fs/src
+
+#set args -fo-report-unsatisfied-symbols -o-lang SUFFIX -q-config /home/quarl/proj/debfsv/analyzer/lattice -fq-casts-preserve-below-functions -fq-poly -tr no_writeSerialNo -tr nohashline  aio.qual.qz
+
+#file oink
+#set args /tmp/a.ii
+
+#set args -q-config /tmp/lattice  -fo-print-stages -fq-poly big/h.qz  
+#set args -q-config /tmp/lattice  -fo-print-stages big/c.qz
+#set args -q-config /tmp/lattice  -fo-print-stages x/a.qz
+
+# file ./oink
+# set args Test/template_default_nodef1.cc
+
+# file ./oink
+# set args Test/default_from_typename.cc
+
+#file ./qual
+#set args  -q-config /tmp/lattice /tmp/a.ii 
+
+# file ./oink
+# set args Test/atom_type_tag.cc
+
+file qual
+#set args -q-config /tmp/lattice Test/funccast_to_nonfunc1.cc
+#set args -q-config /tmp/lattice Test/funcptr_cast_to_compound1.cc
+#set args -fq-no-explain-errors -q-config ../libqual/config/lattice Test/struct_statement_expr1.c
+#set args -q-config ../libqual/config/lattice Test/prelude_A0a.c Test/prelude_A0b.c -fq-no-names
+
+#set args  -q-config /tmp/lattice -fq-no-names  Test/function_pointer_in_array.c 
+
+#file oink
+#set args ../elsa/in/d0050elab.cc
+
+#file qual
+#set args pkg/a.qz
+
+# set args Test/template_dep_resrz1.1.qdir
+# set args Test/template_dep_resrz1.cc -q-srz Test/template_dep_resrz1.1.qdir
+
+# cd /home/quarl/proj/debfsv/analyzer/oink/pkg/afbackup/afbackup_3.3.8.1beta2-2/a5
+# set args -fq-poly    stdio.c.c.i    ranges.qz genutils.qz 
+# #set args ranges.i
+
+# cd /home/quarl/proj/debfsv/glibc-fs/src
+# file oink
+# set args aio.oz
+
+# file qual
+# set args ../elsa/in/t0019.cc.1.qdir
+
+# cd /home/quarl/proj/debfsv/glibc-fs/src
+# file qual
+# set args -q-srz x.qz a.qz b.qz 
+# #set args x.qz
+
+file qual
+set args /home/quarl/proj/debfsv/glibc-fs/GLIBC.qz -fo-print-stages -fq-poly
+
+# file qual
+# set args ../elsa/in/t0025.cc.1.qdir
+
+#file qual
+#set args Test/funcptr_implicit_addr1.c.1.qdir
+
+# file qual
+# set args /home/quarl/proj/debfsv/analyzer/elsa/in/t0561.cc -o-srz /tmp/a.qdir
+
+# cd /home/quarl/proj/debfsv/analyzer/oink/Test
+# file oink
+# set args a.oz -fo-trace-link -fo-report-link-errors
+
+#set args ../elsa/in/t0026.cc
+
+#file  ./qual
+#set args -fq-no-inference -fo-print-stages Test/parse_mess1.cc
+#set args ../elsa/in/t0009.cc -o-srz /dev/shm/oink.buildtmp/test/t0009.cc.1.qdir
+
+#file ./oink
+#set args Test/weak1a.odir Test/weak1b.odir -fo-report-unsatisfied-symbols -o-control Test/weak2.ctl
+
+# file qual
+# set args Test/virtual3.cc     
+
+# file ./qual
+# set args Test/funky1.c
+
+# file ./qual
+# set args Test/virtual1.cc
+
+# file ./qual
+# set args  -fq-no-explain-errors -fq-no-names -q-config ../libqual/config/lattice Test/inconsistent_func_type_param4.c
+
+# file ./qual
+# set args a.cc
+
+# set args Test/using_alias1a.qdir Test/using_alias1b.qdir  
+# set args ../elsa/in/t0048.cc -o-srz /tmp/a.qdir     -fq-no-compactify-graph   
+# set args -fq-no-explain-errors -fq-no-names -fq-poly -q-config ../libqual/config/lattice Test/taint2_a.c.qdir Test/taint2_b.c.qdir -fq-print-quals-graph;
+
+#set args  Test/virtual1.cc   -o-srz /tmp/a
+# set args /home/quarl/a.ii
+
+# file oink
+# set args Test/namespace_static1.cc
+# set args Test/struct_sizeof.c
+
+# file qual
+# set args Test/extern_inline_func8a.cc Test/extern_inline_func8b.cc
+
+# file qual
+# set args -fq-poly  a.qz.tmp_pass1.qz -o-srz a.qz.tmp_pass2.qz
+
+file oink
+# set args /tmp/a.c
+
+# set args Test/virtual4.cc
+
+# set args Test/usedindataflow1.cc
+# set args Test/atom_type_tag.cc
+
+# file oink
+# set args Test/func_gran1.cc -fo-all-pass-filter -o-func-filter Test/func_gran1.cc.vars
+
+# set args Test/template_inner_default1.cc
+
+#set args -fq-no-explain-errors -fq-no-names -q-config ../libqual/config/lattice Test/noparam_cast1.c
+
+#file oink
+#file ./qual
+#set args ../elsa/a.c
+#set args ../elsa/in/t0308.cc
+
+set args Test/const_array2.cc
+
+break main
+
+run
+
+break x_assert_fail
+break __assert_fail
+break breaker

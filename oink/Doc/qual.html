@@ -1,0 +1,1612 @@
+<html>
+<head>
+<title>Cqual++ Documentation</title>
+</head>
+<body bgcolor=white>
+
+<h1>Cqual++ Documentation</h1>
+
+<p>The goal of Cqual++ is that eventually compilers simply refuse to
+compile dataflow bugs.
+
+<h3>Directory contents</h3>
+
+<ul>
+
+<li><a href=index.html>Oink Main Documentation</a> Introduction to
+Oink.
+
+<li><a href=oink_help.html>Annotated Oink Help Output</a> The output
+of ./oink --help annotated with further details on their meaning.
+
+<li><a href=quickstart.html>Cqual++ Quick-Start Instructions</a> The
+shortest path to findings bugs in your code.
+
+<li><a href="qual.html">Cqual++ Documentation [this document]</a> Documentation on the
+main Oink tool.
+
+<li><a href=qual_help.html>Annotated Qual Help Output</a> The output
+of ./qual --help (minus the oink --help output) annotated with further
+details on their meaning.
+
+<li><a href=manifest.html>Oink Manifest</a> A top-down view of the
+aspects of Oink, which files participate in each aspect, and
+documentation on each file.
+
+<li><a href=coding.html>Oink Coding Style</a> The Oink coding
+guidelines; also provided is some elisp for putting emacs into the
+mode I use when editing it.
+
+<li><a href="features_of_elsa.html">Features of Elsa</a> The elsa
+documentation is extensive; I simply point out a few useful features
+that users of Oink/Cqual++ should know about.
+
+</ul>
+
+<h3>Page contents</h3>
+
+<ul>
+
+<li><a href=#intro_examples>Introductory Examples</a>: Dataflow and dataflow bugs are
+best introduced by example.
+
+<ul>
+
+<li><a href=#jeffs_example>Jeff Foster's Canonical Cqual Example</a>:
+The original and best example :-).
+
+<li><a href=#horrible_example>A Horrible C++ Example</a>:
+Second-system syndrome for a Cqual++ example.
+
+</ul>
+
+<li><a href=#is_and_is_not>What Cqual++ Is and Is Not</a>: An introduction to a user
+by David Wagner that I thought was good enough to reprint.
+
+<li><a href=#qual_syntax>Qualifier Syntax</a>: How to annotate
+qualifiers onto your program.
+
+<li><a href=#qual_inference>How Qualifier Inference Works</a>: How
+dataflow edges are turned into a qualifier inference model that is
+consistent exactly when your program is ok.
+
+<li><a href=#no_time>There is No 'Time': Cqual++ is
+Non-Deterministic</a>: We see the syntax as a jumble of nodes and
+edges but not happening in any particular order.
+
+<li><a href=#features>Features of Cqual++</a>: A list of features and their
+command-line flags grouped by "aspect".
+
+<li><a href=#kinds>Kinds of Dataflow</a>: The different Kinds of Dataflow
+Known to Man and which ones Cqual++ is and is not.
+
+<li><a href=#what_is_dataflow>What Exactly is 'Dataflow'?</a>: "Data flowing"
+is actually an imprecise abstraction.
+
+<li><a href=#logical_decision_procedure>Cqual++ as a Logical Decision
+Procedure</a>: If Cqual++ were a theorem-prover, what kind of theorem
+prover would it be?
+
+</ul>
+
+<h3>Command-Line Documentation</h3>
+
+<p>For an exhaustive list of the oink/qual flags and a short
+description of each, just type: <tt>./qual --help</tt>
+
+
+<hr>
+<a name=intro_examples>
+<h2>Introductory Examples</h2>
+</a>
+
+<p>Dataflow and dataflow bugs are best introduced by example.
+
+<a name=jeffs_example>
+<h3>Jeff Foster's Canonical Cqual Example</h3>
+</a>
+
+<p>Here is an example of one such bug, the "printf() format-string bug",
+from Jeff Foster's Cqual documentation.  You can find it in
+<tt>oink/Test/taint1.c</tt>.
+
+<pre>
+    char $tainted *getenv(const char *name);
+    int printf(const $untainted char *fmt, ...);
+    int main(void)
+    {
+      char *s, *t;
+      s = getenv("LD_LIBRARY_PATH");
+      t = s;
+      printf(t);
+    }
+</pre>
+
+<p>The idea of taint analysis is as follows.<ul>
+
+<li>We see that the return value from getenv() is $tainted: it could
+contain any data the user gives us, and therefore cannot be trusted.
+
+<li>The input to the printf() format string argument should be
+$untainted: a pathological format string can allow the user to subvert
+and control the process, so untrusted data should not be allowed
+there.
+
+</ul>
+
+<p>In this program $tainted flows into $untainted, which is a bug.
+Let's watch Cqual++ find it.
+
+<pre>
+    make qual-check-demo-taint1
+    ./qual -q-config ../libqual/config/lattice Test/taint1.c
+    Test/taint1.c:6 WARNING:  ( (getenv) ( ("LD_LIBRARY_PATH")))' treated as $tainted and $untainted
+
+     ( (getenv) ( ("LD_LIBRARY_PATH")))': $tainted $untainted
+    Test/taint1.c:6      $tainted <=  ( (getenv) ( ("LD_LIBRARY_PATH")))'
+    Test/taint1.c:6               <=  (s)''
+    Test/taint1.c:7               <=  (t)''
+    Test/taint1.c:8               <= fmt''
+    Test/taint1.c:2               <= $untainted
+</pre>
+
+<p>Cqual++ deduces that this program is not safe because the $tainted
+data eventually flows into a place that must be $untainted.
+
+<a name=horrible_example>
+<h3>A Horrible C++ Example</h3>
+</a>
+
+<p>One big improvement of Cqual++ over Cqual is that we handle C++.
+Here is the example oink/Test/horrible1.cc.
+
+<pre>
+     1: // class template, reference member, pointer to virtual function
+     2: // member
+
+     4: template<class T> struct A {
+     5:   virtual T f(int x) {}
+     6: };
+
+     8: struct B : A<int> {
+     9:   int &y;
+    10:   B(int &y0) : y(y0) {}
+    11:   int f(int x) {
+    12:     y = x;
+    13:   }
+    14: };
+
+    16: int main() {
+    17:   int $untainted y;
+    18:   A<int> *a0 = new B(y);
+    19:   int (A<int>::*q)(int) = &A<int>::f;
+    20:   int $tainted x = 0;
+    21:   (a0->*q)(x);
+    22: }
+</pre>
+
+What happens is as follows.
+
+<ul>
+
+<li>On line 17 a variable y annotated as $untainted is made on the
+stack.
+
+<li>On line 18 an instance of B is created and the constructor
+initializes B::y from the y of main(), <em>by reference</em>, which
+effectively unifies the variables.
+
+<li>On line 19 q is assigned to point to the virtual function member
+of an instantiation of a template class A&lt;int&gt;::f().
+
+<li>On line 20 the method pointed to by q is called with a tainted
+argument.  Since the object is actually an instance of B, the
+overriding virtual method (recall that virtual-ity is inherited) B::y()
+on line 11 is actually called.
+
+<li>On line 12, the variable containing the tainted is assigned <em>by
+reference</em> to the member B::y, which as you recall was annotated
+as $untainted.  Uh oh.
+
+</ul>
+
+<p>Let's see Cqual++ follow all of that.
+
+<pre>
+    make qual-check-demo-horrible1
+    ./qual -q-config ../libqual/config/lattice Test/horrible1.cc
+    Test/horrible1.cc:11 WARNING: x' treated as $tainted and $untainted
+
+    x': $tainted $untainted
+    Test/horrible1.cc:21     $tainted <=  (x)'
+    Test/horrible1.cc:21              <= anon_var  t62350261-int'
+    Test/horrible1.cc:21              <= anon_var  t62350261-int'
+    Test/horrible1.cc:19              <= x'
+    Test/horrible1.cc:19              <= x'
+    Test/horrible1.cc:19              <= x'
+    Test/horrible1.cc:11              <= x'
+    Test/horrible1.cc:11              <= x'
+    Test/horrible1.cc:11              <=  (x)'
+    Test/horrible1.cc:12              <=  ( (* (this)).y)'
+    Test/horrible1.cc:12              <= y'
+    Test/horrible1.cc:10              <=  (y0)'
+    Test/horrible1.cc:10              <= y0'
+    Test/horrible1.cc:10              <= y0'
+    Test/horrible1.cc:18              <=  (y)'
+    Test/horrible1.cc:18              <= $untainted
+</pre>
+
+<h4>Some Notes on Usage</h4>
+
+<p>If you run this in emacs compile mode, these lines will be parsed just
+as compile errors and repeated use of C-x back-tick will show you the
+successive points along the dataflow path.  Note that there are
+various nodes for things in the path that you can't see; for example,
+when a variable is used, there is a node for the variable and then
+another for the expression containing the variable.
+
+<p>The L-value (reference) identity of a variable (what you can assign
+to) is represented by its name, "y", whereas its R-value identity (its
+value in an expression) is the name with an apostrophe following,
+"y'".  If it is a pointer, the R-value pointed to will have two
+apostrophes "y''"; note that the L-value identity of a thing pointed
+to is the R-value identity of the pointer pointing to it.
+
+<p>Be sure to run Cqual++ on code that has been through the
+preprocessor, commonly refereed to as the ".i" files.  You may find the
+tool <a href="http://build-interceptor.tigris.org/">Build
+Interceptor</a> handy for obtaining these from a software package that
+you would like to analyze without having to modify its build process.
+If you would like Cqual++ (or any other Oink tool) to print line
+numbers from the .i file instead of using the <tt>#line</tt>
+directives in the .i file to map back to the original source file,
+pass the flag "-tr nohashline".
+
+
+<hr>
+<a name=is_and_is_not>
+<h2>What Cqual++ Is and Is Not</h2>
+</a>
+
+<p><a href="http://www.cs.berkeley.edu/~daw/">David Wagner</a>
+recently wrote a summary of Cqual++ in an email to a user.  I thought
+it was great documentation so I just re-use it here; there are other
+indented quotes throughout this document that are also due to David
+and are marked as such and there is one definition from Rob Johnson.
+I have occasionally edited these.
+
+<blockquote>
+
+<p>[David] CQual++ seems best at reasoning about the flow of data: I read in
+something from the network over here in the code, and it flowed through
+my program and eventually affected that variable over there.  That kind
+of thing.
+
+<p>To get concrete, we're starting with format string bugs.  This is
+research in progress, but the goal is to build a highly precise analysis
+to find format string bugs -- hopefully, with low enough false alarm
+rates and good enough engineering that you could use it as a "filter"
+before release to check for code cleanliness.
+
+<p>That's admittedly just one category of bugs, but we think we can
+do a better job than anyone else has done of finding format string
+vulnerabilities -- and our goal is to find all such vulnerabilities,
+so that if the tool says it couldn't find any format string bugs, then
+there really aren't any in the code (modulo some reasonable assumptions).
+Also, we hope it will give us experience that we can build on to look
+at various kinds of input validation flaws (e.g., maybe Unicode bugs,
+cross-site scripting, SQL injection; who knows?)  -- but we haven't
+started on any of the latter categories, and don't expect to until we
+have more experience with format string bugs.
+
+<p>By the way, I hope you don't have the impression that all static analysis
+tools are interchangeable.  CQual++ has a pretty tight focus (at least
+right now), and there are a lot of things you might like to check about
+code that CQual++ just isn't the right tool for.  If you come up with the
+top 10 kinds of bugs you wish a static analysis tool could do, I would
+be pretty happy if only 1 or 2 of those could be handled by CQual++ (to
+give you some idea that we have a pretty narrow focus).  There are many
+different static analysis techniques out there.  The right way to go would
+be to figure out what properties you want to check, and then identify
+the most suitable static analysis techniques for each, and then go build
+some tools.  Type inference, as used in CQual++, is just one among many
+techniques, so you should expect that it is the best tool for the job
+for only a certain fraction of all properties you might want to check.
+
+<p>Anyway, that's what we're working on.  As for what you want to do
+with Cqual++, well, you don't need to be constrained by the specific
+security bugs that we're currently working on.  If you want to
+brainstorm ideas to work on, I would suggest thinking about the
+category of input validation bugs, particularly where data flows from
+a tainted source to trusting sinks, and trying to identify one or two
+vulnerability idioms in that universe that seem important to you.  A
+good place to start would be to ask: what are the types of input
+validation bugs that you care most about, or that are biting your butt
+the hardest?  That's probably the most likely source of applications
+where CQual++ might be a good tool for the job.
+-- David
+
+</blockquote>
+
+
+<hr>
+<a name=qual_syntax>
+<h2>Qualifier Syntax</h2>
+</a>
+
+<p>Cqual++ will parse a type qualifier, such as $tainted, wherever
+"const" would legally go in C or C++; if there really are any built-in
+qualifiers such as "const" Cqual++ qualifiers should go after them or
+it might not parse.  There are examples throughout this document.
+
+<pre>
+    char $tainted *getenv(const char *name);
+    int const $untainted x;
+</pre>
+
+<p>Qualifiers are attached to variables or expressions; things that at
+runtime hold data.  The <a href=#qual_inference>How Qualifier
+Inference Works</a> section says exactly how Cqual++ computes what
+they mean.
+
+<a name=funky>
+<h3>'Funky' Polymorphic Qualifiers for Adding to the Dataflow Graph</h3>
+</a>
+
+<p>If we have a function declaration but no body, such as for a libc
+library function, Cqual++ will behave as if data that flows into it
+just disappears.  However, sometimes in reality the data doesn't
+dissapear but emerges somewhere else, such as in the return value or
+in a place pointed to by one of the other arguments.  Unless this is
+modeled properly the dataflow graph to be broken and a bug missed.
+
+<p>We want to give the function a "dataflow body" that captures how
+data flows in and out of it, even if the dataflow body is not an
+accurate model of what is really going in inside.  Consider the
+example of strcat().  We wouldn't want to analyize the real body of a
+libc function such as <tt>strcat()</tt> anyway as the optimizations it
+does are probably not typesafe.  Let's see what the semantics are from
+the manpage.
+
+<blockquote>
+The strcat() function appends the src string to the dest string
+overwriting the `\0' character at the end of dest, and then adds a
+terminating `\0' character.  The strings may not overlap, and the
+dest string must have enough space for the result. . . .  The
+strcat() and strncat() functions return a pointer to the resulting
+string dest.
+</blockquote>
+
+<p>We could just write a fake body for for strcat() to capture these
+semantics; there is no need for the fake body to actually work, it
+just has to yeild the dataflow graph that you want.  Here is one that
+captures my understanding.
+
+<pre>
+    char *strcat(char *dest, const char *src) {
+      *dest = *src;
+      return dest;
+    }
+</pre>
+
+<p>I find this fake body a bit disconcerting: I am inventing code that
+I can't test and I hope it gives me the dataflow graph I want.  I
+would rather just write down the graph.  Additionally, I would have to
+actually remove the previous body or the compiler or linker would
+complain of a double-definition.
+
+<p>"Funky" polymorphic qualifiers are a syntacitc convenience for just
+writing down the dataflow graph for Cqual++ on a function declaration;
+this does just what we want and doesn't interfere with compilation.
+[Note that there are <a href=#polymorphic>several meanings</a> of the
+word "polymorphic", so I distinguish this one by calling it "funky".]
+
+<ul>
+
+<li>Funky qualifiers occur in a group associated with one function.
+
+<li>The semantics of a single funky qualifier is set of numbers.  The
+name of a funky qualifier is parsed as an underscore-delimited set of
+the numbers in this set.
+
+<li>Flow edges between qualifiers the group are induced by the subset
+relation on the sets of numbers.  That is, for each ordered pair of
+funky qualifiers (A, B) there is a flow edge from A to B whenever the
+set of numbers delimited by A is a subset of those delimted by B.
+
+</ul>
+
+<p>Now we write funky qualifiers on the strcat() function header that
+captures that semantics.  Note that data flows from *src to *dest but
+not the other way, whereas data flows in both directions between *dest
+and *RET where RET is the return value.
+
+<pre>
+    char $_1_2 *strcat(char $_1_2 *dest, const char $_1 *src);
+
+    int main() {
+      char $tainted *x;
+      char $untainted *y;
+      strcat(y, x);
+    }
+</pre>
+
+<p>And it works.
+
+<pre>
+    make qual-check-demo-funky
+    ./qual -q-config ../libqual/config/lattice Test/funky_strcat1.c
+    Test/funky_strcat1.c:6 WARNING:  (y)'' treated as $tainted and $untainted
+
+     (y)'': $tainted $untainted
+    Test/funky_strcat1.c:6      $tainted <=  (x)''
+    Test/funky_strcat1.c:6               <= src''
+    Test/funky_strcat1.c:6               <= src''
+    Test/funky_strcat1.c:1               <= src''
+    Test/funky_strcat1.c:1               <= dest''
+    Test/funky_strcat1.c:1               <= dest''
+    Test/funky_strcat1.c:6               <= dest''
+    Test/funky_strcat1.c:6               <=  (y)''
+    Test/funky_strcat1.c:6               <= $untainted
+</pre>
+
+<h4>The 'ignore-body-qual' Control for Subtracting from the Dataflow graph</h4>
+
+<p>Sometimes we do have the body of a function but we don't like it.
+We would like to replace it with another body.  Again, the
+implementation of a function may not be typesafe if it is optimized
+with assembly or just horrible unsafe C.  We can give it a new
+"dataflow body" that means what we want by using the techniques in the
+previous section, but since <a href=#no_time>Cqual++ is
+non-deterministic</a>, <em>both</em> both of them will be called.  We
+would like to subtract the old body.
+
+<p>This is done by putting an ignore-body-qual for this function into
+a kind of configuration file for Oink/Cqual++ called a "control file".
+See section <a href=#control_files>Control Files</a> for more.
+
+
+<hr>
+<a name=qual_inference>
+<h2>How Qualifier Inference Works</h2>
+</a>
+
+<p>Cqual++ does not know however what qualifiers mean: which ones may legally
+flow into one another, etc..  Cqual++ takes a configuration file that explains
+these to it.  [Note that it is actually Jeff Foster's and Rob Johnson's
+backend in oink-stack/libqual that is doing this level of the analysis, but
+having said that I will return to saying Cqual++ to avoid confusion.]
+
+<pre>
+  -q-config &lt;file&gt;         : set the configuration file to &lt;file&gt;
+</pre>
+
+<p>A popular configuration file is oink-stack/libqual/config/lattice.  Here
+is the section describing the semantics of the $tainted/$untainted
+qualifiers ("taint analysis") to Cqual++.  We describe what it means
+as we describe inference through the section.
+
+<pre>
+    partial order {
+      $untainted [level = value, color = "pam-color-untainted", sign = neg]
+      $tainted [level = value, color = "pam-color-tainted", sign = pos]
+
+      $untainted < $tainted
+    }
+</pre>
+
+<h3>Dataflow is Modeled as a Partial Order</h3>
+
+<p>Dataflow is modeled as a <a
+href="http://en.wikipedia.org/wiki/Partial_order">partial order</a>:<ul>
+
+<li>Each expression or variable corresponds to a node.
+
+<li>Each qualifier also corresponds to a node.
+
+<li>Each dataflow fact is modeled as an edge.
+
+</ul>
+
+That is, when we conclude from examination of the Abstract Syntax Tree
+that data flows from point A to point B, we model this as <u>A <=
+B</u> in our partial order.
+
+<p>Consider this program and ignore the qualifiers for a moment; just
+think about the dataflow.
+
+<pre>
+    int $tainted a;
+    int b = a;
+    int $untainted c = b;
+</pre>
+
+<p>In our model we now introduce two facts.<ul>
+
+<li><u>a &lt;= b</u>
+
+<li><u>b &lt;= c</u>.
+
+</ul>
+
+<h3>The Sign of a Qualifier Shows How to Attach It</h3>
+
+<p>Now consider the above program again and notice the qualifiers on
+the variable declarations.  The configuration file tells us that
+$tainted is a positive qualifier, so we add the fact to our model that
+it bounds below the variable it annotates (why "positive" means below
+is beyond me, you just need some label); similarly the fact that
+$untainted is a negative means it bounds above the variable it
+annotates.  We now have these additional facts.
+
+<ul>
+
+<li><u>$tainted &lt;= a</u>
+
+<li><u>c &lt;= $untainted</u>
+
+</ul>
+
+<h3>The Config File Gives Axioms for the Qualifiers</h3>
+
+<p>The config file tells us one more sentence that we must add to our
+model; this sentence tells us the true, deep meaning of $tainted and
+$untainted and their relationship to one another.  Note the inequality
+is a strict <u>less-than</u> this time.
+
+<ul>
+
+<li><u>$untainted <b>&lt;</b> $tainted</u>
+
+</ul>
+
+<h3>The Model Must Be Consistent</h3>
+
+<p>We now reach a horrific conclusion about the true nature of our
+program which we have known for so long and trusted so much, possibly
+with our very life even. <ul>
+
+<li><u>$untainted <b>&lt;</b> $tainted &lt;= a &lt;= b &lt;= c &lt;= $untainted</u>
+
+</ul>
+
+<p>A node cannot be less than itself and therefore our model is
+inconsistent.
+
+<a name=ref-and-value-level-qualifiers>
+<h3>Ref- and Value-Level Qualifiers</h3>
+</a>
+
+<p>In the previous example, you will note that the configuration file
+specified that $tainted and $untainted were both "value"-level
+qualifiers; R-value level if you work on compilers.  This means that
+you should think of them as qualifying the <em>content</em> of the
+data at runtime: the actual data itself is tainted.  It is what you
+think of when you think "dataflow".
+
+<p>Here is another partial order for doing const analysis.  Note that
+"const" is a qualifier that already exists in C and C++, so there is
+no need to precede it with a "$".
+
+<pre>
+    partial order {
+      const [level = ref, sign = pos]
+      $nonconst [level = ref, sign = neg]
+
+      $nonconst < const
+    }
+</pre>
+
+<p>Notice that the qualifiers here are "ref"-level; L-value level if
+you work on compilers.  This means you should think of them as
+qualifying the <em>context</em> of the data at runtime: the "box" that
+the data lives in, not the data in the box.  That is, data is not
+const, the container of the data is const.  Note that it is not a bug
+to assign from a const variable into a nonconst variable, because the
+data is copied but the variables <em>themselves</em> do not mix.
+However it <em>is</em> a problem to assign a <em>pointer to</em> a
+const to a <em>pointer to</em> a nonconst because you can now write
+through the nonconst pointer to the const context.  Note that going
+the other way is ok.
+
+<p>In practice, this means that ref-level qualifiers are attached to
+the reference to the data rather than the data; otherwise inference
+is done just as above.  In C++ this is exactly the notion of a C++
+reference.  In C for variables it means its L-value identity and for
+data it means the pointer to the data.
+
+<h3>Color?</h3>
+
+<p>Oh, and the color field?  That's a suggested color for things
+qualified with that qualifier.  We thought of everything. :-)
+
+
+<hr>
+<a name=no_time>
+<h2>There is No 'Time': Cqual++ is Non-Deterministic</h2>
+</a>
+
+<p>There is no 'time' to the Cqual++ analysis.  We are oblivious to
+any actual decisions made by the program.  We see the syntax as a
+jumble of nodes and edges but not happening in any particular
+order.<ul>
+
+<li><b>non-determinism</b>: at a branch point all possible paths are taken.
+
+</ul>
+
+<p>Both our control and data flow models are non-deterministic: if a
+program attempts to filter tainted data using controlflow, we don't
+notice.  Note however that filtering the dataflow in other ways does
+work if the dataflow explicitly goes through some actual syntax; see
+below.
+
+<blockquote>
+
+<pre>
+[David and correspondent]
+> I'm not sure, actually. For example, we see this kind of thing a lot in
+> OpenSSL...
+>
+> char localbuf[10];
+>
+> if(tainted_stuff > 10)
+>     goto err;
+> memcpy(localbuf,other_tainted_stuff,tainted_stuff);
+>
+> Its not clear to me whether this kind of analysis is completely out of
+> scope for you, but its what interests me most.
+</pre>
+
+<p>I take it that you want to (a) check that tainted stuff is never used
+as the third (size) argument to memcpy, but (b) mark anything whose size
+has been checked as untainted after the check.  Right?
+
+<p>Yup, that's hard for us, because we can't express the notion that
+'tainted_stuff' is tainted before the if-statement and untainted after
+(at least, not with CQual++).
+
+</blockquote>
+<h3>Managing the Dataflow by Interposing with Explicit Syntax</h3>
+<blockquote>
+
+<p>[David] Is there any way to rewrite the above code to introduce two different
+variables, one for the tainted stuff before the check, and one for the
+untainted stuff after?  And are you willing to do rewrite the code in
+that kind of way?  For instance, would something like this work?
+
+<pre>
+char localbuf[10];
+
+untainted_len = upperbound(tainted_len, 10);
+memcpy(localbuf,other_tainted_stuff,untainted_len);
+
+// for the implementation; hide this from the analysis
+size_t upperbound(size_t i, size_t bound) {
+    if (i > bound)
+        die();
+    return i;
+}
+</pre>
+
+<p>If it's ok to rewrite the code in that style, then I think we should
+be able to do a good job of this.  We'd annotate memcpy like this:
+
+<pre>
+    void *memcpy(void *dest, const void *src, size_t $untainted n);
+</pre>
+
+<p>and (give this to the analysis instead of the above implementation):
+
+<pre>
+    size_t $untainted upperbound(size_t i, size_t $untainted bound);
+</pre>
+
+<p>Then because we have two different variables, with two different names
+(e.g., tainted_len and untainted_len), rather than just one variable
+(tainted_stuff), we can correctly track that 'tainted_len' is $tainted
+and 'untainted_len' is $untainted.
+
+</blockquote>
+
+
+<hr>
+<a name=features>
+<h2>Features of Cqual++</h2>
+</a>
+
+<p>I attempt a short overview of the Cqual++ features; some of them
+are technically Oink features but they are only used in Cqual++ so I
+document them here.  Please see the documentation on <a
+href="index.html#features">Features of Oink</a>.  As with oink you can
+get a list of the command line flags and a hint at their function by
+typing <tt>./qual --help</tt>, you can get a list of the defaults
+with <tt>./qual --verbose</tt>, and you can negate boolean flags
+with <tt>-f-no</tt>.  Rather than just repeat the list of flags here,
+I will introduce aspects of the tool and the relevant command-line
+flags at appropriate points.
+
+<h3>Modifying the kind of analysis done</h3>
+
+<p>Cqual++ will allows you to modify what analysis it does.
+
+<pre>
+  -fq-inference            : do inference (on by default, obviously)
+  -fq-strict-const         : enforce const, rather than allow const inference
+  -fq-casts-preserve       : inference goes through casts, rather than blocking
+  -fq-casts-preserve-below-functions : -fcasts-preserve works below functions
+  -fq-use-const-subtyping  : no back edge below pointers if pointing to const
+  -fq-poly                 : do polymorphic analysis
+  -fo-instance-sensitive   : C mode only.
+                             1) fields get unique values per struct instance
+                             2) 'void's get unique values by type
+  -q-catch-qual &lt;qname&gt;    : attach qname to singleton exception variable
+</pre>
+
+<h3>Modifying the Output</h3>
+
+<p>You can modify what kind of output Cqual++ will give you.
+
+<pre>
+  -fq-print-trans-qual      : in pretty printing, annotate inferred qualifiers
+  -fq-explain-errors        : print bad dataflow path when one is found
+  -fq-exit-at-inconsistency : exit when an inference inconsistency is detected
+</pre>
+
+<h3>Printing the Cqual++ Inference Graph</h3>
+
+<p>Cqual++ translates the syntax of C++ into a dataflow graph which
+the backend then thinks about to tell you if your program has a
+dataflow bug or not.  You can print out the dataflow graph and examine
+it manually.  This is a handy feature if you are debugging Cqual++
+(oink/qual) and the input parses and typechecks but the inference
+conclusion is wrong.  Here are the command-line arguments.
+
+<pre>
+  -fq-print-quals-graph    : print out quals.dot of inference graph
+  -fq-ugly                 : put address of qvar into quals.dot node names
+  -fq-name-with-loc        : put location info on qualifier variable names
+</pre>
+
+<p>There is a make target to help with all the typing: Use the
+'qual-graph/%' target in the qual_result_test.incl.mk makefile to
+print the graph as a GraphViz 'dot' file and then convert it to a
+postscript file for easy viewing.  You can also do it manually like
+this.
+
+<pre>
+    ./qual -q-config ../libqual/config/lattice -fprint-quals-graph -fq-no-exit-at-inconsistency FILE.cc
+    dot -Tps -o FILE-cc.ps quals.dot
+</pre>
+
+<p>Even for small files the output can be a huge graph that can
+overwhelm your postscript viewer.  If the problem is that you expect,
+say, $tainted *to* flow to $untainted and it does *not*, you can use
+the included utility 'qual_graph_component'; run it twice to get just the
+connected components containing the two nodes of interest respectively
+(a useful idea of Scott McPeak's).
+
+<pre>
+    make qual-graph
+    rm -f quals.dot Test/*.dot Test/*.ps
+    ./qual -fq-no-explain-errors -fq-name-with-loc -q-config ../libqual/config/lattice -fq-print-quals-graph -fq-ugly -fq-no-ret-inf Test/t1000.cc
+    Test/t1000.cc:5 WARNING: Test/t1000.cc:5:3  (x)' treated as $tainted and $untainted
+
+    dot -Tps -o Test/t1000.cc-cc.ps quals.dot
+    ./qual_graph_component -root '$tainted'   < quals.dot > Test/t1000.cc-tainted.dot
+    dot -Tps -o Test/t1000.cc-tainted.cc.ps   Test/t1000.cc-tainted.dot
+    ./qual_graph_component -root '$untainted' < quals.dot > Test/t1000.cc-untainted.dot
+    dot -Tps -o Test/t1000.cc-untainted.cc.ps Test/t1000.cc-untainted.dot
+</pre>
+
+<p>If the problem is that you expect $tainted to *not* flow to
+$untainted and it *does*, then just use either one as the -root
+argument and just examine the one connected component containing both
+of them.
+
+
+<a name=linking>
+<h3>Linking and Multiple Translation Units</h3>
+</a>
+
+<p>Cqual++ is whole-program: you can give it multiple translation
+units and it will reason about them as a whole by linking together the
+global symbols very much as a real linker would.  Note that our linker
+is a bit naive compared to a real linker; for example it doesn't
+implement weak or common symbols, etc.  This is work in progress, but
+it works for basic linking.  See the make target
+qual-check-unsat-symbol in oink/qual_serialization_test.incl.mk for
+tests that exercise this feature.
+
+<pre>
+  -fo-report-unsatisfied-symbols : print unsatisfied function symbols in linker
+</pre>
+
+
+<a name=control_files>
+<h3>Control Files</h3>
+</a>
+
+<p>Oink has a general "control file" mechanism that is intended to
+include instructions on detailed modifications to how to analyze a
+particular file; the suffix for a control file is <tt>.ctl</tt>.
+
+<pre>
+  -o-control &lt;file&gt;              : a file for controlling the behavior of oink
+  -fo-print-controls-and-exit    : print the controls and stop
+  -fo-report-unused-controls     : print controls that go unused
+</pre>
+
+<p>Right now the only control implemented is "ignore-body-qual" which
+tells the dataflow not to process the body of a function.  Here are
+some from Test/simple1.ctl and Test/unsat_symbol3c3.ctl.
+
+<pre>
+    ignore-body-qual:
+       file =    bar.i              # some comments mixed with data
+    name = ::foo::f2 SIG (int x, char y)
+    visibility = extern
+
+    ignore-body-qual:
+        file = *
+        name = foo
+        visibility = static
+</pre>
+
+<p>The semantics of each field are as follows.
+
+<ul>
+
+<li><b>file</b> is the name of the file in which the function to be
+ignored occurs; this is necessary to uniquely identify static
+functions.  The special name '*' means all files.
+
+<li><b>name</b> is the name of the function as we "mangle" it; C
+functions (in C mode or within an extern "C") have just the name you
+think; C++ function names are the fullyQualifiedMangledName field on
+the Variable tag in the XML serialization of the file.
+
+<li><b>visibility</b> is either 'static' or 'extern'; if omitted,
+extern is assumed.
+
+</ul>
+
+<p>See the make target qual-check-control-files in
+oink/qual_serialization_test.incl.mk for tests that exercise this
+feature.  For the limitations of the control file syntax it is easiest
+to see an example; see the control file parsing test input
+Test/simple1.ctl.
+
+
+<h3>Serialization</h3>
+
+<p>Much like a real compiler, Cqual++ can "compile" an input C or C++
+file to a dataflow graph and serialize it out for you to a .qdir
+directory.  This can be later supplied on the command line to another
+instance of Cqual++ and the graph will be "linked" in to the analysis.
+
+<p>Note that the resulting dataflow graph does not contain the
+Abstract Syntax Tree.  Further, all we care about this graph is the
+connections it induces between the global symbols, not all of the
+internal details; when compactification is on, the backend will
+compact this graph down by about an order of magnitude before
+rendering it out.  Thus the result of serializing and then
+de-serializing is much smaller than the in-core image of a file just
+parsed from source.
+
+<p>Using serialization and compactification to "compile" each
+translation unit separately and then "linking" together the resulting
+graphs. you should be able to analyze large programs that you could
+not otherwise analyze all at once in core.
+
+<pre>
+  -q-srz &lt;fname&gt;           : serialize qual inference graph to a file
+  -fq-compactify-graph     : compactify graph before serialization
+</pre>
+
+<p>Bugs:<ul>
+
+<li>Compactification can be turned off because it seems to still be a
+little buggy.
+
+<li>Do not attempt to mix polymorphic and non-polymorphic analyses
+when serializing.  That is all of your "compile" and "link" stages
+should all be polymorphic or all non-polymorphic.  It could work, it
+just doesn't right now.
+
+</ul>
+
+<h4>Serialization example</h4>
+
+<p>Here are two files where the tainted-ness flows between translation
+units when they run.
+
+<p>Test/taint2_a.c:
+<pre>
+    int return_tainted();
+    void want_untainted(int $untainted fmt, ...);
+    int main() {
+      int a = return_tainted();
+      want_untainted(a);
+    }
+</pre>
+
+<p>Test/taint2_b.c:
+<pre>
+    int return_tainted() {
+      int $tainted x;
+      return x;
+    }
+</pre>
+
+<p>Here we can see serialization in action.  It is a bit
+disconcerting, but we get separate warnings in each file.
+
+<pre>
+    make qual-srz-demo
+    ./qual -fq-no-explain-errors -q-config ../libqual/config/lattice Test/taint2_a.c -fq-no-ret-inf -q-srz Test/taint2_a.c.qdir
+    ./qual -fq-no-explain-errors -q-config ../libqual/config/lattice Test/taint2_b.c -fq-no-ret-inf -q-srz Test/taint2_b.c.qdir
+    ./qual -q-config ../libqual/config/lattice Test/taint2_a.c.qdir Test/taint2_b.c.qdir
+    Test/taint2_b.c:1 WARNING: return_tainted_ret treated as $tainted and $untainted
+
+    return_tainted_ret: $tainted $untainted
+    Test/taint2_b.c:1      $tainted <= return_tainted_ret
+    Test/taint2_b.c:1               <= return_tainted_ret
+    Test/taint2_a.c:4               <= $untainted
+
+    Test/taint2_a.c:4 WARNING:  ( (return_tainted) ()) treated as $tainted and $untainted
+
+     ( (return_tainted) ()): $tainted $untainted
+    Test/taint2_b.c:1      $tainted <= return_tainted_ret
+    Test/taint2_b.c:1               <= return_tainted_ret
+    Test/taint2_a.c:4               <=  (return_tainted)_ret
+    Test/taint2_a.c:4               <=  ( (return_tainted) ())
+    Test/taint2_a.c:4               <= $untainted
+</pre>
+
+
+<hr>
+<a name=kinds>
+<h2>Kinds of Dataflow</h2>
+</a>
+
+<p>David Wagner again on the various kinds of dataflow.
+
+<blockquote>
+
+<p>[David] Oh, dear.  I wonder whether I led you astray with the term
+"flow-sensitive".  I don't know how much you know about the program
+analysis literature, but the term "flow-sensitive" is a piece of
+jargon with some specific (and not very intuitive) meaning.  Also, by
+the way, flow analysis is a pretty broad category: there's data flow,
+and control flow, and intra-procedural analysis, and inter-procedural
+analysis, and all kinds of (whatever)-sensitivity.
+
+<p>Example:
+
+<pre>
+    char *s = read_from_network();
+    char *d = malloc(strlen(s)+1);
+    strcpy(d, s);
+    use_in_trusting_way(d);
+</pre>
+
+<p>That's the kind of data flow that Cqual++ is very good at tracking.
+Basically, we annotate read_from_network() to say that it returns a
+"char $tainted *", like this:
+<pre>
+    char $tainted *read_from_network();
+</pre>
+
+<p>We annotate <tt>use_in_trusting_way()</tt> to say that it requires
+its input to be a "char $untainted *", like this:
+
+<pre>
+    void use_in_trusting_way(char $untainted *);
+</pre>
+
+<p>Finally, we have some library of annotations on things like
+<tt>strcpy()</tt> expressing how information flows.  (Most or all of
+these annotations can be application-specific, and written separately
+from the rest of the code.)  With these annotations, CQual++ should be
+able to handle this kind of flow easily, even if the data is passed
+through functions, stored on the heap, copied all over the place, and
+so on.
+
+<p>Note that this analysis doesn't require us to understand anything
+special about the order in which statements can execute -- it only
+requires tracking the flow of data from one variable to another --
+which is where CQual++ really shines.
+
+</blockquote>
+
+<a name=polymorphic>
+<h3>Cqual++ is Polymorphic</h3>
+</a>
+
+<p>The word "polymorphic" is very overloaded: we have two meanings of
+polymorphic in this document (the one I am about to give and the <a
+href=#funky>Funky Qualifiers</a> meaning).  Neither one of these
+meanings are what Object Oriented people mean by polymorphic, which we
+simply call "inheritance" (Programming Languages people will just call
+it "subtyping").  In the context of static dataflow analysis
+<ul>
+
+<li><b>polymorphic</b> dataflow means that separate calls to the same
+function get separate dataflow paths that do not mutually interfere.
+
+</ul>
+
+<p>Here is example oink/Test/poly1.c.  Notice that there is really no
+problem; $tainted never flows to $untainted at runtime.
+
+<pre>
+    int f(int x) {
+      return x;
+    }
+
+    int main() {
+      int $tainted x0;
+      int y0;
+      y0 = f(x0);
+
+      int x1;
+      int $untainted y1;
+      y1 = f(x1);
+    }
+</pre>
+
+<p>However a non-polymorphic analysis will simply flow the $tainted in
+at the <em>first</em> call to f() and flow it out at <em>every</em>
+call to f().
+
+<pre>
+    ./qual -fq-no-poly -q-config ../libqual/config/lattice Test/poly1.c; test $? -eq\
+     32
+    Test/poly1.c:8 WARNING:  (x0)' treated as $tainted and $untainted
+
+     (x0)': $tainted $untainted
+    Test/poly1.c:8      $tainted <=  (x0)'
+    Test/poly1.c:8               <= x'
+    Test/poly1.c:8               <= x'
+    Test/poly1.c:12              <= x'
+    Test/poly1.c:12              <= x'
+    Test/poly1.c:1               <= x'
+    Test/poly1.c:1               <=  (x)'
+    Test/poly1.c:2               <=  t54412836-int
+    Test/poly1.c:1               <=  t54412836-int
+    Test/poly1.c:1               <= f_ret
+    Test/poly1.c:12              <=  (f)_ret
+    Test/poly1.c:12              <= f_ret
+    Test/poly1.c:12              <=  (f)_ret
+    Test/poly1.c:12              <=  ( (f) ( (x1)))
+    Test/poly1.c:12              <=  (y1)'
+    Test/poly1.c:12              <= $untainted
+</pre>
+
+<p>A polymorphic analysis does not make this mistake.
+
+<pre>
+    ./qual -fq-poly -q-config ../libqual/config/lattice Test/poly1.c
+</pre>
+
+<h3>Cqual++ is Instance-Sensitive</h3>
+
+<p>There is alway the question of how far a static analysis should go
+to model the heap.  A simple way to handle structs is to just treat
+all structs of the same type as if they were the same struct; that is,
+to just treat a struct as a namespace and its members as global
+variables.  This will not give you false negatives since if two
+structs might be the same, we just assume they are the same.  However
+the false positive rate gets bad. <ul>
+
+<li><b>instance-sensitivity</b> modeling syntactically different objects
+separately if they could not possibly be connected.
+
+</ul>
+
+<p>Cqual refers to this as 'field-sensitivity'.  I consider
+'instance-sensitivity' to be the accurate term for it and respectfully
+disagree with the Cqual designers.
+
+<p>Cqual++ is instance-sensitive in C mode.  Instance-sensitivity is off by
+default.  This restriction to C mode is due to inheritance making
+notions of "same type" complicated.  We could fix this but we have not
+yet.
+
+<p>Here two structs are independent: they don't ever flow together.  A
+line that would make them flow together is commented out.
+
+<pre>
+    struct A {
+      int q;
+    };
+
+    int main() {
+      struct A *a1;
+      struct A *a2;
+      int $tainted x;
+      int $untainted y;
+      a1->q = x;
+      // NOTE that we do not do this: a2 = a1;
+      y = a2->q;
+    }
+</pre>
+
+<p>With instance-sensitivity turned on, Cqual++ correctly allows the file
+to pass.
+
+<pre>
+    make qual-check-demo-instance-sens
+    ./qual -q-config ../libqual/config/lattice -fo-instance-sensitive Test/instance_sensitive_demo.c
+</pre>
+
+<p>With instance-sensitivity turned off, Cqual++ uses one model for both
+structs and the two instances of the field q are collapsed into one,
+allowing $tainted to apparently flow to $untainted.
+
+<pre>
+    ./qual -q-config ../libqual/config/lattice Test/instance_sensitive_demo.c
+    Test/instance_sensitive_demo.c:10 WARNING:  ( (* (a1)).q)' treated as $tainted and $untainted
+
+     ( (* (a1)).q)': $tainted $untainted
+    Test/instance_sensitive_demo.c:10     $tainted <=  (x)'
+    Test/instance_sensitive_demo.c:10              <=  ( (* (a1)).q)'
+    Test/instance_sensitive_demo.c:10              <= q'
+    Test/instance_sensitive_demo.c:12              <=  ( (* (a2)).q)'
+    Test/instance_sensitive_demo.c:12              <=  (y)'
+    Test/instance_sensitive_demo.c:12              <= $untainted
+</pre>
+
+
+<h3>Cqual++ is Void-Polymorphic</h3>
+
+<p>Sometimes programmers will put an <tt>int*</tt> into a
+<tt>void*</tt> at one place and get it out later, and then put a
+<tt>float*</tt> into the same <tt>void*</tt> someplace else and get it
+out later.  If we assume that the programmer is not breaking the
+typesystem, then the <tt>int</tt> and <tt>float</tt> should not get
+tangled together when they are inside the <tt>void*</tt>. <ul>
+
+<li><b>void-polymorphism</b> modeling a <tt>void</tt> as a union with
+one member of each type.
+
+</ul>
+
+<p>Cqual++ is void-polymorphic in C mode.  Void-polymorphism is off by
+default and is actually controlled by the same flag as
+instance-sensitivity, -fo-instance-sensitive, since the underlying mechanism
+and difficulties with C++ are very similar.  Again, This restriction
+to C mode is due to inheritance making notions of "same type"
+complicated.  We could fix this but we have not yet.
+
+<pre>
+    int main() {
+      int $tainted *i;
+      int *i2;
+      float *f;
+      float $untainted *f2;
+      void *v = i;
+      f2 = v;
+    }
+</pre>
+
+<p>With void-polymorphism turned on, Cqual++ correctly allows the file
+to pass.
+
+<pre>
+    make qual-check-demo-void-poly
+    ./qual -q-config ../libqual/config/lattice -fo-instance-sensitive Test/void_poly_demo.c
+</pre>
+
+<p>With void-polymorphism turned off, Cqual++ uses one model for
+everything that goes into the <tt>void</tt> the two pointed-to things
+are collapsed into one, allowing $tainted to apparently flow to
+$untainted.
+
+<pre>
+    ./qual -q-config ../libqual/config/lattice Test/void_poly_demo.c
+    Test/void_poly_demo.c:6 WARNING:  (i)'' treated as $tainted and $untainted
+
+     (i)'': $tainted $untainted
+    Test/void_poly_demo.c:6      $tainted <=  (i)''
+    Test/void_poly_demo.c:6               <=  (v)''
+    Test/void_poly_demo.c:7               <=  (f2)''
+    Test/void_poly_demo.c:7               <= $untainted
+</pre>
+
+
+<h3>Cqual++ is Not Flow-Sensitive</h3>
+<blockquote>
+
+<p>[David] I wonder if words like "flow-sensitive" and "[data] flow analysis" might
+be causing some miscommunication here (note: they're not the same
+concept!).  Note that <ul>
+
+<li><b>flow-sensitivity</b> doesn't refer to 'tracking the flow of
+information through the program'; it refers to <em>analyses that take
+into account the control flow in the program</em>, i.e., the order in
+which statements can execute.
+
+</ul>
+
+<p>Example:
+<pre>
+    char *s = read_from_network();
+    use_in_untrusting_way(s);
+    s = "innocuous";
+    use_in_trusting_way(s);
+</pre>
+
+<p>That's an example of code that CQual++ doesn't handle as well.  The
+above is safe, but CQual++ doesn't recognize it as safe.  The reason
+is that CQual++ doesn't try to reason about the order in which various
+statements occur; it just conservatively assumes that they can be
+executed in any order whatsoever.  (In the jargon, we say that CQual++
+is "flow-insensitive".)  Consequently, CQual++ cannot recognize that
+the second assignment to 's' overwrites the previous value, and thus
+mistakenly thinks that use_in_trusting_way() can receive tainted data.
+
+<p>Recognizing this kind of code, and all its generalizations, requires
+an analysis that is "flow-sensitive": i.e., an analysis that tries to
+determine what order statements can be executed in, and refines the
+results accordingly.  A flow-sensitive analysis would allow the
+variable s to have different types at different places in the code
+(e.g., type "char $tainted *" after the first line, and type "char
+$untainted *" after the third line).  CQual++ doesn't do that.
+
+<p>I suspect it's not so easy to do well.  <a
+href="http://www.cs.umd.edu/~jfoster/">Jeff</a> built a flow-sensitive
+version of CQual, and my impression is that it was a little messy and
+required some pointer analysis (e.g., restrict annotations).  He got a
+paper out of it, so that gives a lower bound on the ease of
+implementing it: it was at least hard enough to be worth a
+publication. :-)
+
+</blockquote>
+
+<h4>Static Single Assignment Considerations</h4>
+
+<p>It was pointed out to me that the example above can be fixed by
+using a trick called Static Single Assignment (SSA): whenever a stack
+variable is modified in the code, instead make a new variable with a
+fresh name (that's a technical term actually) and make all the
+following references to it refer to the new name.  That is, stack
+variables become immutable.  In C++ terminology, we say that they can
+be *initialized* but not *assigned*.
+
+<p>At first SSA sounds really promising and it will fix flow-sensitive
+problems for variables on the *stack*, such as in the example above.
+However, the exact same problem for a variable on the *heap* (that is,
+a memory-location) cannot be fixed in the same way: the analogue of
+SSA on the heap is a restriction that you cannot mutate heap data,
+only copy it.  Thus, while the above example can be fixed by adding
+SSA to the analysis, the same example but with an extra layer of
+pointer indirection will demonstrate again 1) the lack of flow
+sensitivity and 2) the real difficulty in adding it to the analysis.
+
+<p>Right now the dataflow analysis of Oink (and therefore Cqual++) is
+completely purely not flow-sensitive.  Adding SSA (for stack data)
+would make the dataflow more flow sensitive, we would now be in a more
+complex point in the design space: flow sensitivity for the stack but
+not the heap.  I think that it is better to have a simpler point in
+the design space that is simpler to think about: a qualifier for a
+variable or memory location is a property that does not change over
+time.  If you want to keep $tainted and $untainted data separate from
+one another, use different variables; your design will be
+fundamentally simpler if these qualifiers do not depend on the order
+of operations.
+
+<h3>Cqual++ is Not Path-Sensitive</h3>
+<blockquote>
+
+<p>[Rob Johnson]<ul>
+
+<li><b>path-sensitivity</b> making some attempt to model the
+conditional branches in the program.
+
+</ul>
+
+<p>[David Wagner] CQual++ doesn't do that.  Example:
+
+<pre>
+    char *s;
+    if (flag)
+        s = read_from_network():
+    else
+        s = "hello, world";
+    if (flag)
+        use_in_untrusting_way(s);
+    else
+        use_in_trusting_way(s);
+</pre>
+
+<p>That's another kind of code that we can't handle very well.  CQual++
+will ignore the conditional in the if-statement and conservatively
+assume that both branches can be taken.  Consequently, CQual++ will
+think that it might be possible for data to flow from read_from_network()
+into the argument to use_in_trusting_way(), and will issue a warning --
+but the above code isn't a real bug, as any self-respecting programmer
+can see (assuming 'flag' cannot change between the two if-statements).
+
+</blockquote>
+
+
+<hr>
+<a name=what_is_dataflow>
+<h2>What Exactly is 'Dataflow'?</h2>
+</a>
+
+<p>The most useful tool would be one that reported a bug exactly when
+there was one: no false positives and no false negatives.  One
+expression of the <a
+href="http://en.wikipedia.org/wiki/Halting_problem">Halting
+Problem</a> is that this is not possible do to at static (compile)
+time.  Therefore in any tool that finds <a
+href="http://en.wikipedia.org/wiki/Rice's_theorem">non-trivial</a>
+bugs, approximations must be made.  As a general strategy, Cqual++
+considers data to flow at static (compile) time if data <em>could</em>
+flow at dynamic (run) time; generally this strategy is called a
+<em>conservative analysis</em>.
+
+<p>Unfortunately, to go all the way with a conservative analysis would
+make the tool completely useless.  Cqual++ is fundamentally based on
+dataflow; however "data flowing" is actually an imprecise abstraction
+in the first place.  I wrote a little program, launder.c, to
+demonstrate this problem.  Launder computes 'cat' but <ul>
+
+<li>it has a format string bug, and
+
+<li>in a way that Cqual++ will not catch.
+
+</ul>
+
+Launder does this by "laundering" the dataflow through the
+controlflow.  However, the things it does are not beyond what someone
+might write a program to actually do: the JPEG codec does do this sort
+of bit-granularity Huffman encoding/decoding.
+
+<h3>launder.c</h3>
+
+<pre>
+    #include &lt;stdio.h&gt;
+
+    #ifdef CQUAL
+    /* to analyze */
+    #  define TAINTED $tainted
+    #  define UNTAINTED $untainted
+    #else
+    /* to compile */
+    #  define TAINTED
+    #  define UNTAINTED
+    #endif
+
+    /* Replace this with an internal home-grown compression algorithm if
+       you don't believe this is within the realm of what people might
+       write.  For example, the codec for I think JPEG uses Huffman
+       encoding down to the bit granularity and therefor does things like
+       this. */
+    char *launderString(char *in) {
+      int len = strlen(in);
+      char *out = malloc((len+1) * sizeof out[0]);
+      int i, j;
+      for (i=0; i&lt;len; ++i) {
+        out[i] = 0;
+        for (j=0; j&lt;8; ++j) {
+          // NOTE: I can make this as bad as I want; Huffman decoding is
+          // non-trivial
+          if (in[i] & (1&lt;&lt;j)) out[i] |= (1&lt;&lt;j);
+        }
+      }
+      out[i] = '\0';
+      return out;
+    }
+
+    int main(int argc, char **argv) {
+      int size = 1024;
+      char TAINTED line[size];
+      while(1) {
+        char *ret = fgets(line, size, stdin);
+        if (!ret) break;
+        char UNTAINTED *b = launderString(line);
+        /* FORMAT STRING BUG! */
+        printf(b);
+      }
+      return 0;
+    }
+</pre>
+
+<h3>Cqual++ Does Not Find the Bug in Launder</h3>
+
+<p>Run this demo with make qual-check-demo-launder.
+
+<p>Demonstrate that launder computes cat.
+
+<pre>
+    gcc -E Test/launder.c > Test/launder.i
+    gcc Test/launder.i -o Test/launder
+    echo 'Hello there!' > Test/hello.out
+    Test/launder < Test/hello.out
+    Hello there!
+</pre>
+
+<p>Demonstrate that Cqual++ does not find the dataflow.
+
+<pre>
+    gcc -DCQUAL -E Test/launder.c > Test/launder_qual.i
+    grep 'ainted' Test/launder_qual.i
+      char $tainted line[size];
+        char $untainted *b = launderString(line);
+    ./qual -q-config ../libqual/config/lattice Test/launder_qual.i
+</pre>
+
+<h3>Laundering data through an array</h3>
+
+<p>Here is a program that uses an array to compute the identity function.
+
+<pre>
+    char a[100];
+    int main(int argc, char **argv) {
+      char i;
+      for (i='a'; i<'z'; ++i) a[i] = i;
+      char $tainted x = argv[0][0];
+      char $untainted y = a[x];
+      return 0;
+    }
+</pre>
+
+<p>Cqual++ does not find data that "flows through" the array.
+
+<pre>
+    make qual-check-demo-launder-array
+    Demonstrate that Cqual++ does not find the dataflow
+    when laundering the data through an array
+    ./qual -q-config ../libqual/config/lattice Test/launder_array.c
+</pre>
+
+<p>We could make the the dataflow flow "through" array lookups, but do
+you really want it to flow through all of them?  The real question is:
+which array lookups preserve enough information that we would think of
+it as "data is flowing" and which of them destroy enough information
+that we think of it as just looking up a fact about the data.  This is
+a subtle judgment call.
+
+
+<hr>
+<a name=logical_decision_procedure>
+<h2>Cqual++ as a Logical Decision Procedure</h2>
+</a>
+
+<p>The study of proofs is called 'Logic'.  Call any mechanical way of
+deciding the truth value of a sentence 'decision procedure'.  In
+Logic we consider the difference between 1) being able to prove a fact
+versus 2) the fact being true.  There are two interesting properties a
+decision procedure can have.<ul>
+
+<li><b>Sound</b>: Whenever a sentence is <em>provable</em> then it is
+<em>true</em>.
+
+<li><b>Complete</b>: Whenever a sentence is <em>true</em> then it is
+<em>provable</em>.
+
+</ul>
+
+<h3>Soundness</h3>
+
+<p>We think of a static error checking tool as trying to prove that
+the input program does not have a error.  Therefore if we were to say
+"An analysis is <em>sound</em>" it would means that it never reports a
+false negative; such a system would actually demonstrate the absence
+of bugs to the user.
+
+<p>As the Launder example above demonstrates, this "totally sound"
+strategy is basically not possible as a practical matter for Cqual++:
+if $tainted data were ever the argument to an 'if' or 'switch'
+statement then we would have to taint the program counter; then all
+hell brakes loose and <em>Everything</em> your program touches is
+tainted.  Such an analysis might be correct, but it is not very
+useful.  Here is a really sound analysis; if your program has a bug,
+it will always tell you: <tt>echo "Error"</tt>.
+
+<h3>An Attempt at an Exhaustive List of Soundness Holes</h3>
+
+<p>Since no completely sound analysis of C++ is going to be useful, we
+do our best and attempt to enumerate all of the <em>soundness
+holes</em> in Cqual++.  These situations that we assume never
+participate in the mechanism of an actual dataflow bug; if they do, we
+may not find the bug.  <ul>
+
+<li>Dynamically generated code: we never even see it.
+
+<li>Assembly: We simply ignore inline assembly for now.  With an
+assembly parser and dataflow, we could integrate it.
+
+<li>Code invokes undefined behavior: We don't guarantee to guess all
+the bizarre behavior that your compiler might think up for undefined
+situations.
+
+<li>Failures of memory safety: if you write off the end of an array or
+into some random part of memory we are not going to notice.
+
+<li>Failures of type safety: Our model of the program basically *is*
+the type system, so if you go out side of it, we're hozed.
+
+<li>Casts: Another failure of type safety basically; currently <em>any
+cast breaks the flow</em>.  You can hack some other semantics in
+yourself if you like, but it is tough to know what to do in the
+presence of a cast without extending the model below the type system
+and attempting to model memory layout.
+
+<li>Laundering through the control flow: As in the Launder example, we
+simply do not consider data to ever flow into the program counter.
+
+<li>Laundering through arrays: Again as in the Launder example, we
+simply do not consider data that goes into an array lookup, even if
+the array computes the identity function.
+
+<li>Instance sensitivity and void polymorphism in the presence of
+inheritance: Inheritance makes the notion of "same type" more complex
+and we have not yet handled that.
+
+</ul>
+
+<p>If you find any more soundness holes, tell us and I'll give you an
+acknowledgment when we include it.  Please illustrate with a program
+like the dataflow laundering program I give above.  Your program
+qualifies if
+<ul>
+
+<li>it has a real dataflow bug,
+
+<li>Cqual++ does not report an error,
+
+<li>you point out to us the point where the data should have flowed
+but did not, and
+
+<li>the mistake is a mistake in the design of Cqual++, not just a
+coding error.
+
+</ul>
+
+<p>Please note that Cqual++ seems to do the right thing in these
+situations since it is flow-insensitive. <ul>
+
+<li> Signals
+
+<li> Computed GOTOs
+
+<li> Threads
+
+<li> Set-jump / Long-jump
+
+</ul>
+
+
+<h3>Completeness</h3>
+
+<p>Going back to logic terminology, again we think of Cqual++ as
+trying to prove that your program does not have dataflow bugs.
+Therefore if we say that Cqual++ is <em>complete</em> that means that
+it never gives a false positive.  In general, there are two kinds of
+static analysis tools.<ul>
+
+<li><b>Verifiers</b>: these attempt to be sound while giving up a
+little completeness; that is they try to never have false negatives.
+
+<li><b>Bug hunters</b>: These attempt to point out as many bugs as
+they can to you without any attempt to find all of your bugs.
+
+</ul>
+
+<p>Cqual is if the verifier kind.  That is, we think that being
+complete is important but not quite as important as being sound: a
+human can filter out some false positives, but if you give users too
+many, the tool will be useless to them.
+
+<hr>
+<p>&copy; 2002-2006 Daniel S. Wilkerson
+
+<h2>&nbsp;</h2>
+
+</body>
+</html>

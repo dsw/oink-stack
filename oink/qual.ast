@@ -1,0 +1,52 @@
+// -*- c++ -*-
+// see License.txt for copyright and terms of use
+
+// An AST specification file for the modifications that qual makes to
+// Elsa's AST (beyond those of oink).
+
+verbatim {
+  #include "qual_literal.h"     // QLiterals
+  class QualEnv;                // qual_walk.h
+
+  string toString(QLiterals const * ql);
+  string toXml(QLiterals *ql);
+  void fromXml(QLiterals *&ql, string str);
+}
+
+impl_verbatim {
+  extern ASTPrinter_O *astPrinter;
+
+  // this prevents a linking error since only one cc.ast.gen.cc is
+  // generated, and it includes references to toString and
+  // toXml/fromXml for various qual related things that show up in
+  // qual.ast
+  string toString(QLiterals const * ql) {
+    return astPrinter->toString(ql);
+  }
+  string toXml(QLiterals *ql) {
+    return astPrinter->toXml_QLiterals(ql);
+  }
+  void fromXml(QLiterals *&ql, string str) {
+    astPrinter->fromXml_QLiterals(ql, str);
+  }
+}
+
+class TypeSpecifier {
+  public(owner) QLiterals *ql = NULL;
+}
+
+enum DeclaratorContext {
+                          // inside ASTTypeId
+  DC_S_ASSERT_TYPE,       //   S_assert_type::tid
+  DC_S_CHANGE_TYPE,       //   S_change_type::tid
+};
+
+class IDeclarator {
+  -> D_pointer(QLiterals *ql = NULL);
+  -> D_func(QLiterals *ql = NULL);
+}
+
+class Statement {
+  -> S_assert_type(FullExpression e, ASTTypeId tid);
+  -> S_change_type(FullExpression e, ASTTypeId tid);
+}

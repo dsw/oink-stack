@@ -1,0 +1,13 @@
+  errors:   0
+  warnings: 5
+../LibCpdInit/test/compoundinit5Bw.c:9:15: warning: wide character literals not properly implemented
+../LibCpdInit/test/compoundinit5Bw.c:9:15: warning: wide character literals not properly implemented
+../LibCpdInit/test/compoundinit5Bw.c:9:15: warning: wide character literals not properly implemented
+../LibCpdInit/test/compoundinit5Bw.c:9:15: warning: wide character literals not properly implemented
+../LibCpdInit/test/compoundinit5Bw.c:9:15: warning: wide character literals not properly implemented
+f2.b2.a2[0] = L'ha';
+f2.b2.a2[1] = L'ea';
+f2.b2.a2[2] = L'la';
+f2.b2.a2[3] = L'la';
+f2.b2.a2[4] = L'oa';
+typechecking results:

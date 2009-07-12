@@ -1,0 +1,31 @@
+// -*- c++ -*-
+// see License.txt for copyright and terms of use
+
+// This is as extension module to cc.gr: A grammar specification file
+// for the modifications that oink makes to the elsa grammar.
+
+// this verbatim section is appended to the one in cc.gr
+verbatim {
+  // helper for nonterm(Function*) FunctionDefinition
+  
+  // shareable fragment of CCParse_Oink
+  class CCParse_Oink_Shareable : public CCParseShareable {
+  public:
+    CCParse_Oink_Shareable(StringTable &table, CCLang &lang)
+      : CCParseShareable(table, lang) {}
+    // This class is a placeholder; Put user code here if you want it
+    // available during parsing to the user actions.
+  };
+
+}
+
+context_class CCParse_Oink : public CCParse_Oink_Shareable {
+public:
+  CCParse_Oink(StringTable &table, CCLang &lang)
+    : CCParse_Oink_Shareable(table, lang) {}
+  // DO NOT PUT ANY CODE OR DATA HERE; Put it into
+  // CCParse_Oink_Shareable.
+};
+   
+
+// rest of this file is a placeholder for future extensions

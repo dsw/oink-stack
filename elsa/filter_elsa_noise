@@ -1,0 +1,49 @@
+#!/usr/bin/perl -w
+use strict;
+
+# This script used to filter out source locations from the printAST,
+# but now we serialize the source locations correctly, so that is no
+# longer necessary.  However, we still need to filter out:
+#
+#   1) warnings and other progress messages
+#
+#   2) successor pointers as we don't serialize those
+#
+#   3) actual pointer values that Scott likes to print out
+#
+#   4) comments on the number of overloadings as that gets resolved
+#      during typechecking and is not serialized out
+
+while(<STDIN>) {
+  # source locations
+#  next if /^\s*loc =/;
+
+  # warnings and other messages
+  next if /^\s*parse=.* tcheck=.* integ=.* elab=.*/;
+  next if /^\s*typechecking results:/;
+  next if /^\s*errors:/;
+  next if /^\s*warnings:/;
+  next if /^\s*no-typecheck/;
+  next if /^\s*no-elaborate/;
+  next if /^.*:\d+:\d+: warning:/;
+
+  # successor pointers
+  next if /^\s*succ=/;
+
+  # source locations
+#    s|\b\S+\.cc:\d+:\d+ \(0x.*\)||g;
+#    s|<init>:\d+:\d+ \(0x.*\)||g;
+#    s|<noloc>:\d+:\d+ \(0x.*\)||g;
+#    # without
+#    s|\b\S+\.cc:\d+:\d+||g;
+#    s|<init>:\d+:\d+||g;
+#    s|<noloc>:\d+:\d+||g;
+
+  # pointer values
+  s|(0x[0-9A-F]+)||;
+
+  # number of overloadings
+  s| \(\d+ overloadings?\)$||;
+
+  print;
+}

@@ -1,0 +1,129 @@
+#!/usr/bin/perl -w
+# see License.txt for copyright and terms of use
+use strict;
+
+# Filter the quals.dot output of the backend so that the resulting
+# graph consists only of the connected component containing a single
+# given root node.  Originally an idea of Scott McPeak; reimplemented
+# by Daniel S. Wilkerson.
+
+# NOTE: the qual backend currently prints string literals in
+# expressions with quotes which are not backslashed properly; this
+# script will fail on those
+
+# parsed command line arguments
+my $rootPattern;                # pattern that matches the root node
+my $root;                       # node that determines the connected component we print
+my $target;                     # optional: if we have this we just want the root to target path
+
+# parsed graph
+my $startline;                  # first line of the file that has the graph name in it
+my %neighbors;                  # the graph, made undirected
+my @edges;                      # list of parsed edges
+
+# shortest path tree
+my %visited;                    # also tracks the shortest path tree
+my @boundary;
+
+# read the command line flags
+sub parse_command_line {
+  while (@ARGV) {
+    my $arg = shift @ARGV;
+    if ($arg eq '-root') {
+      $rootPattern = shift @ARGV;
+    } else {
+      die "illegal argument:$arg\n";
+    }
+  }
+  die "you must supply a -root\n" unless defined $rootPattern;
+  warn "the root pattern is :$rootPattern:\n";
+}
+
+# get the root from the node if it matches
+sub get_root_from_node {
+  my ($node) = @_;
+  if ($node =~ m/\Q${rootPattern}/) {
+    if (defined $root) {
+      die "two different nodes match the -root pattern: $root, $node\n"
+        unless $root eq $node;
+    } else {
+      $root = $node;
+    }
+  }
+}
+
+# parse the graph
+sub parse_graph {
+  # read until we find the "diagraph" line
+  while (<STDIN>) {
+    if (/^(digraph\s*[a-zA-Z_]*\s*{)$/) {
+      $startline = $1;
+      last;
+    }
+  }
+
+  # read in nodes and edges and process them; stop when we hit the close
+  # curly
+  while (<STDIN>) {
+    chomp;
+    if (/^"[^"]*"$/) {          # "
+      # a node; discard it
+    } elsif (m,^\"((?:[^\"]|\\\")*)\" \s* -> \s* \"((?:[^\"]|\\\")*)\" (?:\s* \[.*\])?$,x) {
+      # an edge; keep it
+      my ($head, $tail) = ($1, $2);
+      # see if it mentions a node that matches $rootPattern
+      get_root_from_node($head);
+      get_root_from_node($tail);
+      # save the edges
+      push @{$neighbors{$head}}, $tail;
+      push @{$neighbors{$tail}}, $head;
+      # FIX: check for duplicate mention of edge?
+      my @parsedEdge = ($head, $tail, $_);
+      push @edges, \@parsedEdge;
+    } elsif (m,^}$,) {
+      last;                     # we are done
+    } else {
+      die "bad line:$_\n";
+    }
+  }
+}
+
+# find everything connected to the $root node using a breadth-first
+# search
+sub bfs {
+  die "no node matched the -root pattern\n" unless defined $root;
+  $visited{$root} = $root;      # only the root points to itself
+  push @boundary, $root;
+  while (@boundary) {
+    my $x = shift @boundary;
+    die "unvisited node on the boundary:$x" unless $visited{$x};
+    for my $n (@{$neighbors{$x}}) {
+      next if $visited{$n};
+      $visited{$n} = $x;
+      push @boundary, $n;
+    }
+  }
+}
+
+# print all the edges in the component containing the root
+sub print_whole_component {
+  print "$startline\n";
+  for my $e (@edges) {
+    my ($head, $tail, $whole) = @{$e};
+    if ($visited{$head}) {
+      die "head visited but tail not?! head:$head, tail:$tail\n"
+        unless $visited{$tail};
+      print "$whole\n";
+    } else {
+      die "tail visited but head not?! head:$head, tail:$tail\n"
+        unless ! $visited{$tail};
+    }
+  }
+  print "}\n";
+}
+
+# **** main
+parse_command_line();
+parse_graph();
+bfs();
+print_whole_component();

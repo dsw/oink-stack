@@ -1,0 +1,55 @@
+# configuration
+Makefile
+config.status
+config.summary
+
+# dependency files
+*.d
+# objects
+*.o
+# archives
+*.a
+
+# executables
+ccparse
+tlexer
+semgrep
+testcout
+packedword_test
+
+# generated files
+*.gen.*
+lexer.lex
+lexer.yy.cc
+cc_tokens.h
+cc_tokens.cc
+cc_tokens.ids
+
+# Test output
+*.dSYM
+*.tmp
+outdir
+tmp.txt
+quicktest
+
+# FIX: these have to be a bug somewhere; I can't find it right now
+in/-DSEL=*
+in/big/*.i
+
+# FIX: don't know why these are left around
+in/t0417.error2.cc
+in/t0472.error1.cc
+in/t0539_1.cc
+in/t0539_10.cc
+in/t0539_11.cc
+in/t0539_2.cc
+in/t0539_3.cc
+in/t0539_4.cc
+in/t0539_5.cc
+in/t0539_6.cc
+in/t0539_7.cc
+in/t0539_8.cc
+in/t0539_9.cc
+
+# temporary state that has to be global across runs
+.serialno

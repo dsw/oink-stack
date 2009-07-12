@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# $Id$
+
+# post-process the C preprocessor: delete this line, which is in
+# /usr/include/c++/3.4/i486-linux-gnu/bits/c++config.h; Elsa 2006-06-14 can't
+# deal with it.
+
+$@ | sed 's#using namespace __gnu_debug_def __attribute__ [(][(]strong[)][)];# /* disabled: using namespace __gnu_debug_def __attribute__ ((strong)); */ #'
+

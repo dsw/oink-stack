@@ -1,0 +1,112 @@
+#!/usr/bin/perl -w
+# -*-cperl-*-
+
+die "this script is not done";
+
+# A script for interpreting files as tests.  We implement a
+# general-purpose means for 1) asserting an embedded sentence to be
+# true about a file and 2) templatizing a file with an embedded diff
+# that is applied to the file before the assertion is run.  The
+# commands that embedd the assertion and diff each have a set of mode
+# names attached; when this script is run a mode is supplied and the
+# assertions and diff commands labelled with that mode are the only
+# ones honored.
+
+# More specifically, we implement the following features.  This script
+# takes as arguments a mode and a list of files.  Step 1) All of the
+# files on the command line to this script are processed to apply the
+# diff indicated by the mode.  Step 2) all of the assertions indicated
+# by the mode are run.
+#
+# During interpretation all lines ending in a suffix of the form
+#   // INTERP_*
+# are considered to be interpreter commands.  They are deleted from
+# the file before the file is saved at the end of step 1.
+#
+# Each command is annotated by a MODE_SET, which is a comma-separated
+# list of mode names; when the current mode is on that list then the
+# command is honored; otherwise it is ignored.
+#
+# Step 1) The file will be processed and all of the ADD(MODE) and
+# DEL(MODE) lines applied and the file FILE.SUFFIX will be saved to
+# FILE-MODE.SUFFIX.
+#
+# Step 2) INPUT=<filenames> COMMAND will be run in the shell, where
+# <filenames> is the list of files FILE-MODE.SUFFIX for each
+# FILE.SUFFIX in the input files to this script.  The test passes if
+# the return value is RESULT.
+
+# The commands are as follows.
+#
+# INTERP_PREFIX(FOO)
+# changes the INTERP prefix to FOO FOO_PREFIX command.  Read all the
+# rest of the rules accordingly.
+#
+# INTERP_ALSO(MODE_SET)FILE
+# also puts FILE on the list of files to be processed and then
+# included in the INPUT argument to the assertion commands run for
+# this mode.  The assertions in FILE are not run.
+#
+# INTERP_ASSERT(MODE_SET) RESULT=COMMAND
+# defines a test assertion.
+#
+# INTERP_ADD(MODE_SET)LINE
+# when mode is MODE then this line is added to the file at this
+# position; any text to the left of the command comment is retained.
+#
+# INTERP_DEL(MODE_SET)
+# when mode is MODE then this entire line is deleted, including the
+# text to the left of the command-comment.
+
+# ****
+my $mode;                       # the mode used to filter the commands
+my @infiles;                    # the input files
+my %infile2outfile;             # map input files to output files
+
+sub parse_command_line {
+  for my $arg(@ARGV) {
+    if ($arg=~m/^--mode=(.*)$/) {
+      $mode = $1;
+    } else {
+      push @infiles, $1;
+    }
+  }
+  die "you must specify a mode" unless defined $mode;
+}
+
+sub make_outfile_name {
+  my ($infile) = @_;
+  if ($infile =~ m/(^[^\.]*)(\..*)$/) {
+    my ($stem, $suffix) = ($1, $2);
+    return "$stem-$mode$suffix";
+  } else {
+    return "$infile-$mode";
+  }
+}
+
+# main ****
+
+# for each infile name, make the outfile name, filter the infile and
+# print it out to outfile; accumulate the assertions (commands and
+# results), and honor the add and del commands
+
+parse_command_line();
+
+# check for duplicate infile names, non-existant infiles, and
+# already-existant outfiles
+my %infilesset;
+my %outfileset;
+for my $infile (@infiles) {
+  die "duplicate infile name $infile" if $infilesset{$infile};
+  ++$infilesset{$infile};
+  die "no such infile $infile" unless -e $infile;
+
+  my $outfile = make_outfile_name($infile);
+  die "duplicate outfile name $outfile -- this shouldn't be possible" if $outfileset{$outfile};
+  ++$outfileset{$infile};
+  die "file already exists $outfile" if -e $outfile;
+}
+
+# for my $infile(@infiles) {
+#   die "" if -e $infilenew;
+# }

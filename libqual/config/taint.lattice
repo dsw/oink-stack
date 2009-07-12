@@ -1,0 +1,11 @@
+/* see License.txt for copyright and terms of use */
+
+/* A qual lattice file containing only the 'tainted' lattice. */
+
+partial order [casts-preserve] {
+  $untainted [level = value, color = "pam-color-untainted", sign = neg]
+  $tainted [level = value, color = "pam-color-tainted", sign = pos]
+
+  $untainted < $tainted
+}
+

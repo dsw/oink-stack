@@ -1,0 +1,41 @@
+GCC is required for preprocessing; it is also used as a compiler just to check
+that source files are valid.
+
+You should preprocess all files to be analyzed using the same compiler version
+on the same system.
+
+The declarations for some system functions differ per system.
+
+The declarations and definitions for the C++ library vary depending on the
+compiler version.
+
+Elsa's template parser can currently handle STL headers from gcc-3.4, but not
+gcc-3.3 or gcc-4.0.
+
+For C-only, other versions of gcc will work.  If you are not using C++, you
+can change the following line in Maekfile.src.incl to refer to your compiler:
+    COMPILER_CC = gcc-3.4 
+
+
+Installing gcc-3.4
+==================
+
+The procedure for installing gcc-3.4 varies per operating system and
+distribution.
+
+On Debian, you can use
+    apt-get install g++-3.4
+
+For distributions that don't provide gcc-3.4, see the URL below for
+information on installing alternate gcc versions.
+    http://www.mjmwired.net/resources/mjm-fedora-gcc.html
+
+You should have a binary called "gcc-3.4" in your PATH; if you have a
+different binary you can use a PATH trick:
+    mkdir platform-model/bin
+    cd platform-model/bin
+    ln -s path-to-gcc34 gcc-3.4
+
+    export PATH=/path/to/platform-model/bin:$PATH
+
+

@@ -1,0 +1,18 @@
+// see License.txt for copyright and terms of use
+// -*-c++-*-
+
+// Qual extensions to the lexing tokens; this file is appended to
+// elsa's cc_tokens.tok.
+
+// flags:
+//   MS(m): token has multiple spellings
+//   NS(n): token is a nonseparator; nonseparators cannot be adjacent
+//   CP(p): token is a keyword only in C++; in C it's an identifier
+
+// enumeration name      description                  : MS NS CP
+// ----------------      ---------------------------  : -- -- --
+TOK_UDEF_QUAL,           "<user-defined qualifier>",  : m  n
+TOK_UTYPE_VAR,           "<user type variable>",      : m  n
+
+TOK_ASSERT_TYPE,         "__qual_assert_type",        :    n
+TOK_CHANGE_TYPE,         "__qual_change_type",        :    n

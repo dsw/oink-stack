@@ -1,0 +1,10 @@
+#!/bin/sh
+
+REPOS=`sed 's/#.*//' StackRepositories.list`
+
+test -n "$REPOS" || exit 1
+
+for repo in $REPOS; do
+    echo "**** Configuring in $repo"
+    ( cd $repo && ./configure "$@" ) || exit 1
+done

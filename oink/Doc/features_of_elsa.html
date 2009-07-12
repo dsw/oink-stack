@@ -1,0 +1,358 @@
+<html>
+<head>
+<title>Features of Elsa</title>
+</head>
+<body bgcolor=white>
+
+<h1>Features of Elsa</h1>
+
+<p>The elsa documentation is extensive; I simply point out a few
+useful features that users of Oink/Cqual++ should know about.
+
+<h3>Directory contents</h3>
+
+<ul>
+
+<li><a href=index.html>Oink Main Documentation</a> Introduction to
+Oink.
+
+<li><a href=oink_help.html>Annotated Oink Help Output</a> The output
+of ./oink --help annotated with further details on their meaning.
+
+<li><a href=quickstart.html>Cqual++ Quick-Start Instructions</a> The
+shortest path to findings bugs in your code.
+
+<li><a href="qual.html">Cqual++ Documentation</a> Documentation on the
+main Oink tool.
+
+<li><a href=qual_help.html>Annotated Qual Help Output</a> The output
+of ./qual --help (minus the oink --help output) annotated with further
+details on their meaning.
+
+<li><a href=manifest.html>Oink Manifest</a> A top-down view of the
+aspects of Oink, which files participate in each aspect, and
+documentation on each file.
+
+<li><a href=coding.html>Oink Coding Style</a> The Oink coding
+guidelines; also provided is some elisp for putting emacs into the
+mode I use when editing it.
+
+<li><a href="features_of_elsa.html">Features of Elsa [this
+document]</a> The elsa documentation is extensive; I simply point out
+a few useful features that users of Oink/Cqual++ should know about.
+
+</ul>
+
+<hr>
+<h2>Features You Need to Ask elsa/ccparse For Directly</h2>
+
+<p>The elsa frontend is oink-stack/elsa/ccparse.  The feature of
+printing the typechecked AST is provided by Elsa and can be used
+directly.
+
+<pre>
+  oink-stack/elsa/ccparse -tr printTypedAST foo.cc
+</pre>
+
+<p>In general many "-tr" ("tracing flags") that work for elsa also
+work for the oink or qual tools; be sure to provide them separately
+"-tr blort -tr gronk" rather than the "-tr blort,gronk" which only
+Elsa accepts.
+
+<p>Note however that flags implemented in elsa/main.cc will not be
+honored by oink or qual because we replace that module with our own
+since we have our own main() function.  Here are some introspection
+flags that Elsa implements that there simply aren't command-line flags
+for in oink and as mentioned the -tr flags won't work from ./oink
+either.
+
+<pre>
+  -tr parseTree; print the parse tree; a bit obscure to read
+  -tr printHierarchies; print the class hierarchies
+</pre>
+
+<hr>
+<h2>Reading and Writing the The AST and Typesystem as XML</h2>
+
+<p>I implemented reading and writing of the Elsa AST and Typesystem so
+that we could have serialization in Cqual++.  You can get an XML view
+of the AST and optionally the Typesystem.
+
+<pre>
+  -tr xmlPrintAST; print the AST as XML
+  -tr xmlPrintAST-types; include type annotations in the XML
+  -tr xmlPrintAST-indent; indent the output (slower)
+</pre>
+
+<p>The input file oink-stack/elsa/in/t0001.cc:
+<pre>
+    // very simple
+
+    int x;
+</pre>
+
+<p>The start of the 9258 lines of XML output.  You can see the line
+length map for the file and the beginnings of the declaration of an
+int.
+
+<pre>
+    ./ccparse -tr c_lang -tr xmlPrintAST,xmlPrintAST-types,xmlPrintAST-indent in/t0001.cc
+...
+    &lt;File _id="FI0x83DBE20"
+     name="in/t0001.cc"
+     numChars="23"
+     numLines="4"
+     lineLengths="FI0x83DE408"&gt;
+     &lt;LineLengths _id="FI0x83DE408"&gt;
+    14 0 6 0
+     &lt;/LineLengths&gt;
+    &lt;/File&gt;
+    &lt;TranslationUnit _id="AST0x83E6CB8"
+     topForms="AL0x83E6CB8"&gt;
+     &lt;List_TranslationUnit_topForms _id="AL0x83E6CB8"&gt;
+      &lt;_List_Item item="AST0x83E6D40"&gt;
+       &lt;TF_decl _id="AST0x83E6D40"
+        loc="in/t0001.cc:3:1"
+        decl="AST0x83E6CE0"&gt;
+        &lt;Declaration _id="AST0x83E6CE0"
+         dflags="(extern &quot;C&quot;)"
+         spec="AST0x83E6CC8"
+         decllist="FL0x83E6D18"&gt;
+         &lt;TS_simple _id="AST0x83E6CC8"
+          loc="in/t0001.cc:3:1"
+          cv=""
+          id="int"&gt;
+         &lt;/TS_simple&gt;
+</pre>
+
+<p>Elsa will parse it back in again too.
+
+<pre>
+  -tr parseXml; parse in XML in the same schema we output it.
+</pre>
+
+<p>Oink/Cqual++ makes use of this to do serialization and
+de-serialization, so if you analyze and serialize a file foo.i using
+Cqual++ and look in the resulting foo.qdir/value directory you will
+see the same XML augmented with serialization for the Abstract Value
+annotations as well.  I just didn't make a command line flag to print
+it to standard out.
+
+<p>XML makes a handy debugging output format since it is reasonably
+readable and is guaranteed to be complete since we use it for
+serialization.  When following object ids as links in the XML you may
+find it handy to use the emacs C-s C-w feature for searching for
+whatever is in front of the cursor instead of attempting to type in
+those ids manually.
+
+<p>The lowered view of the AST is basically the AST after templates
+have been instantiated, implicit syntax made explicit, and overloading
+resolved; it is the version that you want to look at if you are
+analyzing or compiling the code.  See the elsa documentation in
+oink-stack/elsa/doc for more details.
+
+<pre>
+  -tr xmlPrintAST-lowered; give a "lowered" view of the AST
+</pre>
+
+<hr>
+<h2>Hashline directives</h2>
+
+<p>If there are <tt># 123 "blort.c"</tt> ("hashline") directives in
+your blort.i file (which there will be by default) it means that that
+line of blort.i came from line 123 of blort.c.  The elsa source
+location module will parse these directives, build an internal map
+back to the original .c locations, and use this map to report
+locations of things relative to the original file line numbers instead
+of the line numbers in blort.i.
+
+<p>foo.c:
+<pre>
+    #define BOINK b
+    int main() {
+      BOINK;
+    }
+</pre>
+
+<pre>
+    $ gcc -E foo.c > foo.i
+</pre>
+
+<p>foo.i:
+<pre>
+    # 1 "foo.c"
+    # 1 "<built-in>"
+    # 1 "<command line>"
+    # 1 "foo.c"
+
+    int main() {
+      b;
+    }
+</pre>
+
+<p>Note the change in line number reported for the error.
+
+<pre>
+    $ ./oink foo.i
+    foo.c:3:3: error: there is no variable called `b'
+    . . .
+    $ ./oink -tr nohashline foo.i
+    foo.i:7:3: error: there is no variable called `b'
+    . . .
+</pre>
+
+<p>Use this flag to turn that behavior off and get the locations
+reported relative to the raw input file.  It works on both elsa and
+oink.
+<pre>
+  -tr nohashline; don't use the preprocessor hashline directives
+      to map back to the original file
+</pre>
+
+<hr>
+<h2>Lexer output</h2>
+
+<p>If you just want to see the token stream from the lexer, use this:
+
+<pre>
+    ./tlexer -tr tokens in/t0001.cc
+    %%% progress: 0ms: making Lexer
+    %%% progress: 1ms: lexing in/t0001.cc...
+    in/t0001.cc:3:1: int
+    in/t0001.cc:3:5: <name>: x
+    in/t0001.cc:3:6: ;
+    %%% progress: 7ms: done lexing (4 ms)
+</pre>
+
+<hr>
+<h2>Using the ubiquitous 'gdb()' method</h2>
+
+<p>AST nodes, types, and variables have a gdb() method designed to be
+used to print out an object in a helpful from when traversing the
+graph in <tt>gdb</tt> by dumping a human readable representation of
+the object.  Just say 'print x->gdb()' from the gdb command prompt.
+
+<p>This is a good way to use your <tt>.gdbinit</tt> file.
+
+<pre>
+    file ./oink
+    set args ../elsa/in/t0001.cc
+    break main
+    break breaker
+    run
+</pre>
+
+<p>It works on AST nodes.
+
+<pre>
+    Breakpoint 3, ValueASTVisitor::visitDeclarator(Declarator*) (this=0xbffff650,
+        decltor=0x8379958) at value_ast_visitor.cc:33
+    (gdb) p decltor->gdb()
+    tree = Declarator:
+      var: (global) (definition) int x
+      context = DC_TF_DECL
+      decl = D_name:
+        loc = ../elsa/in/t0001.cc:3:5
+        name = PQ_name:
+          loc = ../elsa/in/t0001.cc:3:5
+          name = "x"
+      init is null
+      ctorStatement is null
+      dtorStatement is null
+    $1 = void
+</pre>
+
+<p>It works on Variables.
+
+<pre>
+    (gdb) p decltor->var->gdb()
+    int x
+    $2 = void
+</pre>
+
+<p>It works on Types.
+
+<pre>
+    (gdb) p decltor->var->type->gdb()
+    int
+    $3 = void
+</pre>
+
+
+<hr>
+<h2>Serial numbers</h2>
+
+<p>Tracking dependencies through the heap can be a big pain: Sometimes
+you have <ul>
+
+<li>an object that is in a corrupted state and you want to watch it being created, however
+
+<li>that was on a previous pass through the AST and the stack frames
+of those routines have popped and are gone.
+
+</ul>
+
+<p>When built with USE_SERIAL_NUMBERS, any object whose class inherits
+from class SerialBase will get an 'int serialNumber' field; these are
+currently: (elsa) Scope, the heirarchy of Types, Variable, and (oink)
+Value.  You can use the serial number mechanism to go "backward in
+time" in gdb as follows:
+<ul>
+
+<li>at the location of the object you wish to witness being created,
+use gdb to print its serial number field
+<pre>
+  p x->serialNumber
+</pre>
+
+<li>set a breakpoint at the global serial number creation function
+<pre>
+  b incSerialNumber (suppose its breakpoint 3)
+</pre>
+
+<li>condition that breakpoint to stop when the global serial number is
+the one printed above
+<pre>
+  cond 3 globalSerialNumber == 4756 (whatever the print output)
+</pre>
+
+<li>re-run the program.
+<pre>
+  run
+</pre>
+
+</ul>
+
+<p>To do this for two objects, just create two breakpoints at the same
+place in serialno.cc and condition each breakpoint on its respective
+serial number.
+
+<p>One instance of the Cqual++ tool can create objects and serialize
+them to a file, and then another process instance can read them back
+in for further analysis.  Therefore it is possible to find a corrupted
+object that was created in a process that no longer even exists!  Elsa
+therefore consults a file <tt>.serialno</tt> in the local directory to
+find out where to start the first serial number.  To debug
+multi-process sequences as the one just described, just do as follows.
+<ul>
+
+<li>Delete <tt>.serialno</tt> (it will be recreated and start at zero)
+at the beginning of the sequence of processes.
+
+<li>When in one process you find an object for which you would like to
+find its creation point, print its serial number as before.
+
+<li>Delete <tt>.serialno</tt> again and run the processes in sequence.
+
+<li>When you start the process that increments over the serial number
+you are looking for, set the breakpoint as above and run.
+
+</ul>
+
+<hr>
+<p>&copy; 2002-2006 Daniel S. Wilkerson
+
+<h2>&nbsp;</h2>
+
+</body>
+</html>

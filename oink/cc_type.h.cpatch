@@ -1,0 +1,15 @@
+// see License.txt for copyright and terms of use
+// Oink modifications for cc_type.h
+// codepatch.pl script to apply to Elsa's cc_print.h to
+// arrive at Oink's version of the same file
+
+
+// add another friend to CVAtomicType
+add_after_line
+class CVAtomicType : public Type {
+the_line
+  friend class TypeFactory_O;
+
+
+
+// EOF

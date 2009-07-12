@@ -1,0 +1,14 @@
+# $Id$
+
+smbase
+ast
+elkhound
+elsa
+libregion
+libqual
+oink
+oink-scripts
+
+# uncomment this line and the corresponding line in configure.pl in
+# order to use platform model
+#     platform-model

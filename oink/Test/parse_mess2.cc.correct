@@ -1,0 +1,7 @@
+// -*-c++-*-
+int  $A * $B y;
+class MustBeMembers {
+  int  $C foo(/*m: class MustBeMembers const  $E & */ int  $D a) $E  const;
+};
+
+int  $C MustBeMembers::foo(/*m: class MustBeMembers const  $E & */ int  $D a) $E  const {}

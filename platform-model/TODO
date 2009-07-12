@@ -1,0 +1,24 @@
+-*- text -*-
+
+Add configuration which should 
+
+    - Detect/allow user to specify support for .qz. 
+
+        oink -fo-verbose |grep ARCHIVE_SRZ_ZIP
+
+    - Detect/allow user to specify location of qqual, oink  (should qqualcc
+      be moved to oink/?)
+
+
+TODO (before mozilla guys use this)
+
+- factor annotations into orthogonal components
+
+    0. Vanilla annotations
+    1. Generic taint data flow
+    2. Taint sources (file system, network, getenv, etc) (grep $tainted)
+    3. Format string sinks (grep $untainted)
+
+- Bijection checker
+- Unify
+

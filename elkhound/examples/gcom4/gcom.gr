@@ -1,0 +1,50 @@
+// gcom.gr
+// parser for guarded command example language
+
+verbatim {
+  #include <stdlib.h>     // getenv, atoi
+}
+
+// the parser context class is useful in large examples;
+// an empty one will suffice here
+context_class GCom : public UserActions {
+public:
+  // empty for now
+};
+
+// pull in the tokens generated from lexer.h
+terminals {
+  include("tokens.tok")
+
+  // declare token sval types
+  token(int) TOK_LITERAL;
+  token(char*) TOK_IDENTIFIER;
+
+  precedence {
+    left  20 "*";        // high precedence, left associative
+    left  10 "+" "-";    // low precedence, left associative
+  }
+}
+
+// now the grammar
+
+nonterm(int) AExp {
+  -> n:TOK_LITERAL         { return n; }
+  -> a1:AExp "+" a2:AExp   { return a1 + a2; }
+  -> a1:AExp "-" a2:AExp   { return a1 - a2; }
+  -> a1:AExp "*" a2:AExp   { return a1 * a2; }
+  -> "(" a:AExp ")"        { return a; }
+  
+  // interpret identifiers using environment variables; it's
+  // a bit of a hack, and we'll do something better later
+  -> x:TOK_IDENTIFIER {
+       char const *envp = getenv(x);
+       if (envp) {
+         return atoi(envp);
+       }
+       else {
+         return 0;      // not defined, call it 0
+       }
+     }
+}
+

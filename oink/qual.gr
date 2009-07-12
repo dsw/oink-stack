@@ -1,0 +1,215 @@
+// -*- c++ -*-
+// see License.txt for copyright and terms of use
+
+// A grammar specification file for the modifications that qual makes
+// to the elsa grammar (beyond those of oink).
+
+// there are six more s/r conflicts, just because six of
+// the existing conflicts are duplicated in the new states
+// created by the extra rules; the user qualifiers themselves
+// do not introduce any new nondeterminism
+option shift_reduce_conflicts 64;
+
+// this verbatim section is appended to the one in cc.gr
+verbatim {
+#include "qual_literal.h"
+
+  class CCParse_Qual_Shareable : public CCParse_Oink_Shareable {
+    public:
+    CCParse_Qual_Shareable(StringTable &table, CCLang &lang)
+      : CCParse_Oink_Shareable(table, lang) {}
+
+    // This class is a placeholder; Put user code here if you want it
+    // available during parsing to the user actions.
+
+    // This is a two-argument form of something in cc.gr, for when
+    // QLiterals are attached to "...".  Its name has to be
+    // different from the one in the base class so as not to hide
+    // that one.
+    ASTTypeId *ellipsisTypeId_Q(SourceLoc loc, QLiterals *ql)
+    {
+      ASTTypeId *tid =
+        new ASTTypeId(new TS_simple(loc, ST_ELLIPSIS),
+                      new Declarator(new D_name(loc, NULL /*name*/),
+                                     NULL /*init*/));
+      appendQLiterals(tid->spec->ql, deepClone(ql));
+      return tid;
+    }
+
+    // make a TS_name, and supply CV flags
+    TS_typeVariable *new_TS_typeVariable(SourceLoc loc, CVFlags cv, StringRef utv)
+    {
+      TS_typeVariable *ret = new TS_typeVariable(loc, utv);
+      ret->cv = cv;
+      return ret;
+    }
+  };
+
+}
+
+// this context class is derived from the one in oink.gr
+context_class CCParse_Qual : public CCParse_Qual_Shareable {
+public:
+  CCParse_Qual(StringTable &table, CCLang &lang)
+    : CCParse_Qual_Shareable(table, lang) {}
+  // DO NOT PUT ANY CODE OR DATA HERE; Put it into
+  // CCParse_Qual_Shareable.
+};
+
+
+// this gets added to the one in cc.gr
+terminals {
+  token(StringRef) TOK_UDEF_QUAL ;
+  token(StringRef) TOK_UTYPE_VAR ;
+
+  precedence {
+    prec  190 TOK_UDEF_QUAL;
+  }
+}
+
+
+// As a general rule, we add the syntactic possibility of user
+// qualifiers (things denoted with a leading '$') any place the
+// original syntax allowed const/volatile to appear.  In almost all
+// cases the user qualifiers appear *before* const/volatile.
+
+nonterm(IDeclarator*) NewDeclaratorOpt {
+  // "new" pointer declarator with qualifier literals
+  -> "*" ql:QLiterals cv:CVQualifierSeqOpt d:NewDeclaratorOpt
+       { return new D_pointer(loc, cv, d, ql); }
+}
+
+
+nonterm(Declaration*) DeclSpecifier {
+  // this is based on similar lines in TypeSpecifier
+  -> q:TOK_UDEF_QUAL s:DeclSpecifier  precedence(TOK_PREFER_REDUCE)
+       { prependLiteralString(s->spec->ql, q); return s; }
+  -> s:DeclSpecifier q:TOK_UDEF_QUAL  precedence(TOK_PREFER_REDUCE)
+       { appendLiteralString(s->spec->ql, q); return s; }
+}
+
+
+nonterm(TypeSpecifier*) TypeSpecifier {
+  // user-defined qualifiers can preceed or follow the *whole*
+  // type specifier, but must not be intermingled within it
+  // Q: why is this precedence specification necessary?
+  -> q:TOK_UDEF_QUAL s:TypeSpecifier  precedence(TOK_PREFER_REDUCE)// "$tainted int"
+       { prependLiteralString(s->ql, q); return s; }
+
+  // this is an exception to the rule that $tainted comes before
+  // 'const' ... should we remove it?
+  -> s:TypeSpecifier q:TOK_UDEF_QUAL  precedence(TOK_PREFER_REDUCE)// "int $tainted"
+       { appendLiteralString(s->ql, q); return s; }
+
+  // user defined type
+  -> utv:TOK_UTYPE_VAR          // "$$a"
+       { return new TS_typeVariable(loc, utv); }
+}
+
+
+nonterm(IDeclarator*) Declarator {
+  // pointer declarator with qualifier literals
+  -> "*" ql:QLiterals cv:CVQualifierSeqOpt d:Declarator
+       { return new D_pointer(loc, cv, d, ql); }
+}
+
+
+nonterm(IDeclarator*) DirectDeclarator {
+  // function type declarator, with qualifier literals that become
+  // associated with the "this" parameter (of a class member)
+  -> d:DirectDeclarator
+     "(" params:ParameterDeclarationClause ")"
+     ql:QLiterals               // qualifier literals
+     cv:CVQualifierSeqOpt
+     e:ExceptionSpecificationOpt
+    {
+      return new D_func(loc, d, params, cv, e, NULL/*kandr_params*/, ql);
+    }
+}
+
+// We use a simple right-recursive linked-list design pattern.  Note
+// that this is never the empty string--we rely on cc.gr's rules to
+// handle the case of missing qualifier literals.
+nonterm(QLiterals*) QLiterals {
+  -> q:TOK_UDEF_QUAL {
+    return new QLiterals(q);
+  }
+  -> q:TOK_UDEF_QUAL ql:QLiterals {
+    return new QLiterals(q, ql);
+  }
+}
+
+
+nonterm(IDeclarator*) AbstractDeclarator {
+  // abstract pointer declarator with qualifier literals
+  -> "*" ql:QLiterals cv:CVQualifierSeqOpt d:AbstractDeclaratorOpt
+       { return new D_pointer(loc, cv, d, ql); }
+}
+
+nonterm(IDeclarator*) DirectAbstractDeclarator {
+  // like above, but for abstract function declarators
+  -> d:DirectAbstractDeclaratorOpt
+     "(" args:ParameterDeclarationClause ")"
+     ql:QLiterals               // qualifiers
+     cv:CVQualifierSeqOpt
+     e:ExceptionSpecificationOpt
+    { return new D_func(loc, d, args, cv, e, NULL/*kandr_params*/, ql); }
+}
+
+
+nonterm(FakeList<ASTTypeId>*) ParameterDeclarationList {
+  // qualified ellipsis as last arg, with preceeding comma of it's
+  // not the only arg
+  -> "..." ql:QLiterals
+       { return FakeList<ASTTypeId>::makeList(ellipsisTypeId_Q(loc, ql)); }
+
+  // last arg is "...", and 2nd-to-last is not separated by
+  // a comma from the "..."
+  -> d:ParameterDeclaration "..." ql:QLiterals
+       { FakeList<ASTTypeId> *list =
+           FakeList<ASTTypeId>::makeList(ellipsisTypeId_Q(loc, ql));
+         d->setNext(list->first());
+         return FakeList<ASTTypeId>::makeList(d); }
+}
+
+
+nonterm(IDeclarator*) ConversionDeclaratorOpt {
+  // conversion operator returning a qualified pointer
+  -> "*" ql:QLiterals cv:CVQualifierSeqOpt d:ConversionDeclaratorOpt
+       { return new D_pointer(loc, cv, d, ql); }
+}
+
+
+nonterm(Declaration*) DeclSpecifier {
+  // TS_typeVariable: triggered by TOK_UTYPE_VAR
+  -> utv:TOK_UTYPE_VAR m2:UberModifierSeqOpt
+       { return new Declaration(uberDeclFlags(m2),
+           new_TS_typeVariable(loc, uberCVFlags(m2), utv), NULL); }
+
+  -> m1:UberModifierSeq utv:TOK_UTYPE_VAR m2:UberModifierSeqOpt
+       { UberModifiers m = uberCombine(loc, m1, m2);
+         return new Declaration(uberDeclFlags(m),
+           new_TS_typeVariable(loc, uberCVFlags(m), utv), NULL); }
+}
+
+
+// special features of cqual
+nonterm(Statement*) ExpressionStatement {
+  -> "__qual_assert_type" "(" e:Expression "," t:TypeId ")"
+       { return new S_assert_type(loc, new FullExpression(e), t); }
+  -> "__qual_change_type" "(" e:Expression "," t:TypeId ")"
+       { return new S_change_type(loc, new FullExpression(e), t); }
+}
+
+nonterm(Handler*) Handler {
+  -> "catch" "(" "..." ql:QLiterals ")" s:CompoundStatement
+    { return new Handler(ellipsisTypeId_Q(loc, ql), s);}
+}
+
+// KandR stuff ****************************************************************
+
+// for K&R function definitions
+nonterm(IDeclarator*) KandRDeclarator {
+  -> "*" ql:QLiterals cv:CVQualifierSeqOpt d:KandRDeclarator
+       { return new D_pointer(loc, cv, d, ql); }
+}

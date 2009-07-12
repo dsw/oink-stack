@@ -1,0 +1,13 @@
+
+Oink/qual can be built with ARCHIVE_SRZ_ZIP support, which allows reading and
+writing .oz/.qz files.  This requires the libzipios++ library.
+
+If Oink was not built with that library, it will by default only have
+ARCHIVE_SRZ_DIR support, which creates a directory for each archive file, with
+extension .odir/.qdir.
+
+Platform-model can be configured to create a library for either kind of
+archive.
+
+Oink-scripts will use either one it finds.
+

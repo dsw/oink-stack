@@ -1,0 +1,94 @@
+// c.in6
+// testcases for the translator: make sure I emit every
+// construct in Cil
+
+int binops()
+{
+  int r,x,y,z;
+
+  r = x + y - z * x / y % z;
+  r = x << y >> z;
+  r = x < y > z <= x >= y;
+  r = x == y != z;
+  r = x & y ^ z | x;
+  r = x && y;     // should do short-circuit!
+  r = z || y;
+
+  return r;
+}
+
+
+int unops(int x)
+{
+  int r;     
+  
+  r = -x;
+  r = !x;
+  r = ~x;
+  
+  return r;
+}
+
+
+void exprs()
+{
+  int x,y,z;
+
+  x = 5;
+  x = (int)y;       // seen as an lval cast
+  x = (int)(y+z);   // seen as an rval cast
+  x = &z;
+}
+
+
+typedef struct S { int m; } S;
+S global_s;
+
+void lvals()
+{
+  int x,y,z,*ip;
+  int a[3];
+  S s, *sp;
+
+  x = y;
+  *ip = z;
+  s.m = z;
+  sp->m = 5;
+  //(char)x = z;      // removed casts as lvals
+  a[1] = y;
+
+  // TODO: handle this more gracefully
+  //(char)(x+y) = z;
+}
+
+
+int twoArgFn(int a, int b);
+
+void insts()
+{
+  int x,y,z;
+  x = y;
+  y = binops();
+  z = unops(x);
+  x = twoArgFn(y,z);
+  { x=1; y=2; }       // interestingly, this doesn't lead to a CilCompound
+  
+  while (x) {
+    y = 3;
+  }
+
+  if (x) { 
+    z = 1;
+  }
+  else {
+    z = 2;
+  }
+  
+mylabel:
+  x = 6;
+  goto mylabel;
+
+  return y;
+}
+
+

@@ -1,0 +1,1 @@
+char *a = "hello";

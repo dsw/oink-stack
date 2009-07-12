@@ -1,0 +1,32 @@
+/* see License.txt for copyright and terms of use */
+
+static unsigned long
+__generic_copy_from_user_nocheck(void *$kernel to, const void *$user from,
+				 unsigned long n);
+static unsigned long
+__generic_copy_to_user_nocheck(void *$user to, const void *$kernel from,
+			       unsigned long n);
+unsigned long  __generic_copy_to_user(void *$user to,
+				      const void *$kernel from,
+				      unsigned long);
+unsigned long  __generic_copy_from_user(void *$kernel to,
+					const void *$user from,
+					unsigned long);
+static unsigned long
+__constant_copy_to_user(void *$user to, const void *$kernel from,
+			unsigned long n);
+static unsigned long
+__constant_copy_from_user(void *$kernel to, const void *$user from,
+			  unsigned long n);
+static unsigned long
+__constant_copy_to_user_nocheck(void *$user to, const void *$kernel from,
+				unsigned long n);
+static unsigned long
+__constant_copy_from_user_nocheck(void *$kernel to, const void *$user from,
+				  unsigned long n);
+long strncpy_from_user(char *$kernel dst, const char *$user src,
+		       long count);
+long __strncpy_from_user(char *$kernel dst, const char *$user src,
+			 long count);
+unsigned long clear_user(void *$user mem, unsigned long len);
+unsigned long __clear_user(void *$user mem, unsigned long len);

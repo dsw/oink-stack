@@ -1,0 +1,3 @@
+user_mode[0].name = "640x480-60";
+user_mode[0].par.video = 121;
+user_mode[0].par.x = 8;

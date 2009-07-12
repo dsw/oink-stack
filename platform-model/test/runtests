@@ -1,0 +1,16 @@
+#!/usr/bin/env python2.4
+
+# $Id$
+
+from testsuite import *
+
+args = sys.argv[1:]
+if not args:
+    raise SystemExit("Syntax: runtests TESTFILES...")
+
+try:
+    runtests(args)
+except TestException:
+    print
+    Context.wmsg("See %s for details." %(LOGFILENAME))
+    raise SystemExit(1)

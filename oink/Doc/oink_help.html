@@ -1,0 +1,582 @@
+<html>
+<head>
+<title>Annotated Oink Help Output</title>
+</head>
+<body bgcolor=white>
+
+<h1>Annotated Oink Help Output</h1>
+
+<p>Running <tt>./oink --help</tt> will produce output resembling the
+command-line flag summary below.  On this page I expand on the meaning
+of the various flags.
+
+<h3>Directory contents</h3>
+
+<ul>
+
+<li><a href=index.html>Oink Main Documentation</a> Introduction to
+Oink.
+
+<li><a href=oink_help.html>Annotated Oink Help Output [this document]</a> The output
+of ./oink --help annotated with further details on their meaning.
+
+<li><a href=quickstart.html>Cqual++ Quick-Start Instructions</a> The
+shortest path to findings bugs in your code.
+
+<li><a href="qual.html">Cqual++ Documentation</a> Documentation on the
+main Oink tool.
+
+<li><a href=qual_help.html>Annotated Qual Help Output</a> The output
+of ./qual --help (minus the oink --help output) annotated with further
+details on their meaning.
+
+<li><a href=manifest.html>Oink Manifest</a> A top-down view of the
+aspects of Oink, which files participate in each aspect, and
+documentation on each file.
+
+<li><a href=coding.html>Oink Coding Style</a> The Oink coding
+guidelines; also provided is some elisp for putting emacs into the
+mode I use when editing it.
+
+<li><a href="features_of_elsa.html">Features of Elsa</a> The elsa
+documentation is extensive; I simply point out a few useful features
+that users of Oink/Cqual++ should know about.
+
+</ul>
+
+<hr>
+<h3>Help output</h3>
+
+<p>The actual output is in fixed-width bold and commentary on it
+follows.  Note that the defaults can be found in oink/oink_cmd.cc;
+look for the constructor which starts OinkCmd::OinkCmd(); flag names
+have their '-o-' or '-fo-' prefix removed and have their dashes
+replace with underscores.
+
+<pre><b><font size=+1>
+All arguments not starting with a '-' are considered to be input files.
+
+oink flags that take an argument:
+</font></b></pre>
+
+<p>Some Oink flags take arguments.  These start with '-o-' to indicate
+that they are flags that can be implemented directly by Oink.  The
+organization of Oink is that other tools such as Cqual++ "inherit"
+from the Oink command line processing.  All '-o-' arguments (and
+'-fo-' flags; see below) are implemented by the core Oink system and
+have the same semantics.  Other tools in Oink are encouraged to have
+their own letter distinct from 'o' and each other so that their flags
+can follow the same nomenclature and be distinct; for example, the
+letter for qual is 'q'.
+
+<pre><b><font size=+1>
+-o-lang LANG             : specify the input language; one of:
+      KandR_C, ANSI_C89, ANSI_C99, GNU_C, GNU_KandR_C, GNU2_KandR_C,
+      ANSI_Cplusplus, GNU_Cplusplus, SUFFIX.
+</font></b></pre>
+
+<p>Despite the existence of specifications, there are many versions of
+both C and C++.  In Elsa, we created a combination of configuration
+variables that spans the space of the various combinations of features
+that the various versions of C and C++ correspond to; these are
+declared in elsa/cc_lang.h.  Here are some examples; the comments
+serve to document their semantics.
+
+<pre>
+  // when true, we allow overloaded function declarations (same name,
+  // different signature)
+  bool allowOverloading;
+
+  // when true, to every compound type add the name of the type itself
+  bool compoundSelfName;
+
+  // when true, allow a function call to a function that has never
+  // been declared, implicitly declaring the function in the global
+  // scope; this is for C89 (and earlier) support
+  Bool3 allowImplicitFunctionDecls;
+
+  // when true, allow function definitions that omit any return type
+  // to implicitly return 'int'.
+  bool allowImplicitInt;
+</pre>
+
+<p>What most people think of as a version of C or C++ corresponds to
+setting these variables to a vector of configuration values.  The
+conversion from a language setting to the proper vector of conversion
+values is a kind of "change of basis" matrix; it is implemented in
+elsa/cc_lang.cc.
+
+<p>The name of the language setting corresponds directly to a
+function call in elsa/cc_lang.cc, except for SUFFIX.  The SUFFIX
+setting is the default and chooses a C++ language setting if the
+filename ends in an ending that gcc considers to be a C++ ending and C
+otherwise; it is implemented in oink/oink_cmd.cc:getLangFromSuffix().
+
+<pre><b><font size=+1>
+-o-program-files FILE    : add *contents* of FILE to list of input files
+</font></b></pre>
+
+<p>Sometimes you may have so many files to analyze that they will
+exceed the allowed command-line length for a program on your operating
+system.  You can put the names of the files into a text file, one per
+line, and then just give that file as the argument to this flag.
+
+<pre><b><font size=+1>
+-o-control FILE          : give a file for controlling the behavior of oink
+</font></b></pre>
+
+<p>Sometimes the configuration of the behavior of oink exceeds what is
+natural on the command line and begins to approach that of a
+configuration or command language.  Control files are the answer to
+various kinds of behaviors we want to control within oink; they are
+implemented in oink/oink_control.{h,cc}.
+
+<p>Generally the consist of a constructor call with various arguments.
+Here are some examples.
+
+<pre>
+weak-def:
+    file = Test/unsat_symbol3b.c
+    name = foo
+
+ignore-body-qual:
+    file = Test/unsat_symbol5c.cc
+    name = A::foo
+</pre>
+
+<p>See oink/Test/simple1.ctl for a general example of the limits of
+the syntax. <ul>
+
+<li>ignore-body and ignore-body-qual mean to ignore the body of the
+function they name during dataflow analysis.
+
+<li>weak-def has something to do with weak definitions that I can't
+figure out right now; Karl added this.
+
+<li>unsound-if-used means to warn if this variable is used in the
+dataflow.
+
+</ul>
+
+<p>Generally, see the enum
+oink/oink_control.h:OinkControl::ControlKind for comments describing
+their behavior.
+
+<pre><b><font size=+1>
+-o-func-filter FILE      : give a file listing Variables to be filtered out
+</font></b></pre>
+
+<p>When doing a whole-program analysis you can exceed the memory of
+your machine, even the virtual memory.  Some analyses, such as
+Cqual++, have a feature for partial compilation very much like a real
+compiler: you 1) first analyze or "compile" each translation unit and
+serialize the results in some form and then 2) combine or "link" these
+together to get a whole program analysis.  This helps, but even though
+the linking stage can have far less input to deal with than if you
+"compiled" everything at once, it can still exceed your memory.
+
+<p>To try to help in such situations we have a feature that can be
+thought of as a control-flow (which subsumes dataflow) analysis at the
+global variable / function granularity.  We create a graph where the
+nodes are whole functions or global variables and each function
+contains a "body", the edges of the graph, which is just a list of the
+other functions or globals that the function can reach.  Such a graph
+can be generated easily per translation unit and then "linked"
+together without any chance of exceeding your memory; linking consists
+of finding what nodes are reachable from the main() function and any
+global variables (note that in C++ these can have constructors and
+destructors).
+
+<p>The resulting whole-program function-granularity control-flow graph
+can then be used as a configuration file when doing the analysis "for
+real".  That is, this file can be passed as input to the "compilation"
+stage of each translation unit; any function not named in the file
+will have its body skipped, since it could not be reached in a real
+run of the program anyway.
+
+<p>To generate the function-granularity control-flow graph per
+translation unit, use the <b>-fo-func-gran</b> flag (below); this
+generates a graph in a format similar to make.  To link these graphs
+together, use the simple <b>oink/digraph_component</b> perl script; it
+just does a DFS.  To then pass the resulting function-granularity
+reachability set to the real analysis as it compiles and links, use
+<b>-o-func-filter FILE</b>.
+
+<pre><b><font size=+1>
+-o-srz FILE              : serialize to FILE
+</font></b></pre>
+
+<p>This flag is overloaded for different situations.<ul>
+
+<li>When provided on its own, it means to serialize the Types and
+AbstractValues of the input file.  This is not terribly useful other
+than for testing the linker.
+
+<li>When passed to the client Cqual++, it means to serialize further
+state along with the Types and AbstractValues such as the dataflow
+graph between them.
+
+<li>When <b>-fo-func-gran</b> is passed (see above) it means to
+serialize the function-granularity dataflow graph to FILE.
+
+</ul>
+
+<hr>
+
+<pre><b><font size=+1>
+oink boolean flags; precede by '-fo-no-' for the negative sense.
+</font></b></pre>
+
+<p>Some Oink flags do not take arguments.  These start with '-fo-',
+which means "flag, oink"; see the discussion above on keeping flag
+namespaces separate.  Note that often these flags are in fact on by
+default and they are useful in their negative form of '-fo-no-'.
+
+<pre><b><font size=+1>
+-fo-help, -help, --help  : print this message and exit
+</font></b></pre>
+
+<p>In other tools that extend Oink, <b>--help</b> will print their
+help message after the Oink one.
+
+<pre><b><font size=+1>
+-fo-verbose              : print the setting of each flag
+</font></b></pre>
+
+<p>Will also print strings corresponding to some configure-time
+switches if it was natural for me to do that.
+
+<pre><b><font size=+1>
+-fo-print-stages         : announce each processing stage
+</font></b></pre>
+
+<p>There are many stages in the processing of an input file.  If
+several files are provided all files advance through each of the
+stages together.  If this flag is on, as each new stage is entered,
+the sage is announced with a print statement.
+
+<pre><b><font size=+1>
+-fo-exit-after-parse     : exit after parsing
+</font></b></pre>
+
+<p>Exit immediately after parsing is done and <b>-fo-print-ast</b> has
+had a chance to run; using these two flags together will give you a
+printout of the ambiguous AST before it has been typechecked and
+disambiguated.
+
+<pre><b><font size=+1>
+-fo-exit-after-typecheck : exit after typechecking
+</font></b></pre>
+
+<p>Exit immediately after parsing is done and
+<b>-fo-print-typed-ast</b> has had a chance to run; using these two
+flags together will give you a printout of the un-ambiguous AST after
+it has been typechecked and disambiguated.
+
+<pre><b><font size=+1>
+-fo-exit-after-elaborate : exit after elaborating
+</font></b></pre>
+
+<p>Exit immediately after parsing is done and
+<b>-fo-print-elaborated-ast</b> has had a chance to run; using these
+two flags together will give you a printout of the un-ambiguous AST
+after it has been typechecked, disambiguated, and elaborated.  For
+more on elaboration, see the discussion at <b>-fo-do-elaboration</b>
+below.
+
+<pre><b><font size=+1>
+-fo-print-startstop      : delimit transformed output with cut lines
+</font></b></pre>
+
+<p>If you are both using a flag that results in output per each input
+file, such as -fo-print-typed-ast, and also you are providing more
+than one input file, then using this flag will print delimiter lines
+before and after the output.  The script elsa/chop_out can then be
+used to easily separate them.
+
+<pre><b><font size=+1>
+-fo-func-gran            : compute and print function granularity CFG only
+                              (use -o-srz to write to file)
+</font></b></pre>
+
+<p>See the discussion at <b>-o-func-filter FILE</b> above.
+
+<pre><b><font size=+1>
+-fo-func-gran-dot        : print function granularity CFG in dot format
+</font></b></pre>
+
+<p>This renders out the function granularity graph but in a form that
+when given to the <a href="http://www.graphviz.org/">'dot'</a> program
+will produce a human-readable post-script file of the graph.  This is
+only useful on small examples or the graph is simply unreadable.
+
+<pre><b><font size=+1>
+-fo-all-pass-filter      : assert that all variables pass the filter
+</font></b></pre>
+
+<p>This flag asserts that the filter provided does not filter out
+anything.  Since filtering should be idempotent, if you filter once,
+serialize, and then filter again, the second time the filter should
+filter out nothing; to ensure that, this flag can be set.  See the
+discussion at <b>-o-func-filter FILE</b> above.
+
+<pre><b><font size=+1>
+-fo-print-ast            : print the ast
+</font></b></pre>
+
+<p>Print the ambiguous AST after parsing.
+
+<pre><b><font size=+1>
+-fo-print-typed-ast      : print the ast after typechecking
+</font></b></pre>
+
+<p>Print the un-ambiguous AST after typechecking.
+
+<pre><b><font size=+1>
+-fo-print-elaborated-ast : print the ast after elaboration
+</font></b></pre>
+
+<p>Print the un-ambiguous AST after elaboration.  For more on
+elaboration, see the discussion at <b>-fo-do-elaboration</b> below.
+
+<pre><b><font size=+1>
+-fo-print-ML-types       : print types in ML-style; AST print, not pretty-pr
+</font></b></pre>
+
+<p>Under some circumstances that I forget prints out the types in a
+form that is more top-down in a style that more readily lends itself
+to annotation.  We call this an "ML-style" as perhaps it resembles the
+way types are printed in ML, but it is by no means an accurate
+duplicate of the syntax of C++ types as if they were ML types.  I made
+this up for some thing I needed and I don't remember what it was.
+
+<pre><b><font size=+1>
+-fo-print-buckets        : print buckets
+</font></b></pre>
+
+<p>When <b>-fo-instance-sensitive</b> is on (see below), a refinement
+of the dataflow is implemented that lowers false positives.  This flag
+prints the internals for debugging purposes.
+
+<pre><b><font size=+1>
+-fo-print-stats          : print analysis stats
+</font></b></pre>
+
+<p>Prints a few lines of basic stats on the number of Variables and Values created.
+
+<pre><b><font size=+1>
+-fo-print-sizes          : print internal data structure sizes and exit
+</font></b></pre>
+
+<p>Prints a few lines on the sizes of the objects in memory for
+various common objects that we allocate.  For memory usage debugging.
+
+<pre><b><font size=+1>
+-fo-print-proc-stats     : print process stats
+</font></b></pre>
+
+<p>Print out /proc/self/status.
+
+<pre><b><font size=+1>
+-fo-pretty-print         : print the ast as source
+</font></b></pre>
+
+<p>Print the source back out in a way that approximates as closely as
+possible a syntax that would parse and typecheck back to the program
+that we have.  Note that the Elsa lexer and parser loose a lot of
+information; so the pretty printer effectively canonicalizes your
+file.  Probably in many places there are more parentheses than needed.
+Unsurprisingly it works better for C than C++, but works better for
+both than I thought it ever would.
+
+<p>Pretty printing is intended to be usable for implementing
+source-to-source translation: that is, you should be able to write a
+tool that uses the Elsa front-end to parse, typecheck, and elaborate a
+program, modify its AST, and then pretty print it back out to get a
+modified form that should compile.
+
+<pre><b><font size=+1>
+-fo-trace-link           : trace linking
+</font></b></pre>
+
+<p>Prints debugging information as linking is done.
+
+<pre><b><font size=+1>
+-fo-report-link-errors   : print un-satisfied/over-satisfied function symbols in linker
+</font></b></pre>
+
+<p>Just as a real linker would report an error if there were too many
+or two few definitions for a symbol, when this flag is set we do the
+same.  If you are using the linker, you should be using this flag.
+Not sure why I have it off by default!
+
+<pre><b><font size=+1>
+-fo-report-unused-controls  : print controls that go unused
+</font></b></pre>
+
+<p>It is easy to write a control in a control file that "misses its
+target"; that is, that tries to specify a function but gets the name
+mangling or something wrong and the control will go unused.  Also
+usually when you write such a file you expect that each one of your
+controls will in fact be unused.  By setting this flag you will get an
+error if a control is unused.  See the discussion at <b>-o-control
+FILE</b> above.
+
+<pre><b><font size=+1>
+-fo-print-controls-and-exit : print the controls and stop
+</font></b></pre>
+
+<p>Just print out the controls after reading them in; used for
+debugging control files.  See the discussion at <b>-o-control FILE</b>
+above.
+
+<pre><b><font size=+1>
+-fo-do-overload          : do overload res., overriding language default
+</font></b></pre>
+
+<p>This is passed to Elsa: do in fact do overload resolution.
+
+<pre><b><font size=+1>
+-fo-do-op-overload       : do op overload res., overriding language default
+</font></b></pre>
+
+<p>This is passed to Elsa: do in fact do operator overload resolution.
+
+<pre><b><font size=+1>
+-fo-do-elaboration       : do elaboration (for C++)
+</font></b></pre>
+
+<p>This is passed to Elsa: do in fact do elaboration.  See the
+comments in elsa/cc_elaborate.h for more elaborate (ha!)
+documentation.  Here is Scott's overview.
+
+<pre>
+// The concept of semantic elaboration is that we provide, for many
+// constructs in the language, equivalent alternative formulations in
+// terms of a smaller set of primitive operations.  Then, an analysis
+// can use the elaboration instead of building into itself the language
+// spec's specified semantics.
+</pre>
+
+<p>Here are some examples.
+
+<pre>
+  // This replaces return-by-value for class-valued objects with
+  // call-by-reference:
+  //   - At every call site that would return by value, a temporary
+  //     is created, and passed to the function as an additional
+  //     argument.  Here, "passed" means the E_funCall or E_constructor
+  //     has a 'retObj' pointer to the expression denoting the temporary.
+  //   - In the callee, a special "<retVar>" variable is created; it is
+  //     implicit that it gets its value from the passed temporary.  All
+  //     S_returns are then rewritten to return nothing, but instead
+  //     construct the <retVar> in their 'ctorStatement'.
+  EA_ELIM_RETURN_BY_VALUE  = 0x0001,
+
+  // At the end of a destructor, create a 'dtorStatement' which is the
+  // sequence of dtors of superclasses and members.
+  EA_MEMBER_DTOR           = 0x0002,
+
+  // At member initializers (MemberInits), create a 'ctorStatement'
+  // which explicates the construction of the superclass subobject or
+  // class member as an E_constructor call.
+  EA_MEMBER_CTOR           = 0x0004,
+
+  // In constructors, for any superclasses or members that are not
+  // explicitly initialized, insert MemberInits that invoke the
+  // default (no-arg) constructor for the superclass or member.
+  EA_IMPLICIT_MEMBER_CTORS = 0x0008,
+</pre>
+
+<pre><b><font size=+1>
+-fo-check-AST-integrity  : check the AST is a tree
+</font></b></pre>
+
+<p>Check various integrity conditions I think should be true on the
+tree.  Elsa has its own version of integrity checking that is
+unrelated.  Here is the documentation at the top of
+oink/oink_integrity.h.
+
+<pre>
+// Check the integrity of the AST after parsing, typechecking, and
+// elaboration.  Not to be confused with elsa/integrity.h.
+
+// We check the following:
+//
+// 1) The map *to* AST nodes is 1-1.
+//
+// 2) If requested, the map *to* Values (from AST nodes, variables,
+// and other types) is 1-1.
+//
+// 3) Various other ad-hoc things don't occur anywhere.  One such is
+// that Declarator::context is not DC_UNKNOWN
+</pre>
+
+<pre><b><font size=+1>
+-fo-merge-E_variable-and-var-values :
+        optimization: merge Values for E_variable expressions and Variables
+</font></b></pre>
+
+<p>This flag causes an optimization to be done where the
+AbstractValues of Variables and any E_variable expressions that refer
+to them are combined into one.
+
+<pre><b><font size=+1>
+-fo-instance-sensitive   : C mode only.
+                           1) fields get unique values per struct instance
+                           2) 'void's get unique values by type
+</font></b></pre>
+
+<p>When this flag is on each syntactic instance of the same struct
+type gets its own representative; the alternative (and the default) is
+that a struct would be treated rather like a namespace and all
+instances of a given field simply conflated.  When two structs of the
+same type meet, they are merged completely, so this refinement of the
+dataflow only works for groups of the same struct that never meet
+statically.  Rob Johnson says that this is an important refinement for
+processing the Linux kernel.
+
+<p>A similar optimization is done for the various possible values that
+can flow into a 'void' (usually when it is part of a 'void*'): that
+is, if you flow an int* and a struct A* into a void* and flow them
+back out to an int* and struct A* later, they do not "mix" inside the
+void*.
+
+<p>The whole system is implemented lazily for maximum efficiency.
+That is, when instance-sensitivity is on, each copy of a struct gets a
+"bucket" into which any members are thrown.  However, these members
+are not created unless they are needed.  When two buckets meet, the
+members that are in both are unified (in the dataflow graph sense of
+the word), members that are only in one are shared, and the two
+buckets themselves are merged.  This is all rather complex and prone
+to error and can be hard to debug.  If you dare to see all of this
+complexity in its full horror and glory, turn on the
+<b>-fo-print-buckets</b> flag.
+
+<pre><b><font size=+1>
+-fo-array-index-flows    : the array index flows through the array deref
+</font></b></pre>
+
+<p>Normally the index of an array de-reference is not considered to
+"flow" to the expression that is the resulting value of the
+de-reference.  That is in this expression "x = a[i]" where "a" is an
+array and "i" an int, the "i" does not flow to "a[i]" and consequently
+does not flow to "x".  This is often the semantics that you want.
+
+<p>However, consider the case where "a" is an array of chars that maps
+them to their upper-case version, say "to_upper".  In this case, the
+map preserves almost all information and we might well want to
+consider the data as flowing from the index to the value of the
+de-reference expression.  Currently this flag turns the flow on or off
+for the whole program but we are thinking about some way to refine
+this, perhaps with a control file.  If you can think of a good way,
+let us know.
+
+<hr>
+<p>&copy; 2002-2006 Daniel S. Wilkerson
+</p>
+
+<h2>&nbsp;</h2>
+
+</body>
+</html>

@@ -1,0 +1,14 @@
+// TypeId ambiguity
+
+int main()
+{
+  int x;
+
+  // cast to int, or to function returning int?  
+  //x = ( int() )3;           // ruled out by cppstd rules
+
+  //x = ( ( int() )3 )();     // ruled out by my rules
+
+
+  return 0;
+}
