@@ -4,13 +4,13 @@ see License.txt for copyright and terms of use
              Oink: A collaboration of analyses using Elsa
 
                          Daniel S. Wilkerson
-              http://www.cs.berkeley.edu/~dsw/oink.html
+                    https://www.cubewano.org/oink/
 
 Welcome to Oink!  Oink is a collaboration of backends for Scott
 McPeak's C++ frontend, Elsa.  Oink is designed to make it easy to
 write analysis backends for C++ and comes with one such analysis:
 Cqual++, a C++ version of the Cqual analysis tool.
 
-Please see the www/index.html for documentation.
+Please see Doc/index.html for documentation.
 
 Daniel
