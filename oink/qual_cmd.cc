@@ -376,9 +376,9 @@ void QualCmd::dump() {
          compactify_graph == CG_NEVER ? "never" :
          "?!");
 
-//   printf("fq-module-access: %s\n", boolToStr(module_access));
-//   printf("fq-module-write: %s\n", boolToStr(module_write));
-//   printf("fq-module-trust: %s\n", boolToStr(module_trust));
+  printf("fq-module-access: %s\n", boolToStr(module_access));
+  printf("fq-module-write: %s\n", boolToStr(module_write));
+  printf("fq-module-trust: %s\n", boolToStr(module_trust));
 }
 
 void QualCmd::printHelp() {
@@ -462,11 +462,11 @@ void QualCmd::printHelp() {
      "  -fq-merge-ref-ptr-qvars  : merge qvars of refs and ptrs (vs unify)\n"
      "  -fq-compactify-graph     : compactify graph before serialization\n"
      "  -fq-compactify-graph=always : compactify graph even if not serializing\n"
-//      "\n"
-//      "module analysis: look for violations of the module boundaries.\n"
-//      "  -fq-module-access        : other module accesses a module's memory\n"
-//      "  -fq-module-write         : other module writes a module's memory\n"
-//      "  -fq-module-trust         : access through a pointer in another's control"
+     "\n"
+     "module analysis: look for violations of the module boundaries.\n"
+     "  -fq-module-access        : other module accesses a module's memory\n"
+     "  -fq-module-write         : other module writes a module's memory\n"
+     "  -fq-module-trust         : access through a pointer in another's control"
      "");
 }
 

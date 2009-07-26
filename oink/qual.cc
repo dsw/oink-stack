@@ -1159,12 +1159,16 @@ class Qual_ModuleAccess_Visitor : private ASTVisitor {
 };
 
 void Qual_ModuleAccess_Visitor::postvisitExpression(Expression *obj) {
+  // FIX: this is ad-hoc, however there are expressions without a type
+  if (!obj->type) return;
   Value *exprValue = obj->abstrValue;
   if (exprValue->isReferenceValue()) {
     if (otherAccess) {
-      colorWithModule_otherAccess(exprValue->asRval(), exprValue->loc, NULL, "Expression");
+      colorWithModule_otherAccess(exprValue->asRval(), exprValue->loc,
+                                  NULL, "Expression");
     } else {
-      colorWithModule_access(exprValue->asRval(), exprValue->loc, NULL, "Expression");
+      colorWithModule_access(exprValue->asRval(), exprValue->loc,
+                             NULL, "Expression");
     }
   }
 }
@@ -1720,6 +1724,7 @@ void Qual::markInstanceSpecificValues_stage() {
 
 void Qual::moduleAlloc_stage() {
   printStage("moduleAlloc");
+  Restorer<bool> restorer(value2typeIsOn, true);
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
@@ -1743,6 +1748,7 @@ void Qual::moduleAlloc_stage() {
 
 void Qual::moduleOtherControl_stage() {
   printStage("moduleOtherControl");
+  Restorer<bool> restorer(value2typeIsOn, true);
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
@@ -1765,6 +1771,7 @@ void Qual::moduleOtherControl_stage() {
 
 void Qual::moduleOtherWrite_stage() {
   printStage("moduleOtherWrite");
+  Restorer<bool> restorer(value2typeIsOn, true);
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
@@ -1776,6 +1783,7 @@ void Qual::moduleOtherWrite_stage() {
 
 void Qual::moduleAccess_stage() {
   printStage("moduleAccess");
+  Restorer<bool> restorer(value2typeIsOn, true);
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
@@ -1788,6 +1796,7 @@ void Qual::moduleAccess_stage() {
 
 void Qual::moduleOtherAccess_stage() {
   printStage("moduleOtherAccess");
+  Restorer<bool> restorer(value2typeIsOn, true);
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
@@ -1802,11 +1811,13 @@ void Qual::moduleAnalysis_stages() {
   // access analysis
   if (qualCmd->module_access) {
     if (qualCmd->module_write) { // exclusive with write analysis
-      throw UserError(USER_ERROR_ExitCode,
-                      "module-access and module-write don't make sense together");
+      throw UserError
+        (USER_ERROR_ExitCode,
+         "module-access and module-write don't make sense together");
     }
     if (!(defaultModule || file2module.isNotEmpty())) {
-      throw UserError(USER_ERROR_ExitCode, "to use module analyses, you must supply modules");
+      throw UserError(USER_ERROR_ExitCode,
+                      "to use module analyses, you must supply modules");
     }
     moduleAlloc_stage();
     moduleOtherAccess_stage();
@@ -1815,7 +1826,8 @@ void Qual::moduleAnalysis_stages() {
   if (qualCmd->module_write) {
     xassert(!qualCmd->module_access); // exclusive with write analysis
     if (!(defaultModule || file2module.isNotEmpty())) {
-      throw UserError(USER_ERROR_ExitCode, "to use module analyses, you must supply modules");
+      throw UserError(USER_ERROR_ExitCode,
+                      "to use module analyses, you must supply modules");
     }
     moduleAlloc_stage();
     moduleOtherWrite_stage();
@@ -1824,7 +1836,8 @@ void Qual::moduleAnalysis_stages() {
   // trust analysis
   if (qualCmd->module_trust) {
     if (!(defaultModule || file2module.isNotEmpty())) {
-      throw UserError(USER_ERROR_ExitCode, "to use module analyses, you must supply modules");
+      throw UserError(USER_ERROR_ExitCode,
+                      "to use module analyses, you must supply modules");
     }
     moduleOtherControl_stage();
     moduleAccess_stage();

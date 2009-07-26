@@ -382,7 +382,7 @@ void OinkCmd::dump() { // for -fo-verbose
   printf("fo-trace-link: %s\n", boolToStr(trace_link));
   printf("fo-report-link-errors: %s\n", boolToStr(report_link_errors));
   printf("fo-report-unused-controls: %s\n", boolToStr(report_unused_controls));
-//   printf("fo-report-colorings: %s\n", boolToStr(report_colorings));
+  printf("fo-report-colorings: %s\n", boolToStr(report_colorings));
   printf("fo-print-controls-and-exit: %s\n", boolToStr(print_controls_and_exit));
 
   printf("fo-do-overload: %s\n", boolToStr(do_overload));
@@ -438,7 +438,7 @@ void OinkCmd::printHelp() {
      "  -fo-trace-link           : trace linking\n"
      "  -fo-report-link-errors   : print un-satisfied/over-satisfied function symbols in linker\n"
      "  -fo-report-unused-controls  : print controls that go unused\n"
-//      "  -fo-report-colorings        : report module colorings\n"
+     "  -fo-report-colorings        : report module colorings\n"
      "  -fo-print-controls-and-exit : print the controls and stop\n"
      "\n"
      "  -fo-do-overload          : do overload res., overriding language default\n"
