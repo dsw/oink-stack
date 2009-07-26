@@ -1,7 +1,7 @@
 // see License.txt for copyright and terms of use
 
 // An AST Visitor that computes a instance-sensitive, polymorphic,
-// non-flow-sensitive, non-path-sensitive, expression granularity
+// non-flow-sensitive, non-path-sensitive, expression-granularity
 // dataflow graph on a Translation Unit AST.  When a pair of
 // expressions is found between which data flows, the pair is handed
 // off to the dataflow_ex module.
