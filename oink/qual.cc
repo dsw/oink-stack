@@ -92,13 +92,14 @@ void Qual::visitInSerializationOrder(ValueVisitor &visitor)
 // class QualEcrUpdateVisitor : public ValueVisitor {
 
 // public:
-//   virtual bool preVisitValue(Value *obj) { qa(obj)->ecrUpdate(); return true; }
+//   virtual bool preVisitValue(Value *obj) { qa(obj)->ecrUpdate();
+//   return true; }
 // };
 
-// Update all qvars to point to their ECRs.  This is a necessary step before
-// eliminate_quals_links().  (Previously it was okay to delay this step until
-// serialization because eliminate_quals_links() did not actually deallocate
-// any qvars.)
+// Update all qvars to point to their ECRs.  This is a necessary step
+// before eliminate_quals_links().  (Previously it was okay to delay
+// this step until serialization because eliminate_quals_links() did
+// not actually deallocate any qvars.)
 void Qual::updateEcrAll() {
   printStage("   updateEcrAll");
   // QualEcrUpdateVisitor visitor;
@@ -122,7 +123,8 @@ void Qual::updateEcrAll() {
 // class QualDeadQvarRemoveVisitor : public ValueVisitor {
 
 // public:
-//   virtual bool preVisitValue(Value *obj) { qa(obj)->removeQvarIfDead(); return true; }
+//   virtual bool preVisitValue(Value *obj) {
+//   qa(obj)->removeQvarIfDead(); return true; }
 // };
 
 void Qual::removeDeadQvars() {
@@ -199,7 +201,10 @@ class MarkConstWhenParam_ASTVisitor : private ASTVisitor {
 
 bool MarkConstWhenParam_ASTVisitor::visitDeclarator(Declarator *obj) {
   Variable_O *var = asVariable_O(obj->var);
-  if (var->filteredOut()) return false; // can't decide if I should prune; don't think it matters
+
+  // can't decide if I should prune; don't think it matters
+  if (var->filteredOut()) return false;
+
   if (var->hasFlag(DF_PARAMETER)) {
     MarkConst_ValueVisitor markConst(qspec);
     var->abstrValue()->traverse(markConst);
@@ -248,8 +253,10 @@ StacknessMarker::StacknessMarker(bool onStack0)
   , nonstack_qconst(findQualAndCheck("$nonstack"))
   , onStack(onStack0)
 {
-  USER_ASSERT(stack_qconst,    SL_UNKNOWN, "Literal '$stack' not in lattice");
-  USER_ASSERT(nonstack_qconst, SL_UNKNOWN, "Literal '$nonstack' not in lattice");
+  USER_ASSERT(stack_qconst,    SL_UNKNOWN,
+              "Literal '$stack' not in lattice");
+  USER_ASSERT(nonstack_qconst, SL_UNKNOWN,
+              "Literal '$nonstack' not in lattice");
 }
 
 void StacknessMarker::markValue(Value *v) {
@@ -296,7 +303,9 @@ class MarkStackness_ValueVisitor : public ValueVisitor {
   void recurseOnNonStaticMembers(CVAtomicValue *cvat, CompoundType *ct);
 };
 
-void MarkStackness_ValueVisitor::recurseOnNonStaticMembers(CVAtomicValue *cvat, CompoundType *ct) {
+void MarkStackness_ValueVisitor::recurseOnNonStaticMembers
+  (CVAtomicValue *cvat, CompoundType *ct)
+{
   SFOREACH_OBJLIST_NC(Variable, ct->dataMembers, iter) {
     Variable_O *var = asVariable_O(iter.data());
     if (var->hasFlag(DF_STATIC)) continue;
@@ -379,7 +388,9 @@ class MarkVarsStackness_VisitRealVars : public VisitRealVars_filter {
 
   // methods
   public:
-  virtual void visitVariableIdem(Variable *var); // only visits each Variable once
+
+  // only visits each Variable once
+  virtual void visitVariableIdem(Variable *var);
 
   private:
   void markStack(Variable_O *var);
@@ -453,12 +464,15 @@ class MarkAllocStackness_Visitor : private ASTVisitor {
   MarkStackness_ValueVisitor &stack_markStackness;
   MarkStackness_ValueVisitor &nonstack_markStackness;
 
-  SObjSet<E_funCall*> seenAllocators; // allocators that we saw
-  SObjSet<E_funCall*> castedAllocators; // allocators that were inside a cast expression
+  // allocators that we saw
+  SObjSet<E_funCall*> seenAllocators;
+  // allocators that were inside a cast expression
+  SObjSet<E_funCall*> castedAllocators;
 
   public:
-  MarkAllocStackness_Visitor(MarkStackness_ValueVisitor &stack_markStackness0,
-                             MarkStackness_ValueVisitor &nonstack_markStackness0);
+  MarkAllocStackness_Visitor
+    (MarkStackness_ValueVisitor &stack_markStackness0,
+     MarkStackness_ValueVisitor &nonstack_markStackness0);
 
   SourceLoc getLoc() {return loweredVisitor.getLoc();}
 
@@ -501,9 +515,11 @@ bool MarkAllocStackness_Visitor::subVisitE_cast(E_cast *obj) {
     // Attach the non-stack-ness to the cast expresion pointer; thanks
     // to Matt Harren for help on this.
     USER_ASSERT(obj->abstrValue->isPointerValue(), obj->abstrValue->loc,
-                "cast from allocator (malloc-like function) is not of pointer type");
+                "cast from allocator (malloc-like function) "
+                "is not of pointer type");
     if (obj->abstrValue->isPointerValue()) {
-      obj->abstrValue->asPointerValue()->atValue->traverse(nonstack_markStackness);
+      obj->abstrValue->asPointerValue()->atValue->
+        traverse(nonstack_markStackness);
     }
     // check off the allocator so we can look for missed allocators later
     castedAllocators.add(expr0->asE_funCall());
@@ -517,7 +533,8 @@ bool MarkAllocStackness_Visitor::subVisitE_new(E_new *obj) {
   USER_ASSERT(obj->abstrValue->isPointerValue(), obj->abstrValue->loc,
               "new expression is not of pointer type");
   if (obj->abstrValue->isPointerValue()) {
-    obj->abstrValue->asPointerValue()->atValue->traverse(nonstack_markStackness);
+    obj->abstrValue->asPointerValue()->atValue->
+      traverse(nonstack_markStackness);
   }
   return true;
 }
@@ -529,12 +546,16 @@ class QualSerialization_ValueVisitor : public ValueVisitor {
   ostream &mapOut;
   int numSerializedQvars;
   LibQual::s18n_context *serializationCtxt;
-  SObjSet<LibQual::Type_qualifier*> serializedQvars; // NOTE: only used for assertion
+
+  // NOTE: only used for assertion
+  SObjSet<LibQual::Type_qualifier*> serializedQvars;
+
   IdentityManager &idmgr;
 
   public:
-  QualSerialization_ValueVisitor (IdentityManager &idmgr0,
-                                  ostream &mapOut0, LibQual::s18n_context *serializationCtxt0)
+  QualSerialization_ValueVisitor
+    (IdentityManager &idmgr0,
+     ostream &mapOut0, LibQual::s18n_context *serializationCtxt0)
     : mapOut(mapOut0)
     , numSerializedQvars(0)
     , serializationCtxt(serializationCtxt0)
@@ -562,7 +583,8 @@ bool QualSerialization_ValueVisitor::preVisitValue(Value *value) {
   xassert(annot->hasQv());
   LibQual::Type_qualifier *qv = annot->qv();
 
-  // printf("## QualSerialization_ValueVisitor: value=%p, qa=%p, qv=%p (%p) %s\n",
+  // printf("## QualSerialization_ValueVisitor: value=%p, qa=%p, qv=%p
+  // (%p) %s\n",
   //        value, annot, qv, LibQual::ecr_qual_noninline(qv), name_qual(qv));
   // fflush(stdout);
 
@@ -576,7 +598,8 @@ bool QualSerialization_ValueVisitor::preVisitValue(Value *value) {
   // Check that it was marked extern earlier.  Note that extern_qual(qv)
   // doesn't do a proper subset check because it goes through ecr.
 
-  // xassert(externVisitedSet_global.contains(qv) && "6578c45f-42a6-4bcb-a1cd-c9d49fb2b0aa");
+  // xassert(externVisitedSet_global.contains(qv) &&
+  // "6578c45f-42a6-4bcb-a1cd-c9d49fb2b0aa");
   xassert(LibQual::extern_qual(qv) && "d61f1ed1-a219-4e5b-b6cb-7c11bea92d73");
 
   // dsw: this was inserted by Rob; I think it is just to check we are
@@ -646,7 +669,8 @@ static StringRef moduleForLoc(SourceLoc loc, bool &dueToDefault) {
   if (!module) {
     dueToDefault = true;
     USER_ASSERT(defaultModule, loc,
-                "Default module is needed for file '%s' but none was given.", filename);
+                "Default module is needed for file '%s' but none was given.",
+                filename);
     module = defaultModule;
   }
   return module;
@@ -664,11 +688,13 @@ static void colorWithModule_alloc
   qconstName << module;
   qconstName << "_alloc";
   LibQual::Type_qualifier *qconst = LibQual::find_qual(qconstName.c_str());
-  USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice", strdup(qconstName.c_str()));
+  USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice",
+              strdup(qconstName.c_str()));
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
-    cout << sourceLocManager->getFile(loc) << ":" << sourceLocManager->getLine(loc);
+    cout << sourceLocManager->getFile(loc) << ":" <<
+      sourceLocManager->getLine(loc);
     cout << " " << astNode;
     if (name) cout << " '" << name << "'";
     else cout << " <no-name>";
@@ -695,11 +721,13 @@ static void colorWithModule_access
   qconstName << module;
   qconstName << "_access";
   LibQual::Type_qualifier *qconst = LibQual::find_qual(qconstName.c_str());
-  USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice", strdup(qconstName.c_str()));
+  USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice",
+              strdup(qconstName.c_str()));
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
-    cout << sourceLocManager->getFile(loc) << ":" << sourceLocManager->getLine(loc);
+    cout << sourceLocManager->getFile(loc) << ":" <<
+      sourceLocManager->getLine(loc);
     cout << " " << astNode;
     if (name) cout << " '" << name << "'";
     else cout << " <no-name>";
@@ -723,7 +751,8 @@ static void colorWithModule_otherControl
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
-    cout << sourceLocManager->getFile(loc) << ":" << sourceLocManager->getLine(loc);
+    cout << sourceLocManager->getFile(loc) << ":" <<
+      sourceLocManager->getLine(loc);
     cout << " " << astNode;
     if (name) cout << " '" << name << "'";
     else cout << " <no-name>";
@@ -740,7 +769,8 @@ static void colorWithModule_otherControl
     qconstName << srcModule;
     qconstName << "_otherControl";
     LibQual::Type_qualifier *qconst = LibQual::find_qual(qconstName.c_str());
-    USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice", strdup(qconstName.c_str()));
+    USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice",
+                strdup(qconstName.c_str()));
 
     // print out a line for each
     if (oinkCmd->report_colorings) {
@@ -768,7 +798,8 @@ static void colorWithModule_otherWrite
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
-    cout << sourceLocManager->getFile(loc) << ":" << sourceLocManager->getLine(loc);
+    cout << sourceLocManager->getFile(loc) << ":" <<
+      sourceLocManager->getLine(loc);
     cout << " " << astNode;
     if (name) cout << " '" << name << "'";
     else cout << " <no-name>";
@@ -785,7 +816,8 @@ static void colorWithModule_otherWrite
     qconstName << srcModule;
     qconstName << "_otherWrite";
     LibQual::Type_qualifier *qconst = LibQual::find_qual(qconstName.c_str());
-    USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice", strdup(qconstName.c_str()));
+    USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice",
+                strdup(qconstName.c_str()));
 
     // print out a line for each
     if (oinkCmd->report_colorings) {
@@ -810,7 +842,8 @@ static void colorWithModule_otherAccess
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
-    cout << sourceLocManager->getFile(loc) << ":" << sourceLocManager->getLine(loc);
+    cout << sourceLocManager->getFile(loc) << ":" <<
+      sourceLocManager->getLine(loc);
     cout << " " << astNode;
     if (name) cout << " '" << name << "'";
     else cout << " <no-name>";
@@ -827,7 +860,8 @@ static void colorWithModule_otherAccess
     qconstName << srcModule;
     qconstName << "_otherAccess";
     LibQual::Type_qualifier *qconst = LibQual::find_qual(qconstName.c_str());
-    USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice", strdup(qconstName.c_str()));
+    USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice",
+                strdup(qconstName.c_str()));
 
     // print out a line for each
     if (oinkCmd->report_colorings) {
@@ -853,8 +887,10 @@ class Qual_ModuleAlloc_Visitor : private ASTVisitor {
   bool color_alloc;          // ref-level coloring of allocated memory
   bool color_otherControl;   // value-level coloring of other-control memory
 
-  SObjSet<E_funCall*> seenAllocators; // allocators that we saw
-  SObjSet<E_funCall*> castedAllocators; // allocators that were inside a cast expression
+  // allocators that we saw
+  SObjSet<E_funCall*> seenAllocators;
+  // allocators that were inside a cast expression
+  SObjSet<E_funCall*> castedAllocators;
 
   public:
   Qual_ModuleAlloc_Visitor(bool color_alloc0, bool color_otherControl0)
@@ -876,11 +912,13 @@ class Qual_ModuleAlloc_Visitor : private ASTVisitor {
 bool Qual_ModuleAlloc_Visitor::visitDeclarator(Declarator *obj) {
   Value *varValue = asVariable_O(obj->var)->abstrValue()->asRval();
   if (color_alloc) {
-    colorWithModule_alloc(varValue, varValue->loc, obj->var->name, "Declarator");
+    colorWithModule_alloc(varValue, varValue->loc, obj->var->name,
+                          "Declarator");
   }
   if (color_otherControl) {
     if (varValue->isPointerValue()) {
-      colorWithModule_otherControl(varValue, varValue->loc, obj->var->name, "Declarator");
+      colorWithModule_otherControl(varValue, varValue->loc, obj->var->name,
+                                   "Declarator");
     }
   }
   return true;
@@ -889,9 +927,15 @@ bool Qual_ModuleAlloc_Visitor::visitDeclarator(Declarator *obj) {
 void Qual_ModuleAlloc_Visitor::postvisitExpression(Expression *obj) {
   switch(obj->kind()) {         // roll our own virtual dispatch
   default: break;               // expression kinds for which we do nothing
-  case Expression::E_FUNCALL:     subVisitE_funCall(obj->asE_funCall());         break;
-  case Expression::E_CAST:        subVisitE_cast(obj->asE_cast());               break;
-  case Expression::E_NEW:         subVisitE_new(obj->asE_new());                 break;
+  case Expression::E_FUNCALL:
+    subVisitE_funCall(obj->asE_funCall());
+    break;
+  case Expression::E_CAST:
+    subVisitE_cast(obj->asE_cast());
+    break;
+  case Expression::E_NEW:
+    subVisitE_new(obj->asE_new());
+    break;
   }
 }
 
@@ -912,10 +956,11 @@ bool Qual_ModuleAlloc_Visitor::subVisitE_cast(E_cast *obj) {
       // 2) thing pointed to by 3) the cast expresion; thanks to Matt
       // Harren for help on this.
       Value *castValue = obj->abstrValue
-        ->getAtValue()            // color the value pointed-to, not the pointer
+        ->getAtValue()  // color the value pointed-to, not the pointer
         ->asRval();
       colorWithModule_alloc(castValue, castValue->loc,
-                            funCallName(expr0->asE_funCall()), "E_cast-allocator");
+                            funCallName(expr0->asE_funCall()),
+                            "E_cast-allocator");
     }
     if (color_otherControl) {
       // This is subtle: attach the color to the 1) pointer value of
@@ -923,7 +968,8 @@ bool Qual_ModuleAlloc_Visitor::subVisitE_cast(E_cast *obj) {
       Value *castValue = obj->abstrValue->asRval();
       if (castValue->isPointerValue()) {
         colorWithModule_otherControl(castValue, castValue->loc,
-                                        funCallName(expr0->asE_funCall()), "E_cast-allocator");
+                                     funCallName(expr0->asE_funCall()),
+                                     "E_cast-allocator");
       }
     }
     // check off the allocator so we can look for missed allocators later
@@ -1002,7 +1048,8 @@ bool Qual_ModuleOtherWrite_Visitor::visitDeclarator(Declarator *obj) {
         USER_ASSERT(ctor->args->count()==1, getLoc(),
                     "Non-compound type must have one-arg MemberInit"
                     " (e5a12447-7229-4e2c-bc23-db855954f06e)");
-        colorWithModule_otherWrite(varValue, varValue->loc, obj->var->name, "Declarator-IN_ctor");
+        colorWithModule_otherWrite(varValue, varValue->loc, obj->var->name,
+                                   "Declarator-IN_ctor");
       }
       // otherwise, the ctorStatement was handled above.
     } else if (
@@ -1032,11 +1079,14 @@ bool Qual_ModuleOtherWrite_Visitor::visitDeclarator(Declarator *obj) {
         // however this is not; it is unspecified what happens if you
         // write 'fmt[0]':
         //   static char *fmt = "abort %d (%x); MSCP free pool: %x;";
-        //          if (! (expr->e->isE_stringLit() && varValue->isStringType()) ) {
+
+        //          if (! (expr->e->isE_stringLit() &&
+        //                 varValue->isStringType()) ) {
         //          if (! (expr->e->isE_stringLit()) ) {
         //            dfe.eDataFlow_normal(expr->e->abstrValue, varValue, loc);
         //          }
-        colorWithModule_otherWrite(varValue, varValue->loc, obj->var->name, "Declarator-IN_expr");
+        colorWithModule_otherWrite(varValue, varValue->loc, obj->var->name,
+                                   "Declarator-IN_expr");
       }
     } else if (
                // get rid of gcc unused warning
@@ -1051,7 +1101,8 @@ bool Qual_ModuleOtherWrite_Visitor::visitDeclarator(Declarator *obj) {
       //        xassert(!obj->ctorStatement);
 
 //       try {
-//         compoundInit(&dfe, loc, varValue, ci, oneAssignmentDataFlow, reportUserErrorDataFlow);
+//         compoundInit(&dfe, loc, varValue, ci,
+//                      oneAssignmentDataFlow, reportUserErrorDataFlow);
 //       } catch (UserError &err) {
 //         // dsw: there are some compound initializers situations where
 //         // gcc just gives a warning instead of an error, such as if
@@ -1064,7 +1115,8 @@ bool Qual_ModuleOtherWrite_Visitor::visitDeclarator(Declarator *obj) {
 //       }
 
       // FIX: we should actually set it to deeply write
-      userReportWarning(getLoc(), "unimplemented: compound initializers should be a deep write");
+      userReportWarning(getLoc(), "unimplemented: compound initializers"
+                        " should be a deep write");
       colorWithModule_otherWrite(varValue, varValue->loc, obj->var->name,
                                  "Declarator-IN_compound");
     } else xfailure("can't happen");
@@ -1077,13 +1129,17 @@ bool Qual_ModuleOtherWrite_Visitor::visitMemberInit(MemberInit *obj) {
     // MemberInit for a simple type that does not have an implicit
     // ctor, such as an int.
     // FIX: make this instance-specific; (did I mean to imitate this?)
-//        obj->receiver->type->asRval()->asCVAtomicValue()->getInstanceSpecificValue();
+
+    // obj->receiver->type->asRval()->asCVAtomicValue()->
+    //   getInstanceSpecificValue();
+
     Value *memberValue0 = asVariable_O(obj->member)->abstrValue();
     xassert(!memberValue0->t()->isCompoundType());
     USER_ASSERT(obj->args->count()==1, getLoc(),
                 "Non-compound type must have one-arg MemberInit"
                 " (7ec11921-4016-4649-8120-2ad50f9a73ce)");
-    colorWithModule_otherWrite(memberValue0, memberValue0->loc, obj->member->name, "MemberInit");
+    colorWithModule_otherWrite(memberValue0, memberValue0->loc,
+                               obj->member->name, "MemberInit");
   }
   return true;
 }
@@ -1091,7 +1147,8 @@ bool Qual_ModuleOtherWrite_Visitor::visitMemberInit(MemberInit *obj) {
 bool Qual_ModuleOtherWrite_Visitor::visitHandler(Handler *obj) {
   if (obj->globalVar) {
     Value *tgt0 = asVariable_O(obj->typeId->decl->var)->abstrValue()->asRval();
-    colorWithModule_otherWrite(tgt0, tgt0->loc, obj->typeId->decl->var->name, "Handler");
+    colorWithModule_otherWrite(tgt0, tgt0->loc, obj->typeId->decl->var->name,
+                               "Handler");
   } else {
     xassert(!obj->globalDtorStatement);
   }
@@ -1127,7 +1184,8 @@ bool Qual_ModuleOtherWrite_Visitor::subVisitE_assign(E_assign *obj) {
   Value *tgt = obj->target->abstrValue;
   // remove l-value layer of indirection for ASSIGNMENT (not for
   // INITIALIZATION).
-  USER_ASSERT(tgt->isReferenceValue(), getLoc(), "Left side of assignment must be an lvalue");
+  USER_ASSERT(tgt->isReferenceValue(), getLoc(),
+              "Left side of assignment must be an lvalue");
   Value *tgt1 = tgt->asRval();
   char const *name0 = NULL;
   if (obj->target->skipGroups()->isE_variable()) {
@@ -1219,7 +1277,8 @@ bool NameASTNodesVisitor::visitFunction(Function *obj) {
 
 void Qual::configure() {
   if (qualCmd->inference && !qualCmd->config) {
-    userFatalError(SL_UNKNOWN, "Since you are doing inference, you must supply a config file.\n");
+    userFatalError(SL_UNKNOWN, "Since you are doing inference, you "
+                   "must supply a config file.\n");
   }
   init_libqual(qualCmd->config);
 }
@@ -1228,10 +1287,12 @@ void Qual::configure() {
 // Deserialization ****************
 
 /* virtual */
-void Qual::deserialize_1archive(ArchiveDeserializer *arc, XmlReaderManager &manager)
+void Qual::deserialize_1archive(ArchiveDeserializer *arc,
+                                XmlReaderManager &manager)
 {
-  // NOTE: the XmlReaderManager is shared across both de-serializations below:
-  // the deserialization of value_qual.map needs the XmlReaderManager::id2obj.
+  // NOTE: the XmlReaderManager is shared across both
+  // de-serializations below: the deserialization of value_qual.map
+  // needs the XmlReaderManager::id2obj.
 
   deserialize_formatVersion(arc);
   deserialize_files(arc, manager);
@@ -1321,7 +1382,8 @@ void Qual::srzFormat(ArchiveSrzFormat &srzfmt, bool writing)
   srzfmt.opt("poly", qualCmd->poly);
 }
 
-void Qual::deserialize_abstrValues(ArchiveDeserializer *arc, XmlReaderManager &manager) {
+void Qual::deserialize_abstrValues(ArchiveDeserializer *arc,
+                                   XmlReaderManager &manager) {
   // use heap-allocated readers because if we get an exception, then the
   // underlying ASTList will 'delete' it upon stack unwinding.
   XmlTypeReader *typeReader = new XmlTypeReader;
@@ -1345,8 +1407,9 @@ static inline istream& readArrow(istream&i) {
   return i;
 }
 
-// NOTE: if we ever want to read 64-bit files on 32-bit machines we'd have to
-// change the type of qvarId to uint64_t, or not wrote pointers.
+// NOTE: if we ever want to read 64-bit files on 32-bit machines we'd
+// have to change the type of qvarId to uint64_t, or not wrote
+// pointers.
 
 // Parse a line containing "valueId -> qvarId".  Throws exception on error.
 static inline void parseValueQualMapLine
@@ -1358,12 +1421,14 @@ static inline void parseValueQualMapLine
   input >> valueId >> readArrow >> c1 >> c2 >> qvarId;
 
   if (input.fail() || !input.eof() || c1 != 'Q' || c2 != 'V') {
-    userFatalError(SL_UNKNOWN, "parse error while reading value_qual.map line '%s'", line.c_str());
+    userFatalError(SL_UNKNOWN,
+                   "parse error while reading value_qual.map line '%s'",
+                   line.c_str());
   }
 }
 
-// Read a line. Returns true on success and false on eof.  Throws exception on
-// read error.
+// Read a line. Returns true on success and false on eof.  Throws
+// exception on read error.
 static inline bool readValueQualMapLine(istream& in, std::string& line) {
   std::getline(in, line);
 
@@ -1382,7 +1447,8 @@ static inline bool readValueQualMapLine(istream& in, std::string& line) {
 // Rob: "for each qualifier address on deserialized abstract values
 // replace it using s18n_lookup_deserialized(...)"
 void Qual::deserialize_valueQualMap_stream
-  (istream& in, XmlReaderManager &manager, LibQual::s18n_context *serializationCtxt)
+  (istream& in, XmlReaderManager &manager,
+   LibQual::s18n_context *serializationCtxt)
 {
   std::string line;
   while(readValueQualMapLine(in, line)) {
@@ -1407,7 +1473,8 @@ void Qual::deserialize_valueQualMap_stream
     int foundIt = LibQual::s18n_lookup_deserialized
       (serializationCtxt, (void*) oldQvarPtr, &newQvarPtr);
     if (!foundIt) {
-      userFatalError(SL_UNKNOWN, "failed to find qvar %x while reading value_qual.map",
+      userFatalError(SL_UNKNOWN,
+                     "failed to find qvar %x while reading value_qual.map",
                      oldQvarPtr);
     }
     xassert(newQvarPtr);
@@ -1430,9 +1497,12 @@ static inline istream& matchMarker(istream& in, std::string const& expected) {
 }
 
 // expect string EXPECTED, else throw user error.
-static inline void expectMarker(istream& in, std::string const& expected, const char* fname) {
+static inline void expectMarker
+  (istream& in, std::string const& expected, const char* fname)
+{
   if (!matchMarker(in, expected)) {
-    userFatalError(SL_UNKNOWN, "input error reading '%s', did not find %s marker",
+    userFatalError(SL_UNKNOWN,
+                   "input error reading '%s', did not find %s marker",
                    fname, expected.c_str());
   }
 }
@@ -1440,7 +1510,8 @@ static inline void expectMarker(istream& in, std::string const& expected, const 
 static inline void expectEOF(istream& in, const char* fname) {
   in.peek(); // peek to force setting eofbit if we're at EOF.
   if (!in.eof()) {
-    userFatalError(SL_UNKNOWN, "input error reading '%s', did not reach end of file",
+    userFatalError(SL_UNKNOWN,
+                   "input error reading '%s', did not reach end of file",
                    fname);
   }
 }
@@ -1562,7 +1633,9 @@ void Qual::compactifyGraph() {
   removeDeadQvars();
 }
 
-int Qual::serialize_valuesAndMap(ArchiveSerializer* arc, LibQual::s18n_context *serializationCtxt) {
+int Qual::serialize_valuesAndMap
+  (ArchiveSerializer* arc, LibQual::s18n_context *serializationCtxt)
+{
   // write to a string first, since we can't interleave output to two archive
   // files
   ostream& mapOut = arc->outputAlt("value_qual.map");
@@ -1571,7 +1644,8 @@ int Qual::serialize_valuesAndMap(ArchiveSerializer* arc, LibQual::s18n_context *
   IdentityManager idmgr;
 
   // set up to serialize the qvars as a side-effect
-  QualSerialization_ValueVisitor qSerValVisitor(idmgr, mapOut, serializationCtxt);
+  QualSerialization_ValueVisitor qSerValVisitor(idmgr, mapOut,
+                                                serializationCtxt);
   bool indent = tracingSys("xmlPrintAST-indent");
   int depth = 0;              // shared depth counter between printers
 
@@ -1580,7 +1654,8 @@ int Qual::serialize_valuesAndMap(ArchiveSerializer* arc, LibQual::s18n_context *
   {
     XmlValueWriter_Q valueWriter(idmgr,
                                  (ASTVisitor*)NULL,
-                                 &qSerValVisitor, &valueOut, depth, indent, &srzOracle);
+                                 &qSerValVisitor,
+                                 &valueOut, depth, indent, &srzOracle);
     serialize_abstrValues_stream(valueWriter, serializeVar_O);
     xassert(depth == 0);
   }
@@ -1596,7 +1671,8 @@ void Qual::serialize_results() {
   // been attached; there shouldn't be any at this point
   Restorer<bool> restorer(value2typeIsOn, true);
   try {
-    ArchiveSerializerP arc = archiveSrzManager->getArchiveSerializer(qualCmd->srz);
+    ArchiveSerializerP arc = archiveSrzManager->
+      getArchiveSerializer(qualCmd->srz);
 
     serialize_formatVersion(arc.get());
 
@@ -1628,13 +1704,15 @@ void Qual::serialize_results() {
     // QualSerialization_ValueVisitor::preVisitValue; both are marked
     // LOUD-SERIALIZATION.
     if (numExternQvars != numSerializedQvars) {
-      userFatalError(SL_UNKNOWN, "INTERNAL ERROR: numExternQvars=%d, numSerializedQvars=%d",
+      userFatalError(SL_UNKNOWN,
+                     "INTERNAL ERROR: numExternQvars=%d, numSerializedQvars=%d",
                      numExternQvars, numSerializedQvars);
     }
     xassert(numExternQvars == numSerializedQvars);
 
   } catch(ArchiveIOException & e) {
-    userFatalError(SL_UNKNOWN, "Failed to serialize %s: %s", qualCmd->srz.c_str(), e.error.c_str());
+    userFatalError(SL_UNKNOWN, "Failed to serialize %s: %s",
+                   qualCmd->srz.c_str(), e.error.c_str());
   }
 }
 
@@ -1668,7 +1746,7 @@ void Qual::unifyVars(Variable_O *v1, Variable_O *v2, SourceLoc loc) {
 bool markValueInstanceSpecific(Value *t) {
 //    cout << "Marking as instance-specific " << t->toString() << endl;
   instanceSpecificValues.add(t);
-  return false;                 // keep traversing; a true would cause the search to prune
+  return false; // keep traversing; a true would cause the search to prune
 }
 #endif
 
@@ -1735,11 +1813,14 @@ void Qual::moduleAlloc_stage() {
     unit->traverse(env.loweredVisitor);
     // check that we didn't hit any allocators that were not down inside
     // a cast
-    for(SObjSetIter<E_funCall*> seenIter(env.seenAllocators); !seenIter.isDone(); seenIter.adv()) {
+    for(SObjSetIter<E_funCall*> seenIter(env.seenAllocators);
+        !seenIter.isDone(); seenIter.adv()) {
       E_funCall *call0 = seenIter.data();
       if (!env.castedAllocators.contains(call0)) {
-        SourceLoc loc = call0->abstrValue->loc; // this is just luck that I have this
-        userReportWarning(loc, "(access) allocator that was not inside a cast expression");
+        // this is just luck that I have this
+        SourceLoc loc = call0->abstrValue->loc;
+        userReportWarning
+          (loc, "(access) allocator that was not inside a cast expression");
       }
     }
   }
@@ -1759,11 +1840,14 @@ void Qual::moduleOtherControl_stage() {
     unit->traverse(env.loweredVisitor);
     // check that we didn't hit any allocators that were not down inside
     // a cast
-    for(SObjSetIter<E_funCall*> seenIter(env.seenAllocators); !seenIter.isDone(); seenIter.adv()) {
+    for(SObjSetIter<E_funCall*> seenIter(env.seenAllocators);
+        !seenIter.isDone(); seenIter.adv()) {
       E_funCall *call0 = seenIter.data();
       if (!env.castedAllocators.contains(call0)) {
-        SourceLoc loc = call0->abstrValue->loc; // this is just luck that I have this
-        userReportWarning(loc, "(trust) allocator that was not inside a cast expression");
+        // this is just luck that I have this
+        SourceLoc loc = call0->abstrValue->loc;
+        userReportWarning(loc, "(trust) allocator that was not inside "
+                          "a cast expression");
       }
     }
   }
@@ -2005,15 +2089,19 @@ void Qual::qualCompile_qualVisitation() {
       File *file = files.data();
       maybeSetInputLangFromSuffix(file);
       TranslationUnit *unit = file2unit.get(file);
-      MarkAllocStackness_Visitor env(stack_markStackness, nonstack_markStackness);
+      MarkAllocStackness_Visitor env(stack_markStackness,
+                                     nonstack_markStackness);
       unit->traverse(env.loweredVisitor);
       // check that we didn't hit any allocators that were not down
       // inside a cast
-      for(SObjSetIter<E_funCall*> iter2(env.seenAllocators); !iter2.isDone(); iter2.adv()) {
+      for(SObjSetIter<E_funCall*> iter2(env.seenAllocators);
+          !iter2.isDone(); iter2.adv()) {
         E_funCall *call0 = iter2.data();
         if (!env.castedAllocators.contains(call0)) {
-          SourceLoc loc = call0->abstrValue->loc; // this is just luck that I have this
-          userReportWarning(loc, "(stackness) allocator that was not inside a cast expression");
+          // this is just luck that I have this
+          SourceLoc loc = call0->abstrValue->loc;
+          userReportWarning(loc, "(stackness) allocator that was not "
+                            "inside a cast expression");
         }
       }
     }
@@ -2139,7 +2227,8 @@ bool ExcludeQualData_ValueVisitor::preVisitValue(Value *obj) {
     FOREACH_ASTLIST(char, exclude, iter) {
       char const * const qualName = iter.data();
       if (streq(ql0->name, qualName)) {
-        userInferenceError(obj->loc, "%s data qualified as %s", context, qualName);
+        userInferenceError(obj->loc, "%s data qualified as %s",
+                           context, qualName);
       }
     }
   }
@@ -2195,7 +2284,8 @@ class StackAllocVarLifecycle {
   int unregisterPoint;
 
   public:
-  StackAllocVarLifecycle(Variable_O *var0, bool matchesAsArray, int declPoint0);
+  StackAllocVarLifecycle(Variable_O *var0, bool matchesAsArray,
+                         int declPoint0);
 
   bool isArray() { return var->abstrValue()->isArrayValue(); }
 };
@@ -2247,10 +2337,12 @@ bool VariableUsedInRange_ASTVisitor::visitExpression(Expression *obj) {
     StackAllocVarLifecycle *lifecycle = var2lifecycle.get(var);
     if (lifecycle) {
       if (! (lifecycle->registerPoint <= iterPoint)) {
-        userFatalError(getLoc(), "variable %s used before registeration", var->name);
+        userFatalError(getLoc(), "variable %s used before registeration",
+                       var->name);
       }
       if (! (iterPoint <= lifecycle->unregisterPoint)) {
-        userFatalError(getLoc(), "variable %s used after un-registeration", var->name);
+        userFatalError(getLoc(), "variable %s used after un-registeration",
+                       var->name);
       }
     }
   }
@@ -2298,7 +2390,9 @@ class RegStack_ASTVisitor : private ASTVisitor {
 // return the var; start is set to true if 'register' and false if
 // 'unregister'; asArray flag indicates if the array registraton name
 // matched instead of the normal registration.
-Variable_O *RegStack_ASTVisitor::isRegStmt(Statement *s, bool &asArray, bool &start) {
+Variable_O *RegStack_ASTVisitor::isRegStmt
+  (Statement *s, bool &asArray, bool &start)
+{
   // statement expression?
   if (!s->isS_expr()) return NULL;
   S_expr *sexpr = s->asS_expr();
@@ -2370,11 +2464,13 @@ bool RegStack_ASTVisitor::subVisitS_compound(S_compound *scpd) {
         Variable_O *var = asVariable_O(decl->var);
         Value *v = var->abstrValue();
         bool matchesAsPoint = valueMatchesQSpec(v, qspec);
-        bool matchesAsArray = v->isArrayValue() && valueMatchesQSpec(v->getAtValue(), qspec);
+        bool matchesAsArray = v->isArrayValue() &&
+          valueMatchesQSpec(v->getAtValue(), qspec);
         if (matchesAsPoint || matchesAsArray) {
           if (var2lifecycle.get(var)) {
             // this can't happen in code that typechecks
-            userFatalError(s->loc, "Two declarations for variable %s", var->name);
+            userFatalError(s->loc, "Two declarations for variable %s",
+                           var->name);
           }
           StackAllocVarLifecycle *lifecycle =
             new StackAllocVarLifecycle(var, matchesAsArray, iterPoint);
@@ -2421,27 +2517,32 @@ bool RegStack_ASTVisitor::subVisitS_compound(S_compound *scpd) {
       // check startness and stopness
       if (start) {
         if (lifecycle->registerPoint != -1) {
-          userFatalError(s->loc, "Double registration of qspec variable %s", var->name);
+          userFatalError(s->loc, "Double registration of qspec variable %s",
+                         var->name);
         }
         lifecycle->registerPoint = iterPoint;
         xassert(lifecycle->declPoint > -1); // checked in StackAllocVarLifecycle ctor
         // this can't happen in code that typechecks
         if (! (lifecycle->registerPoint > lifecycle->declPoint)) {
-          userFatalError(s->loc, "Somehow registration point not after declaration point %s",
+          userFatalError(s->loc, "Somehow registration point not after "
+                         "declaration point %s",
                          lifecycle->var->name);
         }
       } else {
         if (lifecycle->unregisterPoint != -1) {
-          userFatalError(s->loc, "Double un-registration of qspec variable %s", var->name);
+          userFatalError(s->loc, "Double un-registration of qspec variable %s",
+                         var->name);
         }
         lifecycle->unregisterPoint = iterPoint;
         if (! (lifecycle->registerPoint > -1)) {
-          userFatalError(s->loc, "Un-registration point before registration point %s",
+          userFatalError(s->loc, "Un-registration point before "
+                         "registration point %s",
                          lifecycle->var->name);
         }
         // this can't happen in code that typechecks
         if (! (lifecycle->unregisterPoint > lifecycle->registerPoint)) {
-          userFatalError(s->loc, "Un-registration point not after registration point %s",
+          userFatalError(s->loc, "Un-registration point not after "
+                         "registration point %s",
                          lifecycle->var->name);
         }
       }
@@ -2459,10 +2560,12 @@ bool RegStack_ASTVisitor::subVisitS_compound(S_compound *scpd) {
     StackAllocVarLifecycle *lifecycle = iter.value();
     xassert(var == lifecycle->var);
     if (! (lifecycle->registerPoint > -1)) {
-      userFatalError(var->loc, "Qspec variable never registered %s", var->name);
+      userFatalError(var->loc, "Qspec variable never registered %s",
+                     var->name);
     }
     if (! (lifecycle->unregisterPoint > -1)) {
-      userFatalError(var->loc, "Qspec variable never un-registered %s", var->name);
+      userFatalError(var->loc, "Qspec variable never un-registered %s",
+                     var->name);
     }
   }
 
@@ -2572,7 +2675,8 @@ class ExlPermAlias_ASTVisitor : private ASTVisitor {
 
   public:
   ExlPermAlias_ASTVisitor
-    (PtrSet<Expression> &context0, char const * const contextName0, QSpec * const qspec0)
+    (PtrSet<Expression> &context0, char const * const contextName0,
+     QSpec * const qspec0)
       : loweredVisitor(this)
       , context(context0)
       , contextName(contextName0)
@@ -2588,7 +2692,8 @@ bool ExlPermAlias_ASTVisitor::visitExpression(Expression *obj) {
   // the asRval() is important
   if (valueMatchesQSpec(obj->abstrValue->asRval(), qspec)) {
     if (!context.contains(obj)) {
-      userFatalError(getLoc(), "expression of type %s not found in context of %s",
+      userFatalError(getLoc(),
+                     "expression of type %s not found in context of %s",
                      qspec->toString(), contextName);
     }
   }
@@ -2633,19 +2738,22 @@ bool ExclValueRefCall_ASTVisitor::visitFullExpression(FullExpression *fexp) {
   }
 
   // for all of those on both lists, make sure they do not match qspec
-  for(PtrMap<Variable, Variable>::Iter iter(argVarsSet); !iter.isDone(); iter.adv()) {
+  for(PtrMap<Variable, Variable>::Iter iter(argVarsSet);
+      !iter.isDone(); iter.adv()) {
     Variable *var = iter.key();
     if (addrOfVarsSet.contains(var)) {
       // in both lists
       if (valueMatchesQSpec(asVariable_O(var)->abstrValue(), qspec)) {
         userFatalError
           (getLoc(), "variable %s is 1) an R-value argument and also"
-           " 2) in a reference context or has its address taken.\n", var->name);
+           " 2) in a reference context or has its address taken.\n",
+           var->name);
       }
     }
   }
 
-  return true; // I suppose some FullExpressions that are nested should be checked
+  // I suppose some FullExpressions that are nested should be checked
+  return true;
 }
 
 // check that function arguments that match qspec are stack or
@@ -2673,14 +2781,16 @@ void ArgLocalVar_ASTVisitor::testFuncArg(Expression *obj) {
   // if so, then must be a stack- or parameter-allocated variable
   if (!obj->isE_variable()) {
     userFatalError(getLoc(),
-                   "Function argument of type %s is not a variable\n", qspec->toString());
+                   "Function argument of type %s is not a variable\n",
+                   qspec->toString());
   }
   Variable *var = obj->asE_variable()->var;
   ScopeKind varSK = var->getScopeKind();
   if (varSK == SK_PARAMETER || varSK == SK_FUNCTION) return;
   userFatalError(getLoc(),
                  "Function argument variable %s of type %s "
-                 "is not stack- or parameter-allocated\n", var->name, qspec->toString());
+                 "is not stack- or parameter-allocated\n",
+                 var->name, qspec->toString());
 }
 
 bool ArgLocalVar_ASTVisitor::visitExpression(Expression *obj) {
@@ -2701,7 +2811,8 @@ class TempImmediatelyUsed_ASTVisitor : private ASTVisitor {
 
   public:
   TempImmediatelyUsed_ASTVisitor
-    (PtrSet<Expression> &context0, char const * const contextName0, QSpec * const qspec0)
+    (PtrSet<Expression> &context0, char const * const contextName0,
+     QSpec * const qspec0)
       : loweredVisitor(this)
       , context(context0)
       , contextName(contextName0)
@@ -2751,7 +2862,8 @@ void Qual::exclude_qual_stage() {
       File *file = files.data();
       maybeSetInputLangFromSuffix(file);
       TranslationUnit *unit = file2unit.get(file);
-      ExcludeQual_ASTVisitor vis(qualCmd->exclude_global, qualCmd->exclude_cast);
+      ExcludeQual_ASTVisitor vis(qualCmd->exclude_global,
+                                 qualCmd->exclude_cast);
       unit->traverse(vis.loweredVisitor);
     }
   }
@@ -2800,7 +2912,8 @@ void Qual::exclude_qual_stage() {
       FOREACH_ASTLIST_NC(QSpec, qualCmd->exl_perm_alias, iter) {
         QSpec *qspec = iter.data();
         ExlPermAlias_ASTVisitor vis
-          (funcArgOrDerefExprSet, "function argument or pointer dereference", qspec);
+          (funcArgOrDerefExprSet, "function argument or pointer dereference",
+           qspec);
         unit->traverse(vis.loweredVisitor);
       }
     }
@@ -2890,7 +3003,8 @@ bool Qual::finishQuals_stage() {
 #else
 #endif
   bool qualifierInconsistency = LibQual::finish_quals();
-  // updateEcrAll(); // see below markExtern_stage() why this is commented for now
+  // updateEcrAll(); // see below markExtern_stage() why this is
+  // commented for now
   haveRunFinishQuals = true;
   return qualifierInconsistency;
 }
@@ -2898,8 +3012,8 @@ bool Qual::finishQuals_stage() {
 void Qual::markExtern_stage() {
   Restorer<bool> restorer(value2typeIsOn, true);
   markExternVars();
-  // TODO: apparently this has to run after markExternVars, perhaps because it
-  // is creating new variables?!
+  // TODO: apparently this has to run after markExternVars, perhaps
+  // because it is creating new variables?!
   updateEcrAll();
 }
 
