@@ -1,4 +1,13 @@
 # configuration
+
+# Do not ignore these Makefiles
+# FIX: how do I do this without enumerating each directory level?
+!*/Makefile
+!*/*/Makefile
+!*/*/*/Makefile
+!*/*/*/*/Makefile
+
+# These are generated
 Makefile
 config.status
 config.summary
