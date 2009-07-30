@@ -1,5 +1,8 @@
 # configuration
 
+# This is generated
+Makefile
+
 # Do not ignore these Makefiles
 # FIX: how do I do this without enumerating each directory level?
 !*/Makefile
@@ -8,7 +11,6 @@
 !*/*/*/*/Makefile
 
 # These are generated
-Makefile
 c/Makefile
 examples/arith/Makefile
 
