@@ -10,7 +10,9 @@ Makefile
 !*/*/*/Makefile
 !*/*/*/*/Makefile
 
-# These are generated
+# These files are generated.  NOTE that these lines MUST be below the
+# "!" lines above: those lines remove files to be ignored so here we
+# put them back in to the set of files to be ignored.
 c/Makefile
 examples/arith/Makefile
 
