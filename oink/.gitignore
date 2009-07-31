@@ -33,6 +33,7 @@ qual
 # generated files
 Build.incl.mk
 *.gen.*
+!elsa_tests.gen.incl.mk
 ElsaHeaders
 quals.dot
 
