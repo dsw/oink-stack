@@ -1,4 +1,4 @@
-char $tainted *getenv(const char *name);
+char $tainted *getenv(char const *name);
 int printf(char const $untainted *fmt, ...);
 int main(void)
 {
