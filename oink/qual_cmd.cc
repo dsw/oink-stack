@@ -65,6 +65,7 @@ QualCmd::QualCmd()
 
   , poly                     (false)
 
+  // Mozilla-specific
   , reg_stack_regfunc         (NULL)
   , reg_stack_un_regfunc      (NULL)
   , reg_stack_array_regfunc   (NULL)
@@ -77,6 +78,7 @@ QualCmd::QualCmd()
   , name_if_missing          (true)
   , casts_preserve_below_functions(true) // Jeff says the default is to not do this; Revolution!
 
+  // structural flow
   , flow_compoundUp          (false)
   , flow_compoundDown        (false)
   , flow_pointUp             (false)
@@ -228,7 +230,8 @@ void QualCmd::readOneArg(int &argc, char **&argv) {
     return;
   }
 
-  HANDLE_FLAG(casts_preserve_below_functions, "-fq-", "casts-preserve-below-functions");
+  HANDLE_FLAG(casts_preserve_below_functions, "-fq-",
+              "casts-preserve-below-functions");
 
   HANDLE_FLAG(flow_compoundUp, "-fq-", "flow-compoundUp");
   HANDLE_FLAG(flow_compoundDown, "-fq-", "flow-compoundDown");
