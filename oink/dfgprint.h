@@ -61,7 +61,7 @@ class NameValuesVisitor : private ASTVisitor {
 
   public:
   NameValuesVisitor(UnionFind<Value> &canonValue0,
-                   PtrMap<Value, char const> &valueName0)
+                    PtrMap<Value, char const> &valueName0)
     : loweredVisitor(this)
     , canonValue(canonValue0)
     , valueName(valueName0)
