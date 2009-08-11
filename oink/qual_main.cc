@@ -74,9 +74,12 @@ int main(int argc, char **argv) {
       m.markExtern_stage();
       m.compactify_stage();
       if (!qualCmd->srz.empty()) m.serialize_results();
-      if (qualifierInconsistency && qualCmd->ret_inf) code = INFERENCE_FAILURE_ExitCode;
+      if (qualifierInconsistency && qualCmd->ret_inf) {
+        code = INFERENCE_FAILURE_ExitCode;
+      }
 
-      Restorer<bool> res(typePrinterCQ.printTransQual, qualCmd->print_trans_qual);
+      Restorer<bool> res(typePrinterCQ.printTransQual,
+                         qualCmd->print_trans_qual);
       m.prettyPrint_stage();
       if (oinkCmd->print_buckets) m.printBuckets();
       if (oinkCmd->print_stats) m.printStats();
@@ -89,7 +92,7 @@ int main(int argc, char **argv) {
     }
 
     WarningManager::summarize(); // summarize omitted warnings
-    m.printStage("cleanup");    // deallocate
+    m.printStage("cleanup");     // deallocate
     cleanup_libqual();
     // cleanup_qualAnnotMap();
     return code;
