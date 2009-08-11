@@ -665,14 +665,22 @@ private:
 static StringRef moduleForLoc(SourceLoc loc, bool &dueToDefault) {
   char const *filename = sourceLocManager->getFile(loc);
   StringRef module = file2module.queryif(filename);
-  dueToDefault = false;
-  if (!module) {
-    dueToDefault = true;
-    USER_ASSERT(defaultModule, loc,
-                "Default module is needed for file '%s' but none was given.",
-                filename);
-    module = defaultModule;
-  }
+  USER_ASSERT(module, loc,
+              "Module is needed for file '%s' but none was given.", filename);
+//   dueToDefault = false;
+//   if (!module) {
+//     dueToDefault = true;
+// //     printf("moduleForLoc: Default module is needed for file '%s'.\n",
+// //            filename);
+//     USER_ASSERT
+//       (defaultModule, loc,
+//        "Default module is needed for file '%s' but none was given.",
+//        filename);
+//     module = defaultModule;
+//   }
+//   cout << "moduleForLoc: " << locToStr(loc)
+//        << " maps to module '" << module << "'"
+//        << endl;
   return module;
 }
 
@@ -774,7 +782,7 @@ static void colorWithModule_otherControl
 
     // print out a line for each
     if (oinkCmd->report_colorings) {
-      cout << "\tcolored " << qconstName;
+      cout << " colored " << qconstName;
       if (dueToDefault) {
         cout << " by default";
       }
@@ -810,6 +818,8 @@ static void colorWithModule_otherWrite
   SFOREACH_OBJLIST(char, moduleList, iter) {
     StringRef srcModule = iter.data();
     if (srcModule == module) continue;
+    // double-check in case StringRef failed to be used correctly
+    xassert(strcmp(srcModule, module) != 0);
 
     // get the qualifier
     stringBuilder qconstName("$");
@@ -821,7 +831,7 @@ static void colorWithModule_otherWrite
 
     // print out a line for each
     if (oinkCmd->report_colorings) {
-      cout << "\tcolored " << qconstName;
+      cout << " colored " << qconstName;
       if (dueToDefault) {
         cout << " by default";
       }
@@ -865,7 +875,7 @@ static void colorWithModule_otherAccess
 
     // print out a line for each
     if (oinkCmd->report_colorings) {
-      cout << "\tcolored " << qconstName;
+      cout << " colored " << qconstName;
       if (dueToDefault) {
         cout << " by default";
       }
@@ -1907,8 +1917,9 @@ void Qual::moduleAnalysis_stages() {
     moduleOtherAccess_stage();
   }
 
+  // write analysis
   if (qualCmd->module_write) {
-    xassert(!qualCmd->module_access); // exclusive with write analysis
+    xassert(!qualCmd->module_access); // exclusive with access analysis
     if (!(defaultModule || file2module.isNotEmpty())) {
       throw UserError(USER_ERROR_ExitCode,
                       "to use module analyses, you must supply modules");

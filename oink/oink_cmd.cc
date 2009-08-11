@@ -239,19 +239,19 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
     loadModule(module);
     return;
   }
-  if (streq(arg, "-o-module-default")) {
-    shift(argc, argv);
-    char *arg0 = shift(argc, argv, "Missing argument to -o-module-default");
-    // set default module
-    if (defaultModule) {
-      throw UserError(USER_ERROR_ExitCode, "Default module already specified.");
-    }
-    defaultModule = globalStrTable(arg0);
-    // not guaranteed to be new so I DO use prependUnique()
-    moduleList.prependUnique(const_cast<char*>(defaultModule));
-    cout << "defaultModule: " << defaultModule << endl;
-    return;
-  }
+//   if (streq(arg, "-o-module-default")) {
+//     shift(argc, argv);
+//     char *arg0 = shift(argc, argv, "Missing argument to -o-module-default");
+//     // set default module
+//     if (defaultModule) {
+//       throw UserError(USER_ERROR_ExitCode, "Default module already specified.");
+//     }
+//     defaultModule = globalStrTable(arg0);
+//     // not guaranteed to be new so I DO use prependUnique()
+//     moduleList.prependUnique(const_cast<char*>(defaultModule));
+//     cout << "defaultModule: " << defaultModule << endl;
+//     return;
+//   }
 
   // we allow a more usual help flag in addition to -fo-help
   if (streq(arg, "-help") || streq(arg, "--help")) {
