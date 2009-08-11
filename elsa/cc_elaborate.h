@@ -174,10 +174,13 @@ public:      // funcs
                          Type *type, DeclFlags dflags);
 
   // syntactic convenience
-  void push(FullExpressionAnnot *a)
-    { fullExpressionAnnotStack.push(a); }
-  void pop(FullExpressionAnnot *a)
-    { FullExpressionAnnot *tmp = fullExpressionAnnotStack.pop(); xassert(a == tmp); }
+  void push(FullExpressionAnnot *a) {
+    fullExpressionAnnotStack.push(a);
+  }
+  void pop(FullExpressionAnnot *a) {
+    FullExpressionAnnot *tmp = fullExpressionAnnotStack.pop();
+    xassert(a == tmp);
+  }
 
 public:      // funcs
   // This section is organized like the .cc file, but all the comments
