@@ -36,7 +36,7 @@ bool ValueASTVisitor::visitExpression(Expression *expr) {
         xfailure("can't happen");
       }
     } else {
-      expr->abstrValue = vFac->buildValue(expr->type, loc);
+      expr->abstrValue = vFac->buildValue(expr->type, getLoc());
     }
   }
   return true;
@@ -51,7 +51,7 @@ bool ValueASTVisitor::visitFunction(Function *func) {
   if (var->filteredOut()) return false;
   // annotate with Value
   // REMOVE_FUNC_DECL_VALUE: remove this line
-  func->abstrValue = vFac->buildValue(func->funcType, loc);
+  func->abstrValue = vFac->buildValue(func->funcType, getLoc());
   // This is taken from ElabVisitor::elaborateFunctionStart()
 
   FunctionValue *ft = func->abstrValue->asFunctionValue();
@@ -81,7 +81,7 @@ bool ValueASTVisitor::visitDeclarator(Declarator *decltor) {
   if (var->filteredOut()) return false;
   // annotate with Value
   // REMOVE_FUNC_DECL_VALUE: remove this line
-  decltor->abstrValue = vFac->buildValue(decltor->type, loc);
+  decltor->abstrValue = vFac->buildValue(decltor->type, getLoc());
   return true;
 }
 

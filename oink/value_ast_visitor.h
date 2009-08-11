@@ -11,15 +11,14 @@ class ValueASTVisitor : private ASTVisitor {
   public:
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
 
-  SourceLoc loc;                // current loc
-
   // ctor ****
   public:
   ValueASTVisitor()
     : loweredVisitor(this)
-    , loc(SL_UNKNOWN)
   {}
   virtual ~ValueASTVisitor() {}
+
+  SourceLoc getLoc() {return loweredVisitor.getLoc();}
 
   virtual bool visitExpression(Expression *);
   virtual bool visitFunction(Function *);
