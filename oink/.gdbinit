@@ -1117,8 +1117,10 @@
 # set args -fq-no-explain-errors -fq-no-names  -fq-no-inference -q-reg-stack '$!regme*' Test/stkvarreg_bad10.c
 # file ./staticprint
 # set args -fo-pretty-print Test/hello.cc
-file ./cpdinit_test
-set args -o-lang ANSI_C99 LibCpdInit/Test/compoundinit1A.c
+# file ./cpdinit_test
+file ./qual
+set args -o-module Test/foo_dupl
+#set args -o-lang ANSI_C99 LibCpdInit/Test/compoundinit1A.c
 
 break main
 break breaker

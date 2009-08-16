@@ -502,7 +502,8 @@ void OinkCmd::loadModule(StringRef module) {
 
   std::ifstream moduleIn(moduleFile);
   if (!moduleIn) {
-    throw UserError(USER_ERROR_ExitCode, stringc << "Cannot read module file " << moduleFile);
+    throw UserError(USER_ERROR_ExitCode,
+                    stringc << "Cannot read module file " << moduleFile);
   }
 
   while(moduleIn) {
@@ -517,6 +518,13 @@ void OinkCmd::loadModule(StringRef module) {
     if (line.empty()) continue;
     // add the file named by the line to the module map
     cout << "\tadding to modules map " << line << "->" << module << endl;
-    file2module.add(strdup(line.c_str()), module);
+    char * const filename = strdup(line.c_str());
+    if (file2module.isMapped(filename)) {
+      throw UserError
+        (USER_ERROR_ExitCode, stringc
+         << "Filename mapped more than once in filename to module map: "
+         << filename);
+    }
+    file2module.add(filename, module);
   }
 }

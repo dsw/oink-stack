@@ -73,6 +73,9 @@ qual-check: qual-check-func-gran-L
 include qual_serialization_test.incl.mk
 qual-check: qual-check-srz
 
+include qual_module_test.incl.mk
+qual-check: qual-module-check
+
 # FIX: dsw: This makefile is broken so I have commented it out for
 # now.
 # include qual_test_big.incl.mk
