@@ -662,7 +662,7 @@ private:
 // Module coloring ****************
 
 // get the module for this location
-static StringRef moduleForLoc(SourceLoc loc, bool &dueToDefault) {
+static StringRef moduleForLoc(SourceLoc loc) {
   char const *filename = sourceLocManager->getFile(loc);
   StringRef module = file2module.queryif(filename);
   USER_ASSERT(module, loc,
@@ -674,8 +674,7 @@ static void colorWithModule_alloc
   (Value *value, SourceLoc loc, char const *name, char const *astNode)
 {
   xassert(value);
-  bool dueToDefault;
-  StringRef module = moduleForLoc(loc, dueToDefault);
+  StringRef module = moduleForLoc(loc);
 
   // get the qualifier
   stringBuilder qconstName("$");
@@ -692,11 +691,7 @@ static void colorWithModule_alloc
     cout << " " << astNode;
     if (name) cout << " '" << name << "'";
     else cout << " <no-name>";
-    cout << " colored " << qconstName;
-    if (dueToDefault) {
-      cout << " by default";
-    }
-    cout << endl;
+    cout << " colored " << qconstName << endl;
   }
 
   // color the value with the module
@@ -707,8 +702,7 @@ static void colorWithModule_access
   (Value *value, SourceLoc loc, char const *name, char const *astNode)
 {
   xassert(value);
-  bool dueToDefault;
-  StringRef module = moduleForLoc(loc, dueToDefault);
+  StringRef module = moduleForLoc(loc);
 
   // get the qualifier
   stringBuilder qconstName("$");
@@ -725,11 +719,7 @@ static void colorWithModule_access
     cout << " " << astNode;
     if (name) cout << " '" << name << "'";
     else cout << " <no-name>";
-    cout << " colored " << qconstName;
-    if (dueToDefault) {
-      cout << " by default";
-    }
-    cout << endl;
+    cout << " colored " << qconstName << endl;
   }
 
   // color the value with the module
@@ -740,8 +730,7 @@ static void colorWithModule_otherControl
   (Value *value, SourceLoc loc, char const *name, char const *astNode)
 {
   xassert(value);
-  bool dueToDefault;
-  StringRef module = moduleForLoc(loc, dueToDefault);
+  StringRef module = moduleForLoc(loc);
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
@@ -768,11 +757,7 @@ static void colorWithModule_otherControl
 
     // print out a line for each
     if (oinkCmd->report_colorings) {
-      cout << " colored " << qconstName;
-      if (dueToDefault) {
-        cout << " by default";
-      }
-      cout << endl;
+      cout << " colored " << qconstName << endl;
     }
 
     // NOTE: this is a value-level qualifier on a pointer
@@ -787,8 +772,7 @@ static void colorWithModule_otherWrite
   (Value *value, SourceLoc loc, char const *name, char const *astNode)
 {
   xassert(value);
-  bool dueToDefault;
-  StringRef module = moduleForLoc(loc, dueToDefault);
+  StringRef module = moduleForLoc(loc);
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
@@ -817,11 +801,7 @@ static void colorWithModule_otherWrite
 
     // print out a line for each
     if (oinkCmd->report_colorings) {
-      cout << " colored " << qconstName;
-      if (dueToDefault) {
-        cout << " by default";
-      }
-      cout << endl;
+      cout << " colored " << qconstName << endl;
     }
 
     // color the value with the module
@@ -833,8 +813,7 @@ static void colorWithModule_otherAccess
   (Value *value, SourceLoc loc, char const *name, char const *astNode)
 {
   xassert(value);
-  bool dueToDefault;
-  StringRef module = moduleForLoc(loc, dueToDefault);
+  StringRef module = moduleForLoc(loc);
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
@@ -861,11 +840,7 @@ static void colorWithModule_otherAccess
 
     // print out a line for each
     if (oinkCmd->report_colorings) {
-      cout << " colored " << qconstName;
-      if (dueToDefault) {
-        cout << " by default";
-      }
-      cout << endl;
+      cout << " colored " << qconstName << endl;
     }
 
     // color the value with the module
