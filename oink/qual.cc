@@ -667,20 +667,6 @@ static StringRef moduleForLoc(SourceLoc loc, bool &dueToDefault) {
   StringRef module = file2module.queryif(filename);
   USER_ASSERT(module, loc,
               "Module is needed for file '%s' but none was given.", filename);
-//   dueToDefault = false;
-//   if (!module) {
-//     dueToDefault = true;
-// //     printf("moduleForLoc: Default module is needed for file '%s'.\n",
-// //            filename);
-//     USER_ASSERT
-//       (defaultModule, loc,
-//        "Default module is needed for file '%s' but none was given.",
-//        filename);
-//     module = defaultModule;
-//   }
-//   cout << "moduleForLoc: " << locToStr(loc)
-//        << " maps to module '" << module << "'"
-//        << endl;
   return module;
 }
 
@@ -1909,7 +1895,7 @@ void Qual::moduleAnalysis_stages() {
         (USER_ERROR_ExitCode,
          "module-access and module-write don't make sense together");
     }
-    if (!(defaultModule || file2module.isNotEmpty())) {
+    if (!file2module.isNotEmpty()) {
       throw UserError(USER_ERROR_ExitCode,
                       "to use module analyses, you must supply modules");
     }
@@ -1920,7 +1906,7 @@ void Qual::moduleAnalysis_stages() {
   // write analysis
   if (qualCmd->module_write) {
     xassert(!qualCmd->module_access); // exclusive with access analysis
-    if (!(defaultModule || file2module.isNotEmpty())) {
+    if (!file2module.isNotEmpty()) {
       throw UserError(USER_ERROR_ExitCode,
                       "to use module analyses, you must supply modules");
     }
@@ -1930,7 +1916,7 @@ void Qual::moduleAnalysis_stages() {
 
   // trust analysis
   if (qualCmd->module_trust) {
-    if (!(defaultModule || file2module.isNotEmpty())) {
+    if (!file2module.isNotEmpty()) {
       throw UserError(USER_ERROR_ExitCode,
                       "to use module analyses, you must supply modules");
     }

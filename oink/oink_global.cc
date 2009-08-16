@@ -47,6 +47,5 @@ SObjSet<StringRef> loadedModules;
 // moduleList;
 SObjList<char> moduleList;
 StringSObjDict<char const> file2module;
-StringRef defaultModule = NULL;
 
 PtrSet<char const> *funcFilterNames = NULL;
