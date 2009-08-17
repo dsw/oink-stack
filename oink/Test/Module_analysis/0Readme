@@ -1,0 +1,11 @@
+Try out doing a module analysis of a project.
+
+To build the project normally:
+   make all
+
+To analyze it:
+   make analyze
+
+Hack on the "parameterization" section of Makefile to change the
+behavior.
+
