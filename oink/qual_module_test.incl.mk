@@ -39,7 +39,7 @@ TEST_TOCLEAN += *.filter-good.c *.filter-bad.c
 TEST_TOCLEAN += Test/mod_foo_hello_write_good.lattice
 TEST_TOCLEAN += Test/mod_foo_hello_write_bad.lattice
 qual-module-check-filter:
-	@ECHO "$@: good"
+	@echo "$@: good"
 	./test_filter -good < Test/mod_write_hello.c \
 	  > Test/mod_write_hello.filter-good.c
 	cd Test; ../module_make_lattice -write mod_write_hello_good mod_foo \
