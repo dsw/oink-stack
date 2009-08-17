@@ -9,10 +9,10 @@ my $access = grep {$_ =~ /^-access$/} @ARGV;
 my $write = grep {$_ =~ /^-write$/} @ARGV;
 my $trust = grep {$_ =~ /^-trust$/} @ARGV;
 if ($access) {
-  warn "Access\n";
+  warn "module_make_lattice generating lattice for Access analysis\n";
 }
 if ($write) {
-  warn "Write\n";
+  warn "module_make_lattice generating lattice for Write analysis\n";
 }
 if (!$access && !$write) {
   die "Specify -access or -write\n";
@@ -21,7 +21,7 @@ if ($access && $write) {
   die "Do not specify both -access and -write\n";
 }
 if ($trust) {
-  warn "Trust\n";
+  warn "module_make_lattice generating lattice for Trust analysis\n";
 }
 
 # lattice file for doing module-access analysis
@@ -53,7 +53,7 @@ if ($trust) {
 
 # read command-line arguments
 my @colors = grep {$_ !~ /^-/} @ARGV;
-warn "colors:" . join(':', @colors). "\n";
+warn "module_make_lattice colors: " . join(', ', @colors). "\n";
 
 for my $color (@colors) {
   if ($access) {
