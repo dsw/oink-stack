@@ -8,7 +8,9 @@ $(error This makefile should be included in qual_test.incl.mk, not used stand-al
 endif
 
 .PHONY: qual-module-check
-qual-module-check: qual-module-check-misc qual-module-check-write-filter
+qual-module-check: qual-module-check-misc
+qual-module-check: qual-module-check-write-filter
+qual-module-check: qual-module-check-access-filter
 
 .PHONY: qual-module-check-misc
 qual-module-check-misc:
@@ -34,8 +36,9 @@ QUALCC_FLAGS += -fq-no-names
 QUALCC_FLAGS += -fq-no-explain-errors
 QUALCC_FLAGS += -fq-no-name-with-loc
 
-.PHONY: qual-module-check-write-filter
 TEST_TOCLEAN += *.filter-good.c *.filter-bad.c
+
+.PHONY: qual-module-check-write-filter
 TEST_TOCLEAN += Test/mod_foo_hello_write_good.lattice
 TEST_TOCLEAN += Test/mod_foo_hello_write_bad.lattice
 qual-module-check-write-filter:
@@ -57,4 +60,28 @@ qual-module-check-write-filter:
 	  -q-config mod_foo_hello_write_bad.lattice \
 	  -o-module mod_write_hello_bad -o-module mod_foo \
 	  mod_write_hello.filter-bad.c mod_lib_foo.c; test $$? -eq 32
+	$(ANNOUNCE_TEST_PASS)
+
+.PHONY: qual-module-check-access-filter
+TEST_TOCLEAN += Test/mod_foo_hello_access_good.lattice
+TEST_TOCLEAN += Test/mod_foo_hello_access_bad.lattice
+qual-module-check-access-filter:
+	@echo "$@: good"
+	./test_filter -good < Test/mod_access_hello.c \
+	  > Test/mod_access_hello.filter-good.c
+	cd Test; ../module_make_lattice -access mod_access_hello_good mod_foo \
+	  > mod_foo_hello_access_good.lattice
+	cd Test; ../qual -fq-module-access $(QUALCC_FLAGS) \
+	  -q-config mod_foo_hello_access_good.lattice \
+	  -o-module mod_access_hello_good -o-module mod_foo \
+	  mod_access_hello.filter-good.c mod_lib_foo.c
+	@echo "$@: bad"
+	./test_filter -bad < Test/mod_access_hello.c \
+	  > Test/mod_access_hello.filter-bad.c
+	cd Test; ../module_make_lattice -access mod_access_hello_bad mod_foo \
+	  > mod_foo_hello_access_bad.lattice
+	cd Test; ../qual -fq-module-access $(QUALCC_FLAGS) \
+	  -q-config mod_foo_hello_access_bad.lattice \
+	  -o-module mod_access_hello_bad -o-module mod_foo \
+	  mod_access_hello.filter-bad.c mod_lib_foo.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)

@@ -1,2 +1,4 @@
 mod_foo_hello_write_bad.lattice
 mod_foo_hello_write_good.lattice
+mod_foo_hello_access_bad.lattice
+mod_foo_hello_access_good.lattice
