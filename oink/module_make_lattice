@@ -1,0 +1,94 @@
+#!/usr/bin/perl -w
+use strict;
+
+# make module lattice files
+
+# set this to write if you want the write lattice; it conflicts with
+# the alloc lattice
+my $access = grep {$_ =~ /^-access$/} @ARGV;
+my $write = grep {$_ =~ /^-write$/} @ARGV;
+my $trust = grep {$_ =~ /^-trust$/} @ARGV;
+if ($access) {
+  warn "Access\n";
+}
+if ($write) {
+  warn "Write\n";
+}
+if (!$access && !$write) {
+  die "Specify -access or -write\n";
+}
+if ($access && $write) {
+  die "Do not specify both -access and -write\n";
+}
+if ($trust) {
+  warn "Trust\n";
+}
+
+# lattice file for doing module-access analysis
+#
+# we do a product of N ref-level taint analysis:
+#    $foo_otherAccess [level = ref, sign = neg]
+#    $foo_alloc       [level = ref, sign = pos]
+#    $foo_otherAccess < $foo_alloc
+
+# lattice file for doing module-write analysis
+#
+# we do a product of N ref-level taint analysis:
+#    $foo_otherWrite [level = ref, sign = neg]
+#    $foo_alloc      [level = ref, sign = pos]
+#    $foo_otherWrite < $foo_alloc
+
+# lattice file for doing module-trust analysis
+#
+# we do a product of N hybrid value/ref-level taint analysis:
+#    $foo_access       [level = ref,   sign = neg]
+#    $foo_otherControl [level = value, sign = pos]
+#    $foo_access < $foo_otherControl
+
+# here is the standard taint analysis for reference:
+#    $untainted [level = value, sign = neg]
+#    $tainted   [level = value, sign = pos]
+#    $untainted < $tainted
+
+
+# read command-line arguments
+my @colors = grep {$_ !~ /^-/} @ARGV;
+warn "colors:" . join(':', @colors). "\n";
+
+for my $color (@colors) {
+  if ($access) {
+    # module-access
+    print "partial order [casts-preserve] {\n";
+    # $untainted
+    print "  \$${color}_otherAccess [level = ref, sign = neg]\n";
+    # $tainted
+    print "  \$${color}_alloc       [level = ref, sign = pos]\n";
+    # $untainted < $tainted
+    print "  \$${color}_otherAccess < \$${color}_alloc\n";
+    print "}\n";
+  } elsif ($write) {
+    # module-write
+    print "partial order [casts-preserve] {\n";
+    # $untainted
+    print "  \$${color}_otherWrite [level = ref, sign = neg]\n";
+    # $tainted
+    print "  \$${color}_alloc      [level = ref, sign = pos]\n";
+    # $untainted < $tainted
+    print "  \$${color}_otherWrite < \$${color}_alloc\n";
+    print "}\n";
+  } else {
+    die "variable accessVsWrite was not set to a legal value\n";
+  }
+
+  if ($trust) {
+    # module-trust
+    print "partial order [casts-preserve] {\n";
+    # $untainted
+    print "  \$${color}_access       [level = ref,   sign = neg]\n";
+    # $tainted
+    print "  \$${color}_otherControl [level = value, sign = pos]\n";
+    # $untainted < $tainted
+    print "  \$${color}_access < \$${color}_otherControl\n";
+    print "}\n";
+  }
+}
