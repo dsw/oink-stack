@@ -8,7 +8,7 @@ $(error This makefile should be included in qual_test.incl.mk, not used stand-al
 endif
 
 .PHONY: qual-module-check
-qual-module-check: qual-module-check-misc qual-module-check-filter
+qual-module-check: qual-module-check-misc qual-module-check-write-filter
 
 .PHONY: qual-module-check-misc
 qual-module-check-misc:
@@ -34,11 +34,11 @@ QUALCC_FLAGS += -fq-no-names
 QUALCC_FLAGS += -fq-no-explain-errors
 QUALCC_FLAGS += -fq-no-name-with-loc
 
-.PHONY: qual-module-check-filter
+.PHONY: qual-module-check-write-filter
 TEST_TOCLEAN += *.filter-good.c *.filter-bad.c
 TEST_TOCLEAN += Test/mod_foo_hello_write_good.lattice
 TEST_TOCLEAN += Test/mod_foo_hello_write_bad.lattice
-qual-module-check-filter:
+qual-module-check-write-filter:
 	@echo "$@: good"
 	./test_filter -good < Test/mod_write_hello.c \
 	  > Test/mod_write_hello.filter-good.c
