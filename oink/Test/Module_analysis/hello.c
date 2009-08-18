@@ -10,7 +10,6 @@ int z;
 int main() {
   printf("main: Hello, world!\n");
   int *x = &z;
-//   int *x = (int*) malloc(sizeof(int));
   *x = 3;
   printf("main: 1, x is %d\n", *x);
   foo_read(x);
