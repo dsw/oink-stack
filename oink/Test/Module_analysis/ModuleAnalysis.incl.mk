@@ -130,4 +130,4 @@ analyze: $(addprefix analyze/,$(EXE))
 $(addprefix analyze/,$(EXE)): analyze/%:
 	@echo; echo "**** $@"
 	$(MKLATTICE) $(MKLATTICE_FLAGS) $(MODS) > ho.lattice
-	time $(QUAL) -q-config ho.lattice $(QUALCC_FLAGS) $^
+	$(QUAL) -q-config ho.lattice $(QUALCC_FLAGS) $^
