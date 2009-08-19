@@ -409,7 +409,7 @@ void OinkCmd::printHelp() {
      "  -fo-print-startstop      : delimit transformed output with cut lines\n"
      "\n"
      "  -fo-func-gran            : compute and print function granularity CFG only\n"
-     "                                (use -o-srz to write to file)\n"
+     "                             (use -o-srz to write to file)\n"
      "  -fo-func-gran-dot        : print function granularity CFG in dot format\n"
      "  -fo-all-pass-filter      : assert that all variables pass the filter\n"
      "  -fo-print-ast            : print the ast\n"
@@ -423,7 +423,8 @@ void OinkCmd::printHelp() {
      "  -fo-pretty-print         : print the ast as source\n"
      "\n"
      "  -fo-trace-link           : trace linking\n"
-     "  -fo-report-link-errors   : print un-satisfied/over-satisfied function symbols in linker\n"
+     "  -fo-report-link-errors   : print un-satisfied/over-satisfied function symbols\n"
+     "                             in linker\n"
      "  -fo-report-unused-controls  : print controls that go unused\n"
      "  -fo-report-colorings        : report module colorings\n"
      "  -fo-print-controls-and-exit : print the controls and stop\n"
@@ -441,7 +442,7 @@ void OinkCmd::printHelp() {
      "  -fo-instance-sensitive   : C mode only.\n"
      "                             1) fields get unique values per struct instance\n"
      "                             2) 'void's get unique values by type\n"
-     "  -fo-array-index-flows    : the array index flows through the array deref"
+     "  -fo-array-index-flows    : the array index flows through the array deref\n"
      "");
 }
 
