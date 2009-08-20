@@ -28,8 +28,8 @@ ANALYSIS := access
 MODS :=
 MODS += foo hello
 # The DEFAULTMOD is the module to use for files that are not listed in
-# any .mod file.
-DEFAULTMOD := hello
+# any .mod file.  NOTE: this is not operational right now.
+# DEFAULTMOD := hello
 
 hello.exe: lib_foo.o
 
