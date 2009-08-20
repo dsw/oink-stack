@@ -69,7 +69,7 @@ qual-module-check-access-filter:
 	@echo "$@: good"
 	./test_filter -good < Test/mod_access_hello.c \
 	  > Test/mod_access_hello.filter-good.c
-	cd Test; ../module_make_lattice -access mod_access_hello_good mod_foo \
+	cd Test; ../module_make_lattice --access mod_access_hello_good mod_foo \
 	  > mod_foo_hello_access_good.lattice
 	cd Test; ../qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config mod_foo_hello_access_good.lattice \
@@ -78,7 +78,7 @@ qual-module-check-access-filter:
 	@echo "$@: bad"
 	./test_filter -bad < Test/mod_access_hello.c \
 	  > Test/mod_access_hello.filter-bad.c
-	cd Test; ../module_make_lattice -access mod_access_hello_bad mod_foo \
+	cd Test; ../module_make_lattice --access mod_access_hello_bad mod_foo \
 	  > mod_foo_hello_access_bad.lattice
 	cd Test; ../qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config mod_foo_hello_access_bad.lattice \

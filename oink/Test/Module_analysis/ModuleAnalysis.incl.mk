@@ -52,11 +52,11 @@ MKLATTICE_FLAGS :=
 # pick exactly one of these
 ifeq ($(ANALYSIS),write)
   QUALCC_FLAGS += -fq-module-write
-  MKLATTICE_FLAGS += -write
+  MKLATTICE_FLAGS += --write
 else
 ifeq ($(ANALYSIS),access)
   QUALCC_FLAGS += -fq-module-access
-  MKLATTICE_FLAGS += -access
+  MKLATTICE_FLAGS += --access
 else
   $(error Variable ANALYSIS must have value 'access' or 'write')
 endif
@@ -129,5 +129,5 @@ QUAL := $(OINK_STACK)/oink/qual
 analyze: $(addprefix analyze/,$(EXE))
 $(addprefix analyze/,$(EXE)): analyze/%:
 	@echo; echo "**** $@"
-	$(MKLATTICE) $(MKLATTICE_FLAGS) $(MODS) > ho.lattice
+	$(MKLATTICE) $(MKLATTICE_FLAGS) --modules "$(MODS)" > ho.lattice
 	$(QUAL) -q-config ho.lattice $(QUALCC_FLAGS) $^
