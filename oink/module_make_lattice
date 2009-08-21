@@ -3,6 +3,8 @@ use strict;
 
 # make module lattice files
 
+# FIX: why aren't we using YAML as the configuration language?
+
 # lattice file for doing module-access analysis
 #
 # we do a product of N ref-level taint analysis:
@@ -34,6 +36,7 @@ my $access;                     # do an access analysis?
 my $write;                      # do a write analysis?
 my $trust;                      # do a trust analysis?
 my @modules;                    # list of modules
+my @mod_files;                  # list of .mod files
 
 sub parse_command_line {
   while (@ARGV) {
@@ -49,6 +52,9 @@ sub parse_command_line {
       $arg = shift @ARGV;
       my @modules0 = split ' ', $arg;
       push @modules, @modules0;
+    } elsif ($arg eq '--mod-file') {
+      $arg = shift @ARGV;
+      push @mod_files, $arg;
     } else {
       die "illegal argument:$arg\n";
     }
@@ -59,6 +65,36 @@ sub check_integrity {
   # access and write mutually exclude
   if ($access && $write) {
     die "Do not specify both --access and --write\n";
+  }
+}
+
+sub load_mod_files {
+  my $current_module;
+  for my $mod_file (@mod_files) {
+    open FILE, $mod_file;
+    while (<FILE>) {
+      # clean up line
+      my $line = $_;
+      chomp $line;              # delete trailing newline
+      $line =~ s/#.*$//;        # delete hash comments
+      $line =~ s/^\s*//;        # delete leading whitespace
+      $line =~ s/\s*$//;        # delete trailing whitespace
+      next if $line =~ /^.\s*$/; # skip blank lines
+      # is it a keyword line?
+      if ($line =~ /^\*\s*(\S+)\s*:\s*(\S+)$/) {
+        my $keyword = $1;
+        my $value = $2;
+        if ($keyword eq 'module') {
+          $current_module = $value;
+          push @modules, $value;
+        } else {
+          die "$mod_file:$.: illegal keyword '${keyword}'\n";
+        }
+      } else {
+        # it is a plain line; we don't need it
+      }
+    }
+    close FILE;
   }
 }
 
@@ -97,8 +133,6 @@ sub emit_lattice {
       # $untainted < $tainted
       print "  \$${mod}_otherWrite < \$${mod}_alloc\n";
       print "}\n";
-    } else {
-      die "variable accessVsWrite was not set to a legal value\n";
     }
 
     if ($trust) {
@@ -118,5 +152,6 @@ sub emit_lattice {
 # main
 parse_command_line();
 check_integrity();
+load_mod_files();
 be_verbose();
 emit_lattice();

@@ -15,6 +15,7 @@ qual-module-check: qual-module-check-access-filter
 .PHONY: qual-module-check-misc
 qual-module-check-misc:
 	./qual -o-module Test/mod_foo_dupl; test $$? -eq 1
+	./module_make_lattice --mod-file Test/mod_barf.mod | grep 'module_make_lattice modules: waga, zeeip, eeeeeeeeep'; test $$? -eq 1
 	$(ANNOUNCE_TEST_PASS)
 
 # do a polymorphic analysis
@@ -45,7 +46,8 @@ qual-module-check-write-filter:
 	@echo "$@: good"
 	./test_filter -good < Test/mod_write_hello.c \
 	  > Test/mod_write_hello.filter-good.c
-	cd Test; ../module_make_lattice -write mod_write_hello_good mod_foo \
+	cd Test; ../module_make_lattice --write \
+          --modules "mod_write_hello_good mod_foo" \
 	  > mod_foo_hello_write_good.lattice
 	cd Test; ../qual -fq-module-write $(QUALCC_FLAGS) \
 	  -q-config mod_foo_hello_write_good.lattice \
@@ -54,7 +56,8 @@ qual-module-check-write-filter:
 	@echo "$@: bad"
 	./test_filter -bad < Test/mod_write_hello.c \
 	  > Test/mod_write_hello.filter-bad.c
-	cd Test; ../module_make_lattice -write mod_write_hello_bad mod_foo \
+	cd Test; ../module_make_lattice --write \
+          --modules "mod_write_hello_bad mod_foo" \
 	  > mod_foo_hello_write_bad.lattice
 	cd Test; ../qual -fq-module-write $(QUALCC_FLAGS) \
 	  -q-config mod_foo_hello_write_bad.lattice \
@@ -69,7 +72,8 @@ qual-module-check-access-filter:
 	@echo "$@: good"
 	./test_filter -good < Test/mod_access_hello.c \
 	  > Test/mod_access_hello.filter-good.c
-	cd Test; ../module_make_lattice --access mod_access_hello_good mod_foo \
+	cd Test; ../module_make_lattice --access \
+          --modules "mod_access_hello_good mod_foo" \
 	  > mod_foo_hello_access_good.lattice
 	cd Test; ../qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config mod_foo_hello_access_good.lattice \
@@ -78,7 +82,8 @@ qual-module-check-access-filter:
 	@echo "$@: bad"
 	./test_filter -bad < Test/mod_access_hello.c \
 	  > Test/mod_access_hello.filter-bad.c
-	cd Test; ../module_make_lattice --access mod_access_hello_bad mod_foo \
+	cd Test; ../module_make_lattice --access \
+          --modules "mod_access_hello_bad mod_foo" \
 	  > mod_foo_hello_access_bad.lattice
 	cd Test; ../qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config mod_foo_hello_access_bad.lattice \
