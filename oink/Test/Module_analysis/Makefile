@@ -31,6 +31,10 @@ MODS += foo hello
 # any .mod file.  NOTE: this is not operational right now.
 # DEFAULTMOD := hello
 
+# For now for simplicity we assume that each module is in a file
+# called module.mod; however this need not be the case in general.
+MOD_SPECS := $(foreach MOD,$(MODS),$(MOD):$(MOD).mod)
+
 hello.exe: lib_foo.o
 
 # this currently fails as the header files have variables that we

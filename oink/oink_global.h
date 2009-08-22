@@ -16,6 +16,10 @@
 #include "astlist.h"
 // #include "Lib/union_find_map.h"
 
+// NOTE: The containers that contain <char const> actually contain
+// StringRef-s, but I can't say that the way those templates are
+// parameterized.
+
 // so that I can assert in various places that I haven't accidentally
 // started any analysis until typechecking was done; must be global
 // because those places are everywhere
@@ -83,17 +87,7 @@ extern Linker linker;
 // user controls
 extern Controls *controls;
 
-// NOTE: The containers that contain <char const> actually contain
-// StringRef-s, but I can't say that the way those templates are
-// parameterized.
-//
-// set of loaded modules; used to prevent duplication at module
-// loading; note that the default module NEED NOT be a loaded module
-extern SObjSet<StringRef> loadedModules;
-// set-semantics list of modules INCLUDING the default module; NOTE:
-// should contain char const but that causes problems in the
-// implementation of class ASTList:
-//  extern ASTList<char const> moduleList;
+// set-semantics list of modules
 extern SObjList<char> moduleList;
 // map from filenames to modulenames
 extern StringSObjDict<char const> file2module;

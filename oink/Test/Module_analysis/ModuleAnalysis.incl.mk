@@ -62,9 +62,6 @@ else
 endif
 endif
 
-# tell Cqual++ about the modules
-QUALCC_FLAGS += $(addprefix -o-module ,$(MODS))
-
 # do a polymorphic analysis
 QUALCC_FLAGS += -fq-poly
 
@@ -122,6 +119,10 @@ QUALCC_FLAGS += -fq-no-use-const-subtyping
 # QUALCC_FLAGS += -fo-pretty-print
 # QUALCC_FLAGS += -fq-no-poly
 
+# Tell the tools about the modules
+MKLATTICE_FLAGS += $(addprefix --mod ,$(MODS))
+QUALCC_FLAGS += $(addprefix -o-mod-spec ,$(MOD_SPECS))
+
 MKLATTICE := $(OINK_STACK)/oink/module_make_lattice
 QUAL := $(OINK_STACK)/oink/qual
 .PRECIOUS: %.lattice
@@ -129,5 +130,5 @@ QUAL := $(OINK_STACK)/oink/qual
 analyze: $(addprefix analyze/,$(EXE))
 $(addprefix analyze/,$(EXE)): analyze/%:
 	@echo; echo "**** $@"
-	$(MKLATTICE) $(MKLATTICE_FLAGS) --modules "$(MODS)" > ho.lattice
+	$(MKLATTICE) $(MKLATTICE_FLAGS) > ho.lattice
 	$(QUAL) -q-config ho.lattice $(QUALCC_FLAGS) $^

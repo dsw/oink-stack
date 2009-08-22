@@ -38,13 +38,6 @@ Linker linker;
 
 Controls *controls = NULL;
 
-// NOTE: The containers that contain <char const> actually contain
-// StringRef-s, but I can't say that the way those templates are
-// parameterized.
-SObjSet<StringRef> loadedModules;
-// NOTE: should contain char const but that causes problems in the
-// implementation of class ASTList: extern ASTList<char const>
-// moduleList;
 SObjList<char> moduleList;
 StringSObjDict<char const> file2module;
 

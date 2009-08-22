@@ -103,9 +103,9 @@ class OinkCmd {
   virtual void printHelp();
   virtual void initializeFromFlags();
 
-  // load the contents of the module into file2module; this builds a
-  // reverse-index
-  virtual void loadModule(StringRef module);
+  // map the filenames listed in 'modFile' to 'module' into
+  // file2module
+  virtual void loadModule(StringRef modFile, StringRef module);
 };
 
 char const *boolToStr(bool b);

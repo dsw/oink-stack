@@ -14,8 +14,10 @@ qual-module-check: qual-module-check-access-filter
 
 .PHONY: qual-module-check-misc
 qual-module-check-misc:
-	./qual -o-module Test/mod_foo_dupl; test $$? -eq 1
-	./module_make_lattice --mod-file Test/mod_barf.mod | grep 'module_make_lattice modules: waga, zeeip, eeeeeeeeep'; test $$? -eq 1
+	./qual -o-mod-spec Test/mod_foo_dupl.mod; test $$? -eq 1
+	./qual -o-mod-spec foo:Test/mod_foo_dupl.mod; test $$? -eq 1
+	./module_make_lattice --mod waga --mod zeeip | \
+	  grep 'module_make_lattice modules: waga, zeeip'; test $$? -eq 1
 	$(ANNOUNCE_TEST_PASS)
 
 # do a polymorphic analysis
@@ -46,23 +48,25 @@ qual-module-check-write-filter:
 	@echo "$@: good"
 	./test_filter -good < Test/mod_write_hello.c \
 	  > Test/mod_write_hello.filter-good.c
-	cd Test; ../module_make_lattice --write \
-          --modules "mod_write_hello_good mod_foo" \
-	  > mod_foo_hello_write_good.lattice
-	cd Test; ../qual -fq-module-write $(QUALCC_FLAGS) \
-	  -q-config mod_foo_hello_write_good.lattice \
-	  -o-module mod_write_hello_good -o-module mod_foo \
-	  mod_write_hello.filter-good.c mod_lib_foo.c
+	./module_make_lattice --write \
+          --mod hello --mod foo \
+	  > Test/mod_foo_hello_write_good.lattice
+	./qual -fq-module-write $(QUALCC_FLAGS) \
+	  -q-config Test/mod_foo_hello_write_good.lattice \
+	  -o-mod-spec hello:Test/mod_write_hello_good.mod \
+	  -o-mod-spec foo:Test/mod_foo.mod \
+	  Test/mod_write_hello.filter-good.c Test/mod_lib_foo.c
 	@echo "$@: bad"
 	./test_filter -bad < Test/mod_write_hello.c \
 	  > Test/mod_write_hello.filter-bad.c
-	cd Test; ../module_make_lattice --write \
-          --modules "mod_write_hello_bad mod_foo" \
-	  > mod_foo_hello_write_bad.lattice
-	cd Test; ../qual -fq-module-write $(QUALCC_FLAGS) \
-	  -q-config mod_foo_hello_write_bad.lattice \
-	  -o-module mod_write_hello_bad -o-module mod_foo \
-	  mod_write_hello.filter-bad.c mod_lib_foo.c; test $$? -eq 32
+	./module_make_lattice --write \
+          --mod hello --mod foo \
+	  > Test/mod_foo_hello_write_bad.lattice
+	./qual -fq-module-write $(QUALCC_FLAGS) \
+	  -q-config Test/mod_foo_hello_write_bad.lattice \
+	  -o-mod-spec hello:Test/mod_write_hello_bad.mod \
+	  -o-mod-spec foo:Test/mod_foo.mod \
+	  Test/mod_write_hello.filter-bad.c Test/mod_lib_foo.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)
 
 .PHONY: qual-module-check-access-filter
@@ -72,21 +76,23 @@ qual-module-check-access-filter:
 	@echo "$@: good"
 	./test_filter -good < Test/mod_access_hello.c \
 	  > Test/mod_access_hello.filter-good.c
-	cd Test; ../module_make_lattice --access \
-          --modules "mod_access_hello_good mod_foo" \
-	  > mod_foo_hello_access_good.lattice
-	cd Test; ../qual -fq-module-access $(QUALCC_FLAGS) \
-	  -q-config mod_foo_hello_access_good.lattice \
-	  -o-module mod_access_hello_good -o-module mod_foo \
-	  mod_access_hello.filter-good.c mod_lib_foo.c
+	./module_make_lattice --access \
+          --mod hello --mod foo \
+	  > Test/mod_foo_hello_access_good.lattice
+	./qual -fq-module-access $(QUALCC_FLAGS) \
+	  -q-config Test/mod_foo_hello_access_good.lattice \
+	  -o-mod-spec hello:Test/mod_access_hello_good.mod \
+	  -o-mod-spec foo:Test/mod_foo.mod \
+	  Test/mod_access_hello.filter-good.c Test/mod_lib_foo.c
 	@echo "$@: bad"
 	./test_filter -bad < Test/mod_access_hello.c \
 	  > Test/mod_access_hello.filter-bad.c
-	cd Test; ../module_make_lattice --access \
-          --modules "mod_access_hello_bad mod_foo" \
-	  > mod_foo_hello_access_bad.lattice
-	cd Test; ../qual -fq-module-access $(QUALCC_FLAGS) \
-	  -q-config mod_foo_hello_access_bad.lattice \
-	  -o-module mod_access_hello_bad -o-module mod_foo \
-	  mod_access_hello.filter-bad.c mod_lib_foo.c; test $$? -eq 32
+	./module_make_lattice --access \
+          --mod hello --mod foo \
+	  > Test/mod_foo_hello_access_bad.lattice
+	./qual -fq-module-access $(QUALCC_FLAGS) \
+	  -q-config Test/mod_foo_hello_access_bad.lattice \
+	  -o-mod-spec hello:Test/mod_access_hello_bad.mod \
+	  -o-mod-spec foo:Test/mod_foo.mod \
+	  Test/mod_access_hello.filter-bad.c Test/mod_lib_foo.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)

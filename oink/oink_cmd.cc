@@ -6,6 +6,7 @@
 #include "cc_type.h"
 #include "trace.h"              // tracingSys, traceAddSys
 #include "oink_util.h"
+#include "libc_missing.h"       // strndup0
 #include <cstring>
 #include <fstream>              // ofstream, ifstream
 
@@ -203,6 +204,12 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
     traceAddSys(shift(argc, argv));
     return;
   }
+  if (streq(arg, "-o-lang")) {
+    shift(argc, argv);
+    char const *langName = shift(argc, argv, "Missing argument to -o-lang");
+    lang = string2Lang(langName);
+    return;
+  }
   if (streq(arg, "-o-program-files")) {
     shift(argc, argv);
     inputFiles.append(new ProgramFile(globalStrTable(shift(argc, argv))));
@@ -218,25 +225,19 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
     func_filter = shift(argc, argv);
     return;
   }
-  if (streq(arg, "-o-lang")) {
+  if (streq(arg, "-o-mod-spec")) {
     shift(argc, argv);
-    char const *langName = shift(argc, argv, "Missing argument to -o-lang");
-    lang = string2Lang(langName);
-    return;
-  }
-  if (streq(arg, "-o-module")) {
-    shift(argc, argv);
-    char const *arg0 = shift(argc, argv,  "Missing argument to -o-module");
-    // load module
-    StringRef module = globalStrTable(arg0);
-    if (loadedModules.contains(module)) {
+    char const *arg0 = shift(argc, argv, "Missing argument to -o-mod-spec");
+    // parse mod spec; it is of the form "module:modfile.mod"
+    char const *colonPos = strstr(arg0, ":");
+    if (!colonPos) {
       throw UserError(USER_ERROR_ExitCode,
-                      stringc << "Request to load module twice: " << module);
+                      stringc << "Illegal mod spec: " << arg0);
     }
-    loadedModules.add(module);
-    // must be new due to set check above; don't need prependUnique()
-    moduleList.prepend(const_cast<char*>(module));
-    loadModule(module);
+    StringRef module = globalStrTable(strndup0(arg0, colonPos-arg0));
+    moduleList.prependUnique(const_cast<char*>(module));
+    StringRef modFile = colonPos+1;
+    loadModule(modFile, module);
     return;
   }
 
@@ -343,6 +344,15 @@ void OinkCmd::dump() { // for -fo-verbose
   }
   printf("o-control: %s\n", control.c_str());
   printf("o-func-filter: %s\n", func_filter.c_str());
+  printf("o-mod-spec, moduleList:\n");
+  SFOREACH_OBJLIST(char, moduleList, iter) {
+    cout << "\t" << iter.data() << endl;
+  }
+  printf("o-mod-spec, file2module:\n");
+  for(StringSObjDict<char const>::SortedKeyIter iter(file2module);
+      !iter.isDone(); iter.next()) {
+    cout << "\t" << iter.key() << " -> " << iter.value() << endl;
+  }
   printf("o-srz: %s\n", srz.c_str());
 
   printf("fo-help: %s\n", boolToStr(help));
@@ -390,13 +400,15 @@ void OinkCmd::printHelp() {
     ("%s",
      "All arguments not starting with a '-' are considered to be input files.\n"
      "\n"
-     "oink flags that take an argument:\n"                                            ///
+     "oink flags that take an argument:\n"
      "  -o-lang LANG             : specify the input language; one of:\n"
      "        KandR_C, ANSI_C89, ANSI_C99, GNU_C, GNU_KandR_C, GNU2_KandR_C,\n"
      "        ANSI_Cplusplus, GNU_Cplusplus, SUFFIX.\n"
      "  -o-program-files FILE    : add *contents* of FILE to list of input files\n"
      "  -o-control FILE          : give a file for controlling the behavior of oink\n"
      "  -o-func-filter FILE      : give a file listing Variables to be filtered out\n"
+     "  -o-mod-spec MOD:FILE     : give a module and a file containing filenames\n"
+     "                             to be associated with that module\n"
      "  -o-srz FILE              : serialize to FILE\n"
      "\n"
      "oink boolean flags; precede by '-fo-no-' for the negative sense.\n"
@@ -492,33 +504,35 @@ void OinkCmd::initializeFromFlags() {
 
   if (all_pass_filter && oinkCmd->func_filter.empty()) {
     throw UserError
-      (USER_ERROR_ExitCode, "If you use -fo-all-pass-filter you must also provide a filter.");
+      (USER_ERROR_ExitCode,
+       "If you use -fo-all-pass-filter you must also provide a filter.");
   }
 }
 
-void OinkCmd::loadModule(StringRef module) {
-  cout << "loading module " << module << endl;
-  stringBuilder moduleFile(module);
-  moduleFile << ".mod";
+void OinkCmd::loadModule(StringRef modFile, StringRef module) {
+  cout << "loading module " << module << " from mod file " << modFile << endl;
 
-  std::ifstream moduleIn(moduleFile);
+  std::ifstream moduleIn(modFile);
   if (!moduleIn) {
     throw UserError(USER_ERROR_ExitCode,
-                    stringc << "Cannot read module file " << moduleFile);
+                    stringc << "Cannot read module file " << modFile);
   }
 
   while(moduleIn) {
     string line;
     getline(moduleIn, line);
-    // comments: delete everything after the hash
+
+    // parse the line:
+    // delete everything after the hash
     char const *hashPos = strstr(line.c_str(), "#");
     if (hashPos) line = line.substring(0, hashPos - line.c_str());
     // trim the line
     line = trimWhitespace(line);
     // skip blank lines
     if (line.empty()) continue;
+
     // add the file named by the line to the module map
-    cout << "\tadding to modules map " << line << "->" << module << endl;
+    cout << "\tadding to modules map: " << line << " -> " << module << endl;
     char * const filename = strdup(line.c_str());
     if (file2module.isMapped(filename)) {
       throw UserError

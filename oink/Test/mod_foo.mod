@@ -1,1 +1,1 @@
-mod_lib_foo.c
+Test/mod_lib_foo.c
