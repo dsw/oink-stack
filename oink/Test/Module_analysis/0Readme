@@ -4,7 +4,7 @@ To build the project normally:
    make all
 
 To analyze it:
-   make analyze
+   make analyze-data-priv
 
 Hack on the "parameterization" section of Makefile to change the
 behavior.

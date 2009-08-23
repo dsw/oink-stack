@@ -42,7 +42,7 @@ hello.exe: lib_foo.o
 # analyze/hello.exe: hello.i lib_foo.i
 
 # this works; I suppose that elsa is ignoring the #include directives
-analyze/hello.exe: hello.c lib_foo.c
+analyze-data-priv/hello.exe: hello.c lib_foo.c
 
 
 # **** include generic functionality

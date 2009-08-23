@@ -126,9 +126,9 @@ QUALCC_FLAGS += $(addprefix -o-mod-spec ,$(MOD_SPECS))
 MKLATTICE := $(OINK_STACK)/oink/module_make_lattice
 QUAL := $(OINK_STACK)/oink/qual
 .PRECIOUS: %.lattice
-.PHONY: analyze analyze/%
-analyze: $(addprefix analyze/,$(EXE))
-$(addprefix analyze/,$(EXE)): analyze/%:
+.PHONY: analyze-data-priv analyze-data-priv/%
+analyze-data-priv: $(addprefix analyze-data-priv/,$(EXE))
+$(addprefix analyze-data-priv/,$(EXE)): analyze/%:
 	@echo; echo "**** $@"
 	$(MKLATTICE) $(MKLATTICE_FLAGS) > ho.lattice
 	$(QUAL) -q-config ho.lattice $(QUALCC_FLAGS) $^
