@@ -1,3 +1,4 @@
+# -*-makefile-*-
 # Makefile to do module analysis of C/C++ files
 
 ifndef TOP_LEVEL_MAKEFILE
@@ -48,19 +49,6 @@ $(addprefix test/,$(EXE)): test/%:
 # cqual++ and mklattice flags
 QUALCC_FLAGS :=
 MKLATTICE_FLAGS :=
-
-# pick exactly one of these
-ifeq ($(ANALYSIS),write)
-  QUALCC_FLAGS += -fq-module-write
-  MKLATTICE_FLAGS += --write
-else
-ifeq ($(ANALYSIS),access)
-  QUALCC_FLAGS += -fq-module-access
-  MKLATTICE_FLAGS += --access
-else
-  $(error Variable ANALYSIS must have value 'access' or 'write')
-endif
-endif
 
 # do a polymorphic analysis
 QUALCC_FLAGS += -fq-poly
@@ -125,10 +113,37 @@ QUALCC_FLAGS += $(addprefix -o-mod-spec ,$(MOD_SPECS))
 
 MKLATTICE := $(OINK_STACK)/oink/module_make_lattice
 QUAL := $(OINK_STACK)/oink/qual
+
+# pick exactly one of these
+ifeq ($(ANALYSIS),write)
+  QUALCC_AN += -fq-module-write
+  MKLATTICE_AN += --write
+else
+ifeq ($(ANALYSIS),access)
+  QUALCC_AN += -fq-module-access
+  MKLATTICE_AN += --access
+else
+# this will cause an error if used
+  QUALCC_AN += --error-no-such-flag
+  MKLATTICE_AN += --error-no-such-flag
+# I had to turn this off because the trust analysis uses the same
+# makefile but just doesn't use these variables
+#   $(error Variable ANALYSIS must have value 'access' or 'write')
+endif
+endif
+
 .PRECIOUS: %.lattice
 .PHONY: analyze-data-priv analyze-data-priv/%
 analyze-data-priv: $(addprefix analyze-data-priv/,$(EXE))
-$(addprefix analyze-data-priv/,$(EXE)): analyze/%:
+$(addprefix analyze-data-priv/,$(EXE)): analyze-data-priv/%:
 	@echo; echo "**** $@"
-	$(MKLATTICE) $(MKLATTICE_FLAGS) > ho.lattice
-	$(QUAL) -q-config ho.lattice $(QUALCC_FLAGS) $^
+	$(MKLATTICE) $(MKLATTICE_AN) $(MKLATTICE_FLAGS) > ho.lattice
+	$(QUAL) -q-config ho.lattice $(QUALCC_AN) $(QUALCC_FLAGS) $^
+
+.PRECIOUS: %.lattice
+.PHONY: analyze-data-trust analyze-data-trust/%
+analyze-data-trust: $(addprefix analyze-data-trust/,$(EXE))
+$(addprefix analyze-data-trust/,$(EXE)): analyze-data-trust/%:
+	@echo; echo "**** $@"
+	$(MKLATTICE) --trust $(MKLATTICE_FLAGS) > ho2.lattice
+	$(QUAL) -fq-module-trust -q-config ho2.lattice $(QUALCC_FLAGS) $^

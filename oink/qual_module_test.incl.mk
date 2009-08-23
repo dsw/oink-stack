@@ -11,6 +11,7 @@ endif
 qual-module-check: qual-module-check-misc
 qual-module-check: qual-module-check-write-filter
 qual-module-check: qual-module-check-access-filter
+qual-module-check: qual-module-check-trust-filter
 
 .PHONY: qual-module-check-misc
 qual-module-check-misc:
@@ -95,4 +96,32 @@ qual-module-check-access-filter:
 	  -o-mod-spec hello:Test/mod_access_hello_bad.mod \
 	  -o-mod-spec foo:Test/mod_foo.mod \
 	  Test/mod_access_hello.filter-bad.c Test/mod_lib_foo.c; test $$? -eq 32
+	$(ANNOUNCE_TEST_PASS)
+
+.PHONY: qual-module-check-trust-filter
+TEST_TOCLEAN += Test/mod_bar_hello_trust_good.lattice
+TEST_TOCLEAN += Test/mod_bar_hello_trust_bad.lattice
+qual-module-check-trust-filter:
+	@echo "$@: good"
+	./test_filter -good < Test/mod_trust_hello.c \
+	  > Test/mod_trust_hello.filter-good.c
+	./module_make_lattice --trust \
+          --mod hello --mod bar \
+	  > Test/mod_bar_hello_trust_good.lattice
+	./qual -fq-module-trust $(QUALCC_FLAGS) \
+	  -q-config Test/mod_bar_hello_trust_good.lattice \
+	  -o-mod-spec hello:Test/mod_trust_hello_good.mod \
+	  -o-mod-spec bar:Test/mod_bar.mod \
+	  Test/mod_trust_hello.filter-good.c Test/mod_trust_bar.c
+	@echo "$@: bad"
+	./test_filter -bad < Test/mod_trust_hello.c \
+	  > Test/mod_trust_hello.filter-bad.c
+	./module_make_lattice --trust \
+          --mod hello --mod bar \
+	  > Test/mod_bar_hello_trust_bad.lattice
+	./qual -fq-module-trust $(QUALCC_FLAGS) \
+	  -q-config Test/mod_bar_hello_trust_bad.lattice \
+	  -o-mod-spec hello:Test/mod_trust_hello_bad.mod \
+	  -o-mod-spec bar:Test/mod_bar.mod \
+	  Test/mod_trust_hello.filter-bad.c Test/mod_trust_bar.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)

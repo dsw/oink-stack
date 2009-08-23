@@ -1,3 +1,4 @@
+# -*-makefile-*-
 # Analyze C/C++ files for Hard Object
 
 all:
