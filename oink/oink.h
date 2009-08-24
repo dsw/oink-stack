@@ -60,7 +60,8 @@ public:
   Variable_O *getFunctionForLinking(const char *name);
 
   // return a list of variables to serialize.
-  void getOrderedExternVars(VarPredicate *varPred, TailList<Variable_O> &externVars);
+  void getOrderedExternVars(VarPredicate *varPred,
+                            TailList<Variable_O> &externVars);
 
   // // get the funcDefn if any for this variable across translation
   // // units
@@ -73,7 +74,7 @@ class FuncGranGraph {
   // directed graph from Variables on Functions (AST function
   // definitions) to Variables in E_variable expressions
   PtrMap<Variable, SObjSet<Variable*> > flowsTo;
-  Variable *root;               // root of the graph for the global "super-main"
+  Variable *root;     // root of the graph for the global "super-main"
 
   explicit FuncGranGraph(Variable *root0) : root(root0) {
     xassert(root);
@@ -136,13 +137,15 @@ class VisitRealVars_filter : public VisitRealVars {
   }
 };
 
-void visitVarsMarkedRealF_filtered(ArrayStack<Variable*> &builtinVars, VisitRealVars &visitReal);
+void visitVarsMarkedRealF_filtered(ArrayStack<Variable*> &builtinVars,
+                                   VisitRealVars &visitReal);
 void visitRealVarsF_filtered(TranslationUnit *tunit, VisitRealVars &visitReal);
 
 // skip function bodies and Declarators of filtered Functions
 class RealVarAndTypeASTVisitor_filtered : public RealVarAndTypeASTVisitor {
   public:
-  explicit RealVarAndTypeASTVisitor_filtered(VariableVisitor *variableVisitor0 = NULL)
+  explicit RealVarAndTypeASTVisitor_filtered
+  (VariableVisitor *variableVisitor0 = NULL)
     : RealVarAndTypeASTVisitor(variableVisitor0)
   {}
   explicit RealVarAndTypeASTVisitor_filtered(TypeVisitor *typeVisitor0)
@@ -161,11 +164,13 @@ class RealVarAndTypeASTVisitor_filtered : public RealVarAndTypeASTVisitor {
 class Oink {
   public:
   UserActions *parseUserActions;
-  ParseEnv *parseEnv;           // same obj as 'userActions' due to Scott's bizarre parsing setup
+  ParseEnv *parseEnv; // same obj as 'userActions' due to Scott's
+                      // bizarre parsing setup
   // ParseTables *parseTables;
   ValueTypePrinter *typePrinter;
   PtrMap<File, TranslationUnit> file2unit; // map files to translation units
-  ArrayStack<Variable*> madeUpVariables; // variables made-up in the course of typechecking
+  ArrayStack<Variable*> madeUpVariables; // variables made-up in the
+                                         // course of typechecking
   ArrayStack<Variable*> builtinVars; // builtin variables
   Variable *funcGranRoot;       // root of the function-granularity CFG
   FuncGranGraph funcGranGraph; // function-granularity control flow graph
@@ -216,14 +221,18 @@ class Oink {
   // function granularity CFG
   void compute_funcGran();      // compute function granularity CFG
   void printVariableName_funcGran(ostream &out, Variable *var);
-  void printVariableAndDep_funcGran(ostream &out, Variable *from, SObjSet<Variable*> *toSet);
-  void printVariableAndDep_DOT_funcGran(ostream &out, Variable *from, SObjSet<Variable*> *toSet);
-  void output_funcGran(ostream &out, bool dot); // output function granularity CFG
+  void printVariableAndDep_funcGran
+    (ostream &out, Variable *from, SObjSet<Variable*> *toSet);
+  void printVariableAndDep_DOT_funcGran
+    (ostream &out, Variable *from, SObjSet<Variable*> *toSet);
+  void output_funcGran(ostream &out, bool dot); // output function
+                                                // granularity CFG
   void print_funcGran();        // print function granularity CFG
 
   // Variable filtering
   void loadFuncFilterNames();   // load func_filter into funcFilterNames
-  void markFuncFilterVars(void (*marker)(Variable*)); // mark Variables that have been filtered
+  void markFuncFilterVars
+    (void (*marker)(Variable*)); // mark Variables that have been filtered
   // NOTE: even if you are not filtering Variables out, you have to
   // run this stage anyway to make all vars as setFilteredKeep(true)
   // as the default is false
@@ -250,16 +259,21 @@ class Oink {
   void serialize_files(ArchiveSerializer * arc);
   void serialize_files_stream(ostream &out);
   void serialize_abstrValues(ArchiveSerializer* arc);
-  void serialize_abstrValues_stream(XmlValueWriter &valueWriter, VarPredicate *varPred);
+  void serialize_abstrValues_stream
+    (XmlValueWriter &valueWriter, VarPredicate *varPred);
 
   void* expectOneXmlTag(XmlReaderManager &manager, int expectKind);
-  virtual void deserialize_1archive(ArchiveDeserializer *arc, XmlReaderManager &manager);
+  virtual void deserialize_1archive
+    (ArchiveDeserializer *arc, XmlReaderManager &manager);
   void deserialize_formatVersion(ArchiveDeserializer * arc);
   void deserialize_files(ArchiveDeserializer *arc, XmlReaderManager &manager);
   void deserialize_files_stream
-    (XmlReaderManager &manager, istream &in, const char* fname, const char *archiveName);
-  void deserialize_abstrValues(ArchiveDeserializer *arc, XmlReaderManager &manager);
-  void deserialize_abstrValues_toLinker(ArchiveDeserializer *arc, XmlReaderManager &manager);
+    (XmlReaderManager &manager, istream &in,
+     char const *fname, char const *archiveName);
+  void deserialize_abstrValues
+    (ArchiveDeserializer *arc, XmlReaderManager &manager);
+  void deserialize_abstrValues_toLinker
+    (ArchiveDeserializer *arc, XmlReaderManager &manager);
   SObjList<Variable_O> *deserialize_abstrValues_stream
     (XmlReaderManager &manager, istream& in, const char* fname);
 };
