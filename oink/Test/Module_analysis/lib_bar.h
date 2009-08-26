@@ -1,8 +1,6 @@
 #ifndef LIB_BAR_H
 #define LIB_BAR_H
 
-// FIX: move this from lib_bar.c
-
 // class
 struct Bar {
   int q;

@@ -110,11 +110,11 @@ QUALCC_FLAGS += -fq-no-use-const-subtyping
 # Tell the tools about the modules
 MKLATTICE_FLAGS += $(addprefix --mod ,$(MODS))
 QUALCC_FLAGS += $(addprefix -o-mod-spec ,$(MOD_SPECS))
+MKLATTICE_FLAGS += --mod default
+QUALCC_FLAGS += -o-mod-default default
 
-MKLATTICE := $(OINK_STACK)/oink/module_make_lattice
-QUAL := $(OINK_STACK)/oink/qual
-
-# pick exactly one of these
+# pick exactly one of these; in reality write and access analyses
+# exclude, but trust analysis can be combined with either
 ifeq ($(ANALYSIS),write)
   QUALCC_AN += -fq-module-write
   MKLATTICE_AN += --write
@@ -123,27 +123,32 @@ ifeq ($(ANALYSIS),access)
   QUALCC_AN += -fq-module-access
   MKLATTICE_AN += --access
 else
-# this will cause an error if used
-  QUALCC_AN += --error-no-such-flag
-  MKLATTICE_AN += --error-no-such-flag
-# I had to turn this off because the trust analysis uses the same
-# makefile but just doesn't use these variables
-#   $(error Variable ANALYSIS must have value 'access' or 'write')
+ifeq ($(ANALYSIS),trust)
+  QUALCC_AN += -fq-module-trust
+  MKLATTICE_AN += --trust
+endif
 endif
 endif
 
+MKLATTICE := $(OINK_STACK)/oink/module_make_lattice
+QUAL := $(OINK_STACK)/oink/qual
+
 .PRECIOUS: %.lattice
-.PHONY: analyze-data-priv analyze-data-priv/%
-analyze-data-priv: $(addprefix analyze-data-priv/,$(EXE))
-$(addprefix analyze-data-priv/,$(EXE)): analyze-data-priv/%:
+.PHONY: analyze analyze/%
+analyze: $(addprefix analyze/,$(EXE))
+$(addprefix analyze/,$(EXE)): analyze/%:
 	@echo; echo "**** $@"
 	$(MKLATTICE) $(MKLATTICE_AN) $(MKLATTICE_FLAGS) > ho.lattice
 	$(QUAL) -q-config ho.lattice $(QUALCC_AN) $(QUALCC_FLAGS) $^
 
-.PRECIOUS: %.lattice
-.PHONY: analyze-data-trust analyze-data-trust/%
-analyze-data-trust: $(addprefix analyze-data-trust/,$(EXE))
-$(addprefix analyze-data-trust/,$(EXE)): analyze-data-trust/%:
+OINK := $(OINK_STACK)/oink/oink
+CHOP_OUT := $(OINK_STACK)/elsa/chop_out
+
+.PHONY: analyze-func-iface analyze-func-iface/%
+analyze-func-iface: $(addprefix analyze-func-iface/,$(EXE))
+$(addprefix analyze-func-iface/,$(EXE)): analyze-func-iface/%:
 	@echo; echo "**** $@"
-	$(MKLATTICE) --trust $(MKLATTICE_FLAGS) > ho2.lattice
-	$(QUAL) -fq-module-trust -q-config ho2.lattice $(QUALCC_FLAGS) $^
+	$(OINK) -fo-func-gran -fo-func-gran-rev-mod-pub \
+	  $(addprefix -o-mod-spec ,$(MOD_SPECS)) -o-mod-default default $^ | \
+          $(CHOP_OUT) '---- START ---- fg-CFG-rev-mod-pub' \
+	  '---- STOP ---- fg-CFG-rev-mod-pub' | sort | uniq

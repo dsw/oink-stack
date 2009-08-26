@@ -91,6 +91,8 @@ extern Controls *controls;
 extern SObjList<char> moduleList;
 // map from filenames to modulenames
 extern StringSObjDict<char const> file2module;
+// the default module
+extern StringRef defaultModule;
 
 // StringRefs of names in func_filter file; this is global because it
 // makes writing a callback function in Oink convenient

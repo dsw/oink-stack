@@ -53,6 +53,11 @@ class OinkCmd {
 
   bool func_gran;               // compute and print function granularity CFG
   bool func_gran_dot;           // print function granularity CFG in dot format
+  bool func_gran_rev_mod_pub;   // further compute reverse graph, mod
+                                // out by module equiv-class, and then
+                                // print which functions are called
+                                // from outside the module
+
   bool all_pass_filter;         // assert that all variables pass the filter
   bool print_startstop;         // bracket large output such as pretty-print with START/STOP
   bool print_ast;               // print the ast after parsing

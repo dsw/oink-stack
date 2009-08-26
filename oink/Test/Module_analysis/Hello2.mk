@@ -25,7 +25,8 @@ ANALYSIS := trust
 # a module and every filename in the corresponding .mod file is the
 # list of files in that module.
 MODS :=
-MODS += bar hello2
+MODS += hello2
+MODS += bar
 
 # For now for simplicity we assume that each module is in a file
 # called module.mod; however this need not be the case in general.
@@ -35,10 +36,10 @@ hello2.exe: lib_bar.o
 
 # this currently fails as the header files have variables that we
 # don't give a module for
-# analyze/hello2.exe: hello.i lib_bar.i
+analyze/hello2.exe: hello2.i lib_bar.i
 
-# this works; I suppose that elsa is ignoring the #include directives
-analyze-data-trust/hello2.exe: hello2.c lib_bar.c
+# FIX: does not work yet
+analyze-func-iface/hello2.exe: hello2.i lib_bar.i
 
 
 # **** include generic functionality

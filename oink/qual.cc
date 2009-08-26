@@ -661,15 +661,6 @@ private:
 
 // Module coloring ****************
 
-// get the module for this location
-static StringRef moduleForLoc(SourceLoc loc) {
-  char const *filename = sourceLocManager->getFile(loc);
-  StringRef module = file2module.queryif(filename);
-  USER_ASSERT(module, loc,
-              "Module is needed for file '%s' but none was given.", filename);
-  return module;
-}
-
 static void colorWithModule_alloc
   (Value *value, SourceLoc loc, char const *name, char const *astNode)
 {

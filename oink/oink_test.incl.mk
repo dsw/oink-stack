@@ -514,6 +514,19 @@ oink-check-func-gran/%:
 	rm -f $*.vars
 	rm -rf $*.odir
 
+oink-check-func-gran: oink-check-func-gran-rev-mod-pub1
+.PHONY: oink-check-func-gran-rev-mod-pub1
+TEST_TOCLEAN += Test/func-gran-rev-mod-pub1.out
+oink-check-func-gran-rev-mod-pub1:
+	./oink -o-mod-spec bar:Test/bar3.mod \
+          -o-mod-spec hello:Test/hello3.mod \
+	  -fo-func-gran -fo-func-gran-rev-mod-pub -o-mod-default default \
+	  Test/lib_bar3.i Test/hello3.i | \
+          $(ELSA_DIR)/chop_out '---- START ---- fg-CFG-rev-mod-pub' \
+	  '---- STOP ---- fg-CFG-rev-mod-pub' | \
+	  sort | uniq > Test/func-gran-rev-mod-pub1.out
+	diff Test/func-gran-rev-mod-pub1.cor Test/func-gran-rev-mod-pub1.out
+
 # print it as a DOT graph so they are easy to visually inspect; this
 # is not a test that is run; it is just here for convenience of seeing
 # the graphs

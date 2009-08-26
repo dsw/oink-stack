@@ -124,6 +124,7 @@ OinkCmd::OinkCmd()
 
   , func_gran            (false)
   , func_gran_dot        (false)
+  , func_gran_rev_mod_pub(false)
   , all_pass_filter      (false)
   , print_startstop      (true)
   , print_ast            (false)
@@ -235,9 +236,23 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
                       stringc << "Illegal mod spec: " << arg0);
     }
     StringRef module = globalStrTable(strndup0(arg0, colonPos-arg0));
-    moduleList.prependUnique(const_cast<char*>(module));
+    // not guaranteed to be new so use appendUnique()
+    moduleList.appendUnique(const_cast<char*>(module));
     StringRef modFile = colonPos+1;
     loadModule(modFile, module);
+    return;
+  }
+  if (streq(arg, "-o-mod-default")) {
+    shift(argc, argv);
+    char *arg0 = shift(argc, argv, "Missing argument to -o-mod-default");
+    // set default module
+    if (defaultModule) {
+      throw UserError(USER_ERROR_ExitCode, "Default module already specified.");
+    }
+    defaultModule = globalStrTable(arg0);
+    // not guaranteed to be new so use appendUnique()
+    moduleList.appendUnique(const_cast<char*>(defaultModule));
+    cout << "setting default module to " << defaultModule << endl;
     return;
   }
 
@@ -256,6 +271,7 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
 
   HANDLE_FLAG(func_gran, "-fo-", "func-gran");
   HANDLE_FLAG(func_gran_dot, "-fo-", "func-gran-dot");
+  HANDLE_FLAG(func_gran_rev_mod_pub, "-fo-", "func-gran-rev-mod-pub");
   HANDLE_FLAG(all_pass_filter, "-fo-", "all-pass-filter");
   HANDLE_FLAG(print_startstop, "-fo-", "print-startstop");
   HANDLE_FLAG(print_ast, "-fo-", "print-ast");
@@ -353,6 +369,7 @@ void OinkCmd::dump() { // for -fo-verbose
       !iter.isDone(); iter.next()) {
     cout << "\t" << iter.key() << " -> " << iter.value() << endl;
   }
+  printf("o-mod-default: %s\n", defaultModule);
   printf("o-srz: %s\n", srz.c_str());
 
   printf("fo-help: %s\n", boolToStr(help));
@@ -364,6 +381,7 @@ void OinkCmd::dump() { // for -fo-verbose
 
   printf("fo-func-gran: %s\n", boolToStr(func_gran));
   printf("fo-func-gran-dot: %s\n", boolToStr(func_gran_dot));
+  printf("fo-func-gran-rev-mod-pub: %s\n", boolToStr(func_gran_rev_mod_pub));
   printf("fo-all-pass-filter: %s\n", boolToStr(all_pass_filter));
   printf("fo-print-startstop: %s\n", boolToStr(print_startstop));
   printf("fo-print-ast: %s\n", boolToStr(print_ast));
@@ -409,6 +427,8 @@ void OinkCmd::printHelp() {
      "  -o-func-filter FILE      : give a file listing Variables to be filtered out\n"
      "  -o-mod-spec MOD:FILE     : give a module and a file containing filenames\n"
      "                             to be associated with that module\n"
+     "  -o-mod-default MOD       : give a module to be used when"
+     "                             no mod-spec applies\n"
      "  -o-srz FILE              : serialize to FILE\n"
      "\n"
      "oink boolean flags; precede by '-fo-no-' for the negative sense.\n"

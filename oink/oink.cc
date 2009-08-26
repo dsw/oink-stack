@@ -68,6 +68,54 @@ void FuncGranGraph::addEdge(Variable *from, Variable *to) {
   toSet->add(to);
 }
 
+void FuncGranGraph::build_flowsFrom() {
+  xassert(!flowsFrom);
+  flowsFrom = new PtrMap<Variable, SObjSet<Variable*> >();
+
+  // for each edge in flowsTo
+  for(PtrMap<Variable,
+        SObjSet<Variable*> >::Iter mapIter(flowsTo);
+      !mapIter.isDone(); mapIter.adv())
+  {
+    Variable *from = mapIter.key();
+    SObjSet<Variable*> *toSet = mapIter.value();
+    for(SObjSetIter<Variable*> toSetIter(*toSet);
+        !toSetIter.isDone(); toSetIter.adv())
+    {
+      Variable *to = toSetIter.data();
+
+      // add edge in flowsFrom from 'to' to 'from'
+      SObjSet<Variable*> *fromSet = flowsFrom->get(to);
+      if (!fromSet) {
+        fromSet = new SObjSet<Variable*>();
+        flowsFrom->add(to, fromSet);
+      }
+      fromSet->add(from);
+    }
+  }
+}
+
+void FuncGranGraph::build_module2ToVars() {
+  xassert(!module2ToVars);
+  module2ToVars = new PtrMap<char const, SObjSet<Variable*> >();
+
+  // for each to-var in flowsFrom
+  for(PtrMap<Variable,
+        SObjSet<Variable*> >::Iter mapIter(*flowsFrom);
+      !mapIter.isDone(); mapIter.adv())
+  {
+    Variable *to = mapIter.key();
+    // map its module to it in module2ToVars
+    StringRef module = moduleForLoc(to->loc);
+    SObjSet<Variable*> *varSet = module2ToVars->get(module);
+    if (!varSet) {
+      varSet = new SObjSet<Variable*>();
+      module2ToVars->add(module, varSet);
+    }
+    varSet->add(to);
+  }
+}
+
 
 // **** FuncGranASTVisitor
 
@@ -732,6 +780,11 @@ void Oink::compute_funcGran() {
     // get the implicit function pointers from virtual methods
     visitRealVarsF(unit, funcGranVarVis);
   }
+
+  if (oinkCmd->func_gran_rev_mod_pub) {
+    funcGranGraph.build_flowsFrom();
+    funcGranGraph.build_module2ToVars();
+  }
 }
 
 void Oink::printVariableName_funcGran(ostream &out, Variable *var) {
@@ -800,6 +853,86 @@ void Oink::output_funcGran(ostream &out, bool dot)
   if (dot) out << "}\n";
 }
 
+void Oink::output_funcGranRevModPub(ostream &out) {
+  xassert(funcGranGraph.flowsFrom);
+  xassert(funcGranGraph.module2ToVars);
+
+  // FIX: until we do linking to unify all the vars that would link
+  // together we can report a varible as being called from more than
+  // one module because its Variable object is different in each file
+  bool const verbose = false;
+
+  // For each module, iterate over its to-vars; for each to-var look
+  // up its loc; from that look up its module.  If that is different
+  // from the current module, this function is public, otherwise not.
+  SFOREACH_OBJLIST(char, moduleList, iter) {
+    StringRef module = iter.data();
+    if (verbose) {
+      cerr << endl;
+      cerr << "module: " << module << endl;
+    }
+    SObjSet<Variable*> *varSet = funcGranGraph.module2ToVars->get(module);
+    if (!varSet) continue;
+    for(SObjSetIter<Variable*> setIter(*varSet);
+        !setIter.isDone(); setIter.adv())
+    {
+      // for each variable 'to' in 'module'
+      Variable *to = setIter.data();
+      if (verbose) {
+        cerr << "var:";
+        if (to->linkerVisibleName()) {
+          cerr << to->fullyQualifiedMangledName0();
+        } else {
+          cerr << "loc:" << locToStr(to->loc) << ":" << to->mangledName0();
+        }
+        cerr << endl;
+      }
+      // Note: if we look up module of 'to' we should get 'module'
+
+      // get the set of variables that call 'to'
+      SObjSet<Variable*> *fromSet = funcGranGraph.flowsFrom->get(to);
+      if (!fromSet) continue;
+
+      // is 'to' public?
+      bool to_isPublic = false;
+      for(SObjSetIter<Variable*> fromSetIter(*fromSet);
+          !fromSetIter.isDone(); fromSetIter.adv()) {
+        Variable *from = fromSetIter.data();
+        if (from == funcGranGraph.root) {
+          // if you are called from super-main, you are public
+          to_isPublic = true;
+          if (verbose) {
+            cerr << "\tcalled from super-main" << endl;
+          }
+          break;
+        }
+        StringRef fromModule = moduleForLoc(from->loc);
+        // FIX: in theory we can use == here
+        if (!streq(fromModule, module)) {
+          // 'to' is called from another module
+          to_isPublic = true;
+          if (verbose) {
+            cerr << "\tcalled from module " << fromModule << endl;
+          }
+          break;
+        } else {
+          if (verbose) {
+            cerr << "\tcalled from its own module" << endl;
+          }
+        }
+      }
+
+      // if 'to' is public, print it
+      if (to_isPublic) {
+        xassert(to->linkerVisibleName());
+        out << "module:" << module << " "
+            << "var:" << to->fullyQualifiedMangledName0()
+            << endl;
+      }
+    }
+  }
+}
+
 // error if extension is wrong
 static void expectExtension(char const *fname, char const *expectedExt)
 {
@@ -824,11 +957,26 @@ void Oink::print_funcGran() {
                      oinkCmd->srz.c_str());
     }
 
-    output_funcGran(out, oinkCmd->func_gran_dot);
+    if (oinkCmd->func_gran_rev_mod_pub) {
+      output_funcGranRevModPub(out);
+    } else {
+      output_funcGran(out, oinkCmd->func_gran_dot);
+    }
   } else {
-    char const *mysplash = oinkCmd->func_gran_dot ? "fg-CFG-dot" : "fg-CFG";
-    cout << "---- START ---- " << mysplash << '\n';
-    output_funcGran(cout, oinkCmd->func_gran_dot);
+    char const *mysplash = "";
+    if (oinkCmd->func_gran_rev_mod_pub) {
+      mysplash = "fg-CFG-rev-mod-pub";
+    } else if (oinkCmd->func_gran_dot) {
+      mysplash = "fg-CFG-dot";
+    } else {
+      mysplash = "fg-CFG";
+    }
+    cout << "---- START ---- " << mysplash << endl;
+    if (oinkCmd->func_gran_rev_mod_pub) {
+      output_funcGranRevModPub(cout);
+    } else {
+      output_funcGran(cout, oinkCmd->func_gran_dot);
+    }
     cout << "---- STOP ---- " << mysplash << endl;
   }
 }
@@ -2063,4 +2211,21 @@ SObjList<Variable_O> *Oink::deserialize_abstrValues_stream
     expectOneXmlTag(manager, XTOK_List_externVars);
 
   return externVars;
+}
+
+StringRef moduleForLoc(SourceLoc loc) {
+  // loc must map to a file.
+  USER_ASSERT(loc != SL_UNKNOWN, loc,
+              "Cannot map an unknown location to a module.");
+  USER_ASSERT(loc != SL_INIT, loc,
+              "Cannot map an initial location to a module.");
+  char const *filename = sourceLocManager->getFile(loc);
+  StringRef module = file2module.queryif(filename);
+  if (!module) {
+    USER_ASSERT(defaultModule, loc,
+                "Default module is needed for file '%s' but none was given.",
+                filename);
+    module = defaultModule;
+  }
+  return module;
 }

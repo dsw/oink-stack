@@ -74,15 +74,26 @@ class FuncGranGraph {
   // directed graph from Variables on Functions (AST function
   // definitions) to Variables in E_variable expressions
   PtrMap<Variable, SObjSet<Variable*> > flowsTo;
-  Variable *root;     // root of the graph for the global "super-main"
+  // reverse of flowsTo
+  PtrMap<Variable, SObjSet<Variable*> > *flowsFrom;
+  // map a module to its vars that are flowed to
+  PtrMap<char const, SObjSet<Variable*> > *module2ToVars;
+  // root of the graph for the global "super-main"
+  Variable *root;
 
-  explicit FuncGranGraph(Variable *root0) : root(root0) {
+  explicit FuncGranGraph(Variable *root0)
+    : flowsFrom(NULL)
+    , module2ToVars(NULL)
+    , root(root0)
+  {
     xassert(root);
   };
 
   Variable *getRoot() { return root; }
   SObjSet<Variable*> *getRootToSet() { return flowsTo.get(root); }
   void addEdge(Variable *from, Variable *to);
+  void build_flowsFrom();
+  void build_module2ToVars();
 };
 
 class FuncGranASTVisitor : private ASTVisitor {
@@ -219,14 +230,17 @@ class Oink {
   void prettyPrint_stage();     // pretty print
 
   // function granularity CFG
-  void compute_funcGran();      // compute function granularity CFG
+  void compute_funcGran(); // compute function granularity CFG
   void printVariableName_funcGran(ostream &out, Variable *var);
   void printVariableAndDep_funcGran
     (ostream &out, Variable *from, SObjSet<Variable*> *toSet);
   void printVariableAndDep_DOT_funcGran
     (ostream &out, Variable *from, SObjSet<Variable*> *toSet);
-  void output_funcGran(ostream &out, bool dot); // output function
-                                                // granularity CFG
+  // output function granularity CFG
+  void output_funcGran(ostream &out, bool dot);
+  // output reverse function granularity CFG, by module, and only the
+  // public functions
+  void output_funcGranRevModPub(ostream &out);
   void print_funcGran();        // print function granularity CFG
 
   // Variable filtering
@@ -280,6 +294,9 @@ class Oink {
 
 void printStart(char const *name);
 void printStop();
+
+// map a loc to its module
+StringRef moduleForLoc(SourceLoc loc);
 
 #define foreachFile \
   for(ASTListIterNC<File> files(oinkCmd->inputFilesFlat); !files.isDone(); files.adv())
