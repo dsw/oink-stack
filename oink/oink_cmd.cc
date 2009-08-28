@@ -442,7 +442,12 @@ void OinkCmd::printHelp() {
      "\n"
      "  -fo-func-gran            : compute and print function granularity CFG only\n"
      "                             (use -o-srz to write to file)\n"
-     "  -fo-func-gran-dot        : print function granularity CFG in dot format\n"
+     "  -fo-func-gran-dot        : when combined with -fo-func-gran,\n"
+     "                             print function granularity CFG in dot format\n"
+     "  -fo-func-gran-rev-mod-pub: when combined with -fo-func-gran, compute\n"
+
+     "                             the reverse map of whom is called by who,\n"
+     "                             then print the functions by module\n"
      "  -fo-all-pass-filter      : assert that all variables pass the filter\n"
      "  -fo-print-ast            : print the ast\n"
      "  -fo-print-typed-ast      : print the ast after typechecking\n"
