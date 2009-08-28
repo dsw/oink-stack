@@ -149,6 +149,9 @@ analyze-func-iface: $(addprefix analyze-func-iface/,$(EXE))
 $(addprefix analyze-func-iface/,$(EXE)): analyze-func-iface/%:
 	@echo; echo "**** $@"
 	$(OINK) -fo-func-gran -fo-func-gran-rev-mod-pub \
-	  $(addprefix -o-mod-spec ,$(MOD_SPECS)) -o-mod-default default $^ | \
-          $(CHOP_OUT) '---- START ---- fg-CFG-rev-mod-pub' \
-	  '---- STOP ---- fg-CFG-rev-mod-pub' | sort | uniq
+	  $(addprefix -o-mod-spec ,$(MOD_SPECS)) -o-mod-default default $^
+
+# to get just the output sorted and uniqued, add this:
+#  | \
+#           $(CHOP_OUT) '---- START ---- fg-CFG-rev-mod-pub' \
+# 	  '---- STOP ---- fg-CFG-rev-mod-pub' | sort | uniq
