@@ -1696,6 +1696,7 @@ bool Qual::varUsedInDataflow(Variable_O *var) {
 }
 
 void Qual::unifyVars(Variable_O *v1, Variable_O *v2, SourceLoc loc) {
+  Oink::unifyVars(v1, v2, loc); // delegate to superclass
   dfe.eDataFlow_refUnify(v1->abstrValue(), v2->abstrValue(), loc);
 }
 
