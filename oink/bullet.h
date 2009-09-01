@@ -18,6 +18,18 @@ class Bullet : public virtual Oink {
   
   // methods ****
 //   void printIhg_stage();
+  void emit_stage();
+};
+
+class HistogramASTVisitor : public ASTVisitor {
+  public:
+  LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
+
+  HistogramASTVisitor()
+     : loweredVisitor(this)
+  {}
+
+  virtual void postvisitStatement(Statement *obj);
 };
 
 // class HistogramASTVisitor : public ASTVisitor {

@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
     m.prettyPrint_stage();
     // put the compilation pass here
 //     if (bulletCmd->print_ihg) m.printIhg_stage();
+    m.emit_stage();
   } catch (xBase &e) {
     cerr << e << endl;
     code = INTERNALERROR_ExitCode;

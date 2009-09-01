@@ -7,6 +7,30 @@
 #include "strutil.h"            // quoted
 #include "oink_util.h"
 
+// Emit stage ****
+
+void Bullet::emit_stage() {
+  printStage("emit");
+  foreachSourceFile {
+    File *file = files.data();
+    maybeSetInputLangFromSuffix(file);
+    printStart(file->name.c_str());
+    TranslationUnit *unit = file2unit.get(file);
+    HistogramASTVisitor vis;
+    unit->traverse(vis.loweredVisitor);
+    // post-processing here
+//     vis.printHistogram(cout);
+    printStop();
+  }
+}
+
+void HistogramASTVisitor::postvisitStatement(Statement *obj) {
+  obj->debugPrint(cout, 0);
+//   cout << "" << endl;
+}
+
+// Example stage ****
+
 // void Bullet::printASTHistogram_stage() {
 //   printStage("printASTHistogram");
 //   foreachSourceFile {

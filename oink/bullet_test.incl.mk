@@ -9,6 +9,11 @@ endif
 .PHONY: bullet-check
 bullet-check:
 	./bullet
+	./bullet Test/helloA.c
+
+# FIX:
+#	./bullet Test/horrible1.cc
+
 #	./bullet -fs-no-print-ihg -fs-ben-flag
 #	./bullet -fs-print-ihg Test/bullet1.cc > /dev/null
 #	./bullet -fs-print-ast-histogram Test/bullet1.cc > /dev/null
