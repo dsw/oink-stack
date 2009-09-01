@@ -35,7 +35,7 @@
 //
 // UPDATE: I don't really recall what this pass is doing, but it seems
 // to be checking that the AST annotated with Types and Values is in
-// fact a tree.  This was important to check bacak when Oink used the
+// fact a tree.  This was important to check back when Oink used the
 // Types as its abstract values and missing a clone() call somewhere
 // in Elsa meant that the annotated AST would not in fact be a tree,
 // as a Type would get re-used.  Since the invention of Values, I
