@@ -1,13 +1,13 @@
 // see License.txt for copyright and terms of use
 
-// All the globals for staticprint in one place.
+// All the globals for bullet in one place.
 
-#ifndef STATICPRINT_GLOBAL_H
-#define STATICPRINT_GLOBAL_H
+#ifndef BULLET_GLOBAL_H
+#define BULLET_GLOBAL_H
 
 #include "oink_global.h"
-#include "staticprint_cmd.h"
+#include "bullet_cmd.h"
 
-extern StaticprintCmd *staticprintCmd;
+extern BulletCmd *bulletCmd;
 
-#endif // STATICPRINT_GLOBAL_H
+#endif // BULLET_GLOBAL_H

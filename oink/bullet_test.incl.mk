@@ -8,10 +8,11 @@ endif
 
 .PHONY: bullet-check
 bullet-check:
-	./bullet -fs-no-print-ihg -fs-ben-flag
+	./bullet
+#	./bullet -fs-no-print-ihg -fs-ben-flag
 #	./bullet -fs-print-ihg Test/bullet1.cc > /dev/null
 #	./bullet -fs-print-ast-histogram Test/bullet1.cc > /dev/null
-	./bullet -fo-pretty-print Test/hello.cc > /dev/null
+#	./bullet -fo-pretty-print Test/hello.cc > /dev/null
 
 # put an input file here to generate its control flow graph as a
 # post-script file
@@ -24,4 +25,4 @@ bullet-check-print/%:
 	./bullet -fs-print-ihg $* > $*.ihg.dot
 	dot -Tps -o $*.ihg.dot.ps $*.ihg.dot
 .PHONY: bullet-check-print
-bullet-check-print: $(addprefix bullet-check-print/,$(CHK_BULLET))
+# bullet-check-print: $(addprefix bullet-check-print/,$(CHK_BULLET))
