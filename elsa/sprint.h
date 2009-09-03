@@ -25,7 +25,7 @@ private:     // data
   //ArrayStack<int> begins;
 
 private:     // funcs
-  ostream &ind();
+  std::ostream &ind();
   bool in(SourceLoc loc);
   void out();
   void digStmt(Statement *s);

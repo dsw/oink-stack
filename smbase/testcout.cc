@@ -1,10 +1,10 @@
 // testcout.cc
 // very simple test of the C++ compiler and runtime
 
-#include <iostream.h>     // cout
+#include <iostream>       // cout
 
 int main()
 {
-  cout << "testcout: works\n";
+  std::cout << "testcout: works\n";
   return 0;
 }

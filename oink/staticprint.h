@@ -99,7 +99,7 @@ class HistogramASTVisitor : public ASTVisitor {
   {}
   virtual ~HistogramASTVisitor() {}
 
-  void printHistogram(ostream &out);
+  void printHistogram(std::ostream &out);
 
   virtual void postvisitTranslationUnit(TranslationUnit *obj);
   virtual void postvisitTopForm(TopForm *obj);

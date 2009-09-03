@@ -23,7 +23,7 @@ class Statement {
   public void getSuccessors(NextPtrList &dest, bool isContinue);
   public string successorsToString() const;
   custom debugPrint {
-    ind(os, indent) << "succ=" << successorsToString() << endl;
+    ind(os, indent) << "succ=" << successorsToString() << std::endl;
   }
 
   // compute the CFG within this statement (e.g. a compound statement that

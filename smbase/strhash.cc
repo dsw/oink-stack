@@ -272,7 +272,7 @@ STATICDEF bool StringHash::keyCompare(char const *key1, char const *key2)
 // ---------------------- test code --------------------
 #ifdef TEST_STRHASH
 
-#include <iostream.h>    // cout
+#include <iostream>      // cout
 #include <stdlib.h>      // rand
 #include <iostream>      // istream
 #include <fstream>       // filebuf
@@ -334,12 +334,12 @@ void readDataFromFile(char *inFileName) {
   dataArray = new StringArray(0);
   char *delim = " \t\n\r\v\f";
   std::filebuf fb;
-  fb.open (inFileName, ios::in);
-  istream in(&fb);
+  fb.open (inFileName, std::ios::in);
+  std::istream in(&fb);
   while(true) {
     stringBuilder s;
     s.readdelim(in, delim);
-//      cout << ":" << s->pcharc() << ":" << endl;
+//      std::cout << ":" << s->pcharc() << ":" << std::endl;
     if (in.eof()) break;
 //      // don't insert 0 length strings
 //      if (s->length() == 0) continue;
@@ -347,10 +347,10 @@ void readDataFromFile(char *inFileName) {
   }
 }
 
-void writeData(ostream &out) {
-  cout << "write data" << endl;
+void writeData(std::ostream &out) {
+  std::cout << "write data" << std::endl;
   for(int i=0; i<dataArray->tableSize; ++i) {
-    out << dataArray->table[i] << endl;
+    out << dataArray->table[i] << std::endl;
   }
 }
 
@@ -429,7 +429,7 @@ void performanceTest(int numPerfRuns) {
   }
   long stopTime = getMilliseconds();
   long duration = stopTime - startTime;
-  cout << "milliseconds to hash: " << duration << endl;
+  std::cout << "milliseconds to hash: " << duration << std::endl;
 
   traceProgress() << "end of strhash performance testing\n";
 }
@@ -443,7 +443,7 @@ bool testPerf = true;
 int numPerfRuns = 10000;
 
 void usage() {
-  cout << "Test the string hashing module strhash.cc\n"
+  std::cout << "Test the string hashing module strhash.cc\n"
        << "  --help / -h     : print this message\n"
        << "  --[no-]testCor  : run the correctness tests\n"
        << "                    will fail if data has duplicate strings (?!)\n"
@@ -454,7 +454,7 @@ void usage() {
        << "                    N should be even\n"
        << "  --dump          : dump out the data after generating/reading it\n"
        << "The default is '--random 300 --testCor --testPerf --numPerfRuns 10000'."
-       << endl;
+       << std::endl;
 }
 
 void initFromFlags(int &argc, char**&argv) {
@@ -475,31 +475,31 @@ void initFromFlags(int &argc, char**&argv) {
       testPerf = false;
     } else if (strcmp(*argv, "--random")==0) {
       if (inFileName) {
-        cout << "do not use --random and --file together" << endl;
+        std::cout << "do not use --random and --file together" << std::endl;
         usage();
         exit(1);
       }
       --argc; ++argv;
       if (!*argv) {
-        cout << "supply an argument to --random" << endl;
+        std::cout << "supply an argument to --random" << std::endl;
         usage();
         exit(1);
       }
       numRandStrs = atoi(*argv);
       if (!(numRandStrs > 0)) {
-        cout << "argument to --random must be > 0" << endl;
+        std::cout << "argument to --random must be > 0" << std::endl;
         usage();
         exit(1);
       }
     } else if (strcmp(*argv, "--file")==0) {
       if (numRandStrs) {
-        cout << "do not use --random and --file together" << endl;
+        std::cout << "do not use --random and --file together" << std::endl;
         usage();
         exit(1);
       }
       --argc; ++argv;
       if (!*argv) {
-        cout << "supply an argument to --file" << endl;
+        std::cout << "supply an argument to --file" << std::endl;
         usage();
         exit(1);
       }
@@ -508,20 +508,20 @@ void initFromFlags(int &argc, char**&argv) {
     } else if (strcmp(*argv, "--numPerfRuns")==0) {
       --argc; ++argv;
       if (!*argv) {
-        cout << "supply an argument to --numPerfRuns" << endl;
+        std::cout << "supply an argument to --numPerfRuns" << std::endl;
         usage();
         exit(1);
       }
       numPerfRuns = atoi(*argv);
       if (!(numPerfRuns > 0)) {
-        cout << "argument to --numPerfRuns must be > 0" << endl;
+        std::cout << "argument to --numPerfRuns must be > 0" << std::endl;
         usage();
         exit(1);
       }
     } else if (strcmp(*argv, "--dump")==0) {
       dump = true;
     } else {
-      cout << "unrecognized flag " << *argv << endl;
+      std::cout << "unrecognized flag " << *argv << std::endl;
       usage();
       exit(1);
     }
@@ -533,9 +533,9 @@ int main(int argc, char **argv)
   traceAddSys("progress");
 
   #if STRHASH_ALG == 1
-    cout << "hash function 1: Nelson" << endl;
+    std::cout << "hash function 1: Nelson" << std::endl;
   #elif STRHASH_ALG == 2
-    cout << "hash function 2: word-rotate/final-mix" << endl;
+    std::cout << "hash function 2: word-rotate/final-mix" << std::endl;
   #else
     #error You must pick a hash function
   #endif // STRHASH_ALG multi-switch
@@ -548,7 +548,7 @@ int main(int argc, char **argv)
     numRandStrs = 300;          // default
   }
   if (numRandStrs % 2 != 0) {
-    cout << "use an even-number argument for --random" << endl;
+    std::cout << "use an even-number argument for --random" << std::endl;
     usage();
     exit(1);
   }
@@ -556,8 +556,8 @@ int main(int argc, char **argv)
     makeRandomData(numRandStrs);
   } else if (inFileName) {
     if (testCor) {
-      cout << "Warning: The correctness test fails if strings are duplicated "
-        "and you are reading data from a file." << endl;
+      std::cout << "Warning: The correctness test fails if strings are duplicated "
+        "and you are reading data from a file." << std::endl;
     }
     readDataFromFile(inFileName);
   } else {
@@ -566,7 +566,7 @@ int main(int argc, char **argv)
 
   // dump data
   if (dump) {
-    writeData(cout);
+    writeData(std::cout);
   }
 
   // test
@@ -580,7 +580,7 @@ int main(int argc, char **argv)
   // delete data
 //    deleteData();
 
-  cout << "strhash tests finished\n";
+  std::cout << "strhash tests finished\n";
   return 0;
 }
 

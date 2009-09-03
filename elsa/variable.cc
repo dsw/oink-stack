@@ -415,7 +415,7 @@ bool Variable::notQuantifiedOut()
 
 void Variable::gdb() const
 {
-  cout << toString() << endl;
+  std::cout << toString() << std::endl;
 }
 
 string Variable::toString() const

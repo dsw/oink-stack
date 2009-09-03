@@ -40,8 +40,8 @@
 // standard insert operator
 // (note that you can put 'virtual' in front of the macro call if desired)
 #define INSERT_OSTREAM(T)                                \
-  void insertOstream(ostream &os) const;                 \
-  friend ostream& operator<< (ostream &os, T const &obj) \
+  void insertOstream(std::ostream &os) const;                 \
+  friend std::ostream& operator<< (std::ostream &os, T const &obj) \
     { obj.insertOstream(os); return os; }
 
 
@@ -85,7 +85,7 @@ bool T::operator== (T const &obj) const
     EMEMB();
 }
 
-void T::insertOstream(ostream &os) const
+void T::insertOstream(std::ostream &os) const
 {}
 #endif // 0
 
@@ -176,9 +176,9 @@ inline void pretendUsedFn(T const &) {}
   STATICDEF void classname::printAllocStats(bool anyway)   \
   {                                                        \
     if (anyway || numAllocd != 0) {                        \
-      cout << #classname << " nodes: " << numAllocd        \
-           << ", max  nodes: " << maxAllocd                \
-           << endl;                                        \
+      std::cout << #classname << " nodes: " << numAllocd   \
+                << ", max  nodes: " << maxAllocd           \
+                << std::endl;                              \
     }                                                      \
   }
 

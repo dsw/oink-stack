@@ -48,7 +48,7 @@
 
 #include <sys/stat.h>     // chmod, mode macros
 #include <time.h>         // tzset, localtime, time
-#include <iostream.h>     // cout
+#include <iostream>       // cout
 
 #if !defined(__WIN32__) || defined(__BORLANDC__)
   #include <dirent.h>       // opendir
@@ -295,8 +295,8 @@ static void nonechoLoop(char *buf, int len)
 
 void readNonechoString(char *buf, int len, char const *prompt)
 {
-  cout << prompt;
-  cout.flush();
+  std::cout << prompt;
+  std::cout.flush();
 
   setRawMode(true);
 
@@ -310,8 +310,8 @@ void readNonechoString(char *buf, int len, char const *prompt)
 
   setRawMode(false);
 
-  cout << "\n";
-  cout.flush();
+  std::cout << "\n";
+  std::cout.flush();
 }
 
 

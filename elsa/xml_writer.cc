@@ -7,7 +7,7 @@
 
 bool sortNameMapDomainWhenSerializing = true;
 
-XmlWriter::XmlWriter(IdentityManager &idmgr0, ostream *out0, int &depth0, bool indent0)
+XmlWriter::XmlWriter(IdentityManager &idmgr0, std::ostream *out0, int &depth0, bool indent0)
   : idmgr(idmgr0)
   , out(out0)
   , depth(depth0)

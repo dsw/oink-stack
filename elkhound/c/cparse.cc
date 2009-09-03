@@ -1,7 +1,7 @@
 // cparse.cc            see license.txt for copyright and terms of use
 // code for cparse.h
 
-#include <iostream.h>    // cout
+#include <iostream>      // cout
 
 #include "cparse.h"      // this module
 #include "cc_lang.h"     // CCLang

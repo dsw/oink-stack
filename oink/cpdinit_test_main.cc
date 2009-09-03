@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
     m.filter_stage();
     m.compoundTest_stage();
   } catch (xBase &e) {
-    cerr << e << endl;
+    std::cerr << e << std::endl;
     code = INTERNALERROR_ExitCode;
     if (UserError *ue = dynamic_cast<UserError*>(&e)) code = ue->exitCode;
   }

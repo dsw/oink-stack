@@ -17,13 +17,13 @@ void CfgPrint::computeCfg_stage() {
     // compute the cfg; not sure where Scott keeps the thing
     int numCfgErrors = computeUnitCFG(unit);
     if (numCfgErrors) {
-      cout << "number of cfg errors " << numCfgErrors << endl;
+      std::cout << "number of cfg errors " << numCfgErrors << std::endl;
     }
   }
 }
 
 void CfgPrint::printCfg_stage() {
-  cout << "digraph G {" << endl;
+  std::cout << "digraph G {" << std::endl;
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
@@ -31,7 +31,7 @@ void CfgPrint::printCfg_stage() {
     CfgPrintVisitor cpv;
     unit->traverse(cpv.loweredVisitor);
   }
-  cout << "}" << endl;
+  std::cout << "}" << std::endl;
 }
 
 // ****
@@ -76,10 +76,10 @@ void CfgPrintDfs::dfg(NextPtr node)
   node.stmt()->getSuccessors(successors, node.cont());
 
   if (!rootNodePrinted) {
-    cout << quoted(stringc << func->nameAndParams->var->fullyQualifiedName0())
+    std::cout << quoted(stringc << func->nameAndParams->var->fullyQualifiedName0())
          << " -> "
          << quoted(node.asString())
-         << endl;
+         << std::endl;
     rootNodePrinted = true;
   }
 
@@ -88,13 +88,13 @@ void CfgPrintDfs::dfg(NextPtr node)
     bool haveSeenIt = (succ.cont() ? seenCont : seen).contains(succ.stmt());
 
     // print the edge out
-    cout << quoted(stringc << node.asString())
+    std::cout << quoted(stringc << node.asString())
          << " -> "
          << quoted(succ.asString())
-         << endl;
-    cout << "[";
-    if (succ.cont()) cout << "color=green";
-    cout << "]" << endl;
+         << std::endl;
+    std::cout << "[";
+    if (succ.cont()) std::cout << "color=green";
+    std::cout << "]" << std::endl;
 
     if (haveSeenIt) {
       // we're already considering, or have already considered, this node;

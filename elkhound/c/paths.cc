@@ -38,7 +38,7 @@ static int mult(int a, int b)
     xfailure(stringc << "arithmetic overflow: " << a << " * " << b);
   }
   if (r > 1000) {
-    cout << r << " is more than 1000 paths!\n";
+    std::cout << r << " is more than 1000 paths!\n";
   }
   return r;
 }
@@ -131,7 +131,7 @@ int countPathsFrom(Env &env, SObjList<Statement> &path,
     if (tracingSys("circular")) {
       // print the circular path
       SFOREACH_OBJLIST(Statement, path, iter) {
-        cout << "  " << toString(iter.data()->loc) << endl;
+        std::cout << "  " << toString(iter.data()->loc) << std::endl;
       }
     }
     return 1;
@@ -194,13 +194,13 @@ void printPaths(TF_func const *func)
   // enumerate all paths from each root
   SFOREACH_OBJLIST(Statement, func->roots, iter) {
     Statement const *s = iter.data();
-    cout << "root at " << toString(iter.data()->loc) << ":\n";
+    std::cout << "root at " << toString(iter.data()->loc) << ":\n";
 
     // the whole point of counting the paths was so I could
     // so easily get a handle on all of them, to be able to
     // write a nice loop like this:
     for (int i=0; i < s->numPaths; i++) {
-      cout << "  path " << i << ":\n";
+      std::cout << "  path " << i << ":\n";
       SObjList<Statement /*const*/> path;
       printPathFrom(path, i, s, false /*isContinue*/);
     }
@@ -220,7 +220,7 @@ int numPathsThrough(Statement const *stmt)
 // abstract the "4" slightly..
 //#define PATHOUT treeOut(4)
 // actually, I didn't want these as headings at all..
-#define PATHOUT cout << "  "
+#define PATHOUT std::cout << "  "
 
 // want 'path' to detect circularity (for debugging);
 // this function has similar structure to 'countPathsFrom', above
@@ -236,7 +236,7 @@ void printPathFrom(SObjList<Statement /*const*/> &path, int index,
 
   // print this node
   PATHOUT << toString(node->loc) << ": "
-          << node->kindName() << endl;
+          << node->kindName() << std::endl;
 
   // debugging check
   if (path.contains(node)) {
@@ -272,7 +272,7 @@ void printPathFrom(SObjList<Statement /*const*/> &path, int index,
         if (s->isS_invariant()) {
           // terminate the path; print final node
           PATHOUT << toString(s->loc) << ": "
-                  << s->kindName() << endl;
+                  << s->kindName() << std::endl;
           PATHOUT << "path ends at an invariant\n";
         }
         else {
@@ -636,7 +636,7 @@ void printPath(int index, Expression const *ths)
 
   ASTSWITCHC(Expression, ths) {
     ASTCASEC(E_funCall, ths) {
-      PATHOUT << "call to " << ths->func->toString() << endl;
+      PATHOUT << "call to " << ths->func->toString() << std::endl;
 
       // 'func'
       int subexpPaths = ths->func->numPaths1();
@@ -661,7 +661,7 @@ void printPath(int index, Expression const *ths)
       printPath(index, ths->expr);
     }
     ASTNEXTC(E_effect, ths) {
-      PATHOUT << "side effect: " << ths->toString() << endl;
+      PATHOUT << "side effect: " << ths->toString() << std::endl;
       printPath(index, ths->expr);
     }
     ASTNEXTC(E_binary, ths) {
@@ -681,11 +681,11 @@ void printPath(int index, Expression const *ths)
         if (ths->op==BIN_AND || ths->op==BIN_OR) {
           // print RHS *if* it's followed
           if (index > 0) {
-            PATHOUT << "traversing into rhs of " << toString(ths->op) << endl;
+            PATHOUT << "traversing into rhs of " << toString(ths->op) << std::endl;
             printPath(index-1, ths->e2);
           }
           else {
-            PATHOUT << "short-circuiting rhs of " << toString(ths->op) << endl;
+            PATHOUT << "short-circuiting rhs of " << toString(ths->op) << std::endl;
           }
         }
 
@@ -740,7 +740,7 @@ void printPath(int index, Expression const *ths)
       printPath(index / modulus, ths->e2);
     }
     ASTNEXTC(E_assign, ths) {
-      PATHOUT << "side effect: " << ths->toString() << endl;
+      PATHOUT << "side effect: " << ths->toString() << std::endl;
       int modulus = ths->src->numPaths1();
       printPath(index % modulus, ths->src);
       printPath(index / modulus, ths->target);

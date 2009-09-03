@@ -43,7 +43,7 @@ sub preamble {
   print(<<"EOF");
 
     verbatim [
-      #include <iostream.h>     // cout
+      #include <iostream>       // cout
       $addlIncl
 
       extern int count;
@@ -99,7 +99,7 @@ while (defined($line = <STDIN>)) {
             "\n");
     }
     else {
-      #print("  fun merge(t1, t2)          [ cout << \"merged $nonterm\\n\"; return t1; ]\n\n");
+      #print("  fun merge(t1, t2)          [ std::cout << \"merged $nonterm\\n\"; return t1; ]\n\n");
     }
 
     next;
@@ -136,7 +136,7 @@ while (defined($line = <STDIN>)) {
       print("); ]\n");
     }
     else {
-      print("[ cout << \"reduced by $curNT $ruleText\\n\"; return ++count; ]\n");
+      print("[ std::cout << \"reduced by $curNT $ruleText\\n\"; return ++count; ]\n");
     }
     next;
   }

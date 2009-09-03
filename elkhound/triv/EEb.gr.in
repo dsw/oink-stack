@@ -9,7 +9,7 @@ terminals {
 }
 
 nonterm E {
-  fun merge(L,R) [ cout << "merging E\n"; return ++count; ]
+  fun merge(L,R) [ std::cout << "merging E\n"; return ++count; ]
   fun dup(v)     [ return ++count; ]
   fun del(v)     []
 

@@ -89,7 +89,7 @@ void DfgPrint::nameValues_stage() {
 // and that would make it more complex than needed.
 void DfgPrint::printDfg_stage() {
   Restorer<bool> restorer(value2typeIsOn, true);
-  cout << "digraph G {" << endl;
+  std::cout << "digraph G {" << std::endl;
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
@@ -98,7 +98,7 @@ void DfgPrint::printDfg_stage() {
     DataFlowVisitor env(unit, dfep, globalLang);
     unit->traverse(env.loweredVisitor);
   }
-  cout << "}" << endl;
+  std::cout << "}" << std::endl;
 }
 
 // ****
@@ -214,13 +214,13 @@ void DataFlowEx_Print::eDataFlow
   // FIX: get the names of src and tgt and print them out along with
   // the loc; use colors to indicate the DataFlowKind and cast; if
   // they are references, print out the unrefed edge also.
-  cout << getValueName(src) << " -> " << getValueName(tgt);
+  std::cout << getValueName(src) << " -> " << getValueName(tgt);
 
   // annotate the edge
-  cout << "[";
+  std::cout << "[";
 //    cout << "label=" << edgeNumber << ",";
-  if (dfk == EQ_DataFlowKind) cout << "dir=both,";
-  cout << "label="
+  if (dfk == EQ_DataFlowKind) std::cout << "dir=both,";
+  std::cout << "label="
 //         << quoted(locToStr(loc))
        << quoted(toLCString(loc))
        << ",";
@@ -231,14 +231,14 @@ void DataFlowEx_Print::eDataFlow
     switch(miPol) {
     default: xfailure("illegal polarity");
     case LibQual::p_neg:        // function call: arg to parameter
-      cout << "color=red,"; break;
+      std::cout << "color=red,"; break;
     case LibQual::p_non:        // normal flow
       /*cout << "color=black,";*/ break;
     case LibQual::p_pos:        // function return
-      cout << "color=blue,"; break;
+      std::cout << "color=blue,"; break;
     case LibQual::p_sub:        // I forget
-      cout << "color=green,"; break;
+      std::cout << "color=green,"; break;
     }
   }
-  cout << "]" << endl;
+  std::cout << "]" << std::endl;
 }

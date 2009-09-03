@@ -171,7 +171,7 @@ for ($i=0; $i < @lines; $i++) {
   # flex output (they have a different fix)
   if ($line =~ m/class istream;/) {
     $lineno++;
-    print OUT ("#include <iostream.h>      // class istream\n");
+    print OUT ("#include <iostream>        // class istream\n");
     next;
   }
 

@@ -207,7 +207,7 @@ PPrint::Setter::~Setter()
     // unbalanced groups
     breaker();          
     if (warnWhenUnbalanced) {
-      cout << "warning: unbalanced indentation grouping in pprint input\n";
+      std::cout << "warning: unbalanced indentation grouping in pprint input\n";
     }
   }
 }
@@ -331,8 +331,8 @@ int main()
   pp.margin = 30;
   pp.startText = "; ";
 
-  cout << "         1    1    2    2    3\n";
-  cout << "1---5----0----5----0----5----0\n";
+  std::cout << "         1    1    2    2    3\n";
+  std::cout << "1---5----0----5----0----5----0\n";
 
   pp << "int foo()\n"
         "{\n"
@@ -354,7 +354,7 @@ int main()
   pp.ind(-2);
   pp << "}\n";
   
-  cout << pp.sb;
+  std::cout << pp.sb;
   
   return 0;
 }

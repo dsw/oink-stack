@@ -3,7 +3,7 @@
 // grammars (this file is *not* required for general use of
 // the Elkhound parser)
 
-#include <iostream.h>     // cout
+#include <iostream>       // cout
 #include <stdlib.h>       // exit
 
 #include "trace.h"        // traceAddSys
@@ -38,7 +38,7 @@ void doit(int argc, char **argv)
     exit(2);
   }
 
-  cout << "final parse result: " << treeTop << endl;
+  std::cout << "final parse result: " << treeTop << std::endl;
 
   // global cleanup
   delete user;

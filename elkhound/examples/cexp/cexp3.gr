@@ -2,13 +2,13 @@
 // another go at C expressions, with user-supplied actions
 
 verbatim {
-  #include <iostream.h>            // cout
+  #include <iostream>              // cout
   #include "cexp3ast.ast.gen.h"    // Exp
   #include "trace.h"               // trace
   #include "useract.h"             // UserActions
 
   #define D(msg) \
-    trace("exptree") << msg << endl
+    trace("exptree") << msg << std::endl
 }
 
 context_class Cexp3 : public UserActions {
@@ -68,7 +68,7 @@ terminals {
 
 nonterm[int] Start {
   -> e:Exp             [ int ret = e->eval();
-                         cout << "reduced Start: " << ret << endl;
+                         std::cout << "reduced Start: " << ret << std::endl;
                          e->decRefCt();
                          return ret;]
 }

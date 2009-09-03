@@ -54,7 +54,7 @@ class XmlTypeWriter : public XmlWriter {
 
   public:
   XmlTypeWriter(IdentityManager &idmgr0, ASTVisitor *astVisitor0,
-                ostream *out0, int &depth0, bool indent0,
+                std::ostream *out0, int &depth0, bool indent0,
                 XTW_SerializeOracle *serializeOracle0);
   virtual ~XmlTypeWriter() {}
 
@@ -99,13 +99,13 @@ class XmlTypeWriter : public XmlWriter {
 
 // print out type annotations for every ast node that has a type
 class XmlTypeWriter_AstVisitor : public XmlAstWriter_AstVisitor {
-//    ostream &out;                 // for the <Link/> tags
+//    std::ostream &out;                 // for the <Link/> tags
   XmlTypeWriter &ttx;
 
   public:
   XmlTypeWriter_AstVisitor
     (XmlTypeWriter &ttx0,
-     ostream &out0,
+     std::ostream &out0,
      int &depth0,
      bool indent0 = false);
 

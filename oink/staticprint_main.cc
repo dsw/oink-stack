@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     if (staticprintCmd->print_ihg) m.printIhg_stage();
     if (staticprintCmd->print_ast_histogram) m.printASTHistogram_stage();
   } catch (xBase &e) {
-    cerr << e << endl;
+    std::cerr << e << std::endl;
     code = INTERNALERROR_ExitCode;
     if (UserError *ue = dynamic_cast<UserError*>(&e)) code = ue->exitCode;
   }

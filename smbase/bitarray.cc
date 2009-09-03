@@ -231,9 +231,9 @@ void testIter(char const *str)
   string s2 = toStringViaIter(b);
   if (s1 != s2 ||
       !s1.equals(str)) {
-    cout << "str: " << str << endl;
-    cout << " s1: " << s1 << endl;
-    cout << " s2: " << s2 << endl;
+    std::cout << "str: " << str << std::endl;
+    std::cout << " s1: " << s1 << std::endl;
+    std::cout << " s2: " << s2 << std::endl;
     xbase("testIter failed");
   }
 
@@ -249,8 +249,8 @@ void testIter(char const *str)
 
   string cStr = toString(c);
   if (!inv.equals(cStr)) {
-    cout << " inv: " << inv << endl;
-    cout << "cStr: " << cStr << endl;
+    std::cout << " inv: " << inv << std::endl;
+    std::cout << "cStr: " << cStr << std::endl;
     xbase("test inverter failed");
   }
 }
@@ -277,18 +277,18 @@ void testUnionIntersection(char const *s1, char const *s2)
   string iStr = toString(i);
 
   if (!uStr.equals(expectUnion)) {
-    cout << "         s1: " << s1 << endl;
-    cout << "         s2: " << s2 << endl;
-    cout << "       uStr: " << uStr << endl;
-    cout << "expectUnion: " << expectUnion << endl;
+    std::cout << "         s1: " << s1 << std::endl;
+    std::cout << "         s2: " << s2 << std::endl;
+    std::cout << "       uStr: " << uStr << std::endl;
+    std::cout << "expectUnion: " << expectUnion << std::endl;
     xbase("test union failed");
   }
 
   if (!iStr.equals(expectIntersection)) {
-    cout << "                s1: " << s1 << endl;
-    cout << "                s2: " << s2 << endl;
-    cout << "              iStr: " << iStr << endl;
-    cout << "expectIntersection: " << expectIntersection << endl;
+    std::cout << "                s1: " << s1 << std::endl;
+    std::cout << "                s2: " << s2 << std::endl;
+    std::cout << "              iStr: " << iStr << std::endl;
+    std::cout << "expectIntersection: " << expectIntersection << std::endl;
     xbase("test intersection failed");
   }
 }
@@ -300,9 +300,9 @@ void testAnyEvenOddBitPair(char const *s, bool expect)
   bool answer = b.anyEvenOddBitPair();
   if (answer != expect) {
     static char const *boolName[] = { "false", "true" };
-    cout << "     s: " << s << endl;
-    cout << "answer: " << boolName[answer] << endl;
-    cout << "expect: " << boolName[expect] << endl;
+    std::cout << "     s: " << s << std::endl;
+    std::cout << "answer: " << boolName[answer] << std::endl;
+    std::cout << "expect: " << boolName[expect] << std::endl;
     xbase("test anyEvenOddBitPair failed");
   }
 }
@@ -365,7 +365,7 @@ void entry()
   testAnyEvenOddBitPair("11110", true);
   testAnyEvenOddBitPair("01100", false);
 
-  cout << "bitarray is ok\n";
+  std::cout << "bitarray is ok\n";
 }
 
 USUAL_MAIN

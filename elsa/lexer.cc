@@ -223,7 +223,7 @@ void Lexer::pp_err(char const *msg)
   // print only line information, and subtract one because I account
   // for whitespace (including the final newline) before processing it
   errors++;
-  cerr << srcFile->name << ":" << (curLine-1) << ": error: " << msg << endl;
+  std::cerr << srcFile->name << ":" << (curLine-1) << ": error: " << msg << std::endl;
 }
 
 

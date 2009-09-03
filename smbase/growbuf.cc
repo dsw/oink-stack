@@ -43,7 +43,7 @@ void entry()
       xfailure("buffer contents are wrong");
     }
   }
-  cout << "growbuf ok\n";
+  std::cout << "growbuf ok\n";
 }
 
 USUAL_MAIN

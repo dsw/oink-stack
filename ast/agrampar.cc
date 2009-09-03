@@ -103,7 +103,7 @@ int agrampar_yylex(YYSTYPE *lvalp, void *parseParam)
 
   static bool traceIt = tracingSys("tokens");
   if (traceIt) {
-    ostream &os = trace("tokens");
+    std::ostream &os = trace("tokens");
     os << lexer.curLocStr() << ": " << code;
     if (lvalp->str) {
       os << ", \"" << *(lvalp->str) << "\"";
@@ -130,7 +130,7 @@ ASTSpecFile *readAbstractGrammar(char const *fname)
     #ifndef NDEBUG
       yydebug = true;
     #else
-      cout << "debugging disabled by -DNDEBUG\n";
+      std::cout << "debugging disabled by -DNDEBUG\n";
     #endif
   }
 
@@ -146,7 +146,7 @@ ASTSpecFile *readAbstractGrammar(char const *fname)
     if (!*in) {
       throw_XOpen(fname);
     }
-    trace("tmp") << "in is " << in.get() << endl;
+    trace("tmp") << "in is " << in.get() << std::endl;
     lexer = new GrammarLexer(isAGramlexEmbed, stringTable, fname, in.xfr());
   }
 

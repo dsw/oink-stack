@@ -69,7 +69,7 @@ IN_compound *E_compoundLit::getInit() {return init;}
 
 // toString ****
 
-void TypeSpecifier::printExtras_O(ostream &os, int indent) const {
+void TypeSpecifier::printExtras_O(std::ostream &os, int indent) const {
   astPrinter->TypeSpecifier_printExtras(this, os, indent);
 }
 

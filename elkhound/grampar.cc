@@ -111,7 +111,7 @@ void astParseErrorCont(Environment &env, LocString const &failToken,
                        rostring msg)
 {
   XASTParse x(failToken, msg);
-  cout << x.why() << endl;
+  std::cout << x.why() << std::endl;
   env.errors++;
 }
 
@@ -403,7 +403,7 @@ void astParseTerminals(Environment &env, TF_terminals const &terms)
       int code = term.code;
       StringRef name = term.name;
       trace("grampar") << "token: code=" << code
-                       << ", name=" << name << endl;
+                       << ", name=" << name << std::endl;
 
       if (!env.g.declareToken(term.name, code, term.alias)) {
         astParseError(term.name, "token already declared");
@@ -432,7 +432,7 @@ void astParseTerminals(Environment &env, TF_terminals const &terms)
     FOREACH_ASTLIST(TermType, terms.types, iter) {
       TermType const &type = *(iter.data());
       trace("grampar") << "token type: name=" << type.name
-                       << ", type=" << type.type << endl;
+                       << ", type=" << type.type << std::endl;
 
       // look up the name
       Terminal *t = astParseToken(env, type.name);
@@ -903,7 +903,7 @@ int grampar_yylex(YYSTYPE *lvalp, void *parseParam)
   }
   catch (xBase &x) {
     // e.g. malformed fundecl
-    cout << lexer.curLocStr() << ": " << x << endl;
+    std::cout << lexer.curLocStr() << ": " << x << std::endl;
 
     // optimistically try just skipping the bad token
     return grampar_yylex(lvalp, parseParam);
@@ -916,7 +916,7 @@ int grampar_yylex(YYSTYPE *lvalp, void *parseParam)
 void grampar_yyerror(char const *message, void *parseParam)
 {
   ParseParams *par = (ParseParams*)parseParam;
-  cout << par->lexer.curLocStr() << ": " << message << endl;
+  std::cout << par->lexer.curLocStr() << ": " << message << std::endl;
 }
 
 
@@ -1230,15 +1230,15 @@ GrammarAST *parseGrammarFile(rostring origFname, bool useML)
 
   ParseParams params(lexer);
 
-  traceProgress() << "parsing grammar source: " << fname << endl;
+  traceProgress() << "parsing grammar source: " << fname << std::endl;
   int retval = grampar_yyparse(&params);
   if (retval==0 && lexer.errors==0) {
     GrammarAST *ret = params.treeTop;
 
     if (tracingSys("printGrammarAST")) {
       // print AST
-      cout << "AST:\n";
-      ret->debugPrint(cout, 2);
+      std::cout << "AST:\n";
+      ret->debugPrint(std::cout, 2);
     }
 
     return ret;
@@ -1286,7 +1286,7 @@ void readGrammarFile(Grammar &g, rostring fname)
 
   // hmm.. I'd like to restore this functionality...
   //if (ASTNode::nodeCount > 0) {
-  //  cout << "leaked " << ASTNode::nodeCount << " AST nodes\n";
+  //  std::cout << "leaked " << ASTNode::nodeCount << " AST nodes\n";
   //}
 }
 
@@ -1300,10 +1300,10 @@ void readGrammarFile(Grammar &g, rostring fname)
 int main(int argc, char **argv)
 {
   if (argc < 2) {
-    cout << "usage: " << argv[0] << " [-tr flags] filename.gr\n";
-    cout << "  interesting trace flags:\n";
-    cout << "    keep-tmp      do not delete the temporary files\n";
-    //cout << "    cat-grammar   print the ascii rep to the screen\n";
+    std::cout << "usage: " << argv[0] << " [-tr flags] filename.gr\n";
+    std::cout << "  interesting trace flags:\n";
+    std::cout << "    keep-tmp      do not delete the temporary files\n";
+    //std::cout << "    cat-grammar   print the ascii rep to the screen\n";
     return 0;
   }
 
@@ -1360,7 +1360,7 @@ int main(int argc, char **argv)
   // compare the two written files
   int result = system(stringc << "diff " << g1Fname << " " << g2Fname);
   if (result != 0) {
-    cout << "the two ascii representations differ!!\n";
+    std::cout << "the two ascii representations differ!!\n";
     return 4;
   }
 
@@ -1371,7 +1371,7 @@ int main(int argc, char **argv)
     remove(binFname);
   }
 
-  cout << "successfully parsed, printed, wrote, and read a grammar!\n";
+  std::cout << "successfully parsed, printed, wrote, and read a grammar!\n";
   return 0;
 }
 

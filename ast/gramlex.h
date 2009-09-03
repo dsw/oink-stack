@@ -17,7 +17,7 @@
 // FlexLexer.h myself.
 #include "sm_flexlexer.h"     // yyFlexLexer
 
-#include <iostream.h>         // istream
+#include <iostream>           // istream
 
 // token code definitions
 #define TOK_EOF 0             // better name
@@ -64,11 +64,11 @@ private:     // data
   // state of a file we were or are lexing
   struct FileState {
     SourceLoc loc;                 // location in the file
-    istream *source;               // (owner?) source stream
+    std::istream *source;          // (owner?) source stream
     yy_buffer_state *bufstate;     // (owner?) flex's internal buffer state
 
   public:
-    FileState(rostring filename, istream *source);
+    FileState(rostring filename, std::istream *source);
     ~FileState();
 
     FileState(FileState const &obj);
@@ -134,7 +134,7 @@ public:      // funcs
   GrammarLexer(isEmbedTok embedTokTest,
                StringTable &strtable,
                char const *fname = "<stdin>",
-               istream * /*owner*/ source = NULL,
+               std::istream * /*owner*/ source = NULL,
                EmbeddedLang * /*owner*/ embedded = NULL /*i.e. assume C lexics*/);
 
   // clean up
@@ -185,7 +185,7 @@ public:      // funcs
   void printWarning(SourceLoc loc, rostring msg);
 
   // for processing includes
-  void recursivelyProcess(rostring fname, istream * /*owner*/ source);
+  void recursivelyProcess(rostring fname, std::istream * /*owner*/ source);
   void popRecursiveFile();
   bool hasPendingFiles() const;
   

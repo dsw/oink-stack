@@ -48,7 +48,7 @@
 #include "sobjlist.h"      // SObjList
 
 #include <stdio.h>         // FILE
-#include <iostream.h>      // ostream
+#include <iostream>        // ostream
 
 
 // fwds from other files
@@ -386,7 +386,7 @@ public:
   // there is significant expense to computing the debug strings
   // (that are then usually not printed)
   bool trParse;                             // tracingSys("parse")
-  ostream &trsParse;                        // trace("parse")
+  std::ostream &trsParse;                   // trace("parse")
 
   // track column for new nodes
   NODE_COLUMN( int globalNodeColumn; )

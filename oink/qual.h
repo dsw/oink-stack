@@ -117,7 +117,7 @@ class Qual : public virtual Oink {
   void deserialize_1archive(ArchiveDeserializer *arc, XmlReaderManager &manager);
   void deserialize_abstrValues(ArchiveDeserializer* arc, XmlReaderManager &manager);
   void deserialize_valueQualMap_stream
-    (istream& in, XmlReaderManager &manager, LibQual::s18n_context *serializationCtxt);
+  (std::istream& in, XmlReaderManager &manager, LibQual::s18n_context *serializationCtxt);
   void deserialize_valueQualMapAndQualGraph(ArchiveDeserializer* arc, XmlReaderManager &manager);
 
   // serialization

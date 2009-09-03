@@ -215,10 +215,10 @@ class Oink {
 
   // function granularity CFG
   void compute_funcGran();      // compute function granularity CFG
-  void printVariableName_funcGran(ostream &out, Variable *var);
-  void printVariableAndDep_funcGran(ostream &out, Variable *from, SObjSet<Variable*> *toSet);
-  void printVariableAndDep_DOT_funcGran(ostream &out, Variable *from, SObjSet<Variable*> *toSet);
-  void output_funcGran(ostream &out, bool dot); // output function granularity CFG
+  void printVariableName_funcGran(std::ostream &out, Variable *var);
+  void printVariableAndDep_funcGran(std::ostream &out, Variable *from, SObjSet<Variable*> *toSet);
+  void printVariableAndDep_DOT_funcGran(std::ostream &out, Variable *from, SObjSet<Variable*> *toSet);
+  void output_funcGran(std::ostream &out, bool dot); // output function granularity CFG
   void print_funcGran();        // print function granularity CFG
 
   // Variable filtering
@@ -248,7 +248,7 @@ class Oink {
   void serialize_results();
   void serialize_formatVersion(ArchiveSerializer * arc);
   void serialize_files(ArchiveSerializer * arc);
-  void serialize_files_stream(ostream &out);
+  void serialize_files_stream(std::ostream &out);
   void serialize_abstrValues(ArchiveSerializer* arc);
   void serialize_abstrValues_stream(XmlValueWriter &valueWriter, VarPredicate *varPred);
 
@@ -257,11 +257,11 @@ class Oink {
   void deserialize_formatVersion(ArchiveDeserializer * arc);
   void deserialize_files(ArchiveDeserializer *arc, XmlReaderManager &manager);
   void deserialize_files_stream
-    (XmlReaderManager &manager, istream &in, const char* fname, const char *archiveName);
+    (XmlReaderManager &manager, std::istream &in, const char* fname, const char *archiveName);
   void deserialize_abstrValues(ArchiveDeserializer *arc, XmlReaderManager &manager);
   void deserialize_abstrValues_toLinker(ArchiveDeserializer *arc, XmlReaderManager &manager);
   SObjList<Variable_O> *deserialize_abstrValues_stream
-    (XmlReaderManager &manager, istream& in, const char* fname);
+    (XmlReaderManager &manager, std::istream& in, const char* fname);
 };
 
 void printStart(char const *name);

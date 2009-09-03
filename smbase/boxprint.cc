@@ -108,7 +108,7 @@ char BPText::getLastChar() const
   }
 }
 
-void BPText::debugPrint(ostream &os, int /*ind*/) const
+void BPText::debugPrint(std::ostream &os, int /*ind*/) const
 {
   os << "text(" << quoted(text) << ")";
 }
@@ -165,7 +165,7 @@ char BPBreak::getLastChar() const
   return 0;
 }
 
-void BPBreak::debugPrint(ostream &os, int /*ind*/) const
+void BPBreak::debugPrint(std::ostream &os, int /*ind*/) const
 {
   os << "break(en=" << (int)enabled << ", ind=" << indent << ")";
 }
@@ -328,7 +328,7 @@ char BPBox::getLastChar() const
 }
 
 
-void BPBox::debugPrint(ostream &os, int ind) const
+void BPBox::debugPrint(std::ostream &os, int ind) const
 {
   static char const * const map[] = {
     "vert",
@@ -470,7 +470,7 @@ BPBox* /*owner*/ BoxPrint::takeTree()
 }
 
 
-void BoxPrint::debugPrint(ostream &os) const
+void BoxPrint::debugPrint(std::ostream &os) const
 {
   for (int i=0; i < boxStack.length(); i++) {
     os << "----- frame -----\n";
@@ -481,7 +481,7 @@ void BoxPrint::debugPrint(ostream &os) const
 
 void BoxPrint::debugPrintCout() const
 {
-  debugPrint(cout);
+  debugPrint(std::cout);
 }
 
 
@@ -591,14 +591,14 @@ void doit(int argc, char *argv[])
   if (argc >= 2) {
     ren.margin = atoi(argv[1]);
   }
-  cout << "margin: " << ren.margin << "\n";
+  std::cout << "margin: " << ren.margin << "\n";
 
   tree->render(ren);
   delete tree;
 
-  cout << "         1    1    2    2    3    3    4    4    5    5    6    6    7\n";
-  cout << "1---5----0----5----0----5----0----5----0----5----0----5----0----5----0\n";
-  cout << ren.takeString();
+  std::cout << "         1    1    2    2    3    3    4    4    5    5    6    6    7\n";
+  std::cout << "1---5----0----5----0----5----0----5----0----5----0----5----0----5----0\n";
+  std::cout << ren.takeString();
 }
 
 int main(int argc, char *argv[])

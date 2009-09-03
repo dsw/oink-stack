@@ -25,7 +25,7 @@ public:
 
   XFW_SerializeOracle *serializeOracle_m;
 
-  XmlFileWriter(IdentityManager &idmgr0, ostream *out0, int &depth0, bool indent0,
+  XmlFileWriter(IdentityManager &idmgr0, std::ostream *out0, int &depth0, bool indent0,
                 XFW_SerializeOracle *serializeOracle0);
   virtual ~XmlFileWriter() {}
 

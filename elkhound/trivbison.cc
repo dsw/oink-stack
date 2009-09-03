@@ -10,7 +10,7 @@
 #include "cyctimer.h"   // CycleTimer
 
 #include <stdio.h>      // printf
-#include <iostream.h>   // cout, etc.
+#include <iostream>     // cout, etc.
 
 // global list of L2 tokens for yielding to Bison
 Lexer2 lexer2;

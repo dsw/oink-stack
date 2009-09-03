@@ -64,7 +64,7 @@ class TopForm (SourceLoc loc) {
        public int numPaths;
        ctor numPaths=0;
 
-       public void printExtras(ostream &os, int indent) const;   // tcheck.cc
+       public void printExtras(std::ostream &os, int indent) const;   // tcheck.cc
        custom debugPrint { printExtras(os, indent); }
      }
 }
@@ -315,7 +315,7 @@ class Statement (SourceLoc loc) {
   custom debugPrint {
     ind(os, indent) << "numPaths=" << numPaths
                     << ", succ=" << successorsToString()
-                    << endl;
+                    << std::endl;
   }
 
   -> S_skip();      // nop; used whenever optional Statement is not present

@@ -15,7 +15,7 @@
 class ASTPrinter_Q : public ASTPrinter_O {
   public:
   virtual void TypeSpecifier_printExtras
-    (TypeSpecifier const *const ts, ostream &os, int indent) const;
+    (TypeSpecifier const *const ts, std::ostream &os, int indent) const;
   virtual string toString(QLiterals const * ql) const;
   virtual string toXml_QLiterals(QLiterals *ql);
   virtual void fromXml_QLiterals(QLiterals *&ql, string str);

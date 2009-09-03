@@ -8,7 +8,7 @@
 #define serializeOracle serializeOracle_m
 
 XmlFileWriter::XmlFileWriter(IdentityManager &idmgr0,
-                             ostream *out0, int &depth0, bool indent0,
+                             std::ostream *out0, int &depth0, bool indent0,
                              XmlFileWriter::XFW_SerializeOracle *serializeOracle0)
   : XmlWriter(idmgr0, out0, depth0, indent0),
     serializeOracle(serializeOracle0)

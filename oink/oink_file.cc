@@ -16,7 +16,7 @@
 #endif
 
 void File::dump() const {
-  cout << "\tfile:" << name << endl;
+  std::cout << "\tfile:" << name << std::endl;
 }
 
 void File::appendSelfIntoList(ASTList<File> &l) const {
@@ -24,7 +24,7 @@ void File::appendSelfIntoList(ASTList<File> &l) const {
 }
 
 void ProgramFile::dump() const {
-  cout << "\tprogram file:" << name << endl;
+  std::cout << "\tprogram file:" << name << std::endl;
 }
 
 void ProgramFile::appendSelfIntoList(ASTList<File> &fileList) const {

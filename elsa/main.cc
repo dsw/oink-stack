@@ -1,7 +1,7 @@
 // main.cc            see license.txt for copyright and terms of use
 // entry-point module for a program that parses C++
 
-#include <iostream.h>     // cout
+#include <iostream>       // cout
 #include <stdlib.h>       // exit, getenv, abort
 #include <fstream.h>      // ofstream
 

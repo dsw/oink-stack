@@ -129,7 +129,7 @@ char *processArgs(int argc, char **argv, char const *additionalInfo) {
   }
 
   if (argc != 2) {
-    cout << "usage: [env] " << progName << " [options] input-file\n"
+    std::cout << "usage: [env] " << progName << " [options] input-file\n"
       "  env:\n"
       "    SYM_OF_INTEREST symbol to watch during analysis\n"
       "  options:\n"
@@ -155,7 +155,7 @@ void maybeUseTrivialActions(ParseTreeAndTokens &ptree)
     // replace current actions with trivial actions
     //delete ptree.userAct;      // the caller does this
     ptree.userAct = new SimpleActions;
-    cout << "using trivial (er, simple..) actions\n";
+    std::cout << "using trivial (er, simple..) actions\n";
   }
 }
 

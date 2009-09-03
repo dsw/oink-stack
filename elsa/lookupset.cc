@@ -256,7 +256,7 @@ string LookupSet::asString() const
 
 void LookupSet::gdb() const
 {
-  cout << asString();
+  std::cout << asString();
 }
 
 

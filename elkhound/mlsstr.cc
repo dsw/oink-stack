@@ -7,7 +7,7 @@
 #include "exc.h"         // xformat
 #include "strutil.h"     // string, replace
 
-#include <iostream.h>    // cout
+#include <iostream>      // cout
 #include <ctype.h>       // isspace
 
 
@@ -266,7 +266,7 @@ void Test::feed(ML &ml, char const *src, bool allowErrors)
 {
   int origErrors = simpleReportError.errors;
 
-  cout << "trying: " << src << endl;
+  std::cout << "trying: " << src << std::endl;
   silentFeed(ml, src);
 
   if (!allowErrors &&
@@ -393,7 +393,7 @@ int Test::main(int argc, char *argv[])
         xbase(stringc << argv[i] << ": caused errors");
       }
 
-      cout << argv[i] << ": ok\n";
+      std::cout << argv[i] << ": ok\n";
     }
     return 0;
   }
@@ -479,7 +479,7 @@ int Test::main(int argc, char *argv[])
   bad(")");
   badname("main");
 
-  cout << "\nmlsstr: all tests PASSED\n";
+  std::cout << "\nmlsstr: all tests PASSED\n";
 
   return 0;
 }
@@ -492,7 +492,7 @@ int main(int argc, char *argv[])
     return t.main(argc, argv);
   }
   catch (xBase &x) {
-    cout << endl << x << endl;
+    std::cout << std::endl << x << std::endl;
     return 10;
   }
 }

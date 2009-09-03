@@ -497,7 +497,7 @@ void OinkCmd::initializeFromFlags() {
 }
 
 void OinkCmd::loadModule(StringRef module) {
-  cout << "loading module " << module << endl;
+  std::cout << "loading module " << module << std::endl;
   stringBuilder moduleFile(module);
   moduleFile << ".mod";
 
@@ -518,7 +518,8 @@ void OinkCmd::loadModule(StringRef module) {
     // skip blank lines
     if (line.empty()) continue;
     // add the file named by the line to the module map
-    cout << "\tadding to modules map " << line << "->" << module << endl;
+    std::cout << "\tadding to modules map " << line
+              << "->" << module << std::endl;
     char * const filename = strdup(line.c_str());
     if (file2module.isMapped(filename)) {
       throw UserError

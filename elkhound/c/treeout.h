@@ -7,9 +7,9 @@
 #ifndef TREEOUT_H
 #define TREEOUT_H
 
-#include <iostream.h>     // ostream
+#include <iostream>       // ostream
 
 // print heading to stdout, with some indication of tree level
-ostream &treeOut(int level);
+std::ostream &treeOut(int level);
 
 #endif // TREEOUT_H

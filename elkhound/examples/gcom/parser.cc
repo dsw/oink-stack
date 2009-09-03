@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 
     // print the tree
     PTreeNode *ptn = (PTreeNode*)result;
-    ptn->printTree(cout, PTreeNode::PF_EXPAND);
+    ptn->printTree(std::cout, PTreeNode::PF_EXPAND);
   }
 
   else {
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     Stmt *top = (Stmt*)result;
     
     if (printAST) {
-      top->debugPrint(cout, 0);
+      top->debugPrint(std::cout, 0);
     }
 
     // evaluate

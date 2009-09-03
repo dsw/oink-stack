@@ -1,7 +1,7 @@
 // main.cc            see license.txt for copyright and terms of use
 // toplevel driver for the C parser
 
-#include <iostream.h>     // cout
+#include <iostream>       // cout
 #include <stdlib.h>       // exit
 
 #include "trace.h"        // traceAddSys
@@ -82,7 +82,7 @@ void doit(int argc, char **argv)
 
     traceProgress() << "done parsing (" << timer.elapsed() << ")\n";
 
-    traceProgress(2) << "final parse result: " << treeTop << endl;
+    traceProgress(2) << "final parse result: " << treeTop << std::endl;
     unit = (TranslationUnit*)treeTop;
 
     //unit->debugPrint(cout, 0);
@@ -95,7 +95,7 @@ void doit(int argc, char **argv)
 
   // print abstract syntax tree
   if (tracingSys("printAST")) {
-    unit->debugPrint(cout, 0);
+    unit->debugPrint(std::cout, 0);
   }
 
   if (tracingSys("stopAfterParse")) {
@@ -118,13 +118,13 @@ void doit(int argc, char **argv)
 
     // print abstract syntax tree annotated with types
     if (tracingSys("printTypedAST")) {
-      unit->debugPrint(cout, 0);
+      unit->debugPrint(std::cout, 0);
     }
 
     if (env.getErrors() != 0) {
       int n = env.getErrors();
-      cout << "there " << plural(n, "was") << " " << env.getErrors() 
-           << " typechecking " << plural(n, "error") << "\n";
+      std::cout << "there " << plural(n, "was") << " " << env.getErrors() 
+                << " typechecking " << plural(n, "error") << "\n";
       exit(4);
     }
 

@@ -80,7 +80,7 @@ verbatim {
 #define D(msg) \
   trace("cc") << msg << endl
 
-inline ostream& operator<< (ostream &os, SourceLoc sl)
+inline std::ostream& operator<< (std::ostream &os, SourceLoc sl)
   { return os << toString(sl); }
 
 // implemented in implint.cc

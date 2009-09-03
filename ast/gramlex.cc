@@ -35,7 +35,7 @@ void GrammarLexer::AltReportError::reportWarning(rostring msg)
 
 
 // ----------------- GrammarLexer::FileState --------------------
-GrammarLexer::FileState::FileState(rostring filename, istream *src)
+GrammarLexer::FileState::FileState(rostring filename, std::istream *src)
   : loc(sourceLocManager->encodeBegin(toCStr(filename))),
     source(src),
     bufstate(NULL)
@@ -70,7 +70,7 @@ GrammarLexer::FileState &GrammarLexer::FileState::
 
 // ---------------------- GrammarLexer --------------------------
 GrammarLexer::GrammarLexer(isEmbedTok test, StringTable &strtbl,
-                           char const *fname, istream *source,
+                           char const *fname, std::istream *source,
                            EmbeddedLang *userEmb)
   : yyFlexLexer(source),
     altReporter(*this),
@@ -91,7 +91,7 @@ GrammarLexer::GrammarLexer(isEmbedTok test, StringTable &strtbl,
     strtable(strtbl),
     errors(0)
 {
-  trace("tmp") << "source is " << source << endl;
+  trace("tmp") << "source is " << source << std::endl;
 
   // grab initial buffer object so we can restore it after
   // processing an include file (turns out this doesn't work
@@ -118,7 +118,7 @@ GrammarLexer::~GrammarLexer()
   // call sites to the constructor are.  (I found this problem because
   // at one point Elsa (erroneously) choked on this construction.)
   if (fileState.source &&
-      fileState.source != &cin) {
+      fileState.source != &std::cin) {
     //checkHeap();
     //checkHeapNode(fileState.source);   // this is wrong b/c of virtual inheritance..
     delete fileState.source;
@@ -166,12 +166,12 @@ int GrammarLexer::yylexInc()
   if (embedTokTest(code)) {
     trace("lex") << "yielding embedded (" << code << ") at "
                  << curLocStr() << ": "
-                 << curFuncBody() << endl;
+                 << curFuncBody() << std::endl;
   }
   else {
     trace("lex") << "yielding token (" << code << ") "
                  << curToken() << " at "
-                 << curLocStr() << endl;
+                 << curLocStr() << std::endl;
   }
   #endif // 0/1
 
@@ -234,7 +234,7 @@ void GrammarLexer::reportError(rostring msg)
 void GrammarLexer::printError(SourceLoc loc, rostring msg)
 {
   errors++;
-  cerr << toString(loc) << ": error: " << msg << endl;
+  std::cerr << toString(loc) << ": error: " << msg << std::endl;
 }
 
 
@@ -245,7 +245,7 @@ void GrammarLexer::reportWarning(rostring msg)
 
 void GrammarLexer::printWarning(SourceLoc loc, rostring msg)
 {
-  cerr << toString(loc) << ": warning: " << msg << endl;
+  std::cerr << toString(loc) << ": warning: " << msg << std::endl;
 }
 
 
@@ -266,9 +266,9 @@ void GrammarLexer::errorIllegalCharacter(char ch)
 }
 
 
-void GrammarLexer::recursivelyProcess(rostring fname, istream *source)
+void GrammarLexer::recursivelyProcess(rostring fname, std::istream *source)
 {
-  trace("lex") << "recursively processing " << fname << endl;
+  trace("lex") << "recursively processing " << fname << std::endl;
                        
   // grab current buffer; this is necessary because when we
   // tried to grab it in the ctor it was NULL
@@ -293,7 +293,7 @@ void GrammarLexer::recursivelyProcess(rostring fname, istream *source)
 void GrammarLexer::popRecursiveFile()
 {
   trace("lex") << "done processing " <<     
-    sourceLocManager->getFile(fileState.loc) << endl;
+    sourceLocManager->getFile(fileState.loc) << std::endl;
 
   // among other things, this prevents us from accidentally deleting
   // flex's first buffer (which it presumably takes care of) or

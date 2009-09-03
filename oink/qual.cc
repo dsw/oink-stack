@@ -543,7 +543,7 @@ bool MarkAllocStackness_Visitor::subVisitE_new(E_new *obj) {
 // QualSerialization_ValueVisitor ****************
 
 class QualSerialization_ValueVisitor : public ValueVisitor {
-  ostream &mapOut;
+  std::ostream &mapOut;
   int numSerializedQvars;
   LibQual::s18n_context *serializationCtxt;
 
@@ -555,7 +555,7 @@ class QualSerialization_ValueVisitor : public ValueVisitor {
   public:
   QualSerialization_ValueVisitor
     (IdentityManager &idmgr0,
-     ostream &mapOut0, LibQual::s18n_context *serializationCtxt0)
+     std::ostream &mapOut0, LibQual::s18n_context *serializationCtxt0)
     : mapOut(mapOut0)
     , numSerializedQvars(0)
     , serializationCtxt(serializationCtxt0)
@@ -647,13 +647,13 @@ class QvarSerializationContextHolder {
 
 private:
   static int writef(void* stream, void* buf, int len) {
-    ostream& o = *( (ostream*)stream );
+    std::ostream& o = *( (std::ostream*)stream );
     o.write((char*) buf, len);
     return o ? len : -1;
   }
 
   static int readf(void* stream, void* buf, int len) {
-    istream&i = *( (istream*)stream );
+    std::istream&i = *( (std::istream*)stream );
     i.read((char*) buf, len);
     return i ? len : -1;
   }
@@ -686,12 +686,12 @@ static void colorWithModule_alloc
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
-    cout << sourceLocManager->getFile(loc) << ":" <<
+    std::cout << sourceLocManager->getFile(loc) << ":" <<
       sourceLocManager->getLine(loc);
-    cout << " " << astNode;
-    if (name) cout << " '" << name << "'";
-    else cout << " <no-name>";
-    cout << " colored " << qconstName << endl;
+    std::cout << " " << astNode;
+    if (name) std::cout << " '" << name << "'";
+    else std::cout << " <no-name>";
+    std::cout << " colored " << qconstName << std::endl;
   }
 
   // color the value with the module
@@ -714,12 +714,12 @@ static void colorWithModule_access
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
-    cout << sourceLocManager->getFile(loc) << ":" <<
+    std::cout << sourceLocManager->getFile(loc) << ":" <<
       sourceLocManager->getLine(loc);
-    cout << " " << astNode;
-    if (name) cout << " '" << name << "'";
-    else cout << " <no-name>";
-    cout << " colored " << qconstName << endl;
+    std::cout << " " << astNode;
+    if (name) std::cout << " '" << name << "'";
+    else std::cout << " <no-name>";
+    std::cout << " colored " << qconstName << std::endl;
   }
 
   // color the value with the module
@@ -734,12 +734,12 @@ static void colorWithModule_otherControl
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
-    cout << sourceLocManager->getFile(loc) << ":" <<
+    std::cout << sourceLocManager->getFile(loc) << ":" <<
       sourceLocManager->getLine(loc);
-    cout << " " << astNode;
-    if (name) cout << " '" << name << "'";
-    else cout << " <no-name>";
-    cout << endl;
+    std::cout << " " << astNode;
+    if (name) std::cout << " '" << name << "'";
+    else std::cout << " <no-name>";
+    std::cout << std::endl;
   }
 
   // for each source module not equal to us, make the otherControl target
@@ -757,7 +757,7 @@ static void colorWithModule_otherControl
 
     // print out a line for each
     if (oinkCmd->report_colorings) {
-      cout << " colored " << qconstName << endl;
+      std::cout << " colored " << qconstName << std::endl;
     }
 
     // NOTE: this is a value-level qualifier on a pointer
@@ -776,12 +776,12 @@ static void colorWithModule_otherWrite
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
-    cout << sourceLocManager->getFile(loc) << ":" <<
+    std::cout << sourceLocManager->getFile(loc) << ":" <<
       sourceLocManager->getLine(loc);
-    cout << " " << astNode;
-    if (name) cout << " '" << name << "'";
-    else cout << " <no-name>";
-    cout << endl;
+    std::cout << " " << astNode;
+    if (name) std::cout << " '" << name << "'";
+    else std::cout << " <no-name>";
+    std::cout << std::endl;
   }
 
   // for each source module not equal to us, make the write target
@@ -801,7 +801,7 @@ static void colorWithModule_otherWrite
 
     // print out a line for each
     if (oinkCmd->report_colorings) {
-      cout << " colored " << qconstName << endl;
+      std::cout << " colored " << qconstName << std::endl;
     }
 
     // color the value with the module
@@ -817,12 +817,12 @@ static void colorWithModule_otherAccess
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
-    cout << sourceLocManager->getFile(loc) << ":" <<
+    std::cout << sourceLocManager->getFile(loc) << ":" <<
       sourceLocManager->getLine(loc);
-    cout << " " << astNode;
-    if (name) cout << " '" << name << "'";
-    else cout << " <no-name>";
-    cout << endl;
+    std::cout << " " << astNode;
+    if (name) std::cout << " '" << name << "'";
+    else std::cout << " <no-name>";
+    std::cout << std::endl;
   }
 
   // for each source module not equal to us, make the write target
@@ -840,7 +840,7 @@ static void colorWithModule_otherAccess
 
     // print out a line for each
     if (oinkCmd->report_colorings) {
-      cout << " colored " << qconstName << endl;
+      std::cout << " colored " << qconstName << std::endl;
     }
 
     // color the value with the module
@@ -1276,7 +1276,7 @@ void Qual::printStats()
 {
   LibQual::Qual_print_stats();
 
-  cout << endl;
+  std::cout << std::endl;
 
   Oink::printStats();
 
@@ -1300,19 +1300,19 @@ void Qual::printStats()
   values_with_names = getNumQvarsWithNames();
 #endif
 
-  cout << "Values with names: " << values_with_names << endl;
-  cout << "Values with qvars: " << values_with_qvars << endl;
+  std::cout << "Values with names: " << values_with_names << std::endl;
+  std::cout << "Values with qvars: " << values_with_qvars << std::endl;
 }
 
 // virtual, overrides Oink
 void Qual::printSizes()
 {
-#define P(T) cout << "  sizeof(" #T ") = " << sizeof(T) << endl
+#define P(T) std::cout << "  sizeof(" #T ") = " << sizeof(T) << std::endl
   Oink::printSizes();
 
-  cout << endl;
+  std::cout << std::endl;
 
-  cout << "Qual:\n";
+  std::cout << "Qual:\n";
 
   P(CVAtomicValue_Q);
   P(PointerValue_Q);
@@ -1321,7 +1321,7 @@ void Qual::printSizes()
   P(ArrayValue_Q);
   P(PointerToMemberValue_Q);
 
-  cout << endl;
+  std::cout << std::endl;
 
   P(CVAtomicValue_QualAnnot);
   P(PointerValue_QualAnnot);
@@ -1330,7 +1330,7 @@ void Qual::printSizes()
   P(ArrayValue_QualAnnot);
   P(PointerToMemberValue_QualAnnot);
 
-  cout << endl;
+  std::cout << std::endl;
 
   P(CVAtomicValue_Q::MyStruct);
   P(PointerValue_Q::MyStruct);
@@ -1339,7 +1339,7 @@ void Qual::printSizes()
   P(ArrayValue_Q::MyStruct);
   P(PointerToMemberValue_Q::MyStruct);
 
-  cout << endl;
+  std::cout << std::endl;
 
   LibQual::Qual_print_sizes();
 #undef P
@@ -1369,11 +1369,11 @@ void Qual::deserialize_abstrValues(ArchiveDeserializer *arc,
 }
 
 // read " -> " from input stream; set badbit on error.
-static inline istream& readArrow(istream&i) {
+static inline std::istream& readArrow(std::istream &i) {
   char c1, c2;
-  i >> ws >> c1 >> c2 >> ws;
+  i >> std::ws >> c1 >> c2 >> std::ws;
   if (!i || c1 != '-' || c2 != '>') {
-    i.setstate(ios::badbit);
+    i.setstate(std::ios::badbit);
   }
   return i;
 }
@@ -1400,7 +1400,7 @@ static inline void parseValueQualMapLine
 
 // Read a line. Returns true on success and false on eof.  Throws
 // exception on read error.
-static inline bool readValueQualMapLine(istream& in, std::string& line) {
+static inline bool readValueQualMapLine(std::istream& in, std::string& line) {
   std::getline(in, line);
 
   if (in.eof() && line.empty()) {
@@ -1418,7 +1418,7 @@ static inline bool readValueQualMapLine(istream& in, std::string& line) {
 // Rob: "for each qualifier address on deserialized abstract values
 // replace it using s18n_lookup_deserialized(...)"
 void Qual::deserialize_valueQualMap_stream
-  (istream& in, XmlReaderManager &manager,
+  (std::istream& in, XmlReaderManager &manager,
    LibQual::s18n_context *serializationCtxt)
 {
   std::string line;
@@ -1458,18 +1458,18 @@ void Qual::deserialize_valueQualMap_stream
 }
 
 // expect string EXPECTED, else set badbit on IN.
-static inline istream& matchMarker(istream& in, std::string const& expected) {
+static inline std::istream& matchMarker(std::istream& in, std::string const& expected) {
   char * buf = (char*) alloca(expected.size());
   in.read(buf, expected.size());
   if (0 != memcmp(buf, expected.c_str(), expected.size())) {
-    in.setstate(ios::badbit);
+    in.setstate(std::ios::badbit);
   }
   return in;
 }
 
 // expect string EXPECTED, else throw user error.
 static inline void expectMarker
-  (istream& in, std::string const& expected, const char* fname)
+  (std::istream& in, std::string const& expected, const char* fname)
 {
   if (!matchMarker(in, expected)) {
     userFatalError(SL_UNKNOWN,
@@ -1478,7 +1478,7 @@ static inline void expectMarker
   }
 }
 
-static inline void expectEOF(istream& in, const char* fname) {
+static inline void expectEOF(std::istream& in, const char* fname) {
   in.peek(); // peek to force setting eofbit if we're at EOF.
   if (!in.eof()) {
     userFatalError(SL_UNKNOWN,
@@ -1492,11 +1492,11 @@ void Qual::deserialize_valueQualMapAndQualGraph
 {
   // de-serialize the quals and the map
 
-  istream& inValueQualMap = arc->input("value_qual.map");
+  std::istream& inValueQualMap = arc->input("value_qual.map");
   // std::stringstream tmpMapIn;
   // tmpMapIn.get(* inValueQualMap.rdbuf() );
 
-  istream& inQual = arc->input("qual.dat");
+  std::istream& inQual = arc->input("qual.dat");
 
   // check that we're reading the right file.
   expectMarker(inQual, QUAL_BOF_MAGIC, arc->curFname());
@@ -1609,8 +1609,8 @@ int Qual::serialize_valuesAndMap
 {
   // write to a string first, since we can't interleave output to two archive
   // files
-  ostream& mapOut = arc->outputAlt("value_qual.map");
-  ostream& valueOut = arc->output("value.xml");
+  std::ostream& mapOut = arc->outputAlt("value_qual.map");
+  std::ostream& valueOut = arc->output("value.xml");
 
   IdentityManager idmgr;
 
@@ -1652,7 +1652,7 @@ void Qual::serialize_results() {
     // should have been set from result of markExternVars().
     xassert(this->numExternQvars != -1);
 
-    ostream& outQual = arc->output("qual.dat");
+    std::ostream& outQual = arc->output("qual.dat");
     outQual << QUAL_BOF_MAGIC;
 
     QvarSerializationContextHolder qctxt(&outQual);
@@ -1715,7 +1715,7 @@ void Qual::unifyVars(Variable_O *v1, Variable_O *v2, SourceLoc loc) {
 // instance-specific
 #if DEBUG_INSTANCE_SPECIFIC_VALUES
 bool markValueInstanceSpecific(Value *t) {
-//    cout << "Marking as instance-specific " << t->toString() << endl;
+//    std::cout << "Marking as instance-specific " << t->toString() << std::endl;
   instanceSpecificValues.add(t);
   return false; // keep traversing; a true would cause the search to prune
 }

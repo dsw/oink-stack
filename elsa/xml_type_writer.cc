@@ -67,7 +67,7 @@ char const *toXml(STemplateArgument::Kind id) {
 }
 
 XmlTypeWriter::XmlTypeWriter (IdentityManager &idmgr0,
-                              ASTVisitor *astVisitor0, ostream *out0, int &depth0, bool indent0,
+                              ASTVisitor *astVisitor0, std::ostream *out0, int &depth0, bool indent0,
                               XTW_SerializeOracle *serializeOracle0)
   : XmlWriter(idmgr0, out0, depth0, indent0)
   , astVisitor(astVisitor0)
@@ -849,7 +849,7 @@ bool XmlTypeWriter::XTW_SerializeOracle::shouldSerialize(Scope const *obj) {
 
 XmlTypeWriter_AstVisitor::XmlTypeWriter_AstVisitor
   (XmlTypeWriter &ttx0,
-   ostream &out0,
+   std::ostream &out0,
    int &depth0,
    bool indent0)
     : XmlAstWriter_AstVisitor(out0, ttx0.idmgr, depth0, indent0)

@@ -5,16 +5,16 @@
 #include "gramanl.h"    // GrammarAnalysis
 #include "strtokp.h"    // StrtokParse
 
-#include <iostream.h>   // cin/cout
+#include <iostream>     // cin/cout
 
 
 void grammarExplorer(GrammarAnalysis &g)
 {
-  cout << "exploring the grammar:\n";
+  std::cout << "exploring the grammar:\n";
 
   #if 0
   for (;;) {
-    cout << "commands:\n"
+    std::cout << "commands:\n"
             "  terminals\n"
             "  nonterminals\n"
             "  productions <nonterm-id>\n"
@@ -23,8 +23,8 @@ void grammarExplorer(GrammarAnalysis &g)
             "  reach <state-id>\n"
             "  track-la <state-id> <prod-id> <term-id>\n"
             "  quit\n";
-    cout << "command> ";
-    cout.flush();
+    std::cout << "command> ";
+    std::cout.flush();
 
     char buf[80];
     cin >> buf;     // buffer overrun potential, don't care
@@ -37,14 +37,14 @@ void grammarExplorer(GrammarAnalysis &g)
       if (0==strcmp(tok[0], "terminals")) {
         for (int i=0; i < g.numTerminals(); i++) {
           Terminal const *t = g.getTerminal(i);
-          t->print(cout);
+          t->print(std::cout);
         }
       }
 
       else if (0==strcmp(tok[0], "nonterminals")) {
         for (int i=0; i < g.numNonterminals(); i++) {
           Nonterminal const *nt = g.getNonterminal(i);
-          nt->print(cout);
+          nt->print(std::cout);
         }
       }
 
@@ -54,8 +54,8 @@ void grammarExplorer(GrammarAnalysis &g)
         int ct=0;
         FOREACH_PRODUCTION(g.productions, iter) {
           if (iter.data()->left == nt) {
-            cout << "[" << ct << "] ";   // production id
-            iter.data()->print(cout);
+            std::cout << "[" << ct << "] ";   // production id
+            iter.data()->print(std::cout);
           }
           ct++;
         }
@@ -63,7 +63,7 @@ void grammarExplorer(GrammarAnalysis &g)
 
       else if (0==strcmp(tok[0], "state")) {
         ItemSet const *is = g.getItemSet(atoi(tok[1]));
-        is->print(cout, g);
+        is->print(std::cout, g);
       }
 
       else if (0==strcmp(tok[0], "suppress-except")) {
@@ -71,10 +71,10 @@ void grammarExplorer(GrammarAnalysis &g)
         Terminal const *t = (id==-1? NULL : g.getTerminal(atoi(tok[1])));
         DottedProduction::lookaheadSuppressExcept = t;
         if (t) {
-          cout << "suppressing  " << t->name << endl;
+          std::cout << "suppressing  " << t->name << endl;
         }
         else {
-          cout << "suppressing nothing\n";
+          std::cout << "suppressing nothing\n";
         }
       }
 
@@ -89,13 +89,13 @@ void grammarExplorer(GrammarAnalysis &g)
           for (int termId=0; termId < g.numTerminals(); termId++) {
             ItemSet const *dest = set->transitionC(g.getTerminal(termId));
             if (dest && dest->id == targetId) {
-              dest->print(cout, g);
+              dest->print(std::cout, g);
             }
           }
           for (int nontermId=0; nontermId < g.numNonterminals(); nontermId++) {
             ItemSet const *dest = set->transitionC(g.getNonterminal(nontermId));
             if (dest && dest->id == targetId) {
-              dest->print(cout, g);
+              dest->print(std::cout, g);
             }
           }
         }
@@ -122,11 +122,11 @@ void grammarExplorer(GrammarAnalysis &g)
       else if (0==strcmp(tok[0], "quit")) {
       }
       else {
-        cout << "unknown command: " << tok[0] << endl;
+        std::cout << "unknown command: " << tok[0] << endl;
       }
     }
     catch (xArrayBounds &) {
-      cout << "too few arguments to " << tok[0] << endl;
+      std::cout << "too few arguments to " << tok[0] << endl;
     }
 
 

@@ -12,8 +12,8 @@ class CpdInitTestVisitor : private ASTVisitor {
   public:
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
 
-  ostream &out;
-  CpdInitTestVisitor(ostream &out0)
+  std::ostream &out;
+  CpdInitTestVisitor(std::ostream &out0)
     : loweredVisitor(this)
     , out(out0)
   {}

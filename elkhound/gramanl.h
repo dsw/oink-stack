@@ -109,7 +109,7 @@ public:	    // funcs
   Symbol *symbolAfterDot() { return const_cast<Symbol*>(symbolAfterDotC()); }
 
   // print to cout as 'A -> B . c D' (no newline)
-  void print(ostream &os/*, GrammarAnalysis const &g*/) const;
+  void print(std::ostream &os/*, GrammarAnalysis const &g*/) const;
   OSTREAM_OPERATOR(DottedProduction)
 };
 
@@ -191,7 +191,7 @@ public:    // funcs
   // true if this item is "A -> alpha * t beta"
   bool isExtendingShift(Nonterminal const *A, Terminal const *t) const;
 
-  void print(ostream &os, GrammarAnalysis const &g) const;
+  void print(std::ostream &os, GrammarAnalysis const &g) const;
 };
 
 
@@ -366,8 +366,8 @@ public:     // funcs
   static bool equalKey(ItemSet const *key1, ItemSet const *key2);
 
   // ---- debugging ----
-  void writeGraph(ostream &os, GrammarAnalysis const &g) const;
-  void print(ostream &os, GrammarAnalysis const &g, bool nonkernel=true) const;
+  void writeGraph(std::ostream &os, GrammarAnalysis const &g) const;
+  void print(std::ostream &os, GrammarAnalysis const &g, bool nonkernel=true) const;
 };
 
 
@@ -582,10 +582,10 @@ public:	    // funcs
 
   // overrides base class to add a little bit of the
   // annotated info
-  void printProductions(ostream &os, bool printCode=true) const;
+  void printProductions(std::ostream &os, bool printCode=true) const;
 
   // print lots of stuff
-  void printProductionsAndItems(ostream &os, bool printCode=true) const;
+  void printProductionsAndItems(std::ostream &os, bool printCode=true) const;
 
   // when grammar is built, this runs all analyses and stores
   // the results in this object's data fields; write the LR item
@@ -593,7 +593,7 @@ public:	    // funcs
   void runAnalyses(char const *setsFname);
 
   // print the item sets to a stream (optionally include nonkernel items)
-  void printItemSets(ostream &os, bool nonkernel) const;
+  void printItemSets(std::ostream &os, bool nonkernel) const;
 
   // given a grammar, replace all of its actions with actions that
   // will build a straightforward parse tree using the facilities

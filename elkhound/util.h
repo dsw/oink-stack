@@ -9,7 +9,7 @@
 
 // given a method called 'print', define an operator to use it
 #define OSTREAM_OPERATOR(MyClass)                                \
-  friend ostream &operator << (ostream &os, MyClass const &ths)  \
+  friend std::ostream &operator << (std::ostream &os, MyClass const &ths) \
     { ths.print(os); return os; }
 
 

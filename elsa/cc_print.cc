@@ -12,7 +12,7 @@
 
 // set this environment variable to see the twalk_layer debugging
 // output
-OStreamOutStream treeWalkOut0(cout);
+OStreamOutStream treeWalkOut0(std::cout);
 TreeWalkOutStream treeWalkOut(treeWalkOut0, getenv("TWALK_VERBOSE"));
 
 // This is a dummy global so that this file will compile both in
@@ -26,7 +26,7 @@ string toString(class dummyType*) {return "";}
 CodeOutStream::~CodeOutStream()
 {
   if (bufferedNewlines) {
-    cout << "**************** ERROR.  "
+    std::cout << "**************** ERROR.  "
          << "You called my destructor before making sure all the buffered newlines\n"
          << "were flushed (by, say, calling finish())\n";
   }
@@ -86,13 +86,13 @@ void CodeOutStream::finish()
   flush();
 }
 
-CodeOutStream & CodeOutStream::operator << (ostream& (*manipfunc)(ostream& outs))
+CodeOutStream & CodeOutStream::operator << (std::ostream& (*manipfunc)(std::ostream& outs))
 {
   // sm: just assume it's "endl"; the only better thing I could
   // imagine doing is pointer comparisons with some other well-known
   // omanips, since we certainly can't execute it...
   if (bufferedNewlines) {
-    out << endl;
+    out << std::endl;
     printIndentation(depth);
   } else bufferedNewlines++;
   out.flush();
@@ -149,7 +149,7 @@ PairDelim::~PairDelim() {
 // **** class TreeWalkOutStream
 
 void TreeWalkOutStream::indent() {
-  out << endl;
+  out << std::endl;
   out.flush();
   for(int i=0; i<depth; ++i) out << ' ';
   out.flush();
@@ -157,7 +157,7 @@ void TreeWalkOutStream::indent() {
   out.flush();
 }
 
-TreeWalkOutStream & TreeWalkOutStream::operator << (ostream& (*manipfunc)(ostream& outs))
+TreeWalkOutStream & TreeWalkOutStream::operator << (std::ostream& (*manipfunc)(std::ostream& outs))
 {
   if (on) out << manipfunc;
   return *this;
@@ -168,7 +168,7 @@ TreeWalkOutStream & TreeWalkOutStream::operator << (ostream& (*manipfunc)(ostrea
 TreeWalkDebug::TreeWalkDebug(char *message, TreeWalkOutStream &out)
   : out(out)
 {
-  out << message << endl;
+  out << message << std::endl;
   out.flush();
   out.down();
 }
@@ -904,7 +904,7 @@ void TF_func::print(PrintEnv &env)
   // qualification.
 
   TreeWalkDebug treeDebug("TF_func");
-  *env.out << endl;
+  *env.out << std::endl;
   env.loc = loc;
   f->print(env);
 }
@@ -1061,7 +1061,7 @@ void Declaration::print(PrintEnv &env)
     // TODO: this will not work if there is more than one declarator ...
 
     iter->print(env);
-    *env.out << ';' << endl;
+    *env.out << ';' << std::endl;
   }
 }
 
@@ -1583,7 +1583,7 @@ char *expr_toString(Expression const *e)
 
 int expr_debugPrint(Expression const *e)
 {
-  e->debugPrint(cout, 0);
+  e->debugPrint(std::cout, 0);
   return 0;    // make gdb happy?
 }
 
@@ -2273,7 +2273,7 @@ void ND_usingDir::print(PrintEnv &env)
 
 
 // ------------------- global functions -------------------
-void prettyPrintTranslationUnit(ostream &os, TranslationUnit const &unit)
+void prettyPrintTranslationUnit(std::ostream &os, TranslationUnit const &unit)
 {
   OStreamOutStream out0(os);
   CodeOutStream codeOut(out0);

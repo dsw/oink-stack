@@ -16,7 +16,7 @@ void CpdInitTest::compoundTest_stage() {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
     TranslationUnit *unit = file2unit.get(file);
-    CpdInitTestVisitor v(cout);
+    CpdInitTestVisitor v(std::cout);
     unit->traverse(v.loweredVisitor);
   }
 }

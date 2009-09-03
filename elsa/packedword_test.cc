@@ -31,16 +31,16 @@ public:
   void setD(int d0) { setD0(d0); d = d0; check(); }
 };
 
-#define N(X) cout << "// " #X ";" << endl; X
+#define N(X) std::cout << "// " #X ";" << std::endl; X
 #define NE(X)                                                     \
-  cout << "// " #X ";" << endl;                                   \
-  clog << "Want exception: ";                                     \
+  std::cout << "// " #X ";" << std::endl;                         \
+  std::clog << "Want exception: ";                                \
   try {                                                           \
     X;                                                            \
-    cerr << "OOPS, expected assertion\n";                         \
+    std::cerr << "OOPS, expected assertion\n";                    \
     return 1;                                                     \
   } catch(...) {                                                  \
-    cout << "Good, got assertion.\n";                             \
+    std::cout << "Good, got assertion.\n";                        \
   }
 
 int main()
@@ -70,9 +70,9 @@ int main()
   NE(foo.setC( C+1 ));
   NE(foo.setD( D+1 ));
 
-  cout << "\n"
-       << "packedword_test: PASS.\n"
-       << flush;
+  std::cout << "\n"
+            << "packedword_test: PASS.\n"
+            << std::flush;
 }
 
 // Local Variables:

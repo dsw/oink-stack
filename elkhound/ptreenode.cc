@@ -45,7 +45,7 @@ TreeCount PTreeNode::countTrees()
 }
 
 
-void PTreeNode::printTree(ostream &out, PrintFlags pf) const
+void PTreeNode::printTree(std::ostream &out, PrintFlags pf) const
 {
   if (tracingSys("ptreeAddrs")) {
     pf = (PrintFlags)(pf | PF_ADDRS);
@@ -57,7 +57,7 @@ void PTreeNode::printTree(ostream &out, PrintFlags pf) const
 // amount to indent per level
 enum { INDENT_INC = 2 };
 
-void PTreeNode::innerPrintTree(ostream &out, int indentation, 
+void PTreeNode::innerPrintTree(std::ostream &out, int indentation, 
                                PrintFlags pf) const
 {
   int alts = 1;
@@ -126,7 +126,7 @@ void PTreeNode::innerPrintTree(ostream &out, int indentation,
   }
 }
 
-STATICDEF void PTreeNode::indent(ostream &out, int n)
+STATICDEF void PTreeNode::indent(std::ostream &out, int n)
 {
   for (int i=0; i<n; i++) {
     out << " ";

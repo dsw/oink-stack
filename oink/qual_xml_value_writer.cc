@@ -9,7 +9,7 @@ XmlValueWriter_Q::XmlValueWriter_Q
   (IdentityManager &mgr,
    // VarPredicate *varPred0, ValuePredicate *valuePred0,
    ASTVisitor *astVisitor0, ValueVisitor *valueVisitor0,
-   ostream *out0, int &depth0, bool indent0,
+   std::ostream *out0, int &depth0, bool indent0,
    XVW_SerializeOracle *srzOracle0)
     : XmlValueWriter(mgr, /*varPred0, valuePred0,*/ astVisitor0, valueVisitor0, out0, depth0,
                      indent0, srzOracle0)

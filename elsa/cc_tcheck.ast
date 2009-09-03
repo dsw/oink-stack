@@ -80,7 +80,7 @@ class Function {
   // 7/29/04: combined this with the old 'ctorReceiver'
   public(xml_TY,xmlShouldSerialize) Variable *receiver = NULL;
 
-  public void printExtras(ostream &os, int indent) const;
+  public void printExtras(std::ostream &os, int indent) const;
   custom debugPrint { printExtras(os, indent); }
 
   // if this Function is intended to be a clone of a template body,
@@ -134,7 +134,7 @@ class MemberInit {
   // or NULL for non-CompoundTypes
   public(xml_TY,xmlShouldSerialize) Variable *ctorVar = NULL;
 
-  public void printExtras(ostream &os, int indent) const;
+  public void printExtras(std::ostream &os, int indent) const;
   custom debugPrint { printExtras(os, indent); }
 
   custom clone {
@@ -247,7 +247,7 @@ class TypeSpecifier {
          Env &env, DeclFlags dflags, CompoundType *ct);
        private void tcheckFunctionBodies(Env &env);
 
-       public void printExtras(ostream &os, int indent) const;
+       public void printExtras(std::ostream &os, int indent) const;
        custom debugPrint { printExtras(os, indent); }
      }
 
@@ -258,7 +258,7 @@ class TypeSpecifier {
 
 
 class BaseClassSpec {
-  public void printExtras(ostream &os, int indent) const;
+  public void printExtras(std::ostream &os, int indent) const;
   custom debugPrint { printExtras(os, indent); }
 
   // the type named by the 'name'
@@ -281,7 +281,7 @@ class Enumerator {
   // tcheck'd so the value has been determined)
   public(xml) int enumValue;
 
-  public void printExtras(ostream &os, int indent) const;
+  public void printExtras(std::ostream &os, int indent) const;
   custom debugPrint { printExtras(os, indent); }
 
   // we pass both the base 'enum' and the Type wrapped around it,
@@ -350,7 +350,7 @@ class Declarator {
   public(xml) DeclaratorContext context = DC_UNKNOWN;
   custom clone {ret->context = context;}
 
-  public void printExtras(ostream &os, int indent) const;
+  public void printExtras(std::ostream &os, int indent) const;
   custom debugPrint { printExtras(os, indent); }
 
   // this class contains the data passed into and out of the
@@ -568,7 +568,7 @@ class Expression {
   // return what kind of special expression this is, if any
   public SpecialExpr getSpecial(CCLang &lang) const;
 
-  public void printExtras(ostream &os, int indent) const;
+  public void printExtras(std::ostream &os, int indent) const;
   custom debugPrint { printExtras(os, indent); }
 
   // interpretations of literals

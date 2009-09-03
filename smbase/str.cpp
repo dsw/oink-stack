@@ -8,7 +8,7 @@
 #include <stdio.h>          // sprintf
 #include <ctype.h>          // isspace
 #include <string.h>         // strcmp
-#include <iostream.h>       // ostream << char*
+#include <iostream>         // ostream << char*
 #include <assert.h>         // assert
 #include <unistd.h>         // write
 
@@ -139,7 +139,7 @@ string& string::operator&=(string const &tail)
 }
 
 
-void string::readdelim(istream &is, char const *delim)
+void string::readdelim(std::istream &is, char const *delim)
 {
   stringBuilder sb;
   sb.readdelim(is, delim);
@@ -147,7 +147,7 @@ void string::readdelim(istream &is, char const *delim)
 }
 
 
-void string::write(ostream &os) const
+void string::write(std::ostream &os) const
 {
   os << s;     // standard char* writing routine
 }
@@ -383,7 +383,7 @@ stringBuilder& stringBuilder::operator<< (Manipulator manip)
 
 
 // slow but reliable
-void stringBuilder::readdelim(istream &is, char const *delim)
+void stringBuilder::readdelim(std::istream &is, char const *delim)
 {
   char c;
   is.get(c);
@@ -479,13 +479,13 @@ string vstringf(char const *format, va_list args)
 // ------------------ test code --------------------
 #ifdef TEST_STR
 
-#include <iostream.h>    // cout
+#include <iostream>      // cout
 
 void test(unsigned long val)
 {
   //cout << stringb(val << " in hex: 0x" << stringBuilder::Hex(val)) << endl;
 
-  cout << stringb(val << " in hex: " << SBHex(val)) << endl;
+  std::cout << stringb(val << " in hex: " << SBHex(val)) << std::endl;
 }
 
 int main()
@@ -497,10 +497,11 @@ int main()
   test((unsigned long)(-1));
   test(1);
 
-  cout << "stringf: " << stringf("int=%d hex=%X str=%s char=%c float=%f",
-                                 5, 0xAA, "hi", 'f', 3.4) << endl;
+  std::cout << "stringf: " << stringf("int=%d hex=%X str=%s char=%c float=%f",
+                                      5, 0xAA, "hi", 'f', 3.4)
+            << std::endl;
 
-  cout << "tests passed\n";
+  std::cout << "tests passed\n";
 
   return 0;
 }

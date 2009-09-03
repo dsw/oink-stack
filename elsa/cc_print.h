@@ -12,7 +12,7 @@
 #include "cc_ast.h"             // C++ AST; this module
 #include "str.h"                // stringBuilder
 
-#include <iostream.h>           // ostream
+#include <iostream>             // ostream
 
 // this virtual semi-abstract class is intended to act as a
 // "superclass" for ostream, stringBuilder, and any other "output
@@ -22,7 +22,7 @@ class OutStream {
   virtual ~OutStream() {}
 
   // special-case methods
-  virtual OutStream & operator << (ostream& (*manipfunc)(ostream& outs)) = 0;
+  virtual OutStream & operator << (std::ostream& (*manipfunc)(std::ostream& outs)) = 0;
   virtual void flush() = 0;
 
   // special method to support rostring
@@ -49,7 +49,7 @@ class StringBuilderOutStream : public OutStream {
   StringBuilderOutStream(stringBuilder &buffer0) : buffer(buffer0) {}
 
   // special-case methods
-  virtual StringBuilderOutStream & operator << (ostream& (*manipfunc)(ostream& outs)) {
+  virtual StringBuilderOutStream & operator << (std::ostream& (*manipfunc)(std::ostream& outs)) {
     buffer << "\n";             // assume that it is endl
     return *this;
   }
@@ -77,13 +77,13 @@ class StringBuilderOutStream : public OutStream {
 };
 
 class OStreamOutStream : public OutStream {
-  ostream &out;
+  std::ostream &out;
 
   public:
-  OStreamOutStream(ostream &out0) : out(out0) {}
+  OStreamOutStream(std::ostream &out0) : out(out0) {}
 
   // special-case methods
-  virtual OStreamOutStream & operator << (ostream& (*manipfunc)(ostream& outs)) {
+  virtual OStreamOutStream & operator << (std::ostream& (*manipfunc)(std::ostream& outs)) {
     out << manipfunc;
     return *this;
   }
@@ -132,7 +132,7 @@ class CodeOutStream : public OutStream {
   void finish();
 
   // OutStream methods
-  CodeOutStream & operator << (ostream& (*manipfunc)(ostream& outs));
+  CodeOutStream & operator << (std::ostream& (*manipfunc)(std::ostream& outs));
   void flush() { out.flush(); }
   CodeOutStream & operator << (char const *message);
 
@@ -190,7 +190,7 @@ class TreeWalkOutStream : public OutStream {
 
   public:
   // OutStream methods
-  virtual TreeWalkOutStream & operator << (ostream& (*manipfunc)(ostream& outs));
+  virtual TreeWalkOutStream & operator << (std::ostream& (*manipfunc)(std::ostream& outs));
   virtual void flush() { out.flush(); }
 
   // special method to support rostring
@@ -393,7 +393,7 @@ void printSTemplateArgument(PrintEnv &env, STemplateArgument const *sta);
 // choice of output stream) from what the following function does.  I
 // made the following function by abstracting the -tr prettyPrint
 // behavior.
-void prettyPrintTranslationUnit(ostream &os, TranslationUnit const &unit);
+void prettyPrintTranslationUnit(std::ostream &os, TranslationUnit const &unit);
 
 
 #endif // CC_PRINT_H

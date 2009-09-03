@@ -14,7 +14,7 @@
 #define STR_H
 
 #include "typ.h"         // bool
-#include <iostream.h>	 // istream, ostream
+#include <iostream>  	 // istream, ostream
 #include <stdarg.h>      // va_list
 #include <string.h>      // strcmp, etc.
 
@@ -139,27 +139,27 @@ public:	       // funcs
   string& operator&= (string const &tail);
 
   // input/output
-  friend istream& operator>> (istream &is, string &obj)
+  friend std::istream& operator>> (std::istream &is, string &obj)
     { obj.readline(is); return is; }
-  friend ostream& operator<< (ostream &os, string const &obj)
+  friend std::ostream& operator<< (std::ostream &os, string const &obj)
     { obj.write(os); return os; }
 
   // note: the read* functions are currently implemented in a fairly
   // inefficient manner (one char at a time)
 
-  void readdelim(istream &is, char const *delim);
+  void readdelim(std::istream &is, char const *delim);
     // read from is until any character in delim is encountered; consumes that
     // character, but does not put it into the string; if delim is null or
     // empty, reads until EOF
 
-  void readall(istream &is) { readdelim(is, NULL); }
+  void readall(std::istream &is) { readdelim(is, NULL); }
     // read all remaining chars of is into this
 
-  void readline(istream &is) { readdelim(is, "\n"); }
+  void readline(std::istream &is) { readdelim(is, "\n"); }
     // read a line from input stream; consumes the \n, but doesn't put it into
     // the string
 
-  void write(ostream &os) const;
+  void write(std::ostream &os) const;
     // writes all stored characters (but not '\0')
 
   // debugging
@@ -184,7 +184,7 @@ void/*unusable*/ toCStr(char const *s);
 // I need some compatibility functions
 inline int strlen(rostring s) { return s.length(); }
 
-inline istream &getline(istream &in, string &line) { line.readline(in); return in; }
+inline std::istream &getline(std::istream &in, string &line) { line.readline(in); return in; }
 
 int strcmp(rostring s1, rostring s2);
 int strcmp(rostring s1, char const *s2);
@@ -307,12 +307,12 @@ public:
   stringBuilder &myself() { return *this; }
 
   // stream readers
-  friend istream& operator>> (istream &is, stringBuilder &sb)
+  friend std::istream& operator>> (std::istream &is, stringBuilder &sb)
     { sb.readline(is); return is; }
-  void readall(istream &is) { readdelim(is, NULL); }
-  void readline(istream &is) { readdelim(is, "\n"); }
+  void readall(std::istream &is) { readdelim(is, NULL); }
+  void readline(std::istream &is) { readdelim(is, "\n"); }
 
-  void readdelim(istream &is, char const *delim);
+  void readdelim(std::istream &is, char const *delim);
 
   // an experiment: hex formatting (something I've sometimes done by resorting
   // to sprintf in the past)

@@ -4,7 +4,7 @@
 #include "objpool.h"     // ObjectPool
 
 #include <stdlib.h>      // rand
-#include <iostream.h>    // cout
+#include <iostream>      // cout
 
 
 // class we're going to make a pool of
@@ -53,7 +53,7 @@ int main()
   }
 
   // start allocating at random
-  cout << "allocating/deallocating " << ITERS << " times..\n";
+  std::cout << "allocating/deallocating " << ITERS << " times..\n";
   for (i=0; i<ITERS; i++) {
     int index = rand()%BIG;
     Foo *&f = allocated[index];
@@ -78,7 +78,7 @@ int main()
   int finalNumAllocd = numAllocated;
 
   // deallocate all that remain
-  cout << "freeing remaining " << numAllocated << " stragglers\n";
+  std::cout << "freeing remaining " << numAllocated << " stragglers\n";
   for (i=0; i<BIG; i++) {
     if (allocated[i]) {
       Foo *&f = allocated[i];
@@ -93,8 +93,9 @@ int main()
   // verify that the # of objects freed is the # that became available
   xassert(finalNumAllocd == (pool.freeObjectsInPool() - startSize));
 
-  cout << "pool capacity at end: " << pool.freeObjectsInPool() << endl;
-  cout << "tobjpool works!\n";
+  std::cout << "pool capacity at end: " << pool.freeObjectsInPool()
+            << std::endl;
+  std::cout << "tobjpool works!\n";
 
   return 0;
 }

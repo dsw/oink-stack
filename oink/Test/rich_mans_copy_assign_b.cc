@@ -1,7 +1,7 @@
 // this should pass if we handle "this" specially; testing default
 // copy assign
 
-//  #include <iostream.h>
+//  #include <iostream>
 
 struct A {
   int q;

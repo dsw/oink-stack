@@ -7,7 +7,7 @@
 #define PTREENODE_H
 
 #include <stddef.h>     // NULL
-#include <iostream.h>   // ostream
+#include <iostream>     // ostream
 
 // for storing counts of parse trees; I try to make the code work for
 // either 'int' or 'double' in this spot (e.g. I assign 0 to it
@@ -63,8 +63,8 @@ private:     // funcs
   void init();
 
   // helpers
-  static void indent(ostream &out, int n);
-  void innerPrintTree(ostream &out, int indentation, PrintFlags pf) const;
+  static void indent(std::ostream &out, int n);
+  void innerPrintTree(std::ostream &out, int indentation, PrintFlags pf) const;
   int countMergedList() const;
 
 public:      // funcs
@@ -96,7 +96,7 @@ public:      // funcs
   // print the entire parse forest using indentation to represent
   // nesting, and duplicating printing of shared subtrees within
   // ambiguous regions
-  void printTree(ostream &out, PrintFlags pf = PF_NONE) const;
+  void printTree(std::ostream &out, PrintFlags pf = PF_NONE) const;
 
   // add an alternative to the current 'merged' list
   void addAlternative(PTreeNode *alt);

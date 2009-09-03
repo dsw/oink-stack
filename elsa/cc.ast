@@ -75,7 +75,7 @@ class TopForm (SourceLoc loc) {
   custom traverse { if (ambiguity) ambiguity->traverse(vis); }
 
   // print ambiguities
-  public void printAmbiguities(ostream &os, int indent) const;
+  public void printAmbiguities(std::ostream &os, int indent) const;
   custom preemptDebugPrint {
     if (ambiguity) {
       printAmbiguities(os, indent);
@@ -172,7 +172,7 @@ class ASTTypeId (
   custom traverse { if (ambiguity) ambiguity->traverse(vis); }
 
   // print ambiguities
-  public void printAmbiguities(ostream &os, int indent) const;
+  public void printAmbiguities(std::ostream &os, int indent) const;
   custom preemptDebugPrint {
     if (ambiguity) {
       printAmbiguities(os, indent);
@@ -193,7 +193,7 @@ class PQName(SourceLoc loc) {
   public string toString() const;
   public string toString_noTemplArgs() const;
   public friend stringBuilder& operator<< (stringBuilder &sb, PQName const &obj);
-  public friend ostream& operator<< (ostream &os, PQName const &obj) { return os << obj.toString(); };
+  public friend std::ostream& operator<< (std::ostream &os, PQName const &obj) { return os << obj.toString(); };
 
   // retrieve a StringRef for the underlying name, be it a PQ_name or
   // a PQ_operator
@@ -233,7 +233,7 @@ class PQName(SourceLoc loc) {
        custom traverse { if (ambiguity) ambiguity->traverse(vis); }
 
        // print ambiguities
-       public void printAmbiguities(ostream &os, int indent) const;
+       public void printAmbiguities(std::ostream &os, int indent) const;
        custom preemptDebugPrint {
          if (ambiguity) {
            printAmbiguities(os, indent);
@@ -266,7 +266,7 @@ class TypeSpecifier(SourceLoc loc) {
   public(field,xml) CVFlags cv = CV_UNLOCKED;
   custom clone { ret->cv = cv; }
 
-  public void printExtras(ostream &os, int indent) const;
+  public void printExtras(std::ostream &os, int indent) const;
   custom debugPrint { printExtras(os, indent); }
 
   public bool canBeTypeParam() const;
@@ -362,7 +362,7 @@ class Declarator (
   custom traverse { if (ambiguity) ambiguity->traverse(vis); }
 
   // print ambiguities
-  public void printAmbiguities(ostream &os, int indent) const;
+  public void printAmbiguities(std::ostream &os, int indent) const;
   custom preemptDebugPrint {
     if (ambiguity) {
       printAmbiguities(os, indent);
@@ -472,7 +472,7 @@ class Statement (SourceLoc loc) {
   custom traverse { if (ambiguity) ambiguity->traverse(vis); }
 
   // print ambiguities
-  public void printAmbiguities(ostream &os, int indent) const;
+  public void printAmbiguities(std::ostream &os, int indent) const;
   custom preemptDebugPrint {
     if (ambiguity) {
       printAmbiguities(os, indent);
@@ -515,7 +515,7 @@ class Condition {
   custom traverse { if (ambiguity) ambiguity->traverse(vis); }
 
   // print ambiguities
-  public void printAmbiguities(ostream &os, int indent) const;
+  public void printAmbiguities(std::ostream &os, int indent) const;
   custom preemptDebugPrint {
     if (ambiguity) {
       printAmbiguities(os, indent);
@@ -563,7 +563,7 @@ class Expression {
   }
 
   // print ambiguities
-  public void printAmbiguities(ostream &os, int indent) const;
+  public void printAmbiguities(std::ostream &os, int indent) const;
   custom preemptDebugPrint {
     if (ambiguity) {
       printAmbiguities(os, indent);
@@ -688,7 +688,7 @@ class ArgExpression(Expression expr) {   // expression in an argument list
   // are independent
   public ArgExpression *ambiguity = NULL;
   public void addAmbiguity(ArgExpression *alternative);
-  public void printAmbiguities(ostream &os, int indent) const;
+  public void printAmbiguities(std::ostream &os, int indent) const;
   custom traverse { if (ambiguity) ambiguity->traverse(vis); }
   custom preemptDebugPrint {
     if (ambiguity) {
@@ -751,7 +751,7 @@ class TemplateParameter (SourceLoc loc)(TemplateParameter /*nullable*/ next) {
   custom traverse { if (ambiguity) ambiguity->traverse(vis); }
 
   // print ambiguities
-  public void printAmbiguities(ostream &os, int indent) const;
+  public void printAmbiguities(std::ostream &os, int indent) const;
   custom preemptDebugPrint {
     if (ambiguity) {
       printAmbiguities(os, indent);
@@ -800,7 +800,7 @@ class TemplateArgument(/*first*/)(/*last*/ TemplateArgument next) {
   custom traverse { if (ambiguity) ambiguity->traverse(vis); }
 
   // print ambiguities
-  public void printAmbiguities(ostream &os, int indent) const;
+  public void printAmbiguities(std::ostream &os, int indent) const;
   custom preemptDebugPrint {
     if (ambiguity) {
       printAmbiguities(os, indent);

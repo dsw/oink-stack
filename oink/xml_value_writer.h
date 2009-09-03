@@ -77,7 +77,7 @@ virtual bool shouldSerialize(TYPE const *x) {return XTW_SerializeOracle::shouldS
   XmlValueWriter(IdentityManager &idmgr0,
                  // VarPredicate *varPred0, ValuePredicate *valuePred0,
                  ASTVisitor *astVisitor0, ValueVisitor *valueVisitor,
-                 ostream *out0, int &depth0, bool indent0,
+                 std::ostream *out0, int &depth0, bool indent0,
                  XVW_SerializeOracle *serializeOracle0);
   virtual ~XmlValueWriter() {}
 

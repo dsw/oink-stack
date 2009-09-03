@@ -8,7 +8,7 @@
 #include "nonport.h"       // getMilliseconds
 #include "trace.h"         // tracingSys
 
-#include <iostream.h>      // cout
+#include <iostream>        // cout
 
 
 void entry(int argc, char **argv)
@@ -17,7 +17,7 @@ void entry(int argc, char **argv)
   TRACE_ARGS()
 
   if (argc != 2) {
-    cout << "usage: " << progName << " [-tr tokens] input.i\n";
+    std::cout << "usage: " << progName << " [-tr tokens] input.i\n";
     return;
   }
   traceAddSys("progress");
@@ -38,7 +38,7 @@ void entry(int argc, char **argv)
 
   while (lexer.type != 0 /*eof*/) {
     if (print) {
-      cout << toString(lexer.loc) << ": " << lexer.tokenDesc() << endl;
+      std::cout << toString(lexer.loc) << ": " << lexer.tokenDesc() << std::endl;
     }
 
     nextToken(&lexer);

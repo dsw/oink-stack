@@ -985,7 +985,7 @@ void testFile(char const *fname)
 
     fseek(fp, 0, SEEK_END);
     len = (int)ftell(fp);
-    cout << "length of " << fname << ": " << len << endl;
+    std::cout << "length of " << fname << ": " << len << std::endl;
   }
 
   // get locations for the start and end
@@ -1156,23 +1156,23 @@ void testHashMap()
   int ppLine;
   for (ppLine = 1; ppLine < 10; ppLine++) {
     SourceLoc loc = mgr.encodeLineCol("srcloc.tmp", ppLine, 1);
-    cout << "ppLine " << ppLine << ": " << toString(loc) << endl;
+    std::cout << "ppLine " << ppLine << ": " << toString(loc) << std::endl;
   }
 
   // similar for last few lines
   for (ppLine = pp->numLines - 4; ppLine <= pp->numLines; ppLine++) {
     SourceLoc loc = mgr.encodeLineCol("srcloc.tmp", ppLine, 1);
-    cout << "ppLine " << ppLine << ": " << toString(loc) << endl;
+    std::cout << "ppLine " << ppLine << ": " << toString(loc) << std::endl;
   }
 
   // see how the expander line behaves
   if (!expanderLine) {
-    cout << "didn't find expander line!\n";
+    std::cout << "didn't find expander line!\n";
     exit(2);
   }
   else {
     SourceLoc loc = mgr.encodeLineCol("srcloc.tmp", expanderLine, 1);
-    cout << "expander column 1: " << toString(loc) << endl;
+    std::cout << "expander column 1: " << toString(loc) << std::endl;
 
     // in the pp file, I can advance the expander horizontally a long ways;
     // this should truncate to column 9
@@ -1181,16 +1181,16 @@ void testHashMap()
     char const *fname;
     int offset;
     mgr.decodeOffset(loc, fname, offset);
-    cout << "expander column 21: " << fname << ", offset " << offset << endl;
+    std::cout << "expander column 21: " << fname << ", offset " << offset << std::endl;
     xassert(0==strcmp(fname, "srcloc.test.cc"));
 
     // map that to line/col, which should show the truncation
     int line, col;
     orig->charToLineCol(offset, line, col);
-    cout << "expander column 21: " << locString(fname, line, col) << endl;
+    std::cout << "expander column 21: " << locString(fname, line, col) << std::endl;
     if (col != 9 && col != 10) {
       // 9 is for LF line endings, 10 for CRLF
-      cout << "expected column 9 or 10!\n";
+      std::cout << "expected column 9 or 10!\n";
       exit(2);
     }
   }
@@ -1206,7 +1206,7 @@ void testHashMap2()
 
   for (int ppLine = 1; ppLine <= pp->numLines; ppLine++) {
     SourceLoc loc = mgr.encodeLineCol("srcloc.test2.cc", ppLine, 1);
-    cout << "ppLine " << ppLine << ": " << toString(loc) << endl;
+    std::cout << "ppLine " << ppLine << ": " << toString(loc) << std::endl;
   }
 }
 
@@ -1215,7 +1215,7 @@ void entry(int argc, char ** /*argv*/)
 {
   xBase::logExceptions = false;
   traceAddSys("progress");
-  traceProgress() << "begin" << endl;
+  traceProgress() << "begin" << std::endl;
 
   if (argc >= 2) {
     // set maxStaticLocs low to test the warning
@@ -1240,22 +1240,22 @@ void entry(int argc, char ** /*argv*/)
     testFile("srcloc.h");
   }
 
-  traceProgress() << "end" << endl;
+  traceProgress() << "end" << std::endl;
 
   // protect against degeneracy by printing the length of
   // the longest line
-  cout << "\n";
-  cout << "long line len: " << longestLen << endl;
+  std::cout << "\n";
+  std::cout << "long line len: " << longestLen << std::endl;
 
   // test the statics
-  cout << "invalid: " << toString(SL_UNKNOWN) << endl;
-  cout << "here: " << toString(HERE_SOURCELOC) << endl;
+  std::cout << "invalid: " << toString(SL_UNKNOWN) << std::endl;
+  std::cout << "here: " << toString(HERE_SOURCELOC) << std::endl;
 
-  cout << "\n";
+  std::cout << "\n";
   testHashMap();
   testHashMap2();
 
-  cout << "srcloc is ok\n";
+  std::cout << "srcloc is ok\n";
 }
 
 ARGS_MAIN

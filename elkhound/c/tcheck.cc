@@ -174,7 +174,7 @@ void TF_func::itcheck(Env &env)
 
 
 template <class T, class Y>      // Y is type of thing printed
-void printSObjList(ostream &os, int indent, char const *label,
+void printSObjList(std::ostream &os, int indent, char const *label,
                    SObjList<T> const &list, Y (*map)(T const *t))
 {
   ind(os, indent) << label << ":";
@@ -197,7 +197,7 @@ string stmtLoc(Statement const *s)
 }
 
 
-void TF_func::printExtras(ostream &os, int indent) const
+void TF_func::printExtras(std::ostream &os, int indent) const
 {
   printSObjList(os, indent, "params", params, varName);
   printSObjList(os, indent, "locals", locals, varName);
@@ -433,7 +433,7 @@ void /*Type const * */D_name::itcheck(Env &env, Type const *base,
 {
   trace("tcheck")
     << "found declarator name: " << (name? name : "(null)")
-    << ", type is " << base->toCString() << endl;
+    << ", type is " << base->toCString() << std::endl;
 
   // construct a Variable: this is a binding introduction
   Variable *var = new Variable(loc, name, base, dflags);
@@ -591,7 +591,7 @@ void /*Type const * */D_bitfield::itcheck(Env &env, Type const *base,
 {
   trace("tcheck")
     << "found bitfield declarator name: "
-    << (name? name : "(null)") << endl;
+    << (name? name : "(null)") << std::endl;
   xfailure("bitfields not supported yet");
   //return NULL;    // silence warning
 }

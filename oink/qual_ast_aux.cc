@@ -3,13 +3,13 @@
 #include "qual_ast_aux.h"       // this module
 
 void ASTPrinter_Q::TypeSpecifier_printExtras
-  (TypeSpecifier const *const ts, ostream &os, int indent) const
+  (TypeSpecifier const *const ts, std::ostream &os, int indent) const
 {
   ASTPrinter_O::TypeSpecifier_printExtras(ts, os, indent);
   xassert(ts);
   if (ts->ql) {
     ind(os, indent);
-    os << toString(ts->ql) << endl;
+    os << toString(ts->ql) << std::endl;
   }
 }
 

@@ -24,7 +24,7 @@ class TemplCandidates;
 extern int overloadNesting;      // overload resolutions ongoing
 
 // ostream with line prefix already printed
-ostream &overloadTrace();
+std::ostream &overloadTrace();
 
 #ifndef NDEBUG
   class OverloadIndTrace {

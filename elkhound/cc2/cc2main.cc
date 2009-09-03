@@ -1,7 +1,7 @@
 // cc2main.cc            see license.txt for copyright and terms of use
 // toplevel driver for cc2
 
-#include <iostream.h>     // cout
+#include <iostream>       // cout
 #include <stdlib.h>       // exit
 
 #include "trace.h"        // traceAddSys
@@ -44,13 +44,13 @@ void doit(int argc, char **argv)
       exit(2);
     }
 
-    traceProgress(2) << "final parse result: " << treeTop << endl;
+    traceProgress(2) << "final parse result: " << treeTop << std::endl;
 
     if (treeTop && tracingSys("printTree")) {
       PTreeNode *node = (PTreeNode*)treeTop;
-      cout << "local ambiguities: " << PTreeNode::alternativeCount << endl;
-      cout << "number of parses: " << node->countTrees() << endl;
-      node->printTree(cout);
+      std::cout << "local ambiguities: " << PTreeNode::alternativeCount << std::endl;
+      std::cout << "number of parses: " << node->countTrees() << std::endl;
+      node->printTree(std::cout);
     }
 
     delete user;         

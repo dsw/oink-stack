@@ -44,7 +44,7 @@ char const *XmlLexer::currentText() const
   return const_cast<XmlLexer*>(this)->YYText();
 }
 
-void XmlLexer::restart(istream *in) 
+void XmlLexer::restart(std::istream *in) 
 { 
   this->yyrestart(in); 
   linenumber = 1; 

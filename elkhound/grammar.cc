@@ -79,7 +79,7 @@ int Symbol::getTermOrNontermIndex() const
 }
 
 
-void Symbol::print(ostream &os) const
+void Symbol::print(std::ostream &os) const
 {
   os << name;
   if (type) {
@@ -90,7 +90,7 @@ void Symbol::print(ostream &os) const
 }
 
 
-void Symbol::printDDM(ostream &os) const
+void Symbol::printDDM(std::ostream &os) const
 {
   // don't print anything if no handlers
   if (!anyDDM()) return;
@@ -108,7 +108,7 @@ void Symbol::printDDM(ostream &os) const
 }
 
 
-void Symbol::internalPrintDDM(ostream &os) const
+void Symbol::internalPrintDDM(std::ostream &os) const
 {
   if (dupCode.isNonNull()) {
     os << "    dup(" << dupParam << ") [" << dupCode << "]\n";
@@ -175,7 +175,7 @@ void Terminal::xfer(Flatten &flat)
 }
 
 
-void Terminal::print(ostream &os) const
+void Terminal::print(std::ostream &os) const
 {
   os << "[" << termIndex << "]";
   if (precedence) {
@@ -186,7 +186,7 @@ void Terminal::print(ostream &os) const
 }
 
 
-void Terminal::internalPrintDDM(ostream &os) const
+void Terminal::internalPrintDDM(std::ostream &os) const
 {
   Symbol::internalPrintDDM(os);
 
@@ -272,7 +272,7 @@ void Nonterminal::xferSerfs(Flatten &flat, Grammar &g)
 }
 
 
-void Nonterminal::print(ostream &os, Grammar const *grammar) const
+void Nonterminal::print(std::ostream &os, Grammar const *grammar) const
 {
   os << "[" << ntIndex << "] ";
   Symbol::print(os);
@@ -296,7 +296,7 @@ void Nonterminal::print(ostream &os, Grammar const *grammar) const
 }
 
 
-void Nonterminal::internalPrintDDM(ostream &os) const
+void Nonterminal::internalPrintDDM(std::ostream &os) const
 {
   Symbol::internalPrintDDM(os);
   
@@ -468,7 +468,7 @@ bool TerminalSet::removeSet(TerminalSet const &obj)
 }
 
 
-void TerminalSet::print(ostream &os, Grammar const &g, char const *lead) const
+void TerminalSet::print(std::ostream &os, Grammar const &g, char const *lead) const
 {
   int ct=0;
   FOREACH_TERMINAL(g.terminals, iter) {
@@ -731,7 +731,7 @@ void Production::addForbid(Terminal *t, int numTerminals)
 }
 
 
-void Production::print(ostream &os) const
+void Production::print(std::ostream &os) const
 {
   os << toString();
 }
@@ -889,7 +889,7 @@ int Grammar::numNonterminals() const
 }
 
 
-void Grammar::printSymbolTypes(ostream &os) const
+void Grammar::printSymbolTypes(std::ostream &os) const
 {
   os << "Grammar terminals with types or precedence:\n";
   FOREACH_OBJLIST(Terminal, terminals, term) {
@@ -897,7 +897,7 @@ void Grammar::printSymbolTypes(ostream &os) const
     t.printDDM(os);
     if (t.precedence) {
       os << "  " << t.name << " " << ::toString(t.associativity)
-         << " %prec " << t.precedence << endl;
+         << " %prec " << t.precedence << std::endl;
     }
   }
 
@@ -908,7 +908,7 @@ void Grammar::printSymbolTypes(ostream &os) const
 }
 
 
-void Grammar::printProductions(ostream &os, bool code) const
+void Grammar::printProductions(std::ostream &os, bool code) const
 {
   os << "Grammar productions:\n";
   for (ObjListIter<Production> iter(productions);
@@ -964,7 +964,7 @@ bool Grammar::declareToken(LocString const &symbolName, int code,
 {
   // verify that this token hasn't been declared already
   if (findSymbolC(symbolName)) {
-    cout << "token " << symbolName << " has already been declared\n";
+    std::cout << "token " << symbolName << " has already been declared\n";
     return false;
   }
 
@@ -997,7 +997,7 @@ string bisonTokenName(Terminal const *t)
 }
 
 // print the grammar in a form that Bison likes
-void Grammar::printAsBison(ostream &os) const
+void Grammar::printAsBison(std::ostream &os) const
 {
   os << "/* automatically generated grammar */\n\n";
 
@@ -1104,8 +1104,8 @@ void Grammar::printAsBison(ostream &os) const
             }
           }
           if (!found) {
-            cout << "warning: cannot find token for precedence level "
-                 << prod.data()->precedence << endl;
+            std::cout << "warning: cannot find token for precedence level "
+                      << prod.data()->precedence << std::endl;
             os << " /* no token precedence level "/* */
                << prod.data()->precedence << " */";
           }
@@ -1264,7 +1264,7 @@ string terminalSequenceToString(TerminalList const &list)
 
 // ------------------ emitting C++ code ---------------------
 #if 0     // not done
-void Grammar::emitSelfCC(ostream &os) const
+void Grammar::emitSelfCC(std::ostream &os) const
 {
   os << "void buildGrammar(Grammar *g)\n"
         "{\n";

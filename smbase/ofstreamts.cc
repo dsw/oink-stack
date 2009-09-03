@@ -8,15 +8,15 @@
 #include <stdio.h>
 #include <unistd.h>
 
-size_t getFileSize(istream &i)
+size_t getFileSize(std::istream &i)
 {
   // use 'streampos' instead of 'istream::pos_type' for gcc-2.95
   // compatibility.
   if (!i) return 0;
   streampos save_pos = i.tellg();
-  i.seekg(0, ios::beg);
+  i.seekg(0, std::ios::beg);
   streampos begin_pos = i.tellg();
-  i.seekg(0, ios::end);
+  i.seekg(0, std::ios::end);
   streampos end_pos = i.tellg();
   size_t size = end_pos - begin_pos;
   i.seekg(save_pos);
@@ -70,9 +70,9 @@ const char *ofstreamTS::init_fname(string const &destFname0)
 void ofstreamTS::save() {
   close();
   if (filesIdentical(destFname.c_str(), tmpFname.c_str())) {
-    cout << "  file " << destFname << " unchanged, so not overwriting it.\n";
+    std::cout << "  file " << destFname << " unchanged, so not overwriting it.\n";
     if (unlink(tmpFname.c_str())) {
-      cerr << "  unlink " << tmpFname << " failed\n";
+      std::cerr << "  unlink " << tmpFname << " failed\n";
     }
     return;
   }
@@ -84,6 +84,6 @@ void ofstreamTS::save() {
 void ofstreamTS::deleteTmp() {
   close();
   if (unlink(tmpFname.c_str())) {
-    cerr << "  unlink " << tmpFname << " failed\n";
+    std::cerr << "  unlink " << tmpFname << " failed\n";
   }
 }

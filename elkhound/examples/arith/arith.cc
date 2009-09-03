@@ -101,7 +101,7 @@ int main(int argc)
 
     // print the tree
     PTreeNode *ptn = (PTreeNode*)result;
-    ptn->printTree(cout, PTreeNode::PF_EXPAND);
+    ptn->printTree(std::cout, PTreeNode::PF_EXPAND);
   }
 
   return 0;

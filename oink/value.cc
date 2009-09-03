@@ -623,7 +623,7 @@ void BucketOValues::getOthersExtraFields(BucketOValues &other) {
 
 void indent(int indentation) {
   for (int i=0; i<indentation; ++i) {
-    cout << "\t";
+    std::cout << "\t";
   }
 }
 

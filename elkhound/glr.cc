@@ -125,7 +125,7 @@
 #endif
 #if ACTION_TRACE
   #define ACTION(stmt) stmt
-  #define TRSACTION(stuff) if (tracingSys("action")) { cout << stuff << endl; }
+  #define TRSACTION(stuff) if (tracingSys("action")) { std::cout << stuff << std::endl; }
 #else
   #define ACTION(stmt)
   #define TRSACTION(stuff)
@@ -134,7 +134,7 @@
 // TRSPARSE(stuff) traces <stuff> during debugging with -tr parse
 #if !defined(NDEBUG)
   #define IF_NDEBUG(stuff)
-  #define TRSPARSE(stuff) if (trParse) { trsParse << stuff << endl; }
+  #define TRSPARSE(stuff) if (trParse) { trsParse << stuff << std::endl; }
   #define TRSPARSE_DECL(stuff) stuff
 #else
   #define IF_NDEBUG(stuff) stuff
@@ -499,9 +499,9 @@ SiblingLink *StackNode::getLinkTo(StackNode *another)
 
 STATICDEF void StackNode::printAllocStats()
 {
-  cout << "stack nodes: " << numStackNodesAllocd
+  std::cout << "stack nodes: " << numStackNodesAllocd
        << ", max stack nodes: " << maxStackNodesAllocd
-       << endl;
+       << std::endl;
 }
 
 
@@ -844,11 +844,11 @@ bool GLR::glrParse(LexerInterface &lexer, SemanticValue &treeTop)
   if (getenv("ELKHOUND_DEBUG")) {
     #if DO_ACCOUNTING
       StackNode::printAllocStats();
-      cout << "detShift=" << detShift
+      std::cout << "detShift=" << detShift
            << ", detReduce=" << detReduce
            << ", nondetShift=" << nondetShift
            << ", nondetReduce=" << nondetReduce
-           << endl;
+           << std::endl;
       //PVAL(parserMerges);
       PVAL(computeDepthIters);
       
@@ -1162,7 +1162,7 @@ STATICDEF bool GLR
               // update: now I don't even set it to NULL because the code here
               // has been changed to ignore *any* value
               //if (prev->firstSib.sval != NULL) {
-              //  cout << "I GOT THE ANALYSIS WRONG!\n";
+              //  std::cout << "I GOT THE ANALYSIS WRONG!\n";
               //}
 
               // cancelled(1) effect: parser->decRefCt();
@@ -1373,7 +1373,7 @@ string stackTraceString(StackNode *parser)
 // far as I can tell!)
 bool GLR::nondeterministicParseToken()
 {
-  //cout << "not deterministic\n";
+  //std::cout << "not deterministic\n";
 
   // ([GLR] called the code from here to the end of
   // the loop 'parseword')
@@ -1428,35 +1428,35 @@ void GLR::printParseErrorMessage(StateId lastToDie)
   // nondeterministic algorithm there might have been more than one
   // state that could have made progress..
   if (lastToDie != STATE_INVALID) {
-    cout << "In state " << lastToDie << ", I expected one of these tokens:\n";
-    cout << "  ";
+    std::cout << "In state " << lastToDie << ", I expected one of these tokens:\n";
+    std::cout << "  ";
     for (int i=0; i < tables->getNumTerms(); i++) {
       ActionEntry act = tables->getActionEntry(lastToDie, i);
       if (!tables->isErrorAction(act)) {
-        //cout << "  [" << i << "] " << lexerPtr->tokenKindDesc(i) << "\n";
-        cout << lexerPtr->tokenKindDesc(i) << ", ";
+        //std::cout << "  [" << i << "] " << lexerPtr->tokenKindDesc(i) << "\n";
+        std::cout << lexerPtr->tokenKindDesc(i) << ", ";
       }
     }
-    cout << "\n";
+    std::cout << "\n";
   }
   else {                                                                          
     // this happens because I lose the dead-parser info while processing
     // the reduction worklist; to implement this I'd need to remember each
     // state that died while processing the worklist; for now I'll just let
     // it be, and only have the right info sometimes
-    cout << "(expected-token info not available due to nondeterministic mode)\n";
+    std::cout << "(expected-token info not available due to nondeterministic mode)\n";
   }
 
   // failure caused by unprimed lexer?
   if (lexerPtr->type == 0 && 
       lexerPtr->sval == (SemanticValue)LexerInterface::DEFAULT_UNPRIMED_SVAL) {
-    cout << "It looks like you forgot to prime the lexer before calling the parser.\n";
+    std::cout << "It looks like you forgot to prime the lexer before calling the parser.\n";
   }
 
-  cout << toString(lexerPtr->loc)
+  std::cout << toString(lexerPtr->loc)
        << ": Parse error (state " << lastToDie << ") at "
        << lexerPtr->tokenDesc()
-       << endl;
+       << std::endl;
 
   // removing this for now since keeping it would mean putting
   // sample inputs and left contexts for all states into the
@@ -1464,11 +1464,11 @@ void GLR::printParseErrorMessage(StateId lastToDie)
   #if 0
   if (lastToDie == STATE_INVALID) {
     // I'm not entirely confident it has to be nonnull..
-    cout << "what the?  lastToDie is STATE_INVALID??\n";
+    std::cout << "what the?  lastToDie is STATE_INVALID??\n";
   }
   else {
     // print out the context of that parser
-    cout << "last parser (state " << lastToDie << ") to die had:\n"
+    std::cout << "last parser (state " << lastToDie << ") to die had:\n"
          << "  sample input: "
          << sampleInput(getItemSet(lastToDie)) << "\n"
          << "  left context: "
@@ -1498,7 +1498,7 @@ bool GLR::cleanupAfterParse(SemanticValue &treeTop)
 
   // finish the parse by reducing to start symbol
   if (topmostParsers.length() != 1) {
-    cout << "parsing finished with more than one active parser!\n";
+    std::cout << "parsing finished with more than one active parser!\n";
     return false;
   }
   StackNode *last = topmostParsers.top();
@@ -2051,18 +2051,18 @@ SiblingLink *GLR::rwlShiftNonterminal(StackNode *leftSibling, int lhsIndex,
         if (sibLink->yieldCount > 0) {
           // yield-then-merge (YTM) happened
           yieldThenMergeCt++;
-          SOURCELOC( trace("ytm") << "at " << toString(loc) << endl; )
+          SOURCELOC( trace("ytm") << "at " << toString(loc) << std::endl; )
 
           // if merging yielded a new semantic value, then we most likely
           // have a problem; if it yielded the *same* value, then most
           // likely the user has implemented the 'ambiguity' link soln,
           // so we're ok
           if (old2 != sibLink->sval) {
-            cout << "warning: incomplete parse forest: " << (void*)old2
+            std::cout << "warning: incomplete parse forest: " << (void*)old2
                  << " has already been yielded, but it now has been "
                  << "merged with " << (void*)sval << " to make "
                  << (void*)(sibLink->sval) << " (lhsIndex="
-                 << lhsIndex << ")" << endl;
+                 << lhsIndex << ")" << std::endl;
           }
         }
       )

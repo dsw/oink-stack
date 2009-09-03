@@ -684,51 +684,51 @@ bool QualAnnot_ExternVisit::preVisitVariable(Variable_O *var) {
 #endif
 
 void CVAtomicValue_QualAnnot::printDeepQualifiers() {
-  cout << "(atom " << GETSN(v()) << " " << ::toString(getQl()) << ")";
+  std::cout << "(atom " << GETSN(v()) << " " << ::toString(getQl()) << ")";
   // FIX: Don't know if I'm supposed to check the fields of a struct
   // or not.  Wrote Jeff 31 dec 2002.
 }
 
 void PointerValue_QualAnnot::printDeepQualifiers() {
-  cout << "(ptr " << GETSN(v()) << " " << ::toString(getQl());
-  cout << " at:";
+  std::cout << "(ptr " << GETSN(v()) << " " << ::toString(getQl());
+  std::cout << " at:";
   qa(v()->getAtValue())->printDeepQualifiers();
-  cout << ")";
+  std::cout << ")";
 }
 
 void ReferenceValue_QualAnnot::printDeepQualifiers() {
-  cout << "(ref " << GETSN(v()) << " " << ::toString(getQl());
-  cout << " at:";
+  std::cout << "(ref " << GETSN(v()) << " " << ::toString(getQl());
+  std::cout << " at:";
   qa(v()->getAtValue())->printDeepQualifiers();
-  cout << ")";
+  std::cout << ")";
 }
 
 void FunctionValue_QualAnnot::printDeepQualifiers() {
-  cout << "(func " << GETSN(v()) << " " << ::toString(getQl());
+  std::cout << "(func " << GETSN(v()) << " " << ::toString(getQl());
   // FIX: how to deal with the implicit-this parameter?
-  cout << " ret:";
+  std::cout << " ret:";
   qa(v()->retValue)->printDeepQualifiers();
-  cout << " args:";
+  std::cout << " args:";
   for(SObjListIterNC<Variable_O> params_iter(*v()->params);
       !params_iter.isDone();
       params_iter.adv()) {
     qa(params_iter.data()->abstrValue())->printDeepQualifiers();
   }
-  cout << ")";
+  std::cout << ")";
 }
 
 void ArrayValue_QualAnnot::printDeepQualifiers() {
-  cout << "(array " << GETSN(v()) << " " << ::toString(getQl()) << ")";
+  std::cout << "(array " << GETSN(v()) << " " << ::toString(getQl()) << ")";
   qa(v()->atValue)->printDeepQualifiers();
 }
 
 void PointerToMemberValue_QualAnnot::printDeepQualifiers() {
-  cout << "(ptrtomem " << GETSN(v()) << " " << ::toString(getQl());
-  cout << " at:";
+  std::cout << "(ptrtomem " << GETSN(v()) << " " << ::toString(getQl());
+  std::cout << " at:";
   // FIX: if the inClass member is ever made to have qualifiers, need
   // to check it as well
   qa(v()->getAtValue())->printDeepQualifiers();
-  cout << ")";
+  std::cout << ")";
 }
 
 #undef GETSN
@@ -780,9 +780,9 @@ void attachOneLiteralToQvar(SourceLoc locOfAttach,
 
 void dumpQl(Value *t) {
   qa(t)->printDeepQualifiers();
-  cout << " ql:";
-  cout << ::toString(qa(t)->getQl());
-  cout << endl;
+  std::cout << " ql:";
+  std::cout << ::toString(qa(t)->getQl());
+  std::cout << std::endl;
 }
 
 bool isConstForInferencePurposes(Value *v) {

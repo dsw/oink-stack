@@ -5,7 +5,7 @@
 #ifndef TRACE_H
 #define TRACE_H
 
-#include <iostream.h>     // ostream
+#include <iostream>       // ostream
 
 
 // add a subsystem to the list of those being traced
@@ -25,7 +25,7 @@ void traceRemoveAll();
 // sending a little output to identify the system); if not, it
 // yields an ostream attached to /dev/null; when using this
 // method, it is up to you to put the newline
-ostream &trace(char const *sysName);
+std::ostream &trace(char const *sysName);
 
 // give an entire string to trace; do *not* put a newline in it
 // (the tracer will do that)
@@ -57,7 +57,7 @@ void trstr(char const *sysName, char const *traceString);
 // special for "progress" tracing; prints time too;
 // 'level' is level of detail -- 1 is highest level, 2 is
 // more refined (and therefore usually not printed), etc.
-ostream &traceProgress(int level=1);
+std::ostream &traceProgress(int level=1);
 
 
 // add one or more subsystems, separated by commas
@@ -82,6 +82,6 @@ extern bool ignoreTraceEnvVar;    // initially false
 
 
 // render the tracers as a string for examination
-void printTracers(ostream &out, char *delim = ", ");
+void printTracers(std::ostream &out, char *delim = ", ");
 
 #endif // TRACE_H

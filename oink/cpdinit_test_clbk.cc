@@ -11,20 +11,20 @@ extern char const *cpdTestGlobalCurVarName; // cpdinit_test.cc
 void oneAssignmentCpdTest(void *context, SourceLoc loc, MemberValueIter &type_iter,
                           IN_expr *src_expr, Value *tgtContainer, Variable *tgtContentVar) {
   // FIX: replace this with tgtContentVar->name
-  cout << cpdTestGlobalCurVarName;
-  cout << type_iter.toString();
-  cout << " = ";
-  OStreamOutStream out0(cout);
+  std::cout << cpdTestGlobalCurVarName;
+  std::cout << type_iter.toString();
+  std::cout << " = ";
+  OStreamOutStream out0(std::cout);
   CodeOutStream codeOut(out0);
   PrintEnv e(typePrinterOink, &codeOut);
   src_expr->e->iprint(e);
-  codeOut << ";" << endl;
+  codeOut << ";" << std::endl;
   codeOut.finish();
 }
 
 bool reportUserErrorCpdTest(void *context, SourceLoc loc, MemberValueIter &type_iter,
                             Initializer *init, UserError &e) {
-  cout << "**** User error at " << ::toString(loc) << endl;
+  std::cout << "**** User error at " << ::toString(loc) << std::endl;
   return true;                  // rethrow
 }
 

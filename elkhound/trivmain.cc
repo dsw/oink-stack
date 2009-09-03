@@ -156,7 +156,7 @@ void entry(int argc, char *argv[])
   // count # of parses
   if (count) {
     TreeCount numParses = top->countTrees();
-    cout << "num parses: " << numParses << endl;
+    std::cout << "num parses: " << numParses << std::endl;
 
     TreeCount should = 0;    // meaning unknown
     if (0==strcmp(GRAMMAR_NAME, "triv/SSx.tree.bin")) {
@@ -167,17 +167,17 @@ void entry(int argc, char *argv[])
     }
 
     if (should != 0) {
-      cout << "should be: " << should << endl;
+      std::cout << "should be: " << should << std::endl;
       if (should != numParses) {
-        cout << "MISMATCH in number of parse trees\n";
+        std::cout << "MISMATCH in number of parse trees\n";
       }
     }
   }
-  cout << "tree nodes: " << PTreeNode::allocCount
-       << endl;
+  std::cout << "tree nodes: " << PTreeNode::allocCount
+       << std::endl;
 
   if (tracingSys("printTree")) {
-    top->printTree(cout);
+    top->printTree(std::cout);
   }
 }
 

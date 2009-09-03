@@ -10,33 +10,33 @@ void testrw(std::string const& archivename)
 {
   {
     ArchiveSerializerP a = archiveSrzManager->getArchiveSerializer(archivename);
-    cout << "opened ArchiveSerializer '" << a->archiveName() << "'" << endl;
+    std::cout << "opened ArchiveSerializer '" << a->archiveName() << "'" << std::endl;
 
     a->output("file1") << "this is file1";
-    cout << "  wrote to '" << a->curFname() << "'" << endl;
+    std::cout << "  wrote to '" << a->curFname() << "'" << std::endl;
 
     a->output("file2") << "this is file2";
-    cout << "  wrote to '" << a->curFname() << "'" << endl;
+    std::cout << "  wrote to '" << a->curFname() << "'" << std::endl;
   }
 
   {
     ArchiveDeserializerP a = archiveSrzManager->getArchiveDeserializer(archivename);
-    cout << "opened ArchiveDeserializer " << a->archiveName() << "'" << endl;
+    std::cout << "opened ArchiveDeserializer " << a->archiveName() << "'" << std::endl;
 
     std::string s;
 
     std::getline(a->input("file1"), s);
-    cout << "  read from '" << a->curFname() << "': " << s << endl;
+    std::cout << "  read from '" << a->curFname() << "': " << s << std::endl;
 
     std::getline(a->input("file2"), s);
-    cout << "  read from '" << a->curFname() << "': " << s << endl;
+    std::cout << "  read from '" << a->curFname() << "': " << s << std::endl;
 
     try {
-      cout << "  read from bad file 'file3': ";
+      std::cout << "  read from bad file 'file3': ";
       a->input("file3");
-      cout << "FAILED, did not throw ArchiveIOException\n";
+      std::cout << "FAILED, did not throw ArchiveIOException\n";
     } catch(ArchiveIOException) {
-      cout << "good, threw ArchiveIOException\n";
+      std::cout << "good, threw ArchiveIOException\n";
     }
   }
 }
@@ -44,14 +44,14 @@ void testrw(std::string const& archivename)
 void testnonexistant(std::string const& archivename)
 {
   try {
-    cout << "test opening invalid archive " << archivename << ": ";
+    std::cout << "test opening invalid archive " << archivename << ": ";
 
     archiveSrzManager->getArchiveDeserializer(archivename);
-    cout << "FAILED, did not throw ArchiveIOException\n";
+    std::cout << "FAILED, did not throw ArchiveIOException\n";
   } catch(UserError &) {
-    cout << "good, threw UserError\n";
+    std::cout << "good, threw UserError\n";
   } catch(ArchiveIOException &) {
-    cout << "good, threw ArchiveIOException\n";
+    std::cout << "good, threw ArchiveIOException\n";
   }
 }
 
@@ -64,8 +64,8 @@ int main()
     testnonexistant("badfilename.xyz");
     testnonexistant("/etc/xxx.qz");
   } catch (xBase &e) {
-    cerr << "EXCEPTION: " << e << endl;
+    std::cerr << "EXCEPTION: " << e << std::endl;
   } catch (...) {
-    cerr << "UNKNOWN EXCEPTION\n";
+    std::cerr << "UNKNOWN EXCEPTION\n";
   }
 }

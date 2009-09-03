@@ -4,7 +4,7 @@
 
 verbatim ParseEnv [
 
-#include <iostream.h>      // cout
+#include <iostream>        // cout
 #include "trace.h"         // trace
 #include "locstr.h"        // LocString
 #include "strhash.h"       // StringHash

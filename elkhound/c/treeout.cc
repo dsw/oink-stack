@@ -4,11 +4,11 @@
 #include "treeout.h"     // this module
 
 // print heading to stdout, with some indication of tree level
-ostream &treeOut(int level)
+std::ostream &treeOut(int level)
 {
   while (level--) {
-    cout << "*";
+    std::cout << "*";
   }
-  cout << " ";
-  return cout;
+  std::cout << " ";
+  return std::cout;
 }

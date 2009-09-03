@@ -7,7 +7,7 @@
 #include "strutil.h"     // string, replace
 #include "reporterr.h"   // silentReportError
 
-#include <iostream.h>    // cout
+#include <iostream>      // cout
 #include <ctype.h>       // isspace
 
 
@@ -346,7 +346,7 @@ int Test::main()
   badname(")");
   badname("main");
 
-  cout << "\nccsstr: all tests PASSED\n";
+  std::cout << "\nccsstr: all tests PASSED\n";
 
   return 0;
 }

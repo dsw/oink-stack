@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
       if (oinkCmd->print_proc_stats) m.printProcStats();
 
     } catch (xBase &e) {
-      if (e.why()[0]) cerr << argv0 << ": " << e << endl;
+      if (e.why()[0]) std::cerr << argv0 << ": " << e << std::endl;
       code = INTERNALERROR_ExitCode;
       if (UserError *ue = dynamic_cast<UserError*>(&e)) code = ue->exitCode;
     }

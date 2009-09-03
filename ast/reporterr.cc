@@ -3,7 +3,7 @@
 
 #include "reporterr.h"      // this module
 
-#include <iostream.h>       // cout
+#include <iostream>         // cout
 
 
 // --------------------- SilentReportError -------------------------
@@ -29,13 +29,13 @@ SilentReportError silentReportError;
 void SimpleReportError::reportError(rostring str)
 {
   SilentReportError::reportError(str);
-  cout << "error: " << str << endl;
+  std::cout << "error: " << str << std::endl;
 }
 
 void SimpleReportError::reportWarning(rostring str)
 {
   SilentReportError::reportWarning(str);
-  cout << "warning: " << str << endl;
+  std::cout << "warning: " << str << std::endl;
 }
 
 SimpleReportError simpleReportError;

@@ -19,10 +19,10 @@ class VariableMatcher;
 // a stream that reads a file as a set of constructors for Controls
 class ControlStream {
   public:
-  istream &in;                  // underlying input stream
+  std::istream &in;             // underlying input stream
   int lineCount;                // count the lines starting at 1
 
-  ControlStream(istream &in0)
+  ControlStream(std::istream &in0)
     : in(in0)
     , lineCount(0)
   {}
@@ -63,7 +63,7 @@ class OinkControl {
   bool match(VariableMatcher const &vm) const;
   bool isComplete();            // is this object completely initialized?
   void print() const;                               // for debugging
-  void print(ostream &out) const;                   // for debugging
+  void print(std::ostream &out) const;              // for debugging
 };
 
 class Controls {
@@ -87,7 +87,7 @@ public:
 
   void load(ControlStream &in); // load controlList from a file
   void buildIndex();            // build the index on the controlList
-  void print(ostream &out);     // print in parsable form
+  void print(std::ostream &out); // print in parsable form
   void makeEmptyUsedControls(); // set usedControls to the empty set
   bool allControlsUsed();       // true iff all the controls are used
   void printUnusedControls();   // print out the unused controls

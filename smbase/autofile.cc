@@ -34,12 +34,12 @@ AutoFILE::~AutoFILE()
 #ifdef TEST_AUTOFILE
 
 #include "test.h"         // ARGS_MAIN
-#include <iostream.h>     // cout
+#include <iostream>       // cout
 
 void entry(int argc, char *argv[])
 {                         
   if (argc < 2) {
-    cout << "usage: " << argv[0] << " filename [mode]\n";
+    std::cout << "usage: " << argv[0] << " filename [mode]\n";
     return;
   }
 
@@ -48,14 +48,14 @@ void entry(int argc, char *argv[])
     mode = argv[2];
   }
 
-  cout << "about to open " << argv[1] << " with mode " << mode << endl;
+  std::cout << "about to open " << argv[1] << " with mode " << mode << std::endl;
 
   {
     AutoFILE fp(argv[1], mode);
-    cout << argv[1] << " is now open" << endl;
+    std::cout << argv[1] << " is now open" << std::endl;
   }
 
-  cout << argv[1] << " is now closed" << endl;
+  std::cout << argv[1] << " is now closed" << std::endl;
 }
 
 ARGS_MAIN

@@ -1,7 +1,7 @@
 // semgrep.cc
 // example Elsa application: semantic grep
 
-#include <iostream.h>     // cout
+#include <iostream>       // cout
 #include <stdlib.h>       // exit, atoi
 
 #include "parssppt.h"     // ParseTreeAndTokens

@@ -28,7 +28,7 @@ xmlUniqueId_t uniqueIdAST(void const * const obj);
 //
 // quarl 2006-05-22: print directly to stream without 'string' creation
 static inline
-ostream &outputXmlPointer(ostream &out, char const *label, xmlUniqueId_t id) {
+std::ostream &outputXmlPointer(std::ostream &out, char const *label, xmlUniqueId_t id) {
   if (id == 0) {
     // make it easy to parse this later, as a string without a label
     return out << "(null)";
@@ -38,7 +38,7 @@ ostream &outputXmlPointer(ostream &out, char const *label, xmlUniqueId_t id) {
 }
 
 static inline
-ostream &outputXmlPointerQuoted(ostream &out, char const *label, xmlUniqueId_t id) {
+std::ostream &outputXmlPointerQuoted(std::ostream &out, char const *label, xmlUniqueId_t id) {
   if (id == 0) {
     return out << "'(null)'";
   } else {
@@ -91,8 +91,8 @@ string toXml_SourceLoc(SourceLoc loc);
 void fromXml_SourceLoc(SourceLoc &loc, const char *str);
 
 // output SRC with encoding and quotes around it.
-ostream &outputXmlAttrQuoted(ostream &o, const char *src);
-static inline ostream &outputXmlAttrQuoted(ostream &o, string const &src)
+std::ostream &outputXmlAttrQuoted(std::ostream &o, const char *src);
+static inline std::ostream &outputXmlAttrQuoted(std::ostream &o, string const &src)
 { return outputXmlAttrQuoted(o, src.c_str()); }
 
 // Output SRC with quotes, but no encoding.  Only use with objects that do not
@@ -103,7 +103,7 @@ static inline ostream &outputXmlAttrQuoted(ostream &o, string const &src)
 // performance a lot.
 template <typename T>
 inline
-ostream &outputXmlAttrQuotedNoEscape(ostream &o, T src)
+std::ostream &outputXmlAttrQuotedNoEscape(std::ostream &o, T src)
 {
   return o << '\'' << src << '\'';
 }
@@ -127,7 +127,7 @@ inline string xmlAttrQuote(rostring src) { return xmlAttrQuote(src.c_str()); }
 
 // write N spaces to OUT.
 static inline
-void writeSpaces(ostream &out, size_t n)
+void writeSpaces(std::ostream &out, size_t n)
 {
   static char const spaces[] =
     "                                                  "

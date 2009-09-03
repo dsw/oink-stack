@@ -9,7 +9,7 @@
 #include "ptreeact.h"  // ParseTreeLexer, ParseTreeActions
 
 #include <stdio.h>     // getchar
-#include <iostream.h>  // cout
+#include <iostream>    // cout
 #include <string.h>    // strcmp
 
 
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 
     // print the tree
     PTreeNode *ptn = (PTreeNode*)result;
-    ptn->printTree(cout, PTreeNode::PF_EXPAND);
+    ptn->printTree(std::cout, PTreeNode::PF_EXPAND);
   }
   
   else {

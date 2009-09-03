@@ -36,7 +36,7 @@ public:
   char const *currentText() const;
 
   // this is yyrestart.  For starting and restarting.
-  void restart(istream *in);
+  void restart(std::istream *in);
 
   int tok(XmlToken kind);
   int svalTok(XmlToken t);

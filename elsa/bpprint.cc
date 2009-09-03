@@ -1766,7 +1766,7 @@ void ND_usingDir::print(BPEnv &bp) const
 
 
 // ---------------- global funcs -----------------------
-void bppTranslationUnit(ostream &out, TranslationUnit const &unit)
+void bppTranslationUnit(std::ostream &out, TranslationUnit const &unit)
 {
   BPEnv bp;
   unit.print(bp);

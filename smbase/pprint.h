@@ -26,7 +26,7 @@
 #ifndef PPRINT_H
 #define PPRINT_H
 
-#include <iostream.h>      // ostream
+#include <iostream>        // ostream
 #include "str.h"           // string
 #include "array.h"         // GrowArray
 
@@ -49,9 +49,9 @@ public:
 };
 
 class PPrintOstreamOut : public PPrintOut {
-  ostream &os;
+  std::ostream &os;
 public:
-  PPrintOstreamOut(ostream &o) : os(o) {}
+  PPrintOstreamOut(std::ostream &o) : os(o) {}
   virtual ~PPrintOstreamOut() {}
   virtual void write(char const *text);
 };
@@ -174,7 +174,7 @@ class PPrintToOstream : public PPrint {
   PPrintOstreamOut osOut;
 
 public:
-  PPrintToOstream(ostream &os)
+  PPrintToOstream(std::ostream &os)
     : PPrint(osOut), osOut(os) {}
 };
 

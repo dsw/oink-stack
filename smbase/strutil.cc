@@ -633,12 +633,12 @@ void translateAscii()
   {
     ofstream file("strutil.out");
     assert(file);
-    file << "Hallo" << endl
-         << ascii << endl
-         << "Hallo2" << endl
+    file << "Hallo" << std::endl
+         << ascii << std::endl
+         << "Hallo2" << std::endl
          << translate(ascii, "\001-\057\072-\101\133-\140\173-\377", underscore)
                                           // ^^^ probably should be 100, no biggie
-         << endl;
+         << std::endl;
   }
 
   if (!getenv("SAVE_OUTPUT")) {

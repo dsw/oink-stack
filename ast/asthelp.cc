@@ -7,7 +7,7 @@
 
 
 // ----------- debugPrint helpers -----------------------
-ostream &ind(ostream &os, int indent)
+std::ostream &ind(std::ostream &os, int indent)
 {
   while (indent--) {
     os << " ";
@@ -17,13 +17,13 @@ ostream &ind(ostream &os, int indent)
 
 
 void debugPrintStr(string const &s, char const *name,
-                   ostream &os, int indent)
+                   std::ostream &os, int indent)
 {
   debugPrintStr(s.c_str(), name, os, indent);
 }
 
 void debugPrintStr(char const *s, char const *name,
-                   ostream &os, int indent)
+                   std::ostream &os, int indent)
 {
   string s1((s) ? string(s) : string("NULL"));
   ind(os, indent) << name << " = " << quoted(s1) << "\n";
@@ -31,7 +31,7 @@ void debugPrintStr(char const *s, char const *name,
 
 
 void debugPrintCStr(char const *s, char const *name,
-                    ostream &os, int indent)
+                    std::ostream &os, int indent)
 {
   ind(os, indent) << name << " = ";
   if (s) {
@@ -46,7 +46,7 @@ void debugPrintCStr(char const *s, char const *name,
 
 template <class STR>
 void debugPrintStringList(ASTList<STR> const &list, char const *name,
-                          ostream &os, int indent)
+                          std::ostream &os, int indent)
 {
   ind(os, indent) << name << ": ";
   {
@@ -63,13 +63,13 @@ void debugPrintStringList(ASTList<STR> const &list, char const *name,
 
 
 void debugPrintList(ASTList<string> const &list, char const *name,
-                    ostream &os, int indent)
+                    std::ostream &os, int indent)
 {
   debugPrintStringList(list, name, os, indent);
 }
 
 void debugPrintList(ASTList<LocString> const &list, char const *name,
-                    ostream &os, int indent)
+                    std::ostream &os, int indent)
 {
   debugPrintStringList(list, name, os, indent);
 }

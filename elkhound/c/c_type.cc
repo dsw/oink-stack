@@ -1039,7 +1039,7 @@ int ArrayType::reprSize() const
   }
   else {
     // or should I throw an exception ..?
-    cout << "warning: reprSize of a sizeless array\n";
+    std::cout << "warning: reprSize of a sizeless array\n";
     return 0;
   }
 }

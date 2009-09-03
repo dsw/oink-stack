@@ -151,7 +151,7 @@ void emitMLActionCode(GrammarAnalysis const &g, rostring mliFname,
     out << "#include \"srcloc.h\"      // SourceLoc\n";
     out << "\n";
     out << "#include <assert.h>      // assert\n";
-    out << "#include <iostream.h>    // cout\n";
+    out << "#include <iostream>      // cout\n";
     out << "#include <stdlib.h>      // abort\n";
     out << "\n";
 
@@ -268,8 +268,8 @@ static char const *notVoid(char const *type)
 static char const *typeString(char const *type, LocString const &tag)
 {
   if (!type) {
-    cout << tag.locString() << ": Production tag \"" << tag
-         << "\" on a symbol with no type.\n";
+    std::cout << tag.locString() << ": Production tag \"" << tag
+              << "\" on a symbol with no type.\n";
     return "__error_no_type__";     // will make compiler complain
   }
   else {

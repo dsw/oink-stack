@@ -9,14 +9,16 @@
 void Exp::incRefCt()
 {
   refCt++;
-  trace("refct") << "incremented refct of " << this << " to " << refCt << endl;
+  trace("refct") << "incremented refct of " << this << " to "
+                 << refCt << std::endl;
 }
 
 void Exp::decRefCt()
 {
   xassert(refCt > 0);
   --refCt;
-  trace("refct") << "decremented refct of " << this << " to " << refCt << endl;
+  trace("refct") << "decremented refct of " << this << " to "
+                 << refCt << std::endl;
   if (refCt == 0) {
     delete this;
   }

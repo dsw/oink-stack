@@ -45,13 +45,13 @@ public:
   IdentityManager &idmgr;       // unique id manager
 
 protected:
-  ostream *out;                 // output stream to which to print
+  std::ostream *out;            // output stream to which to print
 
   int &depth;                   // ref so we can share our indentation depth with other printers
   bool indent;                  // should we print indentation?
 
 public:
-  XmlWriter(IdentityManager &idmgr0, ostream *out0, int &depth0, bool indent0);
+  XmlWriter(IdentityManager &idmgr0, std::ostream *out0, int &depth0, bool indent0);
 
   // whether we are writing or not.
   bool writingP() const { return out != NULL; }
@@ -169,7 +169,7 @@ public:
     ttx.depth--;
   }
 
-  ostream &out() { xassert(ttx.out); return *ttx.out; }
+  std::ostream &out() { xassert(ttx.out); return *ttx.out; }
 
 protected:
   void newline() { ttx.newline(); }

@@ -5,7 +5,7 @@
 #include "astvisit.h"     // ASTVisitorEx
 #include "trace.h"        // TRACE
 
-#include <iostream.h>     // cout
+#include <iostream>       // cout
 
 
 // ----------------------- ParseEnv -----------------------
@@ -136,14 +136,14 @@ LocString * /*owner*/ ParseEnv::ls(SourceLoc loc, char const *name)
 
 void ParseEnv::error(SourceLoc loc, char const *msg)
 {
-  cout << toString(loc) << ": error: " << msg << endl;
+  std::cout << toString(loc) << ": error: " << msg << std::endl;
   errors++;
 }
 
 
 void ParseEnv::warning(SourceLoc loc, char const *msg)
 {
-  cout << toString(loc) << ": warning: " << msg << endl;
+  std::cout << toString(loc) << ": warning: " << msg << std::endl;
   warnings++;
 }
 

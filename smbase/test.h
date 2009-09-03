@@ -5,7 +5,7 @@
 #ifndef __TEST_H
 #define __TEST_H
 
-#include <iostream.h>      // cout
+#include <iostream>        // cout
 #include <stdio.h>         // printf
 #include "exc.h"           // xBase
 #include "nonport.h"       // getMilliseconds
@@ -25,7 +25,7 @@ int main()                                      \
     return 0;                                   \
   }                                             \
   catch (xBase &x) {                            \
-    cout << x << endl;                          \
+    std::cout << x << std::endl;                \
     return 4;                                   \
   }                                             \
 }
@@ -40,14 +40,14 @@ int main(int argc, char *argv[])                \
     return 0;                                   \
   }                                             \
   catch (xBase &x) {                            \
-    cout << x << endl;                          \
+    std::cout << x << std::endl;                \
     return 4;                                   \
   }                                             \
 }
 
 
 // convenient for printing the value of a variable or expression
-#define PVAL(val) cout << #val << " = " << (val) << endl
+#define PVAL(val) std::cout << #val << " = " << (val) << std::endl
 
 
 // easy way to time a section of code
@@ -60,7 +60,7 @@ public:
     start = getMilliseconds();
   }
   ~TimedSection() {
-    cout << name << ": " << (getMilliseconds() - start) << " msecs\n";
+    std::cout << name << ": " << (getMilliseconds() - start) << " msecs\n";
   }
 };
 

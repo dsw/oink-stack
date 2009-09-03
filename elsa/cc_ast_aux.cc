@@ -461,7 +461,7 @@ string refersTo(Variable *v)
 // TranslationUnit
 
 // ---------------------- TopForm --------------------
-void TopForm::printAmbiguities(ostream &os, int indent) const
+void TopForm::printAmbiguities(std::ostream &os, int indent) const
 {
   genericPrintAmbiguities(this, "TopForm", os, indent);
 }
@@ -480,7 +480,7 @@ void TopForm::addAmbiguity(TopForm *alt)
 
 
 // ---------------------- Function --------------------
-void Function::printExtras(ostream &os, int indent) const
+void Function::printExtras(std::ostream &os, int indent) const
 {
   if (funcType) {
     ind(os, indent) << "funcType = " << funcType->toString() << "\n";
@@ -562,7 +562,7 @@ bool Function::isTemplate() const
 
 
 // ---------------------- MemberInit ----------------------
-void MemberInit::printExtras(ostream &os, int indent) const
+void MemberInit::printExtras(std::ostream &os, int indent) const
 {
   if (member) {
     ind(os, indent) << "member: " << refersTo(member) << "\n";
@@ -581,7 +581,7 @@ void MemberInit::printExtras(ostream &os, int indent) const
 // Declaration
 
 // ---------------------- ASTTypeId -----------------------
-void ASTTypeId::printAmbiguities(ostream &os, int indent) const
+void ASTTypeId::printAmbiguities(std::ostream &os, int indent) const
 {
   genericPrintAmbiguities(this, "ASTTypeId", os, indent);
 
@@ -814,7 +814,7 @@ PQName *PQName::mergeAmbiguous(PQName *obj)
 }
 
 
-void PQ_qualifier::printAmbiguities(ostream &os, int indent) const
+void PQ_qualifier::printAmbiguities(std::ostream &os, int indent) const
 {
   PQName const *n = this;
   genericPrintAmbiguities(n, "PQName", os, indent);
@@ -844,7 +844,7 @@ void setAmbiguity(PQName *n, PQName *newAmbig)
 
 
 //  ------------------- TypeSpecifier ---------------------
-void TypeSpecifier::printExtras(ostream &os, int indent) const
+void TypeSpecifier::printExtras(std::ostream &os, int indent) const
 {
   // used to do something, now just a placeholder (could be deleted)
 }
@@ -929,7 +929,7 @@ void TypeSpecifier::setCVOnce(CVFlags newCV)
 }
 
 
-void TS_classSpec::printExtras(ostream &os, int indent) const
+void TS_classSpec::printExtras(std::ostream &os, int indent) const
 {
   // template with instantiations to print?
   if (ctype) {
@@ -955,7 +955,7 @@ void TS_classSpec::printExtras(ostream &os, int indent) const
 
 
 // ------------------- BaseClassSpec ---------------------
-void BaseClassSpec::printExtras(ostream &os, int indent) const
+void BaseClassSpec::printExtras(std::ostream &os, int indent) const
 {
   if (type) {
     ind(os, indent) << "type: " << type->toString() << "\n";
@@ -967,7 +967,7 @@ void BaseClassSpec::printExtras(ostream &os, int indent) const
 // Member
 
 // ---------------------- Enumerator ------------------
-void Enumerator::printExtras(ostream &os, int indent) const
+void Enumerator::printExtras(std::ostream &os, int indent) const
 {
   if (var) {
     ind(os, indent) << "var: "
@@ -979,7 +979,7 @@ void Enumerator::printExtras(ostream &os, int indent) const
 
 
 // ---------------------- Declarator ---------------------------
-void Declarator::printAmbiguities(ostream &os, int indent) const
+void Declarator::printAmbiguities(std::ostream &os, int indent) const
 {
   genericPrintAmbiguities(this, "Declarator", os, indent);
 
@@ -1037,7 +1037,7 @@ SourceLoc Declarator::getLoc() const
 }
 
 
-void Declarator::printExtras(ostream &os, int indent) const
+void Declarator::printExtras(std::ostream &os, int indent) const
 {
   if (var) {
     ind(os, indent) << "var: "
@@ -1146,7 +1146,7 @@ IDeclarator const *D_grouping::getBaseC() const        { return base; }
 // OperatorDeclarator
 
 // ---------------------- Statement --------------------
-void Statement::printAmbiguities(ostream &os, int indent) const
+void Statement::printAmbiguities(std::ostream &os, int indent) const
 {
   genericPrintAmbiguities(this, "Statement", os, indent);
 }
@@ -1180,7 +1180,7 @@ string Statement::kindLocString() const
 
 
 // ----------------------- Condition ----------------------
-void Condition::printAmbiguities(ostream &os, int indent) const
+void Condition::printAmbiguities(std::ostream &os, int indent) const
 {
   genericPrintAmbiguities(this, "Condition", os, indent);
 }
@@ -1207,7 +1207,7 @@ bool Handler::isEllipsis() const
 
 
 // --------------------- Expression ---------------------
-void Expression::printAmbiguities(ostream &os, int indent) const
+void Expression::printAmbiguities(std::ostream &os, int indent) const
 {
   genericPrintAmbiguities(this, "Expression", os, indent);
 
@@ -1255,7 +1255,7 @@ void Expression::setNext(Expression *newNext)
 #endif // 0
 
 
-void Expression::printExtras(ostream &os, int indent) const
+void Expression::printExtras(std::ostream &os, int indent) const
 {
   if (type) {
     ind(os, indent) << "type: " << type->toString() << "\n";
@@ -1348,7 +1348,7 @@ void ArgExpression::addAmbiguity(ArgExpression *alt)
 }
 
 
-void ArgExpression::printAmbiguities(ostream &os, int indent) const
+void ArgExpression::printAmbiguities(std::ostream &os, int indent) const
 {
   genericPrintAmbiguities(this, "ArgExpression", os, indent);
 }
@@ -1387,7 +1387,7 @@ bool TP_template::hasDefaultArg() const
 }
 
 
-void TemplateParameter::printAmbiguities(ostream &os, int indent) const
+void TemplateParameter::printAmbiguities(std::ostream &os, int indent) const
 {
   genericPrintAmbiguities(this, "TemplateParameter", os, indent);
 }
@@ -1402,7 +1402,7 @@ void TemplateParameter::addAmbiguity(TemplateParameter *alt)
 
 
 // -------------------- TemplateArgument ---------------------
-void TemplateArgument::printAmbiguities(ostream &os, int indent) const
+void TemplateArgument::printAmbiguities(std::ostream &os, int indent) const
 {
   genericPrintAmbiguities(this, "TemplateArgument", os, indent);
 }

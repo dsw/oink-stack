@@ -49,17 +49,19 @@ class GlobalSerialNoInit {
       } catch(...) {}
     }
     if (tracingSys("serialno-announce")) {
-      cout << "starting with globalSerialNumber " << globalSerialNumber << endl;
+      std::cout << "starting with globalSerialNumber "
+                << globalSerialNumber << std::endl;
     }
   }
 
   ~GlobalSerialNoInit() {
     if (tracingSys("serialno-write")) {
       ofstream out(filename);
-      out << globalSerialNumber << endl;
+      out << globalSerialNumber << std::endl;
     }
     if (tracingSys("serialno-announce")) {
-      cout << "ending with globalSerialNumber " << globalSerialNumber << endl;
+      std::cout << "ending with globalSerialNumber "
+                << globalSerialNumber << std::endl;
     }
   }
 };

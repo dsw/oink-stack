@@ -119,10 +119,10 @@ bool OinkControl::isComplete() {
 }
 
 void OinkControl::print() const {
-  print(cout);
+  print(std::cout);
 }
 
-void OinkControl::print(ostream &out) const {
+void OinkControl::print(std::ostream &out) const {
   switch (kind) {
   default: xfailure("illegal ");
   case CK_IGNORE_BODY:      out << "ignore-body:";     break;
@@ -134,7 +134,7 @@ void OinkControl::print(ostream &out) const {
       << "\n\tfile=" << file
       << "\n\tarchive=" << archive
       << "\n\tvisibility=" << toString(visibility)
-      << endl;
+      << std::endl;
 }
 
 // Controls ****
@@ -196,14 +196,14 @@ void Controls::buildIndex() {
   }
 }
 
-void Controls::print(ostream &out) {
-  out << "---- CONTROL_START ----" << endl;
+void Controls::print(std::ostream &out) {
+  out << "---- CONTROL_START ----" << std::endl;
   FOREACH_ASTLIST_NC(OinkControl, controlList, iter) {
     OinkControl *ctl = iter.data();
     ctl->print(out);
-    out << endl;
+    out << std::endl;
   }
-  out << "---- CONTROL_STOP ----" << endl;
+  out << "---- CONTROL_STOP ----" << std::endl;
 }
 
 bool OinkControl::match(VariableMatcher const &vm) const
@@ -229,10 +229,10 @@ bool OinkControl::match(VariableMatcher const &vm) const
 
   if (!hasVisibility) return false;
 
-//        cout << "function " << fullyQualifiedName
+//        std::cout << "function " << fullyQualifiedName
 //             << ", file " << filename
 //             << ", declFlags " << toXml(declFlags)
-//             << endl;
+//             << std::endl;
 //        throw UserError(USER_ERROR_ExitCode);
   return true;
 }
@@ -325,7 +325,7 @@ void Controls::printUnusedControls() {
   FOREACH_ASTLIST_NC(OinkControl, controlList, iter) {
     OinkControl *ctl = iter.data();
     if (!usedControls.contains(ctl)) {
-      ctl->print(cout);
+      ctl->print(std::cout);
     }
   }
 }

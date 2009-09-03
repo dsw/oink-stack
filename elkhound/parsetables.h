@@ -8,7 +8,7 @@
 #include "array.h"        // ArrayStack
 #include "glrconfig.h"    // compression options
 #include "str.h"          // string
-#include <iostream.h>     // ostream
+#include <iostream>       // ostream
 
 class Flatten;            // flatten.h
 class EmitCode;           // emitcode.h
@@ -20,7 +20,7 @@ class Bit2d;              // bit2d.h
 // prevent any other integers from silently flowing into it
 enum StateId { STATE_INVALID=-1 };
 
-inline ostream& operator<< (ostream &os, StateId id)
+inline std::ostream& operator<< (std::ostream &os, StateId id)
   { return os << (int)id; }
 
 

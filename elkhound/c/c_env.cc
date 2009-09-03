@@ -662,7 +662,7 @@ Type const *Env::promoteTypes(BinaryOp op, Type const *t1, Type const *t2)
 // --------------------- error/warning reporting ------------------
 Type const *Env::err(char const *str)
 {
-  cout << ::toString(currentLoc()) << ": error: " << str << endl;
+  std::cout << ::toString(currentLoc()) << ": error: " << str << std::endl;
   errors++;
   return fixed(ST_ERROR);
 }
@@ -670,7 +670,7 @@ Type const *Env::err(char const *str)
 
 void Env::warn(char const *str)
 {
-  cout << ::toString(currentLoc()) << ": warning: " << str << endl;
+  std::cout << ::toString(currentLoc()) << ": warning: " << str << std::endl;
   warnings++;
 }
 

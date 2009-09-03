@@ -12,7 +12,7 @@
 #include "boxprint.h"        // BoxPrint
 
 // libc++
-#include <iostream.h>        // cout
+#include <iostream>          // cout
 
 class TranslationUnit;       // cc_ast.h
 
@@ -24,7 +24,7 @@ class BPEnv : public BoxPrint {
 
 
 // Pretty print an entire translation unit and send it to 'out'.
-void bppTranslationUnit(ostream &out, TranslationUnit const &unit);
+void bppTranslationUnit(std::ostream &out, TranslationUnit const &unit);
 
 
 #endif // BPPRINT_H

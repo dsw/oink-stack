@@ -20,7 +20,7 @@ verbatim {
     public:
     virtual ~ASTPrinter_O() {}
     virtual void TypeSpecifier_printExtras
-      (TypeSpecifier const *const ts, ostream &os, int indent) const
+      (TypeSpecifier const *const ts, std::ostream &os, int indent) const
     {}
     // FIX: get rid of this someday; see the comment starting "this
     // prevents a linking error since only one cc.ast.gen.cc is
@@ -51,7 +51,7 @@ class TypeSpecifier {
   -> TS_typeVariable(StringRef name) {}
 
   // FIX: needed?
-  public void printExtras_O(ostream &os, int indent) const;
+  public void printExtras_O(std::ostream &os, int indent) const;
   custom debugPrint { printExtras_O(os, indent); }
 }
 

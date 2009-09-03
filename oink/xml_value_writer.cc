@@ -16,7 +16,7 @@ XmlValueWriter::XmlValueWriter
   (IdentityManager &idmgr0,
    // VarPredicate *varPred0, ValuePredicate *valuePred0,
    ASTVisitor *astVisitor0, ValueVisitor *valueVisitor0,
-   ostream *out0, int &depth0, bool indent0,
+   std::ostream *out0, int &depth0, bool indent0,
    XVW_SerializeOracle *serializeOracle0)
   : XmlTypeWriter(idmgr0, astVisitor0, out0, depth0, indent0, serializeOracle0)
   // , varPred(varPred0)

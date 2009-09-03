@@ -15,7 +15,7 @@ nonterm Body {
 }
 
 nonterm Stmt {
-  merge(L,R)  [ cout << "merging Stmt\n"; return L; ]
+  merge(L,R)  [ std::cout << "merging Stmt\n"; return L; ]
   dup(v)      [ return v; ]
   del(v)      []
 

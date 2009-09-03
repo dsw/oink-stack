@@ -83,19 +83,19 @@ bool StructurePrinter::visitStatement(Statement *s)
   return false;
 }
 
-ostream &StructurePrinter::ind()
+std::ostream &StructurePrinter::ind()
 {
   for (int i=0; i < depth; i++) {
-    cout << "  ";
+    std::cout << "  ";
   }
-  return cout;
+  return std::cout;
 }
 
 bool StructurePrinter::in(SourceLoc loc)
 {
   if (begin) {
     // I'm first in my parent's list
-    cout << " {\n";
+    std::cout << " {\n";
   }
 
   ind() << "begin=" << toString(loc);
@@ -109,7 +109,7 @@ void StructurePrinter::out()
   depth--;
   if (begin) {
     // no children
-    cout << "\n";
+    std::cout << "\n";
   }
   else {
     // finish child list

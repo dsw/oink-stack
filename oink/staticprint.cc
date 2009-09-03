@@ -42,19 +42,19 @@ void printIhgOneVar(Variable *var0) {
     // FIX: linker-reps are gone but this concern is perhaps not.
     //        baseVar = baseVar->lr();
     char const *baseName = strdup(baseVar->fullyQualifiedName0().c_str());
-    cout << quoted(stringc
-                   << baseName
-                   << "@"
-                   << locToStr(baseVar->loc))
-         << " -> "
-         << quoted(stringc
-                   << name
-                   << "@"
-                   << locToStr(var->loc))
-         << endl;
-    cout << "[";
+    std::cout << quoted(stringc
+                        << baseName
+                        << "@"
+                        << locToStr(baseVar->loc))
+              << " -> "
+              << quoted(stringc
+                        << name
+                        << "@"
+                        << locToStr(var->loc))
+              << std::endl;
+    std::cout << "[";
     // render the inheritance hierarchy in the traditional direction
-    cout << "dir=back,";
+    std::cout << "dir=back,";
     // render the access
     switch (bc->access) {
     default:
@@ -64,20 +64,20 @@ void printIhgOneVar(Variable *var0) {
     case AK_PUBLIC:
       break;                  // the default
     case AK_PROTECTED:
-      cout << "label=protected,"; break;
+      std::cout << "label=protected,"; break;
     case AK_PRIVATE:
-      cout << "label=private,"; break;
+      std::cout << "label=private,"; break;
     }
     // render in blue if virtual
     if (bc->isVirtual) {
-      cout << "color=blue,";
+      std::cout << "color=blue,";
     }
-    cout << "]" << endl;
+    std::cout << "]" << std::endl;
   }
 }
 
 void Staticprint::printIhg_stage() {
-  cout << "digraph G {" << endl;
+  std::cout << "digraph G {" << std::endl;
   VisitRealVars_filter visPrintIhg(printIhgOneVar); // VAR-TRAVERSAL
   visitVarsMarkedRealF_filtered(builtinVars, visPrintIhg);
   foreachSourceFile {
@@ -88,7 +88,7 @@ void Staticprint::printIhg_stage() {
     // maps to a class
     visitRealVarsF_filtered(unit, visPrintIhg);
   }
-  cout << "}" << endl;
+  std::cout << "}" << std::endl;
 }
 
 void Staticprint::printASTHistogram_stage() {
@@ -101,14 +101,14 @@ void Staticprint::printASTHistogram_stage() {
     // NOTE: we aren't doing lowered visitation
     HistogramASTVisitor vis;
     unit->traverse(vis);
-    vis.printHistogram(cout);
+    vis.printHistogram(std::cout);
     printStop();
   }
 }
 
 // HistogramASTVisitor ****
 
-void HistogramASTVisitor::printHistogram(ostream &out) {
+void HistogramASTVisitor::printHistogram(std::ostream &out) {
   out << "TranslationUnit: " << num_TranslationUnit << "\n";
   out << "TopForm: " << num_TopForm << "\n";
   out << "Function: " << num_Function << "\n";
