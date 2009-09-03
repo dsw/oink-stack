@@ -661,15 +661,6 @@ private:
 
 // Module coloring ****************
 
-// get the module for this location
-static StringRef moduleForLoc(SourceLoc loc) {
-  char const *filename = sourceLocManager->getFile(loc);
-  StringRef module = file2module.queryif(filename);
-  USER_ASSERT(module, loc,
-              "Module is needed for file '%s' but none was given.", filename);
-  return module;
-}
-
 static void colorWithModule_alloc
   (Value *value, SourceLoc loc, char const *name, char const *astNode)
 {
@@ -1705,6 +1696,7 @@ bool Qual::varUsedInDataflow(Variable_O *var) {
 }
 
 void Qual::unifyVars(Variable_O *v1, Variable_O *v2, SourceLoc loc) {
+  Oink::unifyVars(v1, v2, loc); // delegate to superclass
   dfe.eDataFlow_refUnify(v1->abstrValue(), v2->abstrValue(), loc);
 }
 

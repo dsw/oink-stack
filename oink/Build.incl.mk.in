@@ -30,6 +30,7 @@ FRONTEND_EXE += oink
 FRONTEND_EXE += staticprint
 FRONTEND_EXE += dfgprint
 FRONTEND_EXE += cfgprint
+FRONTEND_EXE += bullet
 FRONTEND_EXE += qual
 exe: $(FRONTEND_EXE)
 
@@ -304,6 +305,7 @@ DEP_INCL_CC := $(filter-out -I-,$(INCL_CC))
 BASIC_LOCAL_CC_O :=
 
 # utilities
+BASIC_LOCAL_CC_O += libc_missing.o
 BASIC_LOCAL_CC_O += oink_file.o
 BASIC_LOCAL_CC_O += oink_util.o
 BASIC_LOCAL_CC_O += oink_control.o
@@ -390,6 +392,13 @@ CFGPRINT_LOCAL_CC_O += cfgprint_cmd.o
 CFGPRINT_LOCAL_CC_O += cfgprint_global.o
 CFGPRINT_LOCAL_CC_O += cfgprint.o
 
+# additional files that bullet depends on beyond basic besides
+# oink lexer and parser extensions
+BULLET_LOCAL_CC_O :=
+BULLET_LOCAL_CC_O += bullet_cmd.o
+BULLET_LOCAL_CC_O += bullet_global.o
+BULLET_LOCAL_CC_O += bullet.o
+
 # additional files qual depends on beyond basic; NOTE that qual
 # DOES extend the lexer and parser and so we DO include those
 # extensions here, whereas other executables that do not simply
@@ -401,7 +410,6 @@ QUAL_LOCAL_CC_O :=
 QUAL_LOCAL_CC_O += qual_lexer.yy.o
 QUAL_LOCAL_CC_O += qual.gr.gen.o
 
-QUAL_LOCAL_CC_O += libc_missing.o
 QUAL_LOCAL_CC_O += qual_ast_aux.o
 QUAL_LOCAL_CC_O += qual_literal.o
 QUAL_LOCAL_CC_O += qual_funky.o
@@ -431,6 +439,7 @@ LOCAL_CC_O += $(CPDINIT_TEST_LOCAL_O)
 LOCAL_CC_O += $(STATICPRINT_LOCAL_CC_O)
 LOCAL_CC_O += $(DFGPRINT_LOCAL_CC_O)
 LOCAL_CC_O += $(CFGPRINT_LOCAL_CC_O)
+LOCAL_CC_O += $(BULLET_LOCAL_CC_O)
 LOCAL_CC_O += $(QUAL_LOCAL_CC_O)
 
 LOCAL_CC_O += oink_main.o
@@ -438,6 +447,7 @@ LOCAL_CC_O += cpdinit_test_main.o
 LOCAL_CC_O += staticprint_main.o
 LOCAL_CC_O += dfgprint_main.o
 LOCAL_CC_O += cfgprint_main.o
+LOCAL_CC_O += bullet_main.o
 LOCAL_CC_O += qual_main.o
 
 LOCAL_CC_O += Lib/union_find_test.o
@@ -721,6 +731,12 @@ cfgprint: $(DATAFLOW_LOCAL_CC_O)
 cfgprint: $(CFGPRINT_LOCAL_CC_O)
 cfgprint: $(OINK_LOCAL_CC_O)
 cfgprint: $(BASIC_LIBS)
+
+bullet: bullet_main.o
+bullet: $(DATAFLOW_LOCAL_CC_O)
+bullet: $(BULLET_LOCAL_CC_O)
+bullet: $(OINK_LOCAL_CC_O)
+bullet: $(BASIC_LIBS)
 
 qual: qual_main.o
 qual: $(DATAFLOW_LOCAL_CC_O)

@@ -1,3 +1,4 @@
+# -*-makefile-*-
 # Analyze C/C++ files for Hard Object
 
 all:
@@ -16,29 +17,29 @@ OINK_STACK := ../../..
 # **** parameterization
 
 EXE :=
-EXE += hello.exe
+EXE += hello2.exe
 
-# pick "access" or "write"
-ANALYSIS := access
-# ANALYSIS := write
+ANALYSIS := trust
 
 # The MODS .mod files are just files full of filenames: every file is
 # a module and every filename in the corresponding .mod file is the
 # list of files in that module.
 MODS :=
-MODS += foo hello
-# The DEFAULTMOD is the module to use for files that are not listed in
-# any .mod file.  NOTE: this is not operational right now.
-# DEFAULTMOD := hello
+MODS += hello2
+MODS += bar
 
-hello.exe: lib_foo.o
+# For now for simplicity we assume that each module is in a file
+# called module.mod; however this need not be the case in general.
+MOD_SPECS := $(foreach MOD,$(MODS),$(MOD):$(MOD).mod)
+
+hello2.exe: lib_bar.o
 
 # this currently fails as the header files have variables that we
 # don't give a module for
-# analyze/hello.exe: hello.i lib_foo.i
+analyze/hello2.exe: hello2.i lib_bar.i
 
-# this works; I suppose that elsa is ignoring the #include directives
-analyze/hello.exe: hello.c lib_foo.c
+# FIX: does not work yet
+analyze-func-iface/hello2.exe: hello2.i lib_bar.i
 
 
 # **** include generic functionality

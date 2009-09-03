@@ -1,11 +1,22 @@
-Try out doing a module analysis of a project.
+This directory demonstrates doing various module analyses of C
+programs.
 
-To build the project normally:
-   make all
+To build each project normally:
+   make all -f Hello.mk
+   make all -f Hello2.mk
 
-To analyze it:
-   make analyze
+To do a data privacy analysis:
+   make -f Hello.mk analyze
 
-Hack on the "parameterization" section of Makefile to change the
-behavior.
+To do a data trust analysis:
+   make -f Hello2.mk analyze
 
+To discover the public functions of some modules:
+   make -f Hello2.mk analyze-func-iface
+
+Hack on the "parameterization" section of Hello.mk or Hello2.mk to
+change the behavior.
+
+ModuleAnalysis.incl.mk is intended to be a "makefile library" for
+client makefile such as Hello.mk and Hello2.mk; as such it should be
+basically re-usable as-is.

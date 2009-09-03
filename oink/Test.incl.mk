@@ -69,6 +69,7 @@ check-small: cpdinit-check
 check-small: staticprint-check
 check-small: dfgprint-check
 check-small: cfgprint-check
+check-small: bullet-check
 check-small: qual-check
 
 # quarl 2006-05-26: check-big is for big tests
@@ -101,4 +102,5 @@ include cpdinit_test.incl.mk
 include staticprint_test.incl.mk
 include dfgprint_test.incl.mk
 include cfgprint_test.incl.mk
+include bullet_test.incl.mk
 include qual_test.incl.mk

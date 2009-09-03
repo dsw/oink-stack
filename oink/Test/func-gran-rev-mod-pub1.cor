@@ -1,0 +1,5 @@
+module:bar var:F:new_Bar
+module:bar var:F:weird_Bar
+module:default var:F:malloc
+module:default var:F:printf
+module:hello var:F:main

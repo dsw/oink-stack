@@ -1,3 +1,4 @@
+# -*-makefile-*-
 # Makefile to do module analysis of C/C++ files
 
 ifndef TOP_LEVEL_MAKEFILE
@@ -48,22 +49,6 @@ $(addprefix test/,$(EXE)): test/%:
 # cqual++ and mklattice flags
 QUALCC_FLAGS :=
 MKLATTICE_FLAGS :=
-
-# pick exactly one of these
-ifeq ($(ANALYSIS),write)
-  QUALCC_FLAGS += -fq-module-write
-  MKLATTICE_FLAGS += -write
-else
-ifeq ($(ANALYSIS),access)
-  QUALCC_FLAGS += -fq-module-access
-  MKLATTICE_FLAGS += -access
-else
-  $(error Variable ANALYSIS must have value 'access' or 'write')
-endif
-endif
-
-# tell Cqual++ about the modules
-QUALCC_FLAGS += $(addprefix -o-module ,$(MODS))
 
 # do a polymorphic analysis
 QUALCC_FLAGS += -fq-poly
@@ -122,12 +107,51 @@ QUALCC_FLAGS += -fq-no-use-const-subtyping
 # QUALCC_FLAGS += -fo-pretty-print
 # QUALCC_FLAGS += -fq-no-poly
 
+# Tell the tools about the modules
+MKLATTICE_FLAGS += $(addprefix --mod ,$(MODS))
+QUALCC_FLAGS += $(addprefix -o-mod-spec ,$(MOD_SPECS))
+MKLATTICE_FLAGS += --mod default
+QUALCC_FLAGS += -o-mod-default default
+
+# pick exactly one of these; in reality write and access analyses
+# exclude, but trust analysis can be combined with either
+ifeq ($(ANALYSIS),write)
+  QUALCC_AN += -fq-module-write
+  MKLATTICE_AN += --write
+else
+ifeq ($(ANALYSIS),access)
+  QUALCC_AN += -fq-module-access
+  MKLATTICE_AN += --access
+else
+ifeq ($(ANALYSIS),trust)
+  QUALCC_AN += -fq-module-trust
+  MKLATTICE_AN += --trust
+endif
+endif
+endif
+
 MKLATTICE := $(OINK_STACK)/oink/module_make_lattice
 QUAL := $(OINK_STACK)/oink/qual
+
 .PRECIOUS: %.lattice
 .PHONY: analyze analyze/%
 analyze: $(addprefix analyze/,$(EXE))
 $(addprefix analyze/,$(EXE)): analyze/%:
 	@echo; echo "**** $@"
-	$(MKLATTICE) $(MKLATTICE_FLAGS) $(MODS) > ho.lattice
-	$(QUAL) -q-config ho.lattice $(QUALCC_FLAGS) $^
+	$(MKLATTICE) $(MKLATTICE_AN) $(MKLATTICE_FLAGS) > ho.lattice
+	$(QUAL) -q-config ho.lattice $(QUALCC_AN) $(QUALCC_FLAGS) $^
+
+OINK := $(OINK_STACK)/oink/oink
+CHOP_OUT := $(OINK_STACK)/elsa/chop_out
+
+.PHONY: analyze-func-iface analyze-func-iface/%
+analyze-func-iface: $(addprefix analyze-func-iface/,$(EXE))
+$(addprefix analyze-func-iface/,$(EXE)): analyze-func-iface/%:
+	@echo; echo "**** $@"
+	$(OINK) -fo-func-gran -fo-func-gran-rev-mod-pub \
+	  $(addprefix -o-mod-spec ,$(MOD_SPECS)) -o-mod-default default $^
+
+# to get just the output sorted and uniqued, add this:
+#  | \
+#           $(CHOP_OUT) '---- START ---- fg-CFG-rev-mod-pub' \
+# 	  '---- STOP ---- fg-CFG-rev-mod-pub' | sort | uniq

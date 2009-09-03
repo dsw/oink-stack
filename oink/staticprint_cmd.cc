@@ -19,8 +19,8 @@ void StaticprintCmd::readOneArg(int &argc, char **&argv) {
   if (old_argc != argc) return; // the superclass read one so we don't
 
   char *arg = argv[0];
-  // please prefix the names of flags with arguments with '-d-'
-  if (streq(arg, "-d-ben-string")) {
+  // please prefix the names of flags with arguments with '-s-'
+  if (streq(arg, "-s-ben-string")) {
     shift(argc, argv);
     ben_string = strdup(shift(argc, argv)); // NOTE: use strdup!
     return;
@@ -38,7 +38,7 @@ void StaticprintCmd::dump() {
   // the idea here is to make the internal name be the same as the
   // external name with the dashes replaced by underscores
   printf("fs-ben-flag: %s\n", boolToStr(ben_flag));
-  printf("m-ben-string: %s\n", ben_string);
+  printf("s-ben-string: %s\n", ben_string);
   printf("fs-print-ihg: %s\n", boolToStr(print_ihg));
   printf("fs-print-ast-histogram: %s\n", boolToStr(print_ast_histogram));
 }
@@ -47,7 +47,7 @@ void StaticprintCmd::printHelp() {
   OinkCmd::printHelp();
   printf
     ("staticprint flags that take an argument:\n"
-     "  -d-ben-string <value>     : set Ben's string\n"
+     "  -s-ben-string <value>     : set Ben's string\n"
      "staticprint boolean flags; preceed by '-fs-' for positive sense, by '-fs-no-' for negative sense.\n"
      "  ben-flag                  : set Ben's flag\n"
      "  print-ihg                 : print the ihg in 'dot' output format to standard out\n"

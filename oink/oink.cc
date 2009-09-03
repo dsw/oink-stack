@@ -68,6 +68,54 @@ void FuncGranGraph::addEdge(Variable *from, Variable *to) {
   toSet->add(to);
 }
 
+void FuncGranGraph::build_flowsFrom() {
+  xassert(!flowsFrom);
+  flowsFrom = new PtrMap<Variable, SObjSet<Variable*> >();
+
+  // for each edge in flowsTo
+  for(PtrMap<Variable,
+        SObjSet<Variable*> >::Iter mapIter(flowsTo);
+      !mapIter.isDone(); mapIter.adv())
+  {
+    Variable *from = mapIter.key();
+    SObjSet<Variable*> *toSet = mapIter.value();
+    for(SObjSetIter<Variable*> toSetIter(*toSet);
+        !toSetIter.isDone(); toSetIter.adv())
+    {
+      Variable *to = toSetIter.data();
+
+      // add edge in flowsFrom from 'to' to 'from'
+      SObjSet<Variable*> *fromSet = flowsFrom->get(to);
+      if (!fromSet) {
+        fromSet = new SObjSet<Variable*>();
+        flowsFrom->add(to, fromSet);
+      }
+      fromSet->add(from);
+    }
+  }
+}
+
+void FuncGranGraph::build_module2ToVars() {
+  xassert(!module2ToVars);
+  module2ToVars = new PtrMap<char const, SObjSet<Variable*> >();
+
+  // for each to-var in flowsFrom
+  for(PtrMap<Variable,
+        SObjSet<Variable*> >::Iter mapIter(*flowsFrom);
+      !mapIter.isDone(); mapIter.adv())
+  {
+    Variable *to = mapIter.key();
+    // map its module to it in module2ToVars
+    StringRef module = moduleForLoc(to->loc);
+    SObjSet<Variable*> *varSet = module2ToVars->get(module);
+    if (!varSet) {
+      varSet = new SObjSet<Variable*>();
+      module2ToVars->add(module, varSet);
+    }
+    varSet->add(to);
+  }
+}
+
 
 // **** FuncGranASTVisitor
 
@@ -245,7 +293,8 @@ class FuncGranVarVisitor : public VisitRealVars {
     : VisitRealVars(NULL)
     , funcGranGraph(funcGranGraph0)
   {}
-  virtual void visitVariableIdem(Variable *var); // only visits each Variable once
+  // only visits each Variable once
+  virtual void visitVariableIdem(Variable *var);
 };
 
 void FuncGranVarVisitor::visitVariableIdem(Variable *var) {
@@ -278,7 +327,9 @@ bool RealVarAndTypeASTVisitor_filtered::visitFunction(Function *obj) {
   return RealVarAndTypeASTVisitor::visitFunction(obj);
 }
 
-void visitVarsMarkedRealF_filtered(ArrayStack<Variable*> &builtinVars, VisitRealVars &visitReal) {
+void visitVarsMarkedRealF_filtered
+  (ArrayStack<Variable*> &builtinVars, VisitRealVars &visitReal)
+{
   FOREACH_ARRAYSTACK_NC(Variable*, builtinVars, iter) {
     Variable_O *var = asVariable_O(*iter.data());
     if (!var->getReal()) continue;
@@ -299,7 +350,8 @@ Oink::Oink()
   , parseEnv(NULL)
   // , parseTables(NULL)
   , typePrinter(NULL)
-  , funcGranRoot(tFac->makeVariable(SL_UNKNOWN, "<super-main>", NULL, DF_NAMESPACE))
+  , funcGranRoot(tFac->makeVariable(SL_UNKNOWN, "<super-main>",
+                                    NULL, DF_NAMESPACE))
   , funcGranGraph(funcGranRoot)
   , archiveSrzManager(NULL)
 {
@@ -330,8 +382,10 @@ void Oink::printStats()
   cout << "Variables: " << Variable::numVariables << endl;
   cout << "Values: " << vFac->getNumValues() << endl;
 #if DEBUG_INSTANCE_SPECIFIC_VALUES
-  cout << "  dataDeclaratorValues: " << dataDeclaratorValues.getNumEntries() << endl;
-  cout << "  instanceSpecificValues: " << instanceSpecificValues.getNumEntries() << endl;
+  cout << "  dataDeclaratorValues: "
+       << dataDeclaratorValues.getNumEntries() << endl;
+  cout << "  instanceSpecificValues: "
+       << instanceSpecificValues.getNumEntries() << endl;
 #endif
 }
 
@@ -430,7 +484,8 @@ void Oink::loadControlFile() {
     controls = new Controls();
     controls->load(in);
   } catch (xBase &x) {
-    x.addContextLeft(stringc << oinkCmd->control.c_str() << ":" << in.lineCount << ": ");
+    x.addContextLeft(stringc << oinkCmd->control.c_str()
+                     << ":" << in.lineCount << ": ");
     throw x;
   }
   if (oinkCmd->print_controls_and_exit) {
@@ -442,13 +497,15 @@ void Oink::loadControlFile() {
 void Oink::parseOneFile(File *file, ParseTables *parseTables) {
   maybeSetInputLangFromSuffix(file);
   if (oinkCmd->lang == SUFFIX_InputLang) {
-    setLangState_fromInputLang(globalLang, getLangFromSuffix(getSuffix(file->name.c_str())));
+    setLangState_fromInputLang
+      (globalLang, getLangFromSuffix(getSuffix(file->name.c_str())));
   }
   try {
     // sm: I need to pass the source file's name up here, but I'm
     // not testing whether argc>0 ..
     SemanticValue treeTop;
-    ParseTreeAndTokens tree(globalLang, treeTop, globalStrTable, file->name.c_str());
+    ParseTreeAndTokens tree(globalLang, treeTop,
+                            globalStrTable, file->name.c_str());
     Lexer *lexer = dynamic_cast<Lexer*>(tree.lexer);  // hack..
     xassert(lexer);
     tree.userAct = parseUserActions;
@@ -499,7 +556,8 @@ void Oink::typecheckOneFile(File *file) {
   maybeSetInputLangFromSuffix(file);
   TranslationUnit *unit = file2unit.get(file);
 
-  TcheckEnv env(globalStrTable, globalLang, *tFac, madeUpVariables, builtinVars, unit);
+  TcheckEnv env(globalStrTable, globalLang, *tFac,
+                madeUpVariables, builtinVars, unit);
   // store the first one in a global
   env.tcheckTranslationUnit(unit);
 
@@ -549,8 +607,9 @@ void Oink::init_stage(int argc, char **argv) {
       if (fileNamesSeen.get(iter.data()->name.c_str())) {
         throw UserError
           (USER_ERROR_ExitCode,
-           stringc << "input file name repeated; the Elsa source location manager"
-           " can't deal with this so don't do it: " << iter.data()->name.c_str());
+           stringc << "input file name repeated; the Elsa source "
+           "location manager can't deal with this so don't do it: "
+           << iter.data()->name.c_str());
       }
       fileNamesSeen.add(iter.data()->name.c_str());
     }
@@ -584,9 +643,11 @@ void Oink::checkInputFilesRecognized() {
   foreachFile {
     File const * file = files.data();
     if (!(isSource(file) || isSerialized(file))) {
-      userFatalError(SL_UNKNOWN,
-                     "Unknown file '%s' - extension not recognized that of a source file or serialized archive.",
-                     file->name.c_str());
+      userFatalError
+        (SL_UNKNOWN,
+         "Unknown file '%s' - extension not recognized that of a "
+         "source file or serialized archive.",
+         file->name.c_str());
     }
   }
 }
@@ -610,8 +671,12 @@ void Oink::typecheck_stage() {
   foreachSourceFile typecheckOneFile(files.data());
   typecheckingDone = true;
 
-  if (oinkCmd->print_typed_ast) foreachSourceFile astPrintOneFile(files.data());
-  if (oinkCmd->exit_after_typecheck) throw UserError(NORMAL_ExitCode);
+  if (oinkCmd->print_typed_ast) {
+    foreachSourceFile astPrintOneFile(files.data());
+  }
+  if (oinkCmd->exit_after_typecheck) {
+    throw UserError(NORMAL_ExitCode);
+  }
 }
 
 void Oink::elaborate_stage() {
@@ -628,7 +693,8 @@ void Oink::elaborate_stage() {
         vis.activities = EA_C_ACTIVITIES;
       }
 
-      // if we are going to pretty print, then we need to retain defunct children
+      // if we are going to pretty print, then we need to retain
+      // defunct children
       if (oinkCmd->pretty_print) {
         vis.cloneDefunctChildren = true;
       }
@@ -643,8 +709,12 @@ void Oink::elaborate_stage() {
   // this may be a bit odd to do if do_elaboration is off, but it just
   // means that the stage has run, not that any elaboration got done
   elaboratingDone = true;
-  if (oinkCmd->print_elaborated_ast) foreachSourceFile astPrintOneFile(files.data());
-  if (oinkCmd->exit_after_elaborate) throw UserError(NORMAL_ExitCode);
+  if (oinkCmd->print_elaborated_ast) {
+    foreachSourceFile astPrintOneFile(files.data());
+  }
+  if (oinkCmd->exit_after_elaborate) {
+    throw UserError(NORMAL_ExitCode);
+  }
 }
 
 void Oink::markRealVars_stage() {
@@ -710,6 +780,11 @@ void Oink::compute_funcGran() {
     // get the implicit function pointers from virtual methods
     visitRealVarsF(unit, funcGranVarVis);
   }
+
+  if (oinkCmd->func_gran_rev_mod_pub) {
+    funcGranGraph.build_flowsFrom();
+    funcGranGraph.build_module2ToVars();
+  }
 }
 
 void Oink::printVariableName_funcGran(ostream &out, Variable *var) {
@@ -727,12 +802,16 @@ void Oink::printVariableName_funcGran(ostream &out, Variable *var) {
   }
 }
 
-void Oink::printVariableAndDep_funcGran(ostream &out, Variable *from, SObjSet<Variable*> *toSet) {
+void Oink::printVariableAndDep_funcGran
+  (ostream &out, Variable *from, SObjSet<Variable*> *toSet)
+{
   // print Variable from
   printVariableName_funcGran(out, from);
   out << '\n';
   // print the set it goes to
-  for(SObjSetIter<Variable*> setIter(*toSet); !setIter.isDone(); setIter.adv()) {
+  for(SObjSetIter<Variable*> setIter(*toSet);
+      !setIter.isDone(); setIter.adv())
+  {
     out << '\t';               // tab-indent; this is redundant
     printVariableName_funcGran(out, setIter.data());
     out << '\n';
@@ -745,7 +824,9 @@ void Oink::printVariableAndDep_funcGran(ostream &out, Variable *from, SObjSet<Va
 void Oink::printVariableAndDep_DOT_funcGran
   (ostream &out, Variable *from, SObjSet<Variable*> *toSet)
 {
-  for(SObjSetIter<Variable*> setIter(*toSet); !setIter.isDone(); setIter.adv()) {
+  for(SObjSetIter<Variable*> setIter(*toSet);
+      !setIter.isDone(); setIter.adv())
+  {
     out << '\"';
     printVariableName_funcGran(out, from);
     out << "\" -> \"";
@@ -759,8 +840,10 @@ void Oink::output_funcGran(ostream &out, bool dot)
 {
   if (dot) out << "digraph {\n";
   // NOTE: the output order is not canonical
-  for(PtrMap<Variable, SObjSet<Variable*> >::Iter mapIter(funcGranGraph.flowsTo);
-      !mapIter.isDone(); mapIter.adv()) {
+  for(PtrMap<Variable,
+        SObjSet<Variable*> >::Iter mapIter(funcGranGraph.flowsTo);
+      !mapIter.isDone(); mapIter.adv())
+  {
     if (dot) {
       printVariableAndDep_DOT_funcGran(out, mapIter.key(), mapIter.value());
     } else {
@@ -768,6 +851,86 @@ void Oink::output_funcGran(ostream &out, bool dot)
     }
   }
   if (dot) out << "}\n";
+}
+
+void Oink::output_funcGranRevModPub(ostream &out) {
+  xassert(funcGranGraph.flowsFrom);
+  xassert(funcGranGraph.module2ToVars);
+
+  // FIX: until we do linking to unify all the vars that would link
+  // together we can report a varible as being called from more than
+  // one module because its Variable object is different in each file
+  bool const verbose = false;
+
+  // For each module, iterate over its to-vars; for each to-var look
+  // up its loc; from that look up its module.  If that is different
+  // from the current module, this function is public, otherwise not.
+  SFOREACH_OBJLIST(char, moduleList, iter) {
+    StringRef module = iter.data();
+    if (verbose) {
+      cerr << endl;
+      cerr << "module: " << module << endl;
+    }
+    SObjSet<Variable*> *varSet = funcGranGraph.module2ToVars->get(module);
+    if (!varSet) continue;
+    for(SObjSetIter<Variable*> setIter(*varSet);
+        !setIter.isDone(); setIter.adv())
+    {
+      // for each variable 'to' in 'module'
+      Variable *to = setIter.data();
+      if (verbose) {
+        cerr << "var:";
+        if (to->linkerVisibleName()) {
+          cerr << to->fullyQualifiedMangledName0();
+        } else {
+          cerr << "loc:" << locToStr(to->loc) << ":" << to->mangledName0();
+        }
+        cerr << endl;
+      }
+      // Note: if we look up module of 'to' we should get 'module'
+
+      // get the set of variables that call 'to'
+      SObjSet<Variable*> *fromSet = funcGranGraph.flowsFrom->get(to);
+      if (!fromSet) continue;
+
+      // is 'to' public?
+      bool to_isPublic = false;
+      for(SObjSetIter<Variable*> fromSetIter(*fromSet);
+          !fromSetIter.isDone(); fromSetIter.adv()) {
+        Variable *from = fromSetIter.data();
+        if (from == funcGranGraph.root) {
+          // if you are called from super-main, you are public
+          to_isPublic = true;
+          if (verbose) {
+            cerr << "\tcalled from super-main" << endl;
+          }
+          break;
+        }
+        StringRef fromModule = moduleForLoc(from->loc);
+        // FIX: in theory we can use == here
+        if (!streq(fromModule, module)) {
+          // 'to' is called from another module
+          to_isPublic = true;
+          if (verbose) {
+            cerr << "\tcalled from module " << fromModule << endl;
+          }
+          break;
+        } else {
+          if (verbose) {
+            cerr << "\tcalled from its own module" << endl;
+          }
+        }
+      }
+
+      // if 'to' is public, print it
+      if (to_isPublic) {
+        xassert(to->linkerVisibleName());
+        out << "module:" << module << " "
+            << "var:" << to->fullyQualifiedMangledName0()
+            << endl;
+      }
+    }
+  }
 }
 
 // error if extension is wrong
@@ -790,14 +953,30 @@ void Oink::print_funcGran() {
 
     ofstream out(oinkCmd->srz.c_str());
     if (!out) {
-      userFatalError(SL_UNKNOWN, "Couldn't open file '%s'\n", oinkCmd->srz.c_str());
+      userFatalError(SL_UNKNOWN, "Couldn't open file '%s'\n",
+                     oinkCmd->srz.c_str());
     }
 
-    output_funcGran(out, oinkCmd->func_gran_dot);
+    if (oinkCmd->func_gran_rev_mod_pub) {
+      output_funcGranRevModPub(out);
+    } else {
+      output_funcGran(out, oinkCmd->func_gran_dot);
+    }
   } else {
-    char const *mysplash = oinkCmd->func_gran_dot ? "fg-CFG-dot" : "fg-CFG";
-    cout << "---- START ---- " << mysplash << '\n';
-    output_funcGran(cout, oinkCmd->func_gran_dot);
+    char const *mysplash = "";
+    if (oinkCmd->func_gran_rev_mod_pub) {
+      mysplash = "fg-CFG-rev-mod-pub";
+    } else if (oinkCmd->func_gran_dot) {
+      mysplash = "fg-CFG-dot";
+    } else {
+      mysplash = "fg-CFG";
+    }
+    cout << "---- START ---- " << mysplash << endl;
+    if (oinkCmd->func_gran_rev_mod_pub) {
+      output_funcGranRevModPub(cout);
+    } else {
+      output_funcGran(cout, oinkCmd->func_gran_dot);
+    }
     cout << "---- STOP ---- " << mysplash << endl;
   }
 }
@@ -809,7 +988,8 @@ void Oink::loadFuncFilterNames() {
   std::ifstream in0(oinkCmd->func_filter.c_str());
   int lineCount = 0;
   if (!in0) {
-    userFatalError(SL_UNKNOWN, "Couldn't open function filter file '%s' for reading",
+    userFatalError(SL_UNKNOWN,
+                   "Couldn't open function filter file '%s' for reading",
                    oinkCmd->func_filter.c_str());
   }
   try {
@@ -824,7 +1004,8 @@ void Oink::loadFuncFilterNames() {
       funcFilterNames->add(globalStrTable(line.c_str()));
     }
   } catch (xBase &x) {
-    x.addContextLeft(stringc << oinkCmd->func_filter.c_str() << ":" << lineCount << ": ");
+    x.addContextLeft(stringc << oinkCmd->func_filter.c_str()
+                     << ":" << lineCount << ": ");
     throw x;
   }
 }
@@ -1047,7 +1228,8 @@ void Oink::deserialize_stage() {
       ArchiveDeserializerP arc =
         archiveSrzManager->getArchiveDeserializer(file->name.c_str());
       if (oinkCmd->print_stages) {
-        printStage(stringc << "   deserialize_1archive '" << file->name.c_str() << "'");
+        printStage(stringc << "   deserialize_1archive '"
+                   << file->name.c_str() << "'");
       }
 
       XmlLexer lexer;
@@ -1061,7 +1243,8 @@ void Oink::deserialize_stage() {
 }
 
 /* virtual */
-void Oink::deserialize_1archive(ArchiveDeserializer *arc, XmlReaderManager &manager)
+void Oink::deserialize_1archive
+  (ArchiveDeserializer *arc, XmlReaderManager &manager)
 {
   deserialize_formatVersion(arc);
   deserialize_files(arc, manager);
@@ -1143,9 +1326,10 @@ class CheckForUsedVarsASTVisitor : private ASTVisitor {
     if (obj->isE_variable()) {
       Variable_O *var = asVariable_O(obj->asE_variable()->var);
       if (funcIsUnsoundIfUsed(var)) {
-        userReportWarning(var->loc, "Unsoundness warning: used %s '%s'",
-                          (var->type->isFunctionType() ? "function" : "variable"),
-                          var->name);
+        userReportWarning
+          (var->loc, "Unsoundness warning: used %s '%s'",
+           (var->type->isFunctionType() ? "function" : "variable"),
+           var->name);
       }
     }
     return true;
@@ -1167,7 +1351,8 @@ void Oink::checkForUsedVars_stage() {
 
   // optimization: if there are no unsound-if-used controls, skip the
   // visitation as we can't get any warnings anyway
-  if (!controls || controls->getNumControls(OinkControl::CK_UNSOUNED_IF_USED) == 0) {
+  if (!controls ||
+      controls->getNumControls(OinkControl::CK_UNSOUNED_IF_USED) == 0) {
     return;
   }
 
@@ -1177,25 +1362,25 @@ void Oink::checkForUsedVars_stage() {
   // not what Karl wants but I leave it here in case we want this
   // semantics back someday.
 // //   Restorer<bool> restorer(value2typeIsOn, true);
-//   // FIX: I am not setting a particular lang here but I don't think it
-//   // matters.
-//   CheckUsedRealVars visCheckUsed; // VAR-TRAVERSAL
-//   visitVarsMarkedRealF_filtered(builtinVars, visCheckUsed);
-//   // do the user vars in each source file
-//   foreachSourceFile {
-//     File *file = files.data();
-//     maybeSetInputLangFromSuffix(file);
-//     TranslationUnit *unit = file2unit.get(file);
-//     visitRealVarsF_filtered(unit, visCheckUsed);
+// // FIX: I am not setting a particular lang here but I don't think it
+// // matters.
+// CheckUsedRealVars visCheckUsed; // VAR-TRAVERSAL
+// visitVarsMarkedRealF_filtered(builtinVars, visCheckUsed);
+// // do the user vars in each source file
+// foreachSourceFile {
+//   File *file = files.data();
+//   maybeSetInputLangFromSuffix(file);
+//   TranslationUnit *unit = file2unit.get(file);
+//   visitRealVarsF_filtered(unit, visCheckUsed);
+// }
+// if (visCheckUsed.usedAndUnsound.isNotEmpty()) {
+//   FOREACH_TAILLIST(Variable_O, visCheckUsed.usedAndUnsound, iter) {
+//     Variable_O const *var = iter.data();
+//     userReportWarning(var->loc, "Unsoundness warning: used %s '%s'",
+//                      (var->type->isFunctionType() ? "function" : "variable"),
+//                       var->name);
 //   }
-//   if (visCheckUsed.usedAndUnsound.isNotEmpty()) {
-//     FOREACH_TAILLIST(Variable_O, visCheckUsed.usedAndUnsound, iter) {
-//       Variable_O const *var = iter.data();
-//       userReportWarning(var->loc, "Unsoundness warning: used %s '%s'",
-//                         (var->type->isFunctionType() ? "function" : "variable"),
-//                         var->name);
-//     }
-//   }
+// }
 
   // this checks 'actually used in dataflow' as in someone actually
   // used the function
@@ -1209,9 +1394,9 @@ void Oink::checkForUsedVars_stage() {
 }
 
 // Perform "linking".  This checks if any symbols are undefined or
-// over-defined.  It puts variables to link in linker.tolink_name2vars.  It
-// calls the virtual function linkVariables() implemented by analyses
-// (e.g. Qual).
+// over-defined.  It puts variables to link in
+// linker.tolink_name2vars.  It calls the virtual function
+// linkVariables() implemented by analyses (e.g. Qual).
 void Oink::link_stage() {
   printStage("link");
   // we want to report an error if a control is never used
@@ -1227,7 +1412,8 @@ void Oink::link_stage() {
     char const *name = iter.key();
     Linker::VarList &vars = *iter.value();
     Linker::VarList &varsToLink = *new Linker::VarList;
-    xassert(vars.isNotEmpty()); // we should never have made the list if it were empty
+    // we should never have made the list if it were empty
+    xassert(vars.isNotEmpty());
 
     linkErrors += linkGetVariablesToLink(vars, varsToLink);
 
@@ -1277,7 +1463,8 @@ void Oink::link_stage() {
 // **** linking
 
 void Linker::add(Variable_O *var) {
-  // cout << "Linker::add() var=" << (void*)var << ", name=" << var->name << endl;
+  // cout << "Linker::add() var=" << (void*)var << ", name="
+  // << var->name << endl;
   xassert(!var->isTemplate());
   xassert(!var->isUninstTemplateMember());
   xassert(var->linkerVisibleName(true /*evenIfStaticLinkage*/));
@@ -1443,23 +1630,26 @@ int Oink::linkGetVariablesToLink(Linker::VarList &vars,
     //    See Test/inconsistent_implicit1a.cc: die if some functions
     //    implicit but others not.
     if (var->hasFlag(DF_IMPLICIT) != varImplicit) {
-      userFatalError(var->loc,
-                     "Variable '%s' is inconsistently implicit across translation units",
-                     var->fullyQualifiedMangledName0().c_str());
+      userFatalError
+        (var->loc,
+         "Variable '%s' is inconsistently implicit across translation units",
+         var->fullyQualifiedMangledName0().c_str());
     }
 
     if (var->isTemplate() != varTemplate) {
-      userFatalError(var->loc,
-                     "Variable '%s' is inconsistently a template across translation units",
-                     var->fullyQualifiedMangledName0().c_str());
+      userFatalError
+        (var->loc,
+         "Variable '%s' is inconsistently a template across translation units",
+         var->fullyQualifiedMangledName0().c_str());
     }
 
     // This happens for e.g. clog (complex.h vs iostream); TODO allow
     // data/function segmentation
     if (var->type->isFunctionType() != varFunction) {
-      userFatalError(var->loc,
-                     "Variable '%s' is inconsistently a function across translation units",
-                     var->fullyQualifiedMangledName0().c_str());
+      userFatalError
+        (var->loc,
+         "Variable '%s' is inconsistently a function across translation units",
+         var->fullyQualifiedMangledName0().c_str());
       FOREACH_TAILLIST_NC(Variable_O, vars, iter2) {
         Variable_O *var = iter2.data();
         var->gdb();
@@ -1467,15 +1657,19 @@ int Oink::linkGetVariablesToLink(Linker::VarList &vars,
     }
 
     if (var->isInstantiation() != varInstantiation) {
-      userFatalError(var->loc,
-                     "Variable '%s' is inconsistently an instantiation across translation units",
-                     var->fullyQualifiedMangledName0().c_str());
+      userFatalError
+        (var->loc,
+         "Variable '%s' is inconsistently an instantiation across "
+         "translation units",
+         var->fullyQualifiedMangledName0().c_str());
     }
 
     if (var->isPureVirtualMethod() != varPureVirtual) {
-      userFatalError(var->loc,
-                     "Variable '%s' is inconsistently a pure virtual method across translation units",
-                     var->fullyQualifiedMangledName0().c_str());
+      userFatalError
+        (var->loc,
+         "Variable '%s' is inconsistently a pure virtual method across "
+         "translation units",
+         var->fullyQualifiedMangledName0().c_str());
     }
   }
 
@@ -1571,10 +1765,11 @@ int Oink::linkGetVariablesToLink(Linker::VarList &vars,
   } else if (numDefsStrong == 0 && numDefsWeak > 0) {
     if (numDefsWeak > 1) {
       if (oinkCmd->report_link_errors) {
-        userReportWarning(firstWeak->loc,
-                          "No strong definitions for '%s' but more than 1 weak definition; "
-                          "using the one at this location.",
-                          firstWeak->fullyQualifiedMangledName0().c_str());
+        userReportWarning
+          (firstWeak->loc,
+           "No strong definitions for '%s' but more than 1 weak definition; "
+           "using the one at this location.",
+           firstWeak->fullyQualifiedMangledName0().c_str());
       }
     }
 
@@ -1582,10 +1777,11 @@ int Oink::linkGetVariablesToLink(Linker::VarList &vars,
   } else if (numDefsStrong > 1) {
     // over-satisfied: too many strong definitions
     if (oinkCmd->report_link_errors) {
-      userReportError(first->loc,
-                      "Over-satisfied symbol '%s', has %d definitions (%d strong, %d weak):",
-                      first->fullyQualifiedMangledName0().c_str(),
-                      numDefsStrong+numDefsWeak, numDefsStrong, numDefsWeak);
+      userReportError
+        (first->loc,
+         "Over-satisfied symbol '%s', has %d definitions (%d strong, %d weak):",
+         first->fullyQualifiedMangledName0().c_str(),
+         numDefsStrong+numDefsWeak, numDefsStrong, numDefsWeak);
       dumpLocationsOfDefinitions(vars);
     }
 
@@ -1633,28 +1829,34 @@ void Oink::linkCheckErrors(int linkErrors) {
   // check that main has a definition
   if (oinkCmd->report_link_errors) {
     if (!linker.getFunctionForLinking("F:main")) {
-      userReportError(SL_UNKNOWN, "Un-satisfied symbol: no definition for 'main'");
-        ++linkErrors;
+      userReportError
+        (SL_UNKNOWN, "Un-satisfied symbol: no definition for 'main'");
+      ++linkErrors;
     }
   }
 
   // report unused controls
   if (oinkCmd->report_unused_controls && controls) {
     if (!controls->allControlsUsed()) {
-      userReportError(SL_UNKNOWN, "Some controls were not used during link_stage");
+      userReportError(SL_UNKNOWN,
+                      "Some controls were not used during link_stage");
       controls->printUnusedControls();
       throw UserError(LINK_ERROR_ExitCode);
     }
   }
 
   if (oinkCmd->report_link_errors && linkErrors) {
-    userReportError(SL_UNKNOWN, "Link failed due to un-satisfied or over-satisfied symbols");
+    userReportError
+      (SL_UNKNOWN,
+       "Link failed due to un-satisfied or over-satisfied symbols");
     throw UserError(LINK_ERROR_ExitCode);
   }
 }
 
 // return a list of variables to serialize.
-void Linker::getOrderedExternVars(VarPredicate *varPred, TailList<Variable_O> &externVars) {
+void Linker::getOrderedExternVars
+  (VarPredicate *varPred, TailList<Variable_O> &externVars)
+{
   xassert(haveLinked);
   if (sortNameMapDomainWhenSerializing) {
     for(StringRefMap<Linker::VarList>::SortedKeyIter iter(tolink_name2vars);
@@ -1670,8 +1872,9 @@ void Linker::getOrderedExternVars(VarPredicate *varPred, TailList<Variable_O> &e
         // c9e8f15c-0e47-4852-b7f1-1ede70a102dd
         // FIX: we should turn this back on or at least figure out why
         // it was failing
-//         xassert(var->hasAbstrValue()
-//                 && "c9e8f15c-0e47-4852-b7f1-1ede70a102dd"); // we must have a value
+//       xassert(var->hasAbstrValue()
+//               // we must have a value
+//               && "c9e8f15c-0e47-4852-b7f1-1ede70a102dd");
         externVars.append(var);
       }
     }
@@ -1743,10 +1946,13 @@ void Oink::srzFormat(ArchiveSrzFormat &srzfmt, bool writing)
   if (writing) {
     srzfmt.opt("serialization_format", SERIALIZATION_FORMAT);
   } else {
-    std::string const &s_serialization_format = srzfmt.get("serialization_format");
+    std::string const &s_serialization_format =
+      srzfmt.get("serialization_format");
     if (s_serialization_format.empty() || s_serialization_format[0] != 'v') {
-      userFatalError(SL_UNKNOWN, "Error reading format file, invalid serialization_format '%s'",
-                     s_serialization_format.c_str());
+      userFatalError
+        (SL_UNKNOWN,
+         "Error reading format file, invalid serialization_format '%s'",
+         s_serialization_format.c_str());
     }
 
     serialization_format = atoi(s_serialization_format.c_str()+1);
@@ -1756,13 +1962,16 @@ void Oink::srzFormat(ArchiveSrzFormat &srzfmt, bool writing)
     } else if (serialization_format == 17) {
       // OK
     } else {
-      userFatalError(SL_UNKNOWN, "Error reading format file, unsupported serialization_format '%s'",
-                     s_serialization_format.c_str());
+      userFatalError
+        (SL_UNKNOWN,
+         "Error reading format file, unsupported serialization_format '%s'",
+         s_serialization_format.c_str());
     }
   }
 
   srzfmt.opt("backend", getBackendName());
-  srzfmt.opt("handleExternInline_asPrototype", handleExternInline_asPrototype());
+  srzfmt.opt("handleExternInline_asPrototype",
+             handleExternInline_asPrototype());
 
   if (writing || serialization_format >= 17) {
     // quarl 2006-11-12
@@ -1780,7 +1989,8 @@ void Oink::srzFormat(ArchiveSrzFormat &srzfmt, bool writing)
 void Oink::serialize_results() {
   printStage("serialize_results");
   try {
-    ArchiveSerializerP arc = archiveSrzManager->getArchiveSerializer(oinkCmd->srz.c_str());
+    ArchiveSerializerP arc =
+      archiveSrzManager->getArchiveSerializer(oinkCmd->srz.c_str());
 
     serialize_formatVersion(arc.get());
     serialize_files(arc.get());
@@ -1830,14 +2040,17 @@ void Oink::serialize_abstrValues(ArchiveSerializer* arc) {
   IdentityManager idmgr;
   // TODO: should this only serialize vars/values used in dataflow?
   XmlValueWriter::XVW_SerializeOracle srzOracle;
-  XmlValueWriter valueWriter(idmgr,
-                             // NULL, NULL,
-                             (ASTVisitor*)NULL,
-                             (ValueVisitor*) NULL, &valueOut, depth, indent, &srzOracle);
+  XmlValueWriter valueWriter
+    (idmgr,
+     // NULL, NULL,
+     (ASTVisitor*)NULL,
+     (ValueVisitor*) NULL, &valueOut, depth, indent, &srzOracle);
   serialize_abstrValues_stream(valueWriter, NULL);
 }
 
-void Oink::serialize_abstrValues_stream(XmlValueWriter &valueWriter, VarPredicate *varPred) {
+void Oink::serialize_abstrValues_stream
+  (XmlValueWriter &valueWriter, VarPredicate *varPred)
+{
   // serialize the Linker contents; first we make a list and then
   // serialize that
   TailList<Variable_O> externVars;
@@ -1851,13 +2064,15 @@ void Oink::serialize_abstrValues_stream(XmlValueWriter &valueWriter, VarPredicat
 void* Oink::expectOneXmlTag(XmlReaderManager &manager, int expectKind) {
   manager.parseOneTopLevelTag();
   if (manager.lexer.haveSeenEof()) {
-    manager.xmlUserFatalError(stringc << "Did not get top-level tag, was expecting " << expectKind);
+    manager.xmlUserFatalError
+      (stringc << "Did not get top-level tag, was expecting " << expectKind);
   }
 
   int lastKind = manager.getLastKind();
   if (lastKind != expectKind) {
-    manager.xmlUserFatalError(stringc << "Illegal top-level tag " << lastKind
-                              << ", was expecting " << expectKind);
+    manager.xmlUserFatalError
+      (stringc << "Illegal top-level tag " << lastKind
+       << ", was expecting " << expectKind);
   }
 
   void * lastNode = manager.getLastNode();
@@ -1886,14 +2101,17 @@ void Oink::deserialize_formatVersion(ArchiveDeserializer * arc) {
 
 // **** deserialization: files
 
-void Oink::deserialize_files(ArchiveDeserializer *arc, XmlReaderManager &manager) {
+void Oink::deserialize_files
+  (ArchiveDeserializer *arc, XmlReaderManager &manager)
+{
   istream& in = arc->input("files.xml");
   deserialize_files_stream(manager, in, arc->curFname(), arc->archiveName());
 }
 
 
 void Oink::deserialize_files_stream
-  (XmlReaderManager &manager, istream &in, const char* fname, const char *archiveName)
+  (XmlReaderManager &manager, istream &in, char const *fname,
+   char const *archiveName)
 {
   // prevent the SourceLocManager from looking at files in the file
   // system
@@ -1912,7 +2130,8 @@ void Oink::deserialize_files_stream
   if (oinkCmd->print_stages) {
     // printStage("      reading files");
   }
-  ObjList<SourceLocManager::FileData> *files = (ObjList<SourceLocManager::FileData>*)
+  ObjList<SourceLocManager::FileData> *files =
+    (ObjList<SourceLocManager::FileData>*)
     expectOneXmlTag(manager, XTOK_List_files);
 
   FOREACH_OBJLIST_NC(SourceLocManager::FileData, *files, fileIter) {
@@ -1927,7 +2146,8 @@ void Oink::deserialize_files_stream
     if (sourceLocManager->isLoaded(filename)) {
       if (!isAbsolutePathname(filename)) {
         cout << "Warning: not reloading source locations for '"
-             << filename << "', assuming they are the same as previously loaded version"
+             << filename
+             << "', assuming they are the same as previously loaded version"
              << endl;
       }
     } else {
@@ -1945,7 +2165,9 @@ void Oink::deserialize_files_stream
 
 // **** deserialization: values
 
-void Oink::deserialize_abstrValues(ArchiveDeserializer *arc, XmlReaderManager &manager) {
+void Oink::deserialize_abstrValues
+  (ArchiveDeserializer *arc, XmlReaderManager &manager)
+{
   // use heap-allocated readers because if we get an exception, then the
   // underlying ASTList will 'delete' it upon stack unwinding.
   XmlTypeReader *typeReader = new XmlTypeReader;
@@ -1959,11 +2181,14 @@ void Oink::deserialize_abstrValues(ArchiveDeserializer *arc, XmlReaderManager &m
   manager.unregisterReader(valueReader);
 }
 
-void Oink::deserialize_abstrValues_toLinker(ArchiveDeserializer *arc, XmlReaderManager &manager) {
+void Oink::deserialize_abstrValues_toLinker
+  (ArchiveDeserializer *arc, XmlReaderManager &manager)
+{
   // manager must already have XML readers registered
   istream& in = arc->input("value.xml");
 
-  SObjList<Variable_O> *externVars = deserialize_abstrValues_stream(manager, in, arc->curFname());
+  SObjList<Variable_O> *externVars =
+    deserialize_abstrValues_stream(manager, in, arc->curFname());
 
   SFOREACH_OBJLIST_NC(Variable_O, *externVars, iter) {
     linker.add(iter.data());
@@ -1986,4 +2211,21 @@ SObjList<Variable_O> *Oink::deserialize_abstrValues_stream
     expectOneXmlTag(manager, XTOK_List_externVars);
 
   return externVars;
+}
+
+StringRef moduleForLoc(SourceLoc loc) {
+  // loc must map to a file.
+  USER_ASSERT(loc != SL_UNKNOWN, loc,
+              "Cannot map an unknown location to a module.");
+  USER_ASSERT(loc != SL_INIT, loc,
+              "Cannot map an initial location to a module.");
+  char const *filename = sourceLocManager->getFile(loc);
+  StringRef module = file2module.queryif(filename);
+  if (!module) {
+    USER_ASSERT(defaultModule, loc,
+                "Default module is needed for file '%s' but none was given.",
+                filename);
+    module = defaultModule;
+  }
+  return module;
 }

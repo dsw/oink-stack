@@ -2,3 +2,5 @@ mod_foo_hello_write_bad.lattice
 mod_foo_hello_write_good.lattice
 mod_foo_hello_access_bad.lattice
 mod_foo_hello_access_good.lattice
+mod_bar_hello_trust_bad.lattice
+mod_bar_hello_trust_good.lattice
