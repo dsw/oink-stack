@@ -2137,9 +2137,9 @@ InstCandidate *InstCandidateResolver::selectBestCandidate()
 // ----------------- debugging -------------------
 int overloadNesting = 0;
 
-ostream &overloadTrace()
+std::ostream &overloadTrace()
 {
-  ostream &os = trace("overload");
+  std::ostream &os = trace("overload");
   for (int i=0; i<overloadNesting; i++) {
     os << "  ";
   }

@@ -182,7 +182,7 @@ bool ErrorList::hasFromNonDisambErrors() const
 }
 
 
-void ErrorList::print(ostream &os) const
+void ErrorList::print(std::ostream &os) const
 {
   os << printToString();
 }

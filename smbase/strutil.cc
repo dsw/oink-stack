@@ -568,7 +568,7 @@ void qsortStringArray(char const **strings, int size) {
 #include "test.h"      // USUAL_MAIN
 
 #include <assert.h>    // assert
-#include <fstream.h>   // ofstream
+#include <fstream>     // ofstream
 #include <stdlib.h>    // getenv
 #include <stdio.h>     // printf, remove
 
@@ -631,7 +631,7 @@ void translateAscii()
   underscore[255] = 0;
 
   {
-    ofstream file("strutil.out");
+    std::ofstream file("strutil.out");
     assert(file);
     file << "Hallo" << std::endl
          << ascii << std::endl

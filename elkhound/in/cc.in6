@@ -9,7 +9,7 @@
 #include "trace.h"       // tracing system
 #include "nonport.h"     // getMilliseconds
 
-#include <fstream.h>     // ofstream
+#include <fstream>       // ofstream
 
 
 #if 0    // not used anymore; gprof is much better

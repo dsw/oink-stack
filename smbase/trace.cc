@@ -7,7 +7,7 @@
 #include "strtokp.h"   // StrtokParse
 #include "nonport.h"   // getMilliseconds()
 
-#include <fstream.h>   // ofstream
+#include <fstream>     // ofstream
 #include <stdlib.h>    // getenv
 
 
@@ -18,7 +18,7 @@ static bool inited = false;
 static ObjList<string> tracers;
 
 // stream connected to /dev/null
-ofstream devNullObj("/dev/null");
+std::ofstream devNullObj("/dev/null");
 static std::ostream *devNull = &devNullObj;
 
 
@@ -33,7 +33,7 @@ static void init()
   // around and find out how
   // this leaks, and now that I'm checking for them, it's a little
   // annoying...
-  //devNull = new ofstream("/dev/null");
+  //devNull = new std::ofstream("/dev/null");
 
   inited = true;
 }

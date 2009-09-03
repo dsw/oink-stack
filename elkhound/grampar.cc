@@ -15,7 +15,7 @@
 #include "array.h"           // GrowArray
 #include "mlsstr.h"          // MLSubstrate
 
-#include <fstream.h>         // ifstream
+#include <fstream>           // ifstream
 #include <ctype.h>           // isspace, isalnum
 
 #define LIT_STR(s) LocString(SL_INIT, grammarStringTable.add(s))
@@ -1200,12 +1200,12 @@ GrammarAST *parseGrammarFile(rostring origFname, bool useML)
   #endif // NDEBUG
 
   // open input file
-  Owner<ifstream> in;
+  Owner<std::ifstream> in;
   if (fname.empty()) {
     fname = "<stdin>";
   }
   else {
-    in = new ifstream(fname.c_str());
+    in = new std::ifstream(fname.c_str());
     if (!*in) {
       xsyserror("open", stringc << "error opening input file " << fname);
     }

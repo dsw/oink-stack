@@ -46,7 +46,7 @@ bool GrepVisitor::matches(Variable *var)
 void GrepVisitor::tryHit(Variable *var, SourceLoc refLoc, char const *use)
 {
   if (matches(var)) {
-    cout << toString(refLoc) << ": " << use << "\n";
+    std::cout << toString(refLoc) << ": " << use << "\n";
   }
 }
 
@@ -89,14 +89,14 @@ void doit(int argc, char **argv)
 
   // process command-line arguments
   if (argc != 4) {
-    cout << "usage: " << argv[0] << " <name> <line> input.cc\n";
+    std::cout << "usage: " << argv[0] << " <name> <line> input.cc\n";
     return;
   }
 
   GrepVisitor grepv(argv[1], atoi(argv[2]));
   string inputFname = argv[3];
 
-  //cout << "grepping for " << grepv.name
+  //std::cout << "grepping for " << grepv.name
   //     << " on line " << grepv.line
   //     << " in " << inputFname << "\n";
 
@@ -142,8 +142,8 @@ void doit(int argc, char **argv)
 
     int numErrors = env.errors.numErrors();
     if (numErrors) {
-      env.errors.print(cerr);
-      cerr << numErrors << " errors\n";
+      env.errors.print(std::cerr);
+      std::cerr << numErrors << " errors\n";
       exit(4);
     }
   }
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
   }
   catch (xBase &x) {
     HANDLER();
-    cout << x << endl;
+    std::cout << x << std::endl;
     abort();
   }
 

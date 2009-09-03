@@ -126,7 +126,7 @@
 #include "lexer2.h"      // Lexer2
 
 #include <stdio.h>       // FILE
-#include <fstream.h>     // ofstream
+#include <fstream>       // ofstream
 
 
 // ----------------------- StackNode -----------------------
@@ -987,7 +987,7 @@ void GLR::glrTest(char const *grammarFname, char const *inputFname,
 
 
 #ifdef GLR_MAIN
-//#include <fstream.h>    // ofstream
+//#include <fstream>      // ofstream
 
 int main(int argc, char **argv)
 {

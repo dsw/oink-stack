@@ -8,7 +8,7 @@
 #include "str.h"       // string
 #include "srcloc.h"    // SourceLoc
 
-#include <ostream.h>   // ostream
+#include <ostream>     // ostream
 
 
 // flags on errors
@@ -158,7 +158,7 @@ public:
   bool hasFromNonDisambErrors() const;
 
   // print all the errors, one per line, in order
-  void print(ostream &os) const;
+  void print(std::ostream &os) const;
   string printToString() const;
 };
 

@@ -16,7 +16,7 @@
 #include "ofstreamts.h"    // ofstreamTS
 
 #include <string.h>        // strncmp
-#include <fstream.h>       // ofstream
+#include <fstream>         // ofstream
 #include <ctype.h>         // isalnum
 
 // propertly a member of ListClass below, but I don't like nested
@@ -1481,7 +1481,7 @@ void CGen::emitCloneCode(ASTClass const *super, ASTClass const *sub)
 
 
 // -------------------------- visitor ---------------------------
-void emitTF_custom(ofstream &out, rostring qualifierName, bool addNewline)
+void emitTF_custom(std::ofstream &out, rostring qualifierName, bool addNewline)
 {
   FOREACH_ASTLIST_NC(ToplevelForm, wholeAST->forms, iter) {
     if (iter.data()->isTF_custom()) {

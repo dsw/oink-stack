@@ -18,7 +18,7 @@
 #include "genml.h"       // emitMLActionCode
 #include "ofstreamts.h"  // ofstreamTS
 
-#include <fstream.h>     // ofstream
+#include <fstream>       // ofstream
 #include <stdlib.h>      // getenv
 #include <stdio.h>       // printf
 
@@ -4036,9 +4036,9 @@ void GrammarAnalysis::runAnalyses(char const *setsFname)
   }
 
   // open debug output file
-  ofstream *setsOutput = NULL;
+  std::ofstream *setsOutput = NULL;
   if (setsFname) {
-    setsOutput = new ofstream(setsFname);
+    setsOutput = new std::ofstream(setsFname);
     if (!*setsOutput) {
       std::cout << "couldn't open " << setsFname << " to write item sets\n";
       delete setsOutput;

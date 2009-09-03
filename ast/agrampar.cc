@@ -12,7 +12,7 @@
 
 #include <string.h>          // strncmp
 #include <ctype.h>           // isalnum
-#include <fstream.h>         // ifstream
+#include <fstream>           // ifstream
 
 
 string unbox(string *s)
@@ -135,14 +135,14 @@ ASTSpecFile *readAbstractGrammar(char const *fname)
   }
 
   Owner<GrammarLexer> lexer;
-  Owner<ifstream> in;
+  Owner<std::ifstream> in;
   if (fname == NULL) {
     // stdin
     lexer = new GrammarLexer(isAGramlexEmbed, stringTable);
   }
   else {
     // file
-    in = new ifstream(fname);
+    in = new std::ifstream(fname);
     if (!*in) {
       throw_XOpen(fname);
     }

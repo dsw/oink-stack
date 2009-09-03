@@ -8,6 +8,7 @@
 #include "astlist.h"
 #include <string>
 #include <stdio.h>
+#include <strings.h>
 
 class File;
 

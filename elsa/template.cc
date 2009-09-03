@@ -765,8 +765,9 @@ void TemplateInfo::gdb()
 
 void TemplateInfo::debugPrint(int depth, bool printPartialInsts)
 {
-  ind(cout, depth*2) << "TemplateInfo for "
-                     << (var? var->name : "(null var)") << " {" << endl;
+  ind(std::cout, depth*2) << "TemplateInfo for "
+                          << (var? var->name : "(null var)") << " {"
+                          << std::endl;
 
   depth++;
 
@@ -775,40 +776,40 @@ void TemplateInfo::debugPrint(int depth, bool printPartialInsts)
     // parameter info, so print it; but then *it* better not turn
     // around and print its partial instantiation list, otherwise we
     // get an infinite loop!  (discovered the hard way...)
-    ind(cout, depth*2) << "partialInstantiatedFrom:\n";
+    ind(std::cout, depth*2) << "partialInstantiatedFrom:\n";
     partialInstantiationOf->templateInfo()->
       debugPrint(depth+1, false /*printPartialInsts*/);
   }
 
   // inherited params
   FOREACH_OBJLIST(InheritedTemplateParams, inheritedParams, iter) {
-    ind(cout, depth*2) << "inherited from " << iter.data()->enclosing->name
-                       << ": " << iter.data()->paramsToCString() << endl;
+    ind(std::cout, depth*2) << "inherited from " << iter.data()->enclosing->name
+                       << ": " << iter.data()->paramsToCString() << std::endl;
   }
 
   // my params
-  ind(cout, depth*2) << "params: " << paramsToCString() << endl;
+  ind(std::cout, depth*2) << "params: " << paramsToCString() << std::endl;
 
-  ind(cout, depth*2) << "arguments:" << endl;
+  ind(std::cout, depth*2) << "arguments:" << std::endl;
   FOREACH_OBJLIST_NC(STemplateArgument, arguments, iter) {
     iter.data()->debugPrint(depth+1);
   }
 
-  ind(cout, depth*2) << "instantiations:" << endl;
+  ind(std::cout, depth*2) << "instantiations:" << std::endl;
   depth++;
   SFOREACH_OBJLIST_NC(Variable, instantiations, iter) {
     Variable *var = iter.data();
-    ind(cout, depth*2) << var->type->toString() << endl;
+    ind(std::cout, depth*2) << var->type->toString() << std::endl;
     var->templateInfo()->debugPrint(depth+1);
   }
   depth--;
 
   if (printPartialInsts) {
-    ind(cout, depth*2) << "partial instantiations:" << endl;
+    ind(std::cout, depth*2) << "partial instantiations:" << std::endl;
     depth++;
     SFOREACH_OBJLIST_NC(Variable, partialInstantiations, iter) {
       Variable *var = iter.data();
-      ind(cout, depth*2) << var->toString() << endl;
+      ind(std::cout, depth*2) << var->toString() << std::endl;
       var->templateInfo()->debugPrint(depth+1);
     }
     depth--;
@@ -816,7 +817,7 @@ void TemplateInfo::debugPrint(int depth, bool printPartialInsts)
 
   depth--;
 
-  ind(cout, depth*2) << "}" << endl;
+  ind(std::cout, depth*2) << "}" << std::endl;
 }
 
 
@@ -1017,8 +1018,8 @@ void STemplateArgument::gdb()
 
 void STemplateArgument::debugPrint(int depth)
 {
-  for (int i=0; i<depth; ++i) cout << "  ";
-  cout << "STemplateArgument: " << toString() << endl;
+  for (int i=0; i<depth; ++i) std::cout << "  ";
+  std::cout << "STemplateArgument: " << toString() << std::endl;
 }
 
 

@@ -7,7 +7,7 @@
 #include "xassert.h"      // xassert
 #include <stdlib.h>       // qsort
 #include <string.h>       // memcpy
-#include <new.h>          // new
+#include <new>            // new
 
 
 // ------------------ BitwiseGrowArray --------------------
@@ -127,7 +127,7 @@ private:
   // uninitialized alloc
   static T *alloc(size_t count) {
     void *m = malloc(sizeof(T)*count);
-    if (!m) throw bad_alloc();
+    if (!m) throw std::bad_alloc();
     return (T*) m;
   }
 

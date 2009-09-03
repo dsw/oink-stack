@@ -13,11 +13,11 @@ size_t getFileSize(std::istream &i)
   // use 'streampos' instead of 'istream::pos_type' for gcc-2.95
   // compatibility.
   if (!i) return 0;
-  streampos save_pos = i.tellg();
+  std::streampos save_pos = i.tellg();
   i.seekg(0, std::ios::beg);
-  streampos begin_pos = i.tellg();
+  std::streampos begin_pos = i.tellg();
   i.seekg(0, std::ios::end);
-  streampos end_pos = i.tellg();
+  std::streampos end_pos = i.tellg();
   size_t size = end_pos - begin_pos;
   i.seekg(save_pos);
   return size;
@@ -25,10 +25,10 @@ size_t getFileSize(std::istream &i)
 
 bool filesIdentical(const char *f1, const char *f2)
 {
-  ifstream i1(f1);
+  std::ifstream i1(f1);
   if (!i1) return false;
 
-  ifstream i2(f2);
+  std::ifstream i2(f2);
   if (!i2) {
     xfatal(stringc << "I thought I just wrote " << f2 << ", but it doesn't exist");
     return false;

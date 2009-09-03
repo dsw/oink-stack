@@ -185,10 +185,10 @@ bool DataFlowVisitor::visitFunction(Function *obj) {
 
   // ignore this Function if we should
   if (controls && controls->isIgnored(var)) {
-    cout << sourceLocManager->getString(var->loc)
-         << " ignoring function body since in ignore file: "
-         << var->name
-         << endl;
+    std::cout << sourceLocManager->getString(var->loc)
+              << " ignoring function body since in ignore file: "
+              << var->name
+              << std::endl;
     return false;               // prune
   }
 

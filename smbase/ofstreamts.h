@@ -5,7 +5,7 @@
 #ifndef OFSTREAMTS_H
 #define OFSTREAMTS_H
 
-#include <fstream.h>
+#include <fstream>
 #include "str.h"
 
 // An ofstream which is timestamp-conscious.  It first writes to a temporary
@@ -18,7 +18,7 @@
 // atomic output.
 //
 // Call 'dontsave()' to avoid saving, e.g. if an error occurred.
-class ofstreamTS : public ofstream {
+class ofstreamTS : public std::ofstream {
   // The name of the file where the data is eventually saved
   string destFname;
 

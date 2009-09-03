@@ -1079,7 +1079,7 @@ void TS_typeof::print(PrintEnv &env)
 }
 
 
-void ASTTypeof::printAmbiguities(ostream &os, int indent) const
+void ASTTypeof::printAmbiguities(std::ostream &os, int indent) const
 {
   genericPrintAmbiguities(this, "TypeSpecifier", os, indent);
 
@@ -1236,7 +1236,7 @@ void SubscriptDesignator::print(PrintEnv &env)
 }
 
 
-void Designator::printAmbiguities(ostream &os, int indent) const
+void Designator::printAmbiguities(std::ostream &os, int indent) const
 {
   genericPrintAmbiguities(this, "Designator", os, indent);
 
@@ -1302,7 +1302,7 @@ D_attribute::~D_attribute()
 }
 
 
-void D_attribute::debugPrint(ostream &os, int indent, char const *subtreeName) const
+void D_attribute::debugPrint(std::ostream &os, int indent, char const *subtreeName) const
 {
   // I don't call D_grouping::debugPrint because I want the
   // output to say "D_attribute", not "D_grouping".

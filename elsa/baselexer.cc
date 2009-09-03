@@ -5,7 +5,7 @@
 #include "strtable.h"    // StringTable
 #include "exc.h"         // throw_XOpen
 
-#include <fstream.h>     // ifstream
+#include <fstream>       // ifstream
 
 #if defined(__GNUC__) && (__GNUC__ > 2)
   // gcc-3 doesn't have istrstream (but it is standard!), so fake it
@@ -35,7 +35,7 @@ std::istream *BaseLexer::openFile(char const *fname)
 {
   // 2005-01-17: open in binary mode to coincide with srcloc.cc
   // doing the same, for cygwin reasons
-  this->inputStream = new ifstream(fname, std::ios::in | std::ios::binary);
+  this->inputStream = new std::ifstream(fname, std::ios::in | std::ios::binary);
   if (!*inputStream) {
     // destructor won't be called so delete here.
     delete inputStream; inputStream = NULL;

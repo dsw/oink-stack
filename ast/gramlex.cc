@@ -6,7 +6,7 @@
 #include "ccsstr.h"      // CCSubstrate
 #include "ckheap.h"      // checkHeap
 
-#include <fstream.h>     // cout, ifstream
+#include <fstream>       // cout, ifstream
 
 
 // workaround for flex-2.5.31
@@ -144,7 +144,7 @@ int GrammarLexer::yylexInc()
     string fname = includeFileName;
 
     // 'in' will be deleted in ~GrammarLexer
-    ifstream *in = new ifstream(fname.c_str());
+    std::ifstream *in = new std::ifstream(fname.c_str());
     if (!*in) {
       err(stringc << "unable to open include file `" << fname << "'");
     }

@@ -829,28 +829,29 @@ string Scope::desc() const
 
 static void dumpMap(char const *label, StringRefMap<Variable> const &map)
 {
-  cout << "  " << label << ":\n";
+  std::cout << "  " << label << ":\n";
   for (StringRefMap<Variable>::Iter iter(map);
        !iter.isDone();
        iter.adv()) {
-    cout << "    " << iter.key() << ": " << iter.value()->toString() << "\n";
+    std::cout << "    " << iter.key() << ": "
+              << iter.value()->toString() << "\n";
   }
 }
 
 void Scope::gdb() const
 {
-  cout << "Scope dump of " << desc() << ":\n";
+  std::cout << "Scope dump of " << desc() << ":\n";
   dumpMap("variables", variables);
   dumpMap("typeTags", typeTags);
 
   if (curCompound) {
-    cout << "  friends (found during arg-dep lookup):\n";
+    std::cout << "  friends (found during arg-dep lookup):\n";
     SFOREACH_OBJLIST(Variable, curCompound->friends, iter) {
-      cout << "    " << iter.data()->toQualifiedString() << "\n";
+      std::cout << "    " << iter.data()->toQualifiedString() << "\n";
     }
   }
 
-  cout.flush();
+  std::cout.flush();
 }
 
 

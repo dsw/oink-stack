@@ -242,10 +242,10 @@ bool FuncGranASTVisitor::visitFunction(Function *obj) {
   Variable_O *napVar = asVariable_O(obj->nameAndParams->var);
 //   xassert(tunit == napVar->tunit);
   if (controls && controls->isIgnored(napVar)) {
-    cout << sourceLocManager->getString(napVar->loc)
-         << " ignoring function body since in ignore file: "
-         << napVar->name
-         << endl;
+    std::cout << sourceLocManager->getString(napVar->loc)
+              << " ignoring function body since in ignore file: "
+              << napVar->name
+              << std::endl;
     return false;               // prune
   }
 
@@ -368,8 +368,8 @@ void Oink::printStage(const char *name) {
 }
 
 void Oink::printStage0(char const *name) {
-  cout << "%%" << explain_process_stats << getBackendName() << " stage: "
-       << name << endl;
+  std::cout << "%%" << explain_process_stats << getBackendName()
+            << " stage: " << name << std::endl;
 }
 
 void Oink::printBuckets() {
@@ -379,27 +379,27 @@ void Oink::printBuckets() {
 // virtual
 void Oink::printStats()
 {
-  cout << "Variables: " << Variable::numVariables << endl;
-  cout << "Values: " << vFac->getNumValues() << endl;
+  std::cout << "Variables: " << Variable::numVariables << std::endl;
+  std::cout << "Values: " << vFac->getNumValues() << std::endl;
 #if DEBUG_INSTANCE_SPECIFIC_VALUES
-  cout << "  dataDeclaratorValues: "
-       << dataDeclaratorValues.getNumEntries() << endl;
-  cout << "  instanceSpecificValues: "
-       << instanceSpecificValues.getNumEntries() << endl;
+  std::cout << "  dataDeclaratorValues: "
+            << dataDeclaratorValues.getNumEntries() << std::endl;
+  std::cout << "  instanceSpecificValues: "
+            << instanceSpecificValues.getNumEntries() << std::endl;
 #endif
 }
 
 // virtual
 void Oink::printSizes()
 {
-#define P(T) cout << "  sizeof(" #T ") = " << sizeof(T) << endl
+#define P(T) std::cout << "  sizeof(" #T ") = " << sizeof(T) << std::endl
 
-  cout << "Elsa:\n";
+  std::cout << "Elsa:\n";
 
   P(Variable);
 
-  cout << endl;
-  cout << "Oink:\n";
+  std::cout << std::endl;
+  std::cout << "Oink:\n";
 
   P(CVAtomicValue);
   P(PointerValue);
@@ -414,20 +414,20 @@ void Oink::printSizes()
 // virtual
 void Oink::printProcStats()
 {
-  cat_proc_status(cout);
+  cat_proc_status(std::cout);
 }
 
 void printStart(char const *name) {
   if (oinkCmd->print_startstop) {
-    cout << endl;
-    cout << "---- START ---- " << name << endl;
+    std::cout << std::endl;
+    std::cout << "---- START ---- " << name << std::endl;
   }
 }
 
 void printStop() {
   if (oinkCmd->print_startstop) {
-    cout << "---- STOP ----" << endl;
-    cout << endl;
+    std::cout << "---- STOP ----" << std::endl;
+    std::cout << std::endl;
   }
 }
 
@@ -489,7 +489,7 @@ void Oink::loadControlFile() {
     throw x;
   }
   if (oinkCmd->print_controls_and_exit) {
-    controls->print(cout);
+    controls->print(std::cout);
     exit(0);
   }
 }
@@ -540,7 +540,7 @@ void Oink::parseOneFile(File *file, ParseTables *parseTables) {
       // the 'treeTop' is actually a PTreeNode pointer; print the
       // tree and bail
       PTreeNode *ptn = (PTreeNode*)treeTop;
-      ptn->printTree(cout, PTreeNode::PF_EXPAND);
+      ptn->printTree(std::cout, PTreeNode::PF_EXPAND);
       exit(0);
     }
 
@@ -564,9 +564,9 @@ void Oink::typecheckOneFile(File *file) {
   // print errors and warnings
   int numErrors = env.errors.numErrors();
   int numWarnings = env.errors.numWarnings();
-  env.errors.print(cout);
+  env.errors.print(std::cout);
   if (oinkCmd->verbose || numErrors > 0 || numWarnings > 0) {
-    cout << "typechecking results:\n"
+    std::cout << "typechecking results:\n"
          << "  errors:   " << numErrors << "\n"
          << "  warnings: " << numWarnings << "\n";
   }
@@ -574,7 +574,7 @@ void Oink::typecheckOneFile(File *file) {
 
   // verify the tree now has no ambiguities
   if (unit && numAmbiguousNodes(unit) != 0) {
-    cout << "UNEXPECTED: ambiguities remain after type checking!\n";
+    std::cout << "UNEXPECTED: ambiguities remain after type checking!\n";
     throw UserError(TYPECHECKING_ERROR_ExitCode);
   }
 
@@ -587,7 +587,7 @@ void Oink::astPrintOneFile(File *file) {
   maybeSetInputLangFromSuffix(file);
   printStart(file->name.c_str());
   TranslationUnit *unit = file2unit.get(file);
-  unit->debugPrint(cout, 0);
+  unit->debugPrint(std::cout, 0);
   printStop();
 }
 
@@ -626,12 +626,12 @@ void Oink::init_stage(int argc, char **argv) {
   }
   globalLang.enableAllWarnings();
   if (oinkCmd->verbose) {
-    cout << "**** language settings:\n";
-    cout << globalLang.toString();
-    cout << endl;
-    cout << "**** tracing flags:\n\t";
+    std::cout << "**** language settings:\n";
+    std::cout << globalLang.toString();
+    std::cout << std::endl;
+    std::cout << "**** tracing flags:\n\t";
     printTracers(std::cout, "\n\t");
-    cout << endl;
+    std::cout << std::endl;
   }
 
   checkInputFilesRecognized();
@@ -787,7 +787,7 @@ void Oink::compute_funcGran() {
   }
 }
 
-void Oink::printVariableName_funcGran(ostream &out, Variable *var) {
+void Oink::printVariableName_funcGran(std::ostream &out, Variable *var) {
   if (var == funcGranGraph.root) {
     out << "super-main";
     return;
@@ -803,7 +803,7 @@ void Oink::printVariableName_funcGran(ostream &out, Variable *var) {
 }
 
 void Oink::printVariableAndDep_funcGran
-  (ostream &out, Variable *from, SObjSet<Variable*> *toSet)
+  (std::ostream &out, Variable *from, SObjSet<Variable*> *toSet)
 {
   // print Variable from
   printVariableName_funcGran(out, from);
@@ -822,7 +822,7 @@ void Oink::printVariableAndDep_funcGran
 
 // print the above in DOT format
 void Oink::printVariableAndDep_DOT_funcGran
-  (ostream &out, Variable *from, SObjSet<Variable*> *toSet)
+  (std::ostream &out, Variable *from, SObjSet<Variable*> *toSet)
 {
   for(SObjSetIter<Variable*> setIter(*toSet);
       !setIter.isDone(); setIter.adv())
@@ -836,7 +836,7 @@ void Oink::printVariableAndDep_DOT_funcGran
   out << '\n';
 }
 
-void Oink::output_funcGran(ostream &out, bool dot)
+void Oink::output_funcGran(std::ostream &out, bool dot)
 {
   if (dot) out << "digraph {\n";
   // NOTE: the output order is not canonical
@@ -853,7 +853,7 @@ void Oink::output_funcGran(ostream &out, bool dot)
   if (dot) out << "}\n";
 }
 
-void Oink::output_funcGranRevModPub(ostream &out) {
+void Oink::output_funcGranRevModPub(std::ostream &out) {
   xassert(funcGranGraph.flowsFrom);
   xassert(funcGranGraph.module2ToVars);
 
@@ -868,8 +868,8 @@ void Oink::output_funcGranRevModPub(ostream &out) {
   SFOREACH_OBJLIST(char, moduleList, iter) {
     StringRef module = iter.data();
     if (verbose) {
-      cerr << endl;
-      cerr << "module: " << module << endl;
+      std::cerr << std::endl;
+      std::cerr << "module: " << module << std::endl;
     }
     SObjSet<Variable*> *varSet = funcGranGraph.module2ToVars->get(module);
     if (!varSet) continue;
@@ -879,13 +879,13 @@ void Oink::output_funcGranRevModPub(ostream &out) {
       // for each variable 'to' in 'module'
       Variable *to = setIter.data();
       if (verbose) {
-        cerr << "var:";
+        std::cerr << "var:";
         if (to->linkerVisibleName()) {
-          cerr << to->fullyQualifiedMangledName0();
+          std::cerr << to->fullyQualifiedMangledName0();
         } else {
-          cerr << "loc:" << locToStr(to->loc) << ":" << to->mangledName0();
+          std::cerr << "loc:" << locToStr(to->loc) << ":" << to->mangledName0();
         }
-        cerr << endl;
+        std::cerr << std::endl;
       }
       // Note: if we look up module of 'to' we should get 'module'
 
@@ -902,7 +902,7 @@ void Oink::output_funcGranRevModPub(ostream &out) {
           // if you are called from super-main, you are public
           to_isPublic = true;
           if (verbose) {
-            cerr << "\tcalled from super-main" << endl;
+            std::cerr << "\tcalled from super-main" << std::endl;
           }
           break;
         }
@@ -912,12 +912,12 @@ void Oink::output_funcGranRevModPub(ostream &out) {
           // 'to' is called from another module
           to_isPublic = true;
           if (verbose) {
-            cerr << "\tcalled from module " << fromModule << endl;
+            std::cerr << "\tcalled from module " << fromModule << std::endl;
           }
           break;
         } else {
           if (verbose) {
-            cerr << "\tcalled from its own module" << endl;
+            std::cerr << "\tcalled from its own module" << std::endl;
           }
         }
       }
@@ -927,7 +927,7 @@ void Oink::output_funcGranRevModPub(ostream &out) {
         xassert(to->linkerVisibleName());
         out << "module:" << module << " "
             << "var:" << to->fullyQualifiedMangledName0()
-            << endl;
+            << std::endl;
       }
     }
   }
@@ -971,13 +971,13 @@ void Oink::print_funcGran() {
     } else {
       mysplash = "fg-CFG";
     }
-    cout << "---- START ---- " << mysplash << endl;
+    std::cout << "---- START ---- " << mysplash << std::endl;
     if (oinkCmd->func_gran_rev_mod_pub) {
-      output_funcGranRevModPub(cout);
+      output_funcGranRevModPub(std::cout);
     } else {
-      output_funcGran(cout, oinkCmd->func_gran_dot);
+      output_funcGran(std::cout, oinkCmd->func_gran_dot);
     }
-    cout << "---- STOP ---- " << mysplash << endl;
+    std::cout << "---- STOP ---- " << mysplash << std::endl;
   }
 }
 
@@ -1205,8 +1205,8 @@ void Oink::prettyPrint_stage() {
       File *file = files.data();
       maybeSetInputLangFromSuffix(file);
       printStart(file->name.c_str());
-      cout << "// -*-c++-*-" << endl;
-      OStreamOutStream out0(cout);
+      std::cout << "// -*-c++-*-" << std::endl;
+      OStreamOutStream out0(std::cout);
       CodeOutStream codeOut(out0);
       // some clients of oink will never do pretty printing
       xassert(typePrinter);
@@ -1463,8 +1463,8 @@ void Oink::link_stage() {
 // **** linking
 
 void Linker::add(Variable_O *var) {
-  // cout << "Linker::add() var=" << (void*)var << ", name="
-  // << var->name << endl;
+  // std::cout << "Linker::add() var=" << (void*)var << ", name="
+  // << var->name << std::endl;
   xassert(!var->isTemplate());
   xassert(!var->isUninstTemplateMember());
   xassert(var->linkerVisibleName(true /*evenIfStaticLinkage*/));
@@ -2005,7 +2005,7 @@ void Oink::serialize_results() {
 // **** serialization: format
 
 void Oink::serialize_formatVersion(ArchiveSerializer * arc) {
-  ostream & out = arc->output("format.txt");
+  std::ostream & out = arc->output("format.txt");
   ArchiveSrzFormatWriter srzfmt(out);
   srzFormat(srzfmt, true /* writing */);
 }
@@ -2013,11 +2013,11 @@ void Oink::serialize_formatVersion(ArchiveSerializer * arc) {
 // **** serialization: files
 
 void Oink::serialize_files(ArchiveSerializer * arc) {
-  ostream& out = arc->output("files.xml");
+  std::ostream& out = arc->output("files.xml");
   serialize_files_stream(out);
 }
 
-void Oink::serialize_files_stream(ostream &out) {
+void Oink::serialize_files_stream(std::ostream &out) {
   bool indent = tracingSys("xmlPrintAST-indent");
   int depth = 0;                // shared depth counter between printers
 
@@ -2033,7 +2033,7 @@ void Oink::serialize_files_stream(ostream &out) {
 void Oink::serialize_abstrValues(ArchiveSerializer* arc) {
   // write to a string first, since we can't interleave output to two archive
   // files
-  ostream& valueOut = arc->output("value.xml");
+  std::ostream& valueOut = arc->output("value.xml");
 
   bool indent = tracingSys("xmlPrintAST-indent");
   int depth = 0;              // shared depth counter between printers
@@ -2093,7 +2093,7 @@ void* Oink::expectOneXmlTag(XmlReaderManager &manager, int expectKind) {
 // **** deserialization: format
 
 void Oink::deserialize_formatVersion(ArchiveDeserializer * arc) {
-  istream& in = arc->input("format.txt");
+  std::istream& in = arc->input("format.txt");
 
   ArchiveSrzFormatChecker srzfmt(in, arc->curFname());
   srzFormat(srzfmt, false /* reading */);
@@ -2104,13 +2104,13 @@ void Oink::deserialize_formatVersion(ArchiveDeserializer * arc) {
 void Oink::deserialize_files
   (ArchiveDeserializer *arc, XmlReaderManager &manager)
 {
-  istream& in = arc->input("files.xml");
+  std::istream& in = arc->input("files.xml");
   deserialize_files_stream(manager, in, arc->curFname(), arc->archiveName());
 }
 
 
 void Oink::deserialize_files_stream
-  (XmlReaderManager &manager, istream &in, char const *fname,
+  (XmlReaderManager &manager, std::istream &in, char const *fname,
    char const *archiveName)
 {
   // prevent the SourceLocManager from looking at files in the file
@@ -2145,10 +2145,11 @@ void Oink::deserialize_files_stream
 
     if (sourceLocManager->isLoaded(filename)) {
       if (!isAbsolutePathname(filename)) {
-        cout << "Warning: not reloading source locations for '"
-             << filename
-             << "', assuming they are the same as previously loaded version"
-             << endl;
+        std::cout << "Warning: not reloading source locations for '"
+                  << filename
+                  << "', assuming they are the same as "
+                  << "previously loaded version"
+                  << std::endl;
       }
     } else {
       sourceLocManager->loadFile(fileData);
@@ -2185,7 +2186,7 @@ void Oink::deserialize_abstrValues_toLinker
   (ArchiveDeserializer *arc, XmlReaderManager &manager)
 {
   // manager must already have XML readers registered
-  istream& in = arc->input("value.xml");
+  std::istream& in = arc->input("value.xml");
 
   SObjList<Variable_O> *externVars =
     deserialize_abstrValues_stream(manager, in, arc->curFname());
@@ -2197,7 +2198,7 @@ void Oink::deserialize_abstrValues_toLinker
 }
 
 SObjList<Variable_O> *Oink::deserialize_abstrValues_stream
-  (XmlReaderManager &manager, istream& in, const char* fname)
+  (XmlReaderManager &manager, std::istream& in, const char* fname)
 {
   manager.lexer.inputFname = fname;
   manager.inputFname = fname;

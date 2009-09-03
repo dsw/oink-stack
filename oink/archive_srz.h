@@ -8,6 +8,7 @@
 #include "oink_util.h"                              // for UserError
 #include <iostream>
 #include <string>
+#include <memory>
 
 // usage:
 //     ArchiveSerializerP arc = getSerializer("foo.qz");
