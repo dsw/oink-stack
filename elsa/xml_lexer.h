@@ -4,7 +4,7 @@
 #define XML_LEXER_H
 
 #include <stdio.h>
-#include "fstream.h"            // ifstream
+#include <fstream>              // ifstream
 
 #include "str.h"                // string
 #include "sm_flexlexer.h"       // yyFlexLexer

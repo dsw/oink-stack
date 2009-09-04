@@ -3,7 +3,7 @@
 
 #include "serialno.h"         // this module
 #include "trace.h"            // tracingSys
-#include "fstream.h"          // ifstream
+#include <fstream>            // ifstream
 
 
 // -------------------- serial numbers ON --------------------
@@ -44,7 +44,7 @@ class GlobalSerialNoInit {
   {
     if (tracingSys("serialno-read")) {
       try {
-        ifstream in(filename);
+        std::ifstream in(filename);
         in >> globalSerialNumber;
       } catch(...) {}
     }
@@ -56,7 +56,7 @@ class GlobalSerialNoInit {
 
   ~GlobalSerialNoInit() {
     if (tracingSys("serialno-write")) {
-      ofstream out(filename);
+      std::ofstream out(filename);
       out << globalSerialNumber << std::endl;
     }
     if (tracingSys("serialno-announce")) {

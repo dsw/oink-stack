@@ -799,7 +799,7 @@ void doit(int argc, char **argv)
   // test debugPrint but send the output to /dev/null (basically just
   // make sure it doesn't segfault or abort)
   if (tracingSys("testDebugPrint")) {
-    ofstream devnull("/dev/null");
+    std::ofstream devnull("/dev/null");
     unit->debugPrint(devnull, 0);
   }
 
@@ -817,7 +817,7 @@ void doit(int argc, char **argv)
       bppTranslationUnit(std::cout, *lowered);
     }
     else {
-      ofstream out(cc2cOutputFname.c_str());
+      std::ofstream out(cc2cOutputFname.c_str());
       if (!out) {
         xsyserror("open", stringb("write \"" << cc2cOutputFname << "\""));
       }

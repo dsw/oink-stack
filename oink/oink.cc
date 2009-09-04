@@ -951,7 +951,7 @@ void Oink::print_funcGran() {
     expectExtension(oinkCmd->srz.c_str(),
                     oinkCmd->func_gran_dot ? ".dot" : ".fgcfg");
 
-    ofstream out(oinkCmd->srz.c_str());
+    std::ofstream out(oinkCmd->srz.c_str());
     if (!out) {
       userFatalError(SL_UNKNOWN, "Couldn't open file '%s'\n",
                      oinkCmd->srz.c_str());

@@ -59,7 +59,7 @@ string ArithLexer::tokenKindDesc(int kind) const
 // --------------------- main ----------------------
 ArithLexer lexer;
 
-int main(int argc)
+int main(int argc, char **argv)
 {
   // initialize lexer by grabbing first token
   lexer.nextToken(&lexer);

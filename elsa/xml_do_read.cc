@@ -1,7 +1,7 @@
 // xml_do_read.cc          see license.txt for copyright and terms of use
 
 #include "xml_do_read.h"        // this module
-#include "fstream.h"            // ifstream
+#include <fstream>              // ifstream
 #include "xml_lexer.h"          // XmlLexer
 #include "xml_file_reader.h"    // XmlFileReader
 #include "xml_type_reader.h"    // XmlTypeReader
@@ -12,7 +12,7 @@ class TranslationUnit;
 
 TranslationUnit *xmlDoRead(StringTable &strTable, char const *inputFname) {
   // make reader manager
-  ifstream in(inputFname);
+  std::ifstream in(inputFname);
   XmlLexer lexer;
   lexer.inputFname = inputFname;
   lexer.restart(&in);
