@@ -282,7 +282,8 @@ for ($i=0; $i < @lines; $i++) {
     if ($lines[$i+1] =~ m/^yyFlexLexer::yyFlexLexer/) {
       $state++;
       $lineno++;
-      print OUT ("$line#ifndef NO_YYFLEXLEXER_METHODS\n");
+      print OUT ($line .
+                 "#ifndef NO_YYFLEXLEXER_METHODS\n");
       next;
     }
   }
