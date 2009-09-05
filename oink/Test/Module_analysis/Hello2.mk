@@ -38,7 +38,6 @@ hello2.exe: lib_bar.o
 # don't give a module for
 analyze/hello2.exe: hello2.i lib_bar.i
 
-# FIX: does not work yet
 analyze-func-iface/hello2.exe: hello2.i lib_bar.i
 
 
