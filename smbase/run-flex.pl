@@ -282,6 +282,8 @@ for ($i=0; $i < @lines; $i++) {
     if ($lines[$i+1] =~ m/^yyFlexLexer::yyFlexLexer/) {
       $state++;
       $lineno++;
+      # FIX: dsw: Since rafkind added outputting $line here, perhaps
+      # we should increment $lineno++ once more?
       print OUT ($line .
                  "#ifndef NO_YYFLEXLEXER_METHODS\n");
       next;
