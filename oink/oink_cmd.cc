@@ -532,6 +532,18 @@ void OinkCmd::initializeFromFlags() {
       (USER_ERROR_ExitCode,
        "If you use -fo-all-pass-filter you must also provide a filter.");
   }
+
+  bool const usingModules = moduleList.isNotEmpty() || defaultModule != NULL;
+  if (merge_E_variable_and_var_values && usingModules) {
+    std::cout << "warning: the -fo-merge-E_variable-and-var-values flag is"
+      " incompatible with doing module analyses, so turning it off."
+              << std::endl;
+    merge_E_variable_and_var_values = false;
+//     throw UserError
+//       (USER_ERROR_ExitCode,
+//        "The -fo-merge-E_variable-and-var-values flag is"
+//        " incompatible with doing module analyses.");
+  }
 }
 
 void OinkCmd::loadModule(StringRef modFile, StringRef module) {

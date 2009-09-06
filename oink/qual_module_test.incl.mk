@@ -98,6 +98,20 @@ qual-module-check-access-filter:
 	  Test/mod_access_hello.filter-bad.c Test/mod_lib_foo.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)
 
+.PHONY: qual-module-check-access-lib_foo_simple1
+TEST_TOCLEAN += lib_foo_simple1.lattice
+qual-module-check-access-lib_foo_simple1:
+	@echo "$@"
+	./module_make_lattice --access --mod hello --mod foo --mod default \
+	  > Test/lib_foo_simple1.lattice
+	./qual -q-config Test/lib_foo_simple1.lattice -fq-module-access \
+	  $(QUALCC_FLAGS) \
+	  -o-mod-spec hello:Test/lib_foo_simple1_hello.mod \
+	  -o-mod-spec foo:Test/lib_foo_simple1_foo.mod \
+	  -o-mod-default default \
+	  Test/lib_foo_simple1.i; test $$? -eq 32
+	$(ANNOUNCE_TEST_PASS)
+
 .PHONY: qual-module-check-trust-filter
 TEST_TOCLEAN += Test/mod_bar_hello_trust_good.lattice
 TEST_TOCLEAN += Test/mod_bar_hello_trust_bad.lattice
