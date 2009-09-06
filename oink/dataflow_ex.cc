@@ -37,16 +37,20 @@ void DataFlowEx::eDataFlow_cast(Value *src, Value *tgt, SourceLoc loc) {
 // unification ****
 
 void DataFlowEx::eDataFlow_unify(Value *src, Value *tgt, SourceLoc loc) {
-  // this is off when merge_E_variable_and_var_values is on because
-  // we now sometimes use the same Value annotation for multiple
-  // object (Expressions, Varibles) and we also use the existance of
+  // this is off when merge_E_variable_and_var_values is on because we
+  // now sometimes use the same Value annotation for multiple object
+  // (Expressions, Varibles) and we also use the existance of
   // annotating qvars as evidence of dataflow; therefore there must
   // sometimes be dataflow even between something and itself just to
-  // get it annotated with qvars Don't assign self-edges for
+  // get it annotated with qvars.  Don't assign self-edges for
   // non-useMI edges.
-  if (!oinkCmd->merge_E_variable_and_var_values && src == tgt) return; // optimization
+
+  // optimization
+  if (!oinkCmd->merge_E_variable_and_var_values && src == tgt) return;
+
   eDataFlow(src, tgt, loc,
-            UN_DataFlowKind /*unify*/, true /*even the refs*/, false /*not as cast insertion*/);
+            UN_DataFlowKind /*unify*/, true /*even the refs*/,
+            false /*not as cast insertion*/);
 }
 
 void DataFlowEx::eDataFlow_refUnify(Value *src, Value *tgt, SourceLoc loc) {
