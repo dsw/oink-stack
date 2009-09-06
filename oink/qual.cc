@@ -690,7 +690,7 @@ static void colorWithModule_alloc
 }
 
 static void colorWithModule_access
-  (Value *value, SourceLoc loc, char const *name, char const *astNode)
+  (Expression *expr, Value *value, SourceLoc loc)
 {
   xassert(value);
   StringRef module = moduleForLoc(loc);
@@ -707,9 +707,12 @@ static void colorWithModule_access
   if (oinkCmd->report_colorings) {
     std::cout << sourceLocManager->getFile(loc) << ":" <<
       sourceLocManager->getLine(loc);
-    std::cout << " " << astNode;
-    if (name) std::cout << " '" << name << "'";
-    else std::cout << " <no-name>";
+    std::cout << " Expression";
+//     if (name) std::cout << " '" << name << "'";
+//     else std::cout << " <no-name>";
+    char *name = prettyPrintASTNode(expr);
+    std::cout << " '" << name << "'";
+    free(name);
     std::cout << " colored " << qconstName << std::endl;
   }
 
@@ -801,7 +804,7 @@ static void colorWithModule_otherWrite
 }
 
 static void colorWithModule_otherAccess
-  (Value *value, SourceLoc loc, char const *name, char const *astNode)
+  (Expression *expr, Value *value, SourceLoc loc)
 {
   xassert(value);
   StringRef module = moduleForLoc(loc);
@@ -810,9 +813,12 @@ static void colorWithModule_otherAccess
   if (oinkCmd->report_colorings) {
     std::cout << sourceLocManager->getFile(loc) << ":" <<
       sourceLocManager->getLine(loc);
-    std::cout << " " << astNode;
-    if (name) std::cout << " '" << name << "'";
-    else std::cout << " <no-name>";
+    std::cout << " Expression";
+//     if (name) std::cout << " '" << name << "'";
+//     else std::cout << " <no-name>";
+    char *name = prettyPrintASTNode(expr);
+    std::cout << " '" << name << "'";
+    free(name);
     std::cout << std::endl;
   }
 
@@ -1184,11 +1190,9 @@ void Qual_ModuleAccess_Visitor::postvisitExpression(Expression *obj) {
   Value *exprValue = obj->abstrValue;
   if (exprValue->isReferenceValue()) {
     if (otherAccess) {
-      colorWithModule_otherAccess(exprValue->asRval(), exprValue->loc,
-                                  NULL, "Expression");
+      colorWithModule_otherAccess(obj, exprValue->asRval(), exprValue->loc);
     } else {
-      colorWithModule_access(exprValue->asRval(), exprValue->loc,
-                             NULL, "Expression");
+      colorWithModule_access(obj, exprValue->asRval(), exprValue->loc);
     }
   }
 }

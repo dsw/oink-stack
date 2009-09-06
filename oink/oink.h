@@ -295,6 +295,9 @@ class Oink {
 void printStart(char const *name);
 void printStop();
 
+// pretty-print an AST node
+char *prettyPrintASTNode(Expression *obj);
+
 // map a loc to its module
 StringRef moduleForLoc(SourceLoc loc);
 

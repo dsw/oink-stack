@@ -2214,6 +2214,16 @@ SObjList<Variable_O> *Oink::deserialize_abstrValues_stream
   return externVars;
 }
 
+char *prettyPrintASTNode(Expression *obj) {
+  stringBuilder sb;
+  StringBuilderOutStream out0(sb);
+  CodeOutStream codeOut(out0);
+  PrintEnv env(typePrinterOink, &codeOut);
+  obj->print(env);
+  codeOut.finish();
+  return strdup(sb.c_str());
+}
+
 StringRef moduleForLoc(SourceLoc loc) {
   // loc must map to a file.
   USER_ASSERT(loc != SL_UNKNOWN, loc,
