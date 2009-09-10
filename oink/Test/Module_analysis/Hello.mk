@@ -40,8 +40,7 @@ hello.exe: lib_foo.o
 # don't give a module for
 analyze/hello.exe: hello.i lib_foo.i
 
-# FIX: does not work yet
-# analyze-func-iface/hello.exe: hello.c lib_foo.c
+analyze-func-iface/hello.exe: hello.i lib_foo.i
 
 
 # **** include generic functionality
