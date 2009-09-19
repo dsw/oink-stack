@@ -947,6 +947,16 @@ bool Qual_ModuleAlloc_Visitor::subVisitE_cast(E_cast *obj) {
 }
 
 bool Qual_ModuleAlloc_Visitor::subVisitE_new(E_new *obj) {
+  // FIX: this implementation is a mistake: new is not malloc.  Malloc
+  // is just an allocator and so the memory allocated should get
+  // colored with the module of the source where it is; this forces a
+  // module to wrap ctors around its malloc calls.  New on the other
+  // hand is an allocator and an initializer, so should simply color
+  // the memory with the module color of the class of the instances
+  // that it news, as long as that class has a name; if the class is
+  // unnamed, then the semantics should revert to that of malloc:
+  // coloring with the module that calls the new.
+
   // attach the color to the expression ref value
   Value *value0 = obj->abstrValue->asRval();
   // FIX: could print the type name here
