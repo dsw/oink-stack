@@ -1149,12 +1149,15 @@ void Qual_ModuleAlloc_Visitor::subPostVisitE_new(E_new *obj) {
     AtomicType *atype = cvatype->atomic;
     if (atype->isCompoundType()) {
       CompoundType *ctype = atype->asCompoundType();
-      Variable_O *typedefVar = asVariable_O(ctype->typedefVar);
-      module = classFQName2Module.get
-        (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()));
-      if (!module) {
-        userFatalError(value0->loc, "class %s does not map to a module",
-                       typedefVar->fullyQualifiedMangledName0().c_str());
+      if (ctype->keyword == CompoundType::K_STRUCT
+          || ctype->keyword == CompoundType::K_CLASS) {
+        Variable_O *typedefVar = asVariable_O(ctype->typedefVar);
+        module = classFQName2Module.get
+          (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()));
+        if (!module) {
+          userFatalError(value0->loc, "class %s does not map to a module",
+                         typedefVar->fullyQualifiedMangledName0().c_str());
+        }
       }
     }
   }
