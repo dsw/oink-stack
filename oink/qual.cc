@@ -785,13 +785,17 @@ class Qual_ModuleClassDef_Visitor : private ASTVisitor {
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
 
   // map fully qualified names of classes to their modules
-  StringRefMap<char const> classFQName2Module;
+  StringRefMap<char const> &classFQName2Module;
   // list of class typedef variables
-  SObjList<Variable_O> classVars;
+  SObjList<Variable_O> &classVars;
 
   public:
-  Qual_ModuleClassDef_Visitor()
+  Qual_ModuleClassDef_Visitor
+  (StringRefMap<char const> &classFQName2Module0,
+   SObjList<Variable_O> &classVars0)
     : loweredVisitor(this)
+    , classFQName2Module(classFQName2Module0)
+    , classVars(classVars0)
   {}
 
   SourceLoc getLoc() {return loweredVisitor.getLoc();}
@@ -1979,21 +1983,39 @@ void Qual::markInstanceSpecificValues_stage() {
 #endif
 }
 
-void Qual::moduleAlloc_stage() {
-  printStage("moduleAlloc");
-  Restorer<bool> restorer(value2typeIsOn, true);
-
-  Qual_ModuleClassDef_Visitor classDefEnv;
-
+void Qual::ensure_classFQName2Module() {
+  if (classFQName2Module) {
+    xassert(classVars);
+    return;
+  }
+    
+  classFQName2Module = new StringRefMap<char const>();
+  xassert(!classVars);
+  classVars = new SObjList<Variable_O>();
+  Qual_ModuleClassDef_Visitor classDefEnv(*classFQName2Module, *classVars);
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
     TranslationUnit *unit = file2unit.get(file);
-
     unit->traverse(classDefEnv.loweredVisitor);
+  }
 
-    Qual_ModuleAlloc_Visitor env(classDefEnv.classFQName2Module,
-                                 classDefEnv.classVars,
+  if (qualCmd->module_print_class2mod) {
+    classDefEnv.print_class2mod(std::cout);
+  }
+}
+
+void Qual::moduleAlloc_stage() {
+  printStage("moduleAlloc");
+  Restorer<bool> restorer(value2typeIsOn, true);
+
+  ensure_classFQName2Module();
+  foreachSourceFile {
+    File *file = files.data();
+    maybeSetInputLangFromSuffix(file);
+    TranslationUnit *unit = file2unit.get(file);
+    Qual_ModuleAlloc_Visitor env(*classFQName2Module,
+                                 *classVars,
                                  true, // label alloc memory
                                  false // don't label other-control memory
                                  );
@@ -2012,27 +2034,19 @@ void Qual::moduleAlloc_stage() {
       }
     }
   }
-
-  if (qualCmd->module_print_class2mod) {
-    classDefEnv.print_class2mod(std::cout);
-  }
 }
 
 void Qual::moduleOtherControl_stage() {
   printStage("moduleOtherControl");
   Restorer<bool> restorer(value2typeIsOn, true);
 
-  Qual_ModuleClassDef_Visitor classDefEnv;
-
+  ensure_classFQName2Module();
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
     TranslationUnit *unit = file2unit.get(file);
-
-    unit->traverse(classDefEnv.loweredVisitor);
-
-    Qual_ModuleAlloc_Visitor env(classDefEnv.classFQName2Module,
-                                 classDefEnv.classVars,
+    Qual_ModuleAlloc_Visitor env(*classFQName2Module,
+                                 *classVars,
                                  false, // don't label alloc memory
                                  true // label other-control memory
                                  );
@@ -2050,10 +2064,6 @@ void Qual::moduleOtherControl_stage() {
                           "a cast expression");
       }
     }
-  }
-
-  if (qualCmd->module_print_class2mod) {
-    classDefEnv.print_class2mod(std::cout);
   }
 }
 
