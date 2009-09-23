@@ -441,7 +441,8 @@ void MarkVarsStackness_VisitRealVars::visitVariableIdem(Variable *var0) {
       markNonStack(var);        // basically it is global
     } else {
       // do not mark as the storage-class depends on the containing
-      // class
+      // class; the containing variable will be reallocated onto the
+      // heap if it is on the stack and not if it is not
     }
     break;
   case SK_TEMPLATE_PARAMS: // template paramter list (inside the '<' and '>')
@@ -661,34 +662,6 @@ private:
 
 // Module coloring ****************
 
-static void colorWithModule_alloc
-  (Value *value, SourceLoc loc, char const *name, char const *astNode)
-{
-  xassert(value);
-  StringRef module = moduleForLoc(loc);
-
-  // get the qualifier
-  stringBuilder qconstName("$");
-  qconstName << module;
-  qconstName << "_alloc";
-  LibQual::Type_qualifier *qconst = LibQual::find_qual(qconstName.c_str());
-  USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice",
-              strdup(qconstName.c_str()));
-
-  // tell the user what we are doing
-  if (oinkCmd->report_colorings) {
-    std::cout << sourceLocManager->getFile(loc) << ":" <<
-      sourceLocManager->getLine(loc);
-    std::cout << " " << astNode;
-    if (name) std::cout << " '" << name << "'";
-    else std::cout << " <no-name>";
-    std::cout << " colored " << qconstName << std::endl;
-  }
-
-  // color the value with the module
-  qa(value)->attachOneLiteral(value->loc, qconst);
-}
-
 static void colorWithModule_access
   (Expression *expr, Value *value, SourceLoc loc)
 {
@@ -718,48 +691,6 @@ static void colorWithModule_access
 
   // color the value with the module
   qa(value)->attachOneLiteral(value->loc, qconst);
-}
-
-static void colorWithModule_otherControl
-  (Value *value, SourceLoc loc, char const *name, char const *astNode)
-{
-  xassert(value);
-  StringRef module = moduleForLoc(loc);
-
-  // tell the user what we are doing
-  if (oinkCmd->report_colorings) {
-    std::cout << sourceLocManager->getFile(loc) << ":" <<
-      sourceLocManager->getLine(loc);
-    std::cout << " " << astNode;
-    if (name) std::cout << " '" << name << "'";
-    else std::cout << " <no-name>";
-    std::cout << std::endl;
-  }
-
-  // for each source module not equal to us, make the otherControl target
-  SFOREACH_OBJLIST(char, moduleList, iter) {
-    StringRef srcModule = iter.data();
-    if (srcModule == module) continue;
-
-    // get the qualifier
-    stringBuilder qconstName("$");
-    qconstName << srcModule;
-    qconstName << "_otherControl";
-    LibQual::Type_qualifier *qconst = LibQual::find_qual(qconstName.c_str());
-    USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice",
-                strdup(qconstName.c_str()));
-
-    // print out a line for each
-    if (oinkCmd->report_colorings) {
-      std::cout << " colored " << qconstName << std::endl;
-    }
-
-    // NOTE: this is a value-level qualifier on a pointer
-    xassert(value->isPointerValue());
-
-    // color the value with the module
-    qa(value)->attachOneLiteral(value->loc, qconst);
-  }
 }
 
 static void colorWithModule_otherWrite
@@ -845,12 +776,114 @@ static void colorWithModule_otherAccess
   }
 }
 
+// Qual_ModuleClassDef_Visitor ****************
+
+// visit all of the class/struct/union definitions and map each to a
+// module
+class Qual_ModuleClassDef_Visitor : private ASTVisitor {
+  public:
+  LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
+
+  // map fully qualified names of classes to their modules
+  StringRefMap<char const> classFQName2Module;
+  // list of class typedef variables
+  SObjList<Variable_O> classVars;
+
+  public:
+  Qual_ModuleClassDef_Visitor()
+    : loweredVisitor(this)
+  {}
+
+  SourceLoc getLoc() {return loweredVisitor.getLoc();}
+
+  // print out the class name to modules map
+  void print_class2mod(std::ostream &out);
+
+  virtual void postvisitTypeSpecifier(TypeSpecifier *);
+  virtual void subPostVisitTS_classSpec(TS_classSpec *);
+};
+
+void Qual_ModuleClassDef_Visitor::print_class2mod(std::ostream &out) {
+  out << "---- START class to module map" << std::endl;
+  SFOREACH_OBJLIST(Variable_O, classVars, iter) {
+    Variable_O const *typedefVar = iter.data();
+    StringRef fqname = globalStrTable
+      (typedefVar->fullyQualifiedMangledName0().c_str());
+    StringRef module = classFQName2Module.get(fqname);
+    out << fqname << " " << module << std::endl;
+  }
+  out << "---- END class to module map" << std::endl;
+}
+
+void Qual_ModuleClassDef_Visitor::postvisitTypeSpecifier(TypeSpecifier *obj) {
+  switch(obj->kind()) {         // roll our own virtual dispatch
+  default: break;               // expression kinds for which we do nothing
+  case TypeSpecifier::TS_CLASSSPEC:
+    subPostVisitTS_classSpec(obj->asTS_classSpec());
+    break;
+  }
+}
+
+void Qual_ModuleClassDef_Visitor::subPostVisitTS_classSpec(TS_classSpec *obj) {
+//   std::cout << std::endl;
+//   std::cout << "Qual_ModuleClassDef_Visitor::visitTS_classSpec" << std::endl;
+
+  StringRef module = moduleForLoc(obj->loc);
+  Variable_O * const typedefVar = asVariable_O(obj->ctype->typedefVar);
+  StringRef lookedUpModule =
+    classFQName2Module.get
+    (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()));
+  if (lookedUpModule) {
+    // if already in the map, check they agree
+    if (module != lookedUpModule) {
+      userFatalError(obj->loc, "class %s maps to two modules %s and %s",
+                     typedefVar->fullyQualifiedMangledName0().c_str(),
+                     module, lookedUpModule);
+    }
+  } else {
+    // otherwise, insert it
+//     std::cout << "**** mapping class "
+//               << typedefVar->fullyQualifiedMangledName0()
+//               << " to module " << module
+//               << std::endl;
+//     std::cout << std::endl;
+
+    // FIX: dealing with superclasses is messy, so for now we just
+    // throw an unimplemented exception if you have any; we should be
+    // ensuring that all superclasses map to the same module; note
+    // that in C/C++ we must have seen our superclasses by now so we
+    // could just check that they have the same module; however not
+    // sure what the right thing to do for virtual inheritance is
+    SObjList<BaseClassSubobj const> objs;
+    obj->ctype->getSubobjects(objs);
+    SFOREACH_OBJLIST(BaseClassSubobj const, objs, iter) {
+      CompoundType *base = iter.data()->ct;
+      if (base == obj->ctype) { continue; }
+      userFatalError(obj->loc,
+                     "unimplemented (map from class to module): "
+                     "class %s has superclasses",
+                     typedefVar->fullyQualifiedMangledName0().c_str());
+    }
+
+    classFQName2Module.add
+      (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()),
+       module);
+    // NOTE: don't use append!
+    classVars.prepend(typedefVar);
+  }
+}
+
 // Qual_ModuleAlloc_Visitor ****************
 
 // visit all of the allocation points
 class Qual_ModuleAlloc_Visitor : private ASTVisitor {
   public:
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
+
+  // map defined classes to their modules
+  StringRefMap<char const> &classFQName2Module;
+  // list of class typedef variables
+  SObjList<Variable_O> &classVars;
 
   bool color_alloc;          // ref-level coloring of allocated memory
   bool color_otherControl;   // value-level coloring of other-control memory
@@ -861,32 +894,184 @@ class Qual_ModuleAlloc_Visitor : private ASTVisitor {
   SObjSet<E_funCall*> castedAllocators;
 
   public:
-  Qual_ModuleAlloc_Visitor(bool color_alloc0, bool color_otherControl0)
+  Qual_ModuleAlloc_Visitor(StringRefMap<char const> &classFQName2Module0,
+                           SObjList<Variable_O> &classVars0,
+                           bool color_alloc0, bool color_otherControl0)
     : loweredVisitor(this)
+    , classFQName2Module(classFQName2Module0)
+    , classVars(classVars0)
     , color_alloc(color_alloc0)
     , color_otherControl(color_otherControl0)
   {}
 
   SourceLoc getLoc() {return loweredVisitor.getLoc();}
 
+  void colorWithModule_alloc
+  (Value *value, StringRef module, SourceLoc loc,
+   char const *name, char const *astNode);
+  void colorWithModule_otherControl
+  (Value *value, StringRef module, SourceLoc loc,
+   char const *name, char const *astNode);
+
+  // color the data members of each class the same as their containing
+  // class
+  void colorClassMembers();
+
   virtual bool visitDeclarator(Declarator *);
   virtual void postvisitExpression(Expression *);
 
-  virtual bool subVisitE_funCall(E_funCall *);
-  virtual bool subVisitE_cast(E_cast *);
-  virtual bool subVisitE_new(E_new *);
+  virtual void subPostVisitE_funCall(E_funCall *);
+  virtual void subPostVisitE_cast(E_cast *);
+  virtual void subPostVisitE_new(E_new *);
 };
+
+void Qual_ModuleAlloc_Visitor::colorWithModule_alloc
+  (Value *value, StringRef module, SourceLoc loc,
+   char const *name, char const *astNode)
+{
+  xassert(value);
+  if (!module) {
+    module = moduleForLoc(loc);
+  }
+
+  // if the type is a compound type, check the module of the compound
+  // type is the same as the current module
+  Type *valueType = value->t();
+  if (valueType->isCompoundType()) {
+    CompoundType *ctype = valueType->asCompoundType();
+    Variable_O *typedefVar = asVariable_O(ctype->typedefVar);
+    StringRef cmodule =
+      classFQName2Module.get
+      (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()));
+    if (!cmodule) {
+      userFatalError(loc, "class %s does not map to a module",
+                     typedefVar->fullyQualifiedMangledName0().c_str());
+    } else {
+      if (module != cmodule) {
+        userFatalError(loc, "class %s maps to two modules %s and %s",
+                       typedefVar->fullyQualifiedMangledName0().c_str(),
+                       module, cmodule);
+      }
+    }
+    // otherwise, we're ok
+  }
+
+  // get the qualifier
+  stringBuilder qconstName("$");
+  qconstName << module;
+  qconstName << "_alloc";
+  LibQual::Type_qualifier *qconst = LibQual::find_qual(qconstName.c_str());
+  USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice",
+              strdup(qconstName.c_str()));
+
+  // tell the user what we are doing
+  if (oinkCmd->report_colorings) {
+    std::cout << sourceLocManager->getFile(loc) << ":"
+              << sourceLocManager->getLine(loc);
+    std::cout << " " << astNode;
+    if (name) std::cout << " '" << name << "'";
+    else std::cout << " <no-name>";
+    std::cout << " colored " << qconstName << std::endl;
+  }
+
+  // color the value with the module
+  qa(value)->attachOneLiteral(value->loc, qconst);
+
+  // if the type is an array, recurse into the contained type
+  if (value->isArrayValue()) {
+    colorWithModule_alloc(value->getAtValue(), module, loc, name, astNode);
+  }
+}
+
+void Qual_ModuleAlloc_Visitor::colorWithModule_otherControl
+  (Value *value, StringRef module, SourceLoc loc,
+   char const *name, char const *astNode)
+{
+  xassert(value);
+  if (!module) {
+    module = moduleForLoc(loc);
+  }
+
+  // tell the user what we are doing
+  if (oinkCmd->report_colorings) {
+    std::cout << sourceLocManager->getFile(loc) << ":" <<
+      sourceLocManager->getLine(loc);
+    std::cout << " " << astNode;
+    if (name) std::cout << " '" << name << "'";
+    else std::cout << " <no-name>";
+    std::cout << std::endl;
+  }
+
+  // for each source module not equal to us, make the otherControl target
+  SFOREACH_OBJLIST(char, moduleList, iter) {
+    StringRef srcModule = iter.data();
+    if (srcModule == module) continue;
+
+    // get the qualifier
+    stringBuilder qconstName("$");
+    qconstName << srcModule;
+    qconstName << "_otherControl";
+    LibQual::Type_qualifier *qconst = LibQual::find_qual(qconstName.c_str());
+    USER_ASSERT(qconst, value->loc, "Literal '%s' not in lattice",
+                strdup(qconstName.c_str()));
+
+    // print out a line for each
+    if (oinkCmd->report_colorings) {
+      std::cout << " colored " << qconstName << std::endl;
+    }
+
+    // NOTE: this is a value-level qualifier on a pointer
+    xassert(value->isPointerValue());
+
+    // color the value with the module
+    qa(value)->attachOneLiteral(value->loc, qconst);
+  }
+
+  // if the type is an array, recurse into the contained type
+  if (value->isArrayValue()) {
+    colorWithModule_otherControl(value->getAtValue(), module, loc,
+                                 name, astNode);
+  }
+}
+
+void Qual_ModuleAlloc_Visitor::colorClassMembers() {
+  SFOREACH_OBJLIST(Variable_O, classVars, iter) {
+    Variable_O const *typedefVar = iter.data();
+    StringRef module = classFQName2Module.get
+      (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()));
+    xassert(module);
+    Scope *cpdScope = typedefVar->type->asCVAtomicType()
+      ->atomic->asCompoundType();
+    xassert(cpdScope->scopeKind == SK_CLASS);
+    for (StringRefMap<Variable>::Iter iter = cpdScope->getVariableIter();
+         !iter.isDone(); iter.adv())
+    {
+      Variable_O *var = asVariable_O(iter.value());
+      Value *varValue = var->abstrValue()->asRval();
+      if (color_alloc) {
+        colorWithModule_alloc(varValue, module, varValue->loc, var->name,
+                              "Declarator");
+      }
+      if (color_otherControl) {
+        if (varValue->isPointerValue()) {
+          colorWithModule_otherControl(varValue, module, varValue->loc,
+                                       var->name, "Declarator");
+        }
+      }
+    }
+  }
+}
 
 bool Qual_ModuleAlloc_Visitor::visitDeclarator(Declarator *obj) {
   Value *varValue = asVariable_O(obj->var)->abstrValue()->asRval();
   if (color_alloc) {
-    colorWithModule_alloc(varValue, varValue->loc, obj->var->name,
+    colorWithModule_alloc(varValue, NULL, varValue->loc, obj->var->name,
                           "Declarator");
   }
   if (color_otherControl) {
     if (varValue->isPointerValue()) {
-      colorWithModule_otherControl(varValue, varValue->loc, obj->var->name,
-                                   "Declarator");
+      colorWithModule_otherControl(varValue, NULL, varValue->loc,
+                                   obj->var->name, "Declarator");
     }
   }
   return true;
@@ -896,26 +1081,25 @@ void Qual_ModuleAlloc_Visitor::postvisitExpression(Expression *obj) {
   switch(obj->kind()) {         // roll our own virtual dispatch
   default: break;               // expression kinds for which we do nothing
   case Expression::E_FUNCALL:
-    subVisitE_funCall(obj->asE_funCall());
+    subPostVisitE_funCall(obj->asE_funCall());
     break;
   case Expression::E_CAST:
-    subVisitE_cast(obj->asE_cast());
+    subPostVisitE_cast(obj->asE_cast());
     break;
   case Expression::E_NEW:
-    subVisitE_new(obj->asE_new());
+    subPostVisitE_new(obj->asE_new());
     break;
   }
 }
 
-bool Qual_ModuleAlloc_Visitor::subVisitE_funCall(E_funCall *obj) {
+void Qual_ModuleAlloc_Visitor::subPostVisitE_funCall(E_funCall *obj) {
   if (isAllocator(obj, getLoc())) {
     // record the allocator so we can look for missed allocators later
     seenAllocators.add(obj);
   }
-  return true;
 }
 
-bool Qual_ModuleAlloc_Visitor::subVisitE_cast(E_cast *obj) {
+void Qual_ModuleAlloc_Visitor::subPostVisitE_cast(E_cast *obj) {
   // see if it is a cast from an allocator
   Expression *expr0 = obj->expr->skipGroups();
   if (expr0->isE_funCall() && isAllocator(expr0->asE_funCall(), getLoc())) {
@@ -926,7 +1110,7 @@ bool Qual_ModuleAlloc_Visitor::subVisitE_cast(E_cast *obj) {
       Value *castValue = obj->abstrValue
         ->getAtValue()  // color the value pointed-to, not the pointer
         ->asRval();
-      colorWithModule_alloc(castValue, castValue->loc,
+      colorWithModule_alloc(castValue, NULL, castValue->loc,
                             funCallName(expr0->asE_funCall()),
                             "E_cast-allocator");
     }
@@ -935,7 +1119,7 @@ bool Qual_ModuleAlloc_Visitor::subVisitE_cast(E_cast *obj) {
       // the 2) the cast expresion; thanks to Matt for help on this.
       Value *castValue = obj->abstrValue->asRval();
       if (castValue->isPointerValue()) {
-        colorWithModule_otherControl(castValue, castValue->loc,
+        colorWithModule_otherControl(castValue, NULL, castValue->loc,
                                      funCallName(expr0->asE_funCall()),
                                      "E_cast-allocator");
       }
@@ -943,22 +1127,38 @@ bool Qual_ModuleAlloc_Visitor::subVisitE_cast(E_cast *obj) {
     // check off the allocator so we can look for missed allocators later
     castedAllocators.add(expr0->asE_funCall());
   }
-  return true;
 }
 
-bool Qual_ModuleAlloc_Visitor::subVisitE_new(E_new *obj) {
-  // FIX: this implementation is a mistake: new is not malloc.  Malloc
-  // is just an allocator and so the memory allocated should get
-  // colored with the module of the source where it is; this forces a
-  // module to wrap ctors around its malloc calls.  New on the other
-  // hand is an allocator and an initializer, so should simply color
-  // the memory with the module color of the class of the instances
-  // that it news, as long as that class has a name; if the class is
-  // unnamed, then the semantics should revert to that of malloc:
-  // coloring with the module that calls the new.
-
+void Qual_ModuleAlloc_Visitor::subPostVisitE_new(E_new *obj) {
   // attach the color to the expression ref value
   Value *value0 = obj->abstrValue->asRval();
+
+  // Note: new is not malloc.  Malloc is just an allocator and so the
+  // memory allocated should get colored with the module of the source
+  // where it is; this forces a module to wrap ctors around its malloc
+  // calls.  New on the other hand is an allocator *and* an
+  // initializer, so should simply color the memory with the module
+  // color of the class of the instances that it news, as long as that
+  // class has a name; if the class is unnamed, then the semantics
+  // should revert to that of malloc: coloring with the module that
+  // calls the new.
+  StringRef module = NULL;
+  Type *valueType = value0->t();
+  if (valueType->isCVAtomicType()) {
+    CVAtomicType *cvatype = valueType->asCVAtomicType();
+    AtomicType *atype = cvatype->atomic;
+    if (atype->isCompoundType()) {
+      CompoundType *ctype = atype->asCompoundType();
+      Variable_O *typedefVar = asVariable_O(ctype->typedefVar);
+      module = classFQName2Module.get
+        (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()));
+      if (!module) {
+        userFatalError(value0->loc, "class %s does not map to a module",
+                       typedefVar->fullyQualifiedMangledName0().c_str());
+      }
+    }
+  }
+
   // FIX: could print the type name here
   if (color_alloc) {
     // This is subtle: attach the color to the 1) ref value of the 2)
@@ -967,13 +1167,12 @@ bool Qual_ModuleAlloc_Visitor::subVisitE_new(E_new *obj) {
     Value *newValue = obj->abstrValue
       ->getAtValue()    // color the value pointed-to, not the pointer
       ->asRval();
-    colorWithModule_alloc(newValue, newValue->loc, NULL, "E_new");
+    colorWithModule_alloc(newValue, module, newValue->loc, NULL, "E_new");
   }
   if (color_otherControl) {
     xassert(value0->isPointerValue());
-    colorWithModule_otherControl(value0, value0->loc, NULL, "E_new");
+    colorWithModule_otherControl(value0, module, value0->loc, NULL, "E_new");
   }
-  return true;
 }
 
 // Qual_ModuleOtherWrite_Visitor ****************
@@ -1780,16 +1979,25 @@ void Qual::markInstanceSpecificValues_stage() {
 void Qual::moduleAlloc_stage() {
   printStage("moduleAlloc");
   Restorer<bool> restorer(value2typeIsOn, true);
+
+  Qual_ModuleClassDef_Visitor classDefEnv;
+
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
     TranslationUnit *unit = file2unit.get(file);
-    Qual_ModuleAlloc_Visitor env(true, // label alloc memory
+
+    unit->traverse(classDefEnv.loweredVisitor);
+
+    Qual_ModuleAlloc_Visitor env(classDefEnv.classFQName2Module,
+                                 classDefEnv.classVars,
+                                 true, // label alloc memory
                                  false // don't label other-control memory
                                  );
+    env.colorClassMembers();
     unit->traverse(env.loweredVisitor);
-    // check that we didn't hit any allocators that were not down inside
-    // a cast
+    // check that we didn't hit any allocators that were not down
+    // inside a cast
     for(SObjSetIter<E_funCall*> seenIter(env.seenAllocators);
         !seenIter.isDone(); seenIter.adv()) {
       E_funCall *call0 = seenIter.data();
@@ -1801,19 +2009,31 @@ void Qual::moduleAlloc_stage() {
       }
     }
   }
-}
 
+  if (qualCmd->module_print_class2mod) {
+    classDefEnv.print_class2mod(std::cout);
+  }
+}
 
 void Qual::moduleOtherControl_stage() {
   printStage("moduleOtherControl");
   Restorer<bool> restorer(value2typeIsOn, true);
+
+  Qual_ModuleClassDef_Visitor classDefEnv;
+
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
     TranslationUnit *unit = file2unit.get(file);
-    Qual_ModuleAlloc_Visitor env(false, // don't label alloc memory
+
+    unit->traverse(classDefEnv.loweredVisitor);
+
+    Qual_ModuleAlloc_Visitor env(classDefEnv.classFQName2Module,
+                                 classDefEnv.classVars,
+                                 false, // don't label alloc memory
                                  true // label other-control memory
                                  );
+    env.colorClassMembers();
     unit->traverse(env.loweredVisitor);
     // check that we didn't hit any allocators that were not down inside
     // a cast
@@ -1827,6 +2047,10 @@ void Qual::moduleOtherControl_stage() {
                           "a cast expression");
       }
     }
+  }
+
+  if (qualCmd->module_print_class2mod) {
+    classDefEnv.print_class2mod(std::cout);
   }
 }
 

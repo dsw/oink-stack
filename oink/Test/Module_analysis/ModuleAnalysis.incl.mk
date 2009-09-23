@@ -107,6 +107,9 @@ QUALCC_FLAGS += -fq-no-use-const-subtyping
 # QUALCC_FLAGS += -fo-pretty-print
 # QUALCC_FLAGS += -fq-no-poly
 
+# Print out the class name to module mapping
+# QUALCC_FLAGS += -fq-module-print-class2mod
+
 # Tell the tools about the modules
 MKLATTICE_FLAGS += $(addprefix --mod ,$(MODS))
 QUALCC_FLAGS += $(addprefix -o-mod-spec ,$(MOD_SPECS))

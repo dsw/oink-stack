@@ -20,6 +20,7 @@ EXE :=
 EXE += hello2.exe
 
 ANALYSIS := trust
+# ANALYSIS := access
 
 # The MODS .mod files are just files full of filenames: every file is
 # a module and every filename in the corresponding .mod file is the

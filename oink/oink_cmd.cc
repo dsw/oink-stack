@@ -574,7 +574,7 @@ void OinkCmd::loadModule(StringRef modFile, StringRef module) {
     std::cout << "\tadding to modules map: " << line
               << " -> " << module
               << std::endl;
-    char * const filename = strdup(line.c_str());
+    char const * const filename = globalStrTable(line.c_str());
     if (file2module.isMapped(filename)) {
       throw UserError
         (USER_ERROR_ExitCode, stringc
