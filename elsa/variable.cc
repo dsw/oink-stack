@@ -592,7 +592,7 @@ string Variable::fullyQualifiedName0() const
   return tmp;
 }
 
-void Variable::appendMangledness(stringBuilder &mgldName) {
+void Variable::appendMangledness(stringBuilder &mgldName) const {
   // for function types, be sure to use the mangled name of their
   // signature so that overloading works right
   if (type && type->isFunctionType() && !hasFlag(DF_EXTERN_C)) {
@@ -600,7 +600,7 @@ void Variable::appendMangledness(stringBuilder &mgldName) {
   }
 }
 
-string Variable::mangledName0() {
+string Variable::mangledName0() const {
   // dsw: what was I thinking here?  See assertion at the top of
   // fullyQualifiedName0()
   //
@@ -614,7 +614,7 @@ string Variable::mangledName0() {
   return mgldName;
 }
 
-string Variable::fullyQualifiedMangledName0() {
+string Variable::fullyQualifiedMangledName0() const {
 //    cout << "name '" << name;
 //    if (scope) cout << "; has a scope" << endl;
 //    else cout << "; NO scope" << endl;

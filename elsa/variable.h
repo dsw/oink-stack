@@ -326,9 +326,9 @@ public:
 
   // fully qualified but not mangled name
   string fullyQualifiedName0() const;
-  void appendMangledness(stringBuilder &mgldName);
-  string mangledName0(); 	// no scope
-  string fullyQualifiedMangledName0(); // scope+mangling
+  void appendMangledness(stringBuilder &mgldName) const;
+  string mangledName0() const; 	// no scope
+  string fullyQualifiedMangledName0() const; // scope+mangling
 
   // like toString but with the fully qualified name
   string toQualifiedString() const;
