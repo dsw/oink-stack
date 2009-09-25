@@ -10,6 +10,7 @@ endif
 .PHONY: qual-module-check
 qual-module-check: qual-module-check-misc
 qual-module-check: qual-module-check-write-filter
+qual-module-check: qual-module-check-write-stack-filter
 qual-module-check: qual-module-check-access-filter
 qual-module-check: qual-module-check-trust-filter
 
@@ -75,6 +76,34 @@ qual-module-check-write-filter:
 	  -o-mod-spec hello:Test/mod_write_hello_bad.mod \
 	  -o-mod-spec foo:Test/mod_foo.mod \
 	  Test/mod_write_hello.filter-bad.c Test/mod_lib_foo.c; test $$? -eq 32
+	$(ANNOUNCE_TEST_PASS)
+
+.PHONY: qual-module-check-write-stack-filter
+TEST_TOCLEAN += Test/mod_foo_hello_write_stack_good.lattice
+TEST_TOCLEAN += Test/mod_foo_hello_write_stack_bad.lattice
+qual-module-check-write-stack-filter:
+	@echo "$@: good"
+	./test_filter -good < Test/mod_write_hello_stack.c \
+	  > Test/mod_write_hello_stack.filter-good.c
+	./module_make_lattice --write \
+          --mod hello --mod foo \
+	  > Test/mod_foo_hello_write_stack_good.lattice
+	./qual -fq-module-write $(QUALCC_FLAGS) \
+	  -q-config Test/mod_foo_hello_write_stack_good.lattice \
+	  -o-mod-spec hello:Test/mod_write_hello_stack_good.mod \
+	  -o-mod-spec foo:Test/mod_foo.mod \
+	  Test/mod_write_hello_stack.filter-good.c Test/mod_lib_foo.c
+	@echo "$@: bad"
+	./test_filter -bad < Test/mod_write_hello_stack.c \
+	  > Test/mod_write_hello_stack.filter-bad.c
+	./module_make_lattice --write \
+          --mod hello --mod foo \
+	  > Test/mod_foo_hello_write_stack_bad.lattice
+	./qual -fq-module-write $(QUALCC_FLAGS) \
+	  -q-config Test/mod_foo_hello_write_stack_bad.lattice \
+	  -o-mod-spec hello:Test/mod_write_hello_stack_bad.mod \
+	  -o-mod-spec foo:Test/mod_foo.mod \
+	  Test/mod_write_hello_stack.filter-bad.c Test/mod_lib_foo.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)
 
 .PHONY: qual-module-check-access-filter
