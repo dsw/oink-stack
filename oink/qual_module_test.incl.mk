@@ -12,7 +12,9 @@ qual-module-check: qual-module-check-misc
 qual-module-check: qual-module-check-write-filter
 qual-module-check: qual-module-check-write-stack-filter
 qual-module-check: qual-module-check-access-filter
+qual-module-check: qual-module-check-access-lib_foo_simple1
 qual-module-check: qual-module-check-trust-filter
+qual-module-check: qual-module-check-stack-alloc-class
 
 .PHONY: qual-module-check-misc
 qual-module-check-misc:
@@ -175,3 +177,18 @@ qual-module-check-trust-filter:
 	  -o-mod-spec bar:Test/mod_bar.mod \
 	  Test/mod_trust_hello.filter-bad.c Test/mod_trust_bar.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)
+
+.PHONY: qual-module-check-stack-alloc-class
+TEST_TOCLEAN += Test/mod_bar_hello_trust_good.lattice
+TEST_TOCLEAN += Test/mod_bar_hello_trust_bad.lattice
+qual-module-check-stack-alloc-class:
+	$(ANNOUNCE_TEST_PASS)
+	./module_make_lattice --access \
+          --mod gronk --mod baz \
+	  > Test/mod_gronk_baz.lattice
+	./qual -fq-module-access $(QUALCC_FLAGS) \
+	  -q-config Test/mod_gronk_baz.lattice \
+	  -o-mod-spec gronk:Test/mod_gronk.mod \
+	  -o-mod-spec baz:Test/mod_baz.mod \
+	  Test/mod_gronk_baz.ii 2>&1 | \
+          grep -e 'qual: Test/mod_baz.cc:4: class D:Gronk allocated in module baz but defined in module gronk'

@@ -851,9 +851,10 @@ void Qual_ModuleAlloc_Visitor::colorWithModule_alloc
                      typedefVar->fullyQualifiedMangledName0().c_str());
     } else {
       if (module != cmodule) {
-        userFatalError(loc, "class %s maps to two modules %s and %s",
-                       typedefVar->fullyQualifiedMangledName0().c_str(),
-                       module, cmodule);
+        userFatalError
+          (loc, "class %s allocated in module %s but defined in module %s",
+           typedefVar->fullyQualifiedMangledName0().c_str(),
+           module, cmodule);
       }
     }
     // otherwise, we're ok

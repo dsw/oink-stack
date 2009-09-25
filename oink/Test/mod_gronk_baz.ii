@@ -1,0 +1,18 @@
+# 1 "Test/mod_baz.cc"
+# 1 "<built-in>"
+# 1 "<command line>"
+# 1 "Test/mod_baz.cc"
+# 1 "Test/mod_gronk.h" 1
+
+
+
+struct Gronk {
+  int q;
+
+
+};
+# 2 "Test/mod_baz.cc" 2
+
+int baz() {
+  Gronk g;
+}
