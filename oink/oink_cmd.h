@@ -51,6 +51,7 @@ class OinkCmd {
   bool exit_after_typecheck;    // exit after typechecking
   bool exit_after_elaborate;    // exit after elaborating
 
+  bool module_print_class2mod;  // print the map from classes to modules
   bool func_gran;               // compute and print function granularity CFG
   bool func_gran_dot;           // print function granularity CFG in dot format
   bool func_gran_rev_mod_pub;   // further compute reverse graph, mod

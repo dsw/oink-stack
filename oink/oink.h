@@ -189,6 +189,11 @@ class Oink {
 
   class ArchiveSerializationManager *archiveSrzManager;
 
+  // map fully qualified names of classes to their modules
+  StringRefMap<char const> *classFQName2Module;
+  // list of class typedef variables
+  SObjList<Variable_O> *classVars;
+
   // tor ****
   Oink();
   virtual ~Oink();
@@ -228,6 +233,9 @@ class Oink {
   void deserialize_stage();     // get linker-visible variables and annotations back from file
   void link_stage();            // link
   void prettyPrint_stage();     // pretty print
+
+  // class to module map
+  void build_classFQName2Module();
 
   // function granularity CFG
   void compute_funcGran(); // compute function granularity CFG

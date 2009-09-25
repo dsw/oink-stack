@@ -96,11 +96,6 @@ class Qual : public virtual Oink {
   DataFlowEx &dfe;
   long numExternQvars;
 
-  // map fully qualified names of classes to their modules
-  StringRefMap<char const> *classFQName2Module;
-  // list of class typedef variables
-  SObjList<Variable_O> *classVars;
-
   // tor ****
   public:
   Qual(DataFlowEx &dfe0)
@@ -108,8 +103,6 @@ class Qual : public virtual Oink {
     , thrownQv(NULL)
     , dfe(dfe0)
     , numExternQvars(-1)
-    , classFQName2Module(NULL)
-    , classVars(NULL)
   {}
 
   // methods ****
@@ -144,7 +137,6 @@ class Qual : public virtual Oink {
   // stages
   void markInstanceSpecificValues_stage();
 
-  void ensure_classFQName2Module();
   void moduleAlloc_stage();
   void moduleOtherControl_stage();
   void moduleOtherWrite_stage();

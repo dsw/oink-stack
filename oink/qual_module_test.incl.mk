@@ -15,10 +15,15 @@ qual-module-check: qual-module-check-trust-filter
 
 .PHONY: qual-module-check-misc
 qual-module-check-misc:
+# illegal mod spec
 	./qual -o-mod-spec Test/mod_foo_dupl.mod; test $$? -eq 1
+# duplicate module assignment for a file
 	./qual -o-mod-spec foo:Test/mod_foo_dupl.mod; test $$? -eq 1
-	./module_make_lattice --mod waga --mod zeeip | \
-	  grep 'module_make_lattice modules: waga, zeeip'; test $$? -eq 1
+# check the verbose output of module_make_lattice
+	./module_make_lattice --mod waga --mod zeeip 2>&1 | \
+	  grep 'module_make_lattice modules: waga, zeeip'
+# test that printing the class to module map works
+	./oink -o-mod-spec gronk:Test/mod_gronk.mod -fq-module-print-class2mod Test/mod_gronk.ii | $(ELSA_DIR)/chop_out '---- START class to module map' '---- END class to module map' | grep 'D:Gronk gronk'
 	$(ANNOUNCE_TEST_PASS)
 
 # do a polymorphic analysis

@@ -122,6 +122,7 @@ OinkCmd::OinkCmd()
   , exit_after_typecheck (false)
   , exit_after_elaborate (false)
 
+  , module_print_class2mod(false)
   , func_gran            (false)
   , func_gran_dot        (false)
   , func_gran_rev_mod_pub(false)
@@ -269,6 +270,7 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
   HANDLE_FLAG(exit_after_typecheck, "-fo-", "exit-after-typecheck");
   HANDLE_FLAG(exit_after_elaborate, "-fo-", "exit-after-elaborate");
 
+  HANDLE_FLAG(module_print_class2mod, "-fq-", "module-print-class2mod");
   HANDLE_FLAG(func_gran, "-fo-", "func-gran");
   HANDLE_FLAG(func_gran_dot, "-fo-", "func-gran-dot");
   HANDLE_FLAG(func_gran_rev_mod_pub, "-fo-", "func-gran-rev-mod-pub");
@@ -379,6 +381,7 @@ void OinkCmd::dump() { // for -fo-verbose
   printf("fo-exit-after-typecheck: %s\n", boolToStr(exit_after_typecheck));
   printf("fo-exit-after-elaborate: %s\n", boolToStr(exit_after_elaborate));
 
+  printf("fq-module-print-class2mod: %s\n", boolToStr(module_print_class2mod));
   printf("fo-func-gran: %s\n", boolToStr(func_gran));
   printf("fo-func-gran-dot: %s\n", boolToStr(func_gran_dot));
   printf("fo-func-gran-rev-mod-pub: %s\n", boolToStr(func_gran_rev_mod_pub));

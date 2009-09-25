@@ -99,7 +99,6 @@ QualCmd::QualCmd()
   , module_access            (false)
   , module_write             (false)
   , module_trust             (false)
-  , module_print_class2mod   (false)
 
   , compactify_graph         (CG_IFSRZ)
 {}
@@ -284,7 +283,6 @@ void QualCmd::readOneArg(int &argc, char **&argv) {
   HANDLE_FLAG(module_access, "-fq-", "module-access");
   HANDLE_FLAG(module_write, "-fq-", "module-write");
   HANDLE_FLAG(module_trust, "-fq-", "module-trust");
-  HANDLE_FLAG(module_print_class2mod, "-fq-", "module-print-class2mod");
 }
 
 void QualCmd::dump() {
@@ -384,7 +382,6 @@ void QualCmd::dump() {
   printf("fq-module-access: %s\n", boolToStr(module_access));
   printf("fq-module-write: %s\n", boolToStr(module_write));
   printf("fq-module-trust: %s\n", boolToStr(module_trust));
-  printf("fq-module-print-class2mod: %s\n", boolToStr(module_print_class2mod));
 }
 
 void QualCmd::printHelp() {

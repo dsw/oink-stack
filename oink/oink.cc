@@ -54,6 +54,123 @@ static std::string const SERIALIZATION_FORMAT = "v17";
 
 const size_t LINK_ERROR_MAX_SYMBOLS_REPORTED = 5;
 
+// **** class to module map
+
+// visit all of the class/struct/union definitions and map each to a
+// module
+class Qual_ModuleClassDef_Visitor : private ASTVisitor {
+  public:
+  LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
+
+  // map fully qualified names of classes to their modules
+  StringRefMap<char const> &classFQName2Module;
+  // list of class typedef variables
+  SObjList<Variable_O> &classVars;
+
+  public:
+  Qual_ModuleClassDef_Visitor
+  (StringRefMap<char const> &classFQName2Module0,
+   SObjList<Variable_O> &classVars0)
+    : loweredVisitor(this)
+    , classFQName2Module(classFQName2Module0)
+    , classVars(classVars0)
+  {}
+
+  SourceLoc getLoc() {return loweredVisitor.getLoc();}
+
+  // print out the class name to modules map
+  void print_class2mod(std::ostream &out = std::cout);
+
+  virtual void postvisitTypeSpecifier(TypeSpecifier *);
+  virtual void subPostVisitTS_classSpec(TS_classSpec *);
+};
+
+void Qual_ModuleClassDef_Visitor::print_class2mod(std::ostream &out) {
+  out << "---- START class to module map" << std::endl;
+  SFOREACH_OBJLIST(Variable_O, classVars, iter) {
+    Variable_O const *typedefVar = iter.data();
+    StringRef fqname = globalStrTable
+      (typedefVar->fullyQualifiedMangledName0().c_str());
+    StringRef module = classFQName2Module.get(fqname);
+    out << fqname << " " << module << std::endl;
+  }
+  out << "---- END class to module map" << std::endl;
+}
+
+void Qual_ModuleClassDef_Visitor::postvisitTypeSpecifier(TypeSpecifier *obj) {
+  switch(obj->kind()) {         // roll our own virtual dispatch
+  default: break;               // expression kinds for which we do nothing
+  case TypeSpecifier::TS_CLASSSPEC:
+    subPostVisitTS_classSpec(obj->asTS_classSpec());
+    break;
+  }
+}
+
+void Qual_ModuleClassDef_Visitor::subPostVisitTS_classSpec(TS_classSpec *obj) {
+//   std::cout << std::endl;
+//   std::cout << "Qual_ModuleClassDef_Visitor::visitTS_classSpec" << std::endl;
+
+  StringRef module = moduleForLoc(obj->loc);
+  Variable_O * const typedefVar = asVariable_O(obj->ctype->typedefVar);
+  StringRef lookedUpModule =
+    classFQName2Module.get
+    (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()));
+  if (lookedUpModule) {
+    // if already in the map, check they agree
+    if (module != lookedUpModule) {
+      userFatalError(obj->loc, "class %s maps to two modules %s and %s",
+                     typedefVar->fullyQualifiedMangledName0().c_str(),
+                     module, lookedUpModule);
+    }
+  } else {
+    // otherwise, insert it
+//     std::cout << "**** mapping class "
+//               << typedefVar->fullyQualifiedMangledName0()
+//               << " to module " << module
+//               << std::endl;
+//     std::cout << std::endl;
+
+    // FIX: dealing with superclasses is messy, so for now we just
+    // throw an unimplemented exception if you have any; we should be
+    // ensuring that all superclasses map to the same module; note
+    // that in C/C++ we must have seen our superclasses by now so we
+    // could just check that they have the same module; however not
+    // sure what the right thing to do for virtual inheritance is
+    SObjList<BaseClassSubobj const> objs;
+    obj->ctype->getSubobjects(objs);
+    SFOREACH_OBJLIST(BaseClassSubobj const, objs, iter) {
+      CompoundType *base = iter.data()->ct;
+      if (base == obj->ctype) { continue; }
+      userFatalError(obj->loc,
+                     "unimplemented (map from class to module): "
+                     "class %s has superclasses",
+                     typedefVar->fullyQualifiedMangledName0().c_str());
+    }
+
+    classFQName2Module.add
+      (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()),
+       module);
+    // NOTE: don't use append!
+    classVars.prepend(typedefVar);
+  }
+}
+
+void Oink::build_classFQName2Module() {
+  xassert(!classFQName2Module);
+  classFQName2Module = new StringRefMap<char const>();
+  xassert(!classVars);
+  classVars = new SObjList<Variable_O>();
+  Qual_ModuleClassDef_Visitor classDefEnv(*classFQName2Module, *classVars);
+  foreachSourceFile {
+    File *file = files.data();
+    maybeSetInputLangFromSuffix(file);
+    TranslationUnit *unit = file2unit.get(file);
+    unit->traverse(classDefEnv.loweredVisitor);
+  }
+  if (oinkCmd->module_print_class2mod) {
+    classDefEnv.print_class2mod();
+  }
+}
 
 // **** FuncGranGraph
 
@@ -354,6 +471,9 @@ Oink::Oink()
                                     NULL, DF_NAMESPACE))
   , funcGranGraph(funcGranRoot)
   , archiveSrzManager(NULL)
+
+  , classFQName2Module(NULL)
+  , classVars(NULL)
 {
   // FIX: it would be much more elegant to somehow do this during
   // variable construction

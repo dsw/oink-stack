@@ -124,7 +124,6 @@ class QualCmd : public virtual OinkCmd {
   bool module_access;           // do the module access analysis
   bool module_write;            // do the module write analysis
   bool module_trust;            // do the module trust analysis
-  bool module_print_class2mod;  // print the map from classes to modules
 
   // compactify graph before serialization
   enum { CG_NEVER, CG_ALWAYS, CG_IFSRZ } compactify_graph;

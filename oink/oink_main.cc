@@ -35,6 +35,7 @@ int main(int argc, char **argv) {
       m.elaborate_stage();
       m.markRealVars_stage();
 
+      if (moduleList.isNotEmpty()) m.build_classFQName2Module();
       if (oinkCmd->func_gran) {
         m.compute_funcGran();
         m.print_funcGran();
