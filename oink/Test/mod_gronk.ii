@@ -1,8 +1,8 @@
-# 1 "mod_gronk.cc"
+# 1 "Test/mod_gronk.cc"
 # 1 "<built-in>"
 # 1 "<command line>"
-# 1 "mod_gronk.cc"
-# 1 "mod_gronk.h" 1
+# 1 "Test/mod_gronk.cc"
+# 1 "Test/mod_gronk.h" 1
 
 
 
@@ -11,7 +11,7 @@ struct Gronk {
 
   int read_q();
 };
-# 2 "mod_gronk.cc" 2
+# 2 "Test/mod_gronk.cc" 2
 
 int Gronk::read_q() {
   return q;

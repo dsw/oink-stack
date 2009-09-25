@@ -24,6 +24,8 @@ qual-module-check-misc:
 	  grep 'module_make_lattice modules: waga, zeeip'
 # test that printing the class to module map works
 	./oink -o-mod-spec gronk:Test/mod_gronk.mod -fq-module-print-class2mod Test/mod_gronk.ii | $(ELSA_DIR)/chop_out '---- START class to module map' '---- END class to module map' | grep 'D:Gronk gronk'
+# test that multiple modules per class results in an error
+	./oink -o-mod-spec gronk:Test/mod_gronk.mod -o-mod-spec gronk2:Test/mod_gronk_other.mod -fq-module-print-class2mod Test/mod_gronk.ii Test/mod_gronk_other.cc 2>&1 | grep 'class D:Gronk maps to two modules gronk2 and gronk'
 	$(ANNOUNCE_TEST_PASS)
 
 # do a polymorphic analysis
