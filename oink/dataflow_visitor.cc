@@ -621,12 +621,14 @@ bool DataFlowVisitor::subVisitE_funCall(E_funCall *obj) {
     Value *e1_unref = e_bin->e1->abstrValue->asRval();
     if (e_bin->op == BIN_ARROW_STAR) {
       // pointer to function member call
-      fun = e_bin->e2->abstrValue->asRval()->asPointerToMemberValue()->atValue->asFunctionValue();
+      fun = e_bin->e2->abstrValue->asRval()
+        ->asPointerToMemberValue()->atValue->asFunctionValue();
       thisValue = e1_unref->asPointerValue()->atValue->asLval();
       goto have_function_value;
     } else if (e_bin->op == BIN_DOT_STAR) {
       // pointer to function member call
-      fun = e_bin->e2->abstrValue->asRval()->asPointerToMemberValue()->atValue->asFunctionValue();
+      fun = e_bin->e2->abstrValue->asRval()
+        ->asPointerToMemberValue()->atValue->asFunctionValue();
       thisValue = e1_unref->asLval();
       goto have_function_value;
     }
@@ -683,7 +685,8 @@ bool DataFlowVisitor::subVisitE_funCall(E_funCall *obj) {
   }
 
 have_function_value:
-  dfe.eDataFlow_call0(getLoc(), obj->retObj, obj->abstrValue, thisValue, obj->args, fun);
+  dfe.eDataFlow_call0(getLoc(), obj->retObj, obj->abstrValue,
+                      thisValue, obj->args, fun);
 
   return true;
 }
