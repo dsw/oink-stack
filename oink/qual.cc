@@ -967,6 +967,9 @@ void Qual_ModuleAlloc_Visitor::colorClassMembers() {
 }
 
 bool Qual_ModuleAlloc_Visitor::visitDeclarator(Declarator *obj) {
+  // we handle E_new in a separate pass
+  if (obj->context == DC_E_NEW) return true;
+
   Value *varValue = asVariable_O(obj->var)->abstrValue()->asRval();
   if (color_alloc) {
     colorWithModule_alloc(varValue, NULL, varValue->loc, obj->var->name,
@@ -1047,7 +1050,9 @@ void Qual_ModuleAlloc_Visitor::subPostVisitE_new(E_new *obj) {
   // should revert to that of malloc: coloring with the module that
   // calls the new.
   StringRef module = NULL;
-  Type *valueType = value0->t();
+  // type of a E_new is a pointer to the thing that it news, so we
+  // have to get rid of one pointer layer
+  Type *valueType = value0->getAtValue()->t();
   if (valueType->isCVAtomicType()) {
     CVAtomicType *cvatype = valueType->asCVAtomicType();
     AtomicType *atype = cvatype->atomic;

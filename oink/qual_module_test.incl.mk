@@ -17,6 +17,7 @@ qual-module-check: qual-module-check-trust-filter
 qual-module-check: qual-module-check-stack-alloc-class
 qual-module-check: qual-module-check-access-class-member
 qual-module-check: qual-module-check-access-array
+qual-module-check: qual-module-check-new-across-mod
 
 .PHONY: qual-module-check-misc
 qual-module-check-misc:
@@ -221,5 +222,20 @@ qual-module-check-access-array:
 	  -o-mod-spec gronk:Test/mod_gronk.mod \
 	  -o-mod-spec baz:Test/mod_baz.mod \
 	  Test/mod_gronk_baz_array.ii 2>&1 | \
+          grep -e 'class D:Gronk2 allocated in module baz but defined in module gronk'
+	$(ANNOUNCE_TEST_PASS)
+
+.PHONY: qual-module-check-new-across-mod
+TEST_TOCLEAN += Test/mod_gronk_baz_new.lattice
+qual-module-check-new-across-mod:
+	./module_make_lattice --access \
+          --mod gronk --mod baz --mod default \
+	  > Test/mod_gronk_baz_new.lattice
+	./qual -fq-module-access $(QUALCC_FLAGS) \
+	  -q-config Test/mod_gronk_baz_new.lattice \
+	  -o-mod-spec gronk:Test/mod_gronk.mod \
+	  -o-mod-spec baz:Test/mod_baz.mod \
+	  -o-mod-default default \
+	  Test/mod_gronk_baz_new.ii 2>&1 | \
           grep -e 'class D:Gronk2 allocated in module baz but defined in module gronk'
 	$(ANNOUNCE_TEST_PASS)

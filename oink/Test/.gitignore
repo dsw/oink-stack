@@ -10,3 +10,4 @@ mod_foo_hello_write_stack_bad.lattice
 mod_gronk_baz.lattice
 mod_gronk_baz2.lattice
 mod_gronk_baz_array.lattice
+mod_gronk_baz_new.lattice
