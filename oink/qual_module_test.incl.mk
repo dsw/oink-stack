@@ -15,6 +15,7 @@ qual-module-check: qual-module-check-access-filter
 qual-module-check: qual-module-check-access-lib_foo_simple1
 qual-module-check: qual-module-check-trust-filter
 qual-module-check: qual-module-check-stack-alloc-class
+qual-module-check: qual-module-check-access-class-member
 
 .PHONY: qual-module-check-misc
 qual-module-check-misc:
@@ -179,10 +180,8 @@ qual-module-check-trust-filter:
 	$(ANNOUNCE_TEST_PASS)
 
 .PHONY: qual-module-check-stack-alloc-class
-TEST_TOCLEAN += Test/mod_bar_hello_trust_good.lattice
-TEST_TOCLEAN += Test/mod_bar_hello_trust_bad.lattice
+TEST_TOCLEAN += Test/mod_gronk_baz.lattice
 qual-module-check-stack-alloc-class:
-	$(ANNOUNCE_TEST_PASS)
 	./module_make_lattice --access \
           --mod gronk --mod baz \
 	  > Test/mod_gronk_baz.lattice
@@ -192,3 +191,18 @@ qual-module-check-stack-alloc-class:
 	  -o-mod-spec baz:Test/mod_baz.mod \
 	  Test/mod_gronk_baz.ii 2>&1 | \
           grep -e 'qual: Test/mod_baz.cc:4: class D:Gronk allocated in module baz but defined in module gronk'
+	$(ANNOUNCE_TEST_PASS)
+
+.PHONY: qual-module-check-access-class-member
+TEST_TOCLEAN += Test/mod_gronk_baz2.lattice
+qual-module-check-access-class-member:
+	./module_make_lattice --access \
+          --mod gronk --mod baz \
+	  > Test/mod_gronk_baz2.lattice
+	./qual -fq-module-access $(QUALCC_FLAGS) \
+	  -q-config Test/mod_gronk_baz2.lattice \
+	  -o-mod-spec gronk:Test/mod_gronk.mod \
+	  -o-mod-spec baz:Test/mod_baz.mod \
+	  Test/mod_gronk_baz2.ii 2>&1 | \
+          grep -e 'q treated as $$gronk_alloc and $$gronk_otherAccess'
+	$(ANNOUNCE_TEST_PASS)

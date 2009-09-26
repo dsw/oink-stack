@@ -8,3 +8,4 @@ lib_foo_simple1.lattice
 mod_foo_hello_write_stack_good.lattice
 mod_foo_hello_write_stack_bad.lattice
 mod_gronk_baz.lattice
+mod_gronk_baz2.lattice
