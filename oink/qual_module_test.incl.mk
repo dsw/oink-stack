@@ -16,6 +16,7 @@ qual-module-check: qual-module-check-access-lib_foo_simple1
 qual-module-check: qual-module-check-trust-filter
 qual-module-check: qual-module-check-stack-alloc-class
 qual-module-check: qual-module-check-access-class-member
+qual-module-check: qual-module-check-access-array
 
 .PHONY: qual-module-check-misc
 qual-module-check-misc:
@@ -47,9 +48,11 @@ QUALCC_FLAGS += -fo-no-instance-sensitive
 QUALCC_FLAGS += -fq-no-use-const-subtyping
 
 # make faster by suppressing output
+ifndef VERBOSE_OUT
 QUALCC_FLAGS += -fq-no-names
 QUALCC_FLAGS += -fq-no-explain-errors
 QUALCC_FLAGS += -fq-no-name-with-loc
+endif
 
 TEST_TOCLEAN += *.filter-good.c *.filter-bad.c
 
@@ -205,4 +208,18 @@ qual-module-check-access-class-member:
 	  -o-mod-spec baz:Test/mod_baz.mod \
 	  Test/mod_gronk_baz2.ii 2>&1 | \
           grep -e 'q treated as $$gronk_alloc and $$gronk_otherAccess'
+	$(ANNOUNCE_TEST_PASS)
+
+.PHONY: qual-module-check-access-array
+TEST_TOCLEAN += Test/mod_gronk_baz_array.lattice
+qual-module-check-access-array:
+	./module_make_lattice --access \
+          --mod gronk --mod baz \
+	  > Test/mod_gronk_baz_array.lattice
+	./qual -fq-module-access $(QUALCC_FLAGS) \
+	  -q-config Test/mod_gronk_baz_array.lattice \
+	  -o-mod-spec gronk:Test/mod_gronk.mod \
+	  -o-mod-spec baz:Test/mod_baz.mod \
+	  Test/mod_gronk_baz_array.ii 2>&1 | \
+          grep -e 'class D:Gronk2 allocated in module baz but defined in module gronk'
 	$(ANNOUNCE_TEST_PASS)
