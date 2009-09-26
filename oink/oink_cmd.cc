@@ -443,6 +443,8 @@ void OinkCmd::printHelp() {
      "  -fo-exit-after-elaborate : exit after elaborating\n"
      "  -fo-print-startstop      : delimit transformed output with cut lines\n"
      "\n"
+     "  -fo-module-print-class2mod : print the map from fully-qualified\n"
+     "                               classnames to their module names\n"
      "  -fo-func-gran            : compute and print function granularity CFG only\n"
      "                             (use -o-srz to write to file)\n"
      "  -fo-func-gran-dot        : when combined with -fo-func-gran,\n"
