@@ -180,6 +180,22 @@ qual-module-check-trust-filter:
 	  Test/mod_trust_hello.filter-bad.c Test/mod_trust_bar.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)
 
+qual-module-check: qual-module-check-stack-access
+.PHONY: qual-module-check-stack-access
+TEST_TOCLEAN += Test/mod_gronk_baz_stack_access.lattice
+qual-module-check-stack-access:
+	./module_make_lattice --access \
+          --mod gronk --mod baz --mod default \
+	  > Test/mod_gronk_baz_stack_access.lattice
+	./qual -fq-module-access $(QUALCC_FLAGS) \
+	  -q-config Test/mod_gronk_baz_stack_access.lattice \
+	  -o-mod-spec gronk:Test/mod_gronk.mod \
+	  -o-mod-spec baz:Test/mod_baz.mod \
+	  -o-mod-default default \
+	  Test/mod_gronk_baz_stack_access.ii 2>&1 | \
+          grep -e 'Test/mod_baz.cc:5 WARNING (1 of 1): z treated as $$baz_alloc and $$baz_otherAccess'
+	$(ANNOUNCE_TEST_PASS)
+
 qual-module-check: qual-module-check-access-array
 .PHONY: qual-module-check-access-array
 TEST_TOCLEAN += Test/mod_gronk_baz_array.lattice
