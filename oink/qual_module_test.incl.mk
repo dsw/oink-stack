@@ -191,10 +191,8 @@ qual-module-check-stack-access:
 	  -q-config Test/mod_waga_stack_access.lattice \
 	  -o-mod-spec waga:Test/mod_waga.mod \
 	  -o-mod-default default \
-	  Test/hello_stack_access.c Test/waga_stack_access.c 2>&1
-
-# | \
-          grep -e 'Test/mod_baz.cc:5 WARNING (1 of 1): z treated as $$baz_alloc and $$baz_otherAccess'
+	  Test/hello_stack_access.c Test/waga_stack_access.c 2>&1 | \
+          grep -e 'Test/hello_stack_access.c:4 WARNING (1 of 1): z treated as $$default_alloc and $$default_otherAccess'
 	$(ANNOUNCE_TEST_PASS)
 
 qual-module-check: qual-module-check-access-array
