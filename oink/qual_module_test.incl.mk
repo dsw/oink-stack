@@ -40,7 +40,7 @@ QUALCC_FLAGS += -fo-no-instance-sensitive
 QUALCC_FLAGS += -fq-no-use-const-subtyping
 
 # make faster by suppressing output
-ifndef VERBOSE_OUT
+ifndef VERBOSE
 QUALCC_FLAGS += -fq-no-names
 QUALCC_FLAGS += -fq-no-explain-errors
 QUALCC_FLAGS += -fq-no-name-with-loc
@@ -182,17 +182,18 @@ qual-module-check-trust-filter:
 
 qual-module-check: qual-module-check-stack-access
 .PHONY: qual-module-check-stack-access
-TEST_TOCLEAN += Test/mod_gronk_baz_stack_access.lattice
+TEST_TOCLEAN += Test/mod_waga_stack_access.lattice
 qual-module-check-stack-access:
 	./module_make_lattice --access \
-          --mod gronk --mod baz --mod default \
-	  > Test/mod_gronk_baz_stack_access.lattice
+          --mod waga --mod default \
+	  > Test/mod_waga_stack_access.lattice
 	./qual -fq-module-access $(QUALCC_FLAGS) \
-	  -q-config Test/mod_gronk_baz_stack_access.lattice \
-	  -o-mod-spec gronk:Test/mod_gronk.mod \
-	  -o-mod-spec baz:Test/mod_baz.mod \
+	  -q-config Test/mod_waga_stack_access.lattice \
+	  -o-mod-spec waga:Test/mod_waga.mod \
 	  -o-mod-default default \
-	  Test/mod_gronk_baz_stack_access.ii 2>&1 | \
+	  Test/hello_stack_access.c Test/waga_stack_access.c 2>&1
+
+# | \
           grep -e 'Test/mod_baz.cc:5 WARNING (1 of 1): z treated as $$baz_alloc and $$baz_otherAccess'
 	$(ANNOUNCE_TEST_PASS)
 
