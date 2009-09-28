@@ -1122,7 +1122,8 @@ file ./qual
 # set args -o-module Test/foo_dupl
 #set args -o-lang ANSI_C99 LibCpdInit/Test/compoundinit1A.c
 
-set args -fq-module-access -fq-poly -fo-no-instance-sensitive -fq-no-use-const-subtyping -fq-no-names -fq-no-explain-errors -fq-no-name-with-loc -q-config Test/mod_gronk_baz_new.lattice -o-mod-spec gronk:Test/mod_gronk.mod -o-mod-spec baz:Test/mod_baz.mod Test/mod_gronk_baz_new.ii 
+# set args -fq-module-access -fq-poly -fo-no-instance-sensitive -fq-no-use-const-subtyping -fq-no-names -fq-no-explain-errors -fq-no-name-with-loc -q-config Test/mod_gronk_baz_new.lattice -o-mod-spec gronk:Test/mod_gronk.mod -o-mod-spec baz:Test/mod_baz.mod Test/mod_gronk_baz_new.ii 
+set args -fq-module-access -fq-poly -fo-no-instance-sensitive -fq-no-use-const-subtyping -q-config Test/mod_gronk_baz_method.lattice -o-mod-spec gronk:Test/mod_gronk.mod -o-mod-spec baz:Test/mod_baz.mod -o-mod-default default -fo-print-stages Test/mod_gronk_baz_method.ii
 
 break main
 break breaker

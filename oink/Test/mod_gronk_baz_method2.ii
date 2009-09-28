@@ -1,0 +1,22 @@
+# 1 "Test/mod_baz.cc"
+# 1 "<built-in>"
+# 1 "<command line>"
+# 1 "Test/mod_baz.cc"
+# 144 "/usr/include/stdlib.h" 3 4
+void *malloc(int);
+
+# 1 "Test/mod_gronk.h" 1
+struct Gronk1 {
+  int x;
+
+  void zap(void*) {
+    int y = x;
+  }
+};
+
+# 2 "Test/mod_baz.cc" 2
+
+int baz() {
+  Gronk1 *g = new Gronk1();
+  g->zap( ({*g; (void*)0;}) );
+}

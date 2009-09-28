@@ -1289,12 +1289,14 @@ bool Qual_ModuleOtherWrite_Visitor::subVisitE_assign(E_assign *obj) {
 // an access point is any L-value expression (an expression with Ref
 // type).
 
-// visit all of the write points
+// visit all of the access points
 class Qual_ModuleAccess_Visitor : private ASTVisitor {
   public:
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
 
   bool otherAccess;             // color with our access or other accesses?
+
+  SourceLoc getLoc() {return loweredVisitor.getLoc();}
 
   public:
   Qual_ModuleAccess_Visitor(bool otherAccess0)
@@ -1302,12 +1304,33 @@ class Qual_ModuleAccess_Visitor : private ASTVisitor {
     , otherAccess(otherAccess0)
   {}
 
-  virtual void postvisitExpression(Expression *);
+  virtual bool visitExpression(Expression *);
 };
 
-void Qual_ModuleAccess_Visitor::postvisitExpression(Expression *obj) {
+bool Qual_ModuleAccess_Visitor::visitExpression(Expression *obj) {
   // FIX: this is ad-hoc, however there are expressions without a type
-  if (!obj->type) return;
+  if (!obj->type) return true;
+
+  // This computation decides if an expression is a method call
+  bool isMethodCall = false;
+  if (obj->isE_funCall()) {
+    E_funCall *funCall = obj->asE_funCall();
+    Expression *funcExpr = funCall->func->skipGroups();
+    if (funcExpr->isE_fieldAcc()) {
+      E_fieldAcc *e_field = funcExpr->asE_fieldAcc();
+      Value *fun0 = asVariable_O(e_field->field)->abstrValue()->asRval();
+      if (fun0->isFunctionValue() &&
+          fun0->asFunctionValue()->type->isMethod()) {
+        // method call
+        isMethodCall = true;
+        // the point of this is to not traverse funCall->func
+        FAKELIST_FOREACH_NC(ArgExpression, funCall->args, iter) {
+          iter->traverse(this->loweredVisitor);
+        }
+      }
+    }
+  }
+
   Value *exprValue = obj->abstrValue;
   if (exprValue->isReferenceValue()) {
     if (otherAccess) {
@@ -1316,6 +1339,8 @@ void Qual_ModuleAccess_Visitor::postvisitExpression(Expression *obj) {
       colorWithModule_access(obj, exprValue->asRval(), exprValue->loc);
     }
   }
+
+  return !isMethodCall; // prune the subtree traversal if isMethodCall
 }
 
 // class MarkDecltorsInstanceSpecificVisitor ****************

@@ -8,17 +8,8 @@ $(error This makefile should be included in qual_test.incl.mk, not used stand-al
 endif
 
 .PHONY: qual-module-check
-qual-module-check: qual-module-check-misc
-qual-module-check: qual-module-check-write-filter
-qual-module-check: qual-module-check-write-stack-filter
-qual-module-check: qual-module-check-access-filter
-qual-module-check: qual-module-check-access-lib_foo_simple1
-qual-module-check: qual-module-check-trust-filter
-qual-module-check: qual-module-check-stack-alloc-class
-qual-module-check: qual-module-check-access-class-member
-qual-module-check: qual-module-check-access-array
-qual-module-check: qual-module-check-new-across-mod
 
+qual-module-check: qual-module-check-misc
 .PHONY: qual-module-check-misc
 qual-module-check-misc:
 # illegal mod spec
@@ -57,6 +48,7 @@ endif
 
 TEST_TOCLEAN += *.filter-good.c *.filter-bad.c
 
+qual-module-check: qual-module-check-write-filter
 .PHONY: qual-module-check-write-filter
 TEST_TOCLEAN += Test/mod_foo_hello_write_good.lattice
 TEST_TOCLEAN += Test/mod_foo_hello_write_bad.lattice
@@ -85,6 +77,7 @@ qual-module-check-write-filter:
 	  Test/mod_write_hello.filter-bad.c Test/mod_lib_foo.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)
 
+qual-module-check: qual-module-check-write-stack-filter
 .PHONY: qual-module-check-write-stack-filter
 TEST_TOCLEAN += Test/mod_foo_hello_write_stack_good.lattice
 TEST_TOCLEAN += Test/mod_foo_hello_write_stack_bad.lattice
@@ -113,6 +106,7 @@ qual-module-check-write-stack-filter:
 	  Test/mod_write_hello_stack.filter-bad.c Test/mod_lib_foo.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)
 
+qual-module-check: qual-module-check-access-filter
 .PHONY: qual-module-check-access-filter
 TEST_TOCLEAN += Test/mod_foo_hello_access_good.lattice
 TEST_TOCLEAN += Test/mod_foo_hello_access_bad.lattice
@@ -141,6 +135,7 @@ qual-module-check-access-filter:
 	  Test/mod_access_hello.filter-bad.c Test/mod_lib_foo.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)
 
+qual-module-check: qual-module-check-access-lib_foo_simple1
 .PHONY: qual-module-check-access-lib_foo_simple1
 TEST_TOCLEAN += lib_foo_simple1.lattice
 qual-module-check-access-lib_foo_simple1:
@@ -152,9 +147,11 @@ qual-module-check-access-lib_foo_simple1:
 	  -o-mod-spec hello:Test/lib_foo_simple1_hello.mod \
 	  -o-mod-spec foo:Test/lib_foo_simple1_foo.mod \
 	  -o-mod-default default \
-	  Test/lib_foo_simple1.i; test $$? -eq 32
+	  Test/lib_foo_simple1.i 2>&1 | \
+          grep -e 'lib_foo.c:19 WARNING (1 of 1): z treated as $$hello_alloc and $$hello_otherAccess'
 	$(ANNOUNCE_TEST_PASS)
 
+qual-module-check: qual-module-check-trust-filter
 .PHONY: qual-module-check-trust-filter
 TEST_TOCLEAN += Test/mod_bar_hello_trust_good.lattice
 TEST_TOCLEAN += Test/mod_bar_hello_trust_bad.lattice
@@ -183,6 +180,22 @@ qual-module-check-trust-filter:
 	  Test/mod_trust_hello.filter-bad.c Test/mod_trust_bar.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)
 
+qual-module-check: qual-module-check-access-array
+.PHONY: qual-module-check-access-array
+TEST_TOCLEAN += Test/mod_gronk_baz_array.lattice
+qual-module-check-access-array:
+	./module_make_lattice --access \
+          --mod gronk --mod baz \
+	  > Test/mod_gronk_baz_array.lattice
+	./qual -fq-module-access $(QUALCC_FLAGS) \
+	  -q-config Test/mod_gronk_baz_array.lattice \
+	  -o-mod-spec gronk:Test/mod_gronk.mod \
+	  -o-mod-spec baz:Test/mod_baz.mod \
+	  Test/mod_gronk_baz_array.ii 2>&1 | \
+          grep -e 'qual: Test/mod_baz.cc:5: class D:Gronk2 allocated in module baz but defined in module gronk'
+	$(ANNOUNCE_TEST_PASS)
+
+qual-module-check: qual-module-check-stack-alloc-class
 .PHONY: qual-module-check-stack-alloc-class
 TEST_TOCLEAN += Test/mod_gronk_baz.lattice
 qual-module-check-stack-alloc-class:
@@ -197,6 +210,23 @@ qual-module-check-stack-alloc-class:
           grep -e 'qual: Test/mod_baz.cc:4: class D:Gronk allocated in module baz but defined in module gronk'
 	$(ANNOUNCE_TEST_PASS)
 
+qual-module-check: qual-module-check-access-class
+.PHONY: qual-module-check-access-class
+TEST_TOCLEAN += Test/mod_gronk_baz_access_class.lattice
+qual-module-check-access-class:
+	./module_make_lattice --access \
+          --mod gronk --mod baz --mod default \
+	  > Test/mod_gronk_baz_access_class.lattice
+	./qual -fq-module-access $(QUALCC_FLAGS) \
+	  -q-config Test/mod_gronk_baz_access_class.lattice \
+	  -o-mod-spec gronk:Test/mod_gronk.mod \
+	  -o-mod-spec baz:Test/mod_baz.mod \
+	  -o-mod-default default \
+	  Test/mod_gronk_baz_access_class.ii 2>&1 | \
+          grep -e 'Test/mod_baz.cc:4 WARNING (1 of 1):  (new struct Gronk1  ()) treated as $$gronk_alloc and $$gronk_otherAccess'
+	$(ANNOUNCE_TEST_PASS)
+
+qual-module-check: qual-module-check-access-class-member
 .PHONY: qual-module-check-access-class-member
 TEST_TOCLEAN += Test/mod_gronk_baz2.lattice
 qual-module-check-access-class-member:
@@ -208,23 +238,10 @@ qual-module-check-access-class-member:
 	  -o-mod-spec gronk:Test/mod_gronk.mod \
 	  -o-mod-spec baz:Test/mod_baz.mod \
 	  Test/mod_gronk_baz2.ii 2>&1 | \
-          grep -e 'q treated as $$gronk_alloc and $$gronk_otherAccess'
+          grep -e 'Test/mod_baz.cc:5 WARNING (1 of 1): q treated as $$gronk_alloc and $$gronk_otherAccess'
 	$(ANNOUNCE_TEST_PASS)
 
-.PHONY: qual-module-check-access-array
-TEST_TOCLEAN += Test/mod_gronk_baz_array.lattice
-qual-module-check-access-array:
-	./module_make_lattice --access \
-          --mod gronk --mod baz \
-	  > Test/mod_gronk_baz_array.lattice
-	./qual -fq-module-access $(QUALCC_FLAGS) \
-	  -q-config Test/mod_gronk_baz_array.lattice \
-	  -o-mod-spec gronk:Test/mod_gronk.mod \
-	  -o-mod-spec baz:Test/mod_baz.mod \
-	  Test/mod_gronk_baz_array.ii 2>&1 | \
-          grep -e 'class D:Gronk2 allocated in module baz but defined in module gronk'
-	$(ANNOUNCE_TEST_PASS)
-
+qual-module-check: qual-module-check-new-across-mod
 .PHONY: qual-module-check-new-across-mod
 TEST_TOCLEAN += Test/mod_gronk_baz_new.lattice
 qual-module-check-new-across-mod:
@@ -237,5 +254,36 @@ qual-module-check-new-across-mod:
 	  -o-mod-spec baz:Test/mod_baz.mod \
 	  -o-mod-default default \
 	  Test/mod_gronk_baz_new.ii 2>&1 | \
-          grep -e 'class D:Gronk2 allocated in module baz but defined in module gronk'
+          grep -e 'qual: Test/mod_baz.cc:6: class D:Gronk2 allocated in module baz but defined in module gronk'
+	$(ANNOUNCE_TEST_PASS)
+
+qual-module-check: qual-module-check-method
+.PHONY: qual-module-check-method
+TEST_TOCLEAN += Test/mod_gronk_baz_method.lattice
+qual-module-check-method:
+	./module_make_lattice --access \
+          --mod gronk --mod baz --mod default \
+	  > Test/mod_gronk_baz_method.lattice
+	./qual -fq-module-access $(QUALCC_FLAGS) \
+	  -q-config Test/mod_gronk_baz_method.lattice \
+	  -o-mod-spec gronk:Test/mod_gronk.mod \
+	  -o-mod-spec baz:Test/mod_baz.mod \
+	  -o-mod-default default \
+	  Test/mod_gronk_baz_method.ii 2>&1
+	$(ANNOUNCE_TEST_PASS)
+
+qual-module-check: qual-module-check-method2
+.PHONY: qual-module-check-method2
+TEST_TOCLEAN += Test/mod_gronk_baz_method2.lattice
+qual-module-check-method2:
+	./module_make_lattice --access \
+          --mod gronk --mod baz --mod default \
+	  > Test/mod_gronk_baz_method2.lattice
+	./qual -fq-module-access $(QUALCC_FLAGS) \
+	  -q-config Test/mod_gronk_baz_method2.lattice \
+	  -o-mod-spec gronk:Test/mod_gronk.mod \
+	  -o-mod-spec baz:Test/mod_baz.mod \
+	  -o-mod-default default \
+	  Test/mod_gronk_baz_method2.ii 2>&1 | \
+          grep -e 'Test/mod_baz.cc:4 WARNING (1 of 1):  (new struct Gronk1  ()) treated as $$gronk_alloc and $$gronk_otherAccess'
 	$(ANNOUNCE_TEST_PASS)

@@ -11,3 +11,6 @@ mod_gronk_baz.lattice
 mod_gronk_baz2.lattice
 mod_gronk_baz_array.lattice
 mod_gronk_baz_new.lattice
+mod_gronk_baz_method.lattice
+mod_gronk_baz_access_class.lattice
+mod_gronk_baz_method2.lattice
