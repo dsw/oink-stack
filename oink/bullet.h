@@ -21,18 +21,18 @@ class Bullet : public virtual Oink {
   void emit_stage();
 };
 
-class HistogramASTVisitor : public ASTVisitor {
+class CodeGenASTVisitor : public ASTVisitor {
   public:
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
 
-  HistogramASTVisitor()
+  CodeGenASTVisitor()
      : loweredVisitor(this)
   {}
 
   virtual void postvisitStatement(Statement *obj);
 };
 
-// class HistogramASTVisitor : public ASTVisitor {
+// class CodeGenASTVisitor : public ASTVisitor {
 //   public:
 // //    LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
 
@@ -71,7 +71,7 @@ class HistogramASTVisitor : public ASTVisitor {
 //   int num_AttributeSpecifier;
 //   int num_Attribute;
 
-//   HistogramASTVisitor()
+//   CodeGenASTVisitor()
 // //      : loweredVisitor(this)
 //     : num_TranslationUnit(0)
 //     , num_TopForm(0)
@@ -108,7 +108,7 @@ class HistogramASTVisitor : public ASTVisitor {
 //     , num_AttributeSpecifier(0)
 //     , num_Attribute(0)
 //   {}
-//   virtual ~HistogramASTVisitor() {}
+//   virtual ~CodeGenASTVisitor() {}
 
 //   void printHistogram(ostream &out);
 

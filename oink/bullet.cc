@@ -16,7 +16,7 @@ void Bullet::emit_stage() {
     maybeSetInputLangFromSuffix(file);
     printStart(file->name.c_str());
     TranslationUnit *unit = file2unit.get(file);
-    HistogramASTVisitor vis;
+    CodeGenASTVisitor vis;
     unit->traverse(vis.loweredVisitor);
     // post-processing here
 //     vis.printHistogram(cout);
@@ -24,9 +24,9 @@ void Bullet::emit_stage() {
   }
 }
 
-void HistogramASTVisitor::postvisitStatement(Statement *obj) {
+void CodeGenASTVisitor::postvisitStatement(Statement *obj) {
   obj->debugPrint(std::cout, 0);
-//   cout << "" << endl;
+//   std::cout << "" << std::endl;
 }
 
 // Example stage ****
@@ -39,16 +39,16 @@ void HistogramASTVisitor::postvisitStatement(Statement *obj) {
 //     printStart(file->name.c_str());
 //     TranslationUnit *unit = file2unit.get(file);
 //     // NOTE: we aren't doing lowered visitation
-//     HistogramASTVisitor vis;
+//     CodeGenASTVisitor vis;
 //     unit->traverse(vis);
 //     vis.printHistogram(cout);
 //     printStop();
 //   }
 // }
 
-// HistogramASTVisitor ****
+// CodeGenASTVisitor ****
 
-// void HistogramASTVisitor::printHistogram(ostream &out) {
+// void CodeGenASTVisitor::printHistogram(ostream &out) {
 //   out << "TranslationUnit: " << num_TranslationUnit << "\n";
 //   out << "TopForm: " << num_TopForm << "\n";
 //   out << "Function: " << num_Function << "\n";
@@ -87,138 +87,138 @@ void HistogramASTVisitor::postvisitStatement(Statement *obj) {
 
 // ****
 
-// void HistogramASTVisitor::postvisitTranslationUnit(TranslationUnit *obj) {
+// void CodeGenASTVisitor::postvisitTranslationUnit(TranslationUnit *obj) {
 //   ++num_TranslationUnit;
 // }
 
-// void HistogramASTVisitor::postvisitTopForm(TopForm *obj) {
+// void CodeGenASTVisitor::postvisitTopForm(TopForm *obj) {
 //   ++num_TopForm;
 // }
 
-// void HistogramASTVisitor::postvisitFunction(Function *obj) {
+// void CodeGenASTVisitor::postvisitFunction(Function *obj) {
 //   ++num_Function;
 // }
 
-// void HistogramASTVisitor::postvisitMemberInit(MemberInit *obj) {
+// void CodeGenASTVisitor::postvisitMemberInit(MemberInit *obj) {
 //   ++num_MemberInit;
 // }
 
-// void HistogramASTVisitor::postvisitDeclaration(Declaration *obj) {
+// void CodeGenASTVisitor::postvisitDeclaration(Declaration *obj) {
 //   ++num_Declaration;
 // }
 
-// void HistogramASTVisitor::postvisitASTTypeId(ASTTypeId *obj) {
+// void CodeGenASTVisitor::postvisitASTTypeId(ASTTypeId *obj) {
 //   ++num_ASTTypeId;
 // }
 
-// void HistogramASTVisitor::postvisitPQName(PQName *obj) {
+// void CodeGenASTVisitor::postvisitPQName(PQName *obj) {
 //   ++num_PQName;
 // }
 
-// void HistogramASTVisitor::postvisitTypeSpecifier(TypeSpecifier *obj) {
+// void CodeGenASTVisitor::postvisitTypeSpecifier(TypeSpecifier *obj) {
 //   ++num_TypeSpecifier;
 // }
 
-// void HistogramASTVisitor::postvisitBaseClassSpec(BaseClassSpec *obj) {
+// void CodeGenASTVisitor::postvisitBaseClassSpec(BaseClassSpec *obj) {
 //   ++num_BaseClassSpec;
 // }
 
-// void HistogramASTVisitor::postvisitEnumerator(Enumerator *obj) {
+// void CodeGenASTVisitor::postvisitEnumerator(Enumerator *obj) {
 //   ++num_Enumerator;
 // }
 
-// void HistogramASTVisitor::postvisitMemberList(MemberList *obj) {
+// void CodeGenASTVisitor::postvisitMemberList(MemberList *obj) {
 //   ++num_MemberList;
 // }
 
-// void HistogramASTVisitor::postvisitMember(Member *obj) {
+// void CodeGenASTVisitor::postvisitMember(Member *obj) {
 //   ++num_Member;
 // }
 
-// void HistogramASTVisitor::postvisitDeclarator(Declarator *obj) {
+// void CodeGenASTVisitor::postvisitDeclarator(Declarator *obj) {
 //   ++num_Declarator;
 // }
 
-// void HistogramASTVisitor::postvisitIDeclarator(IDeclarator *obj) {
+// void CodeGenASTVisitor::postvisitIDeclarator(IDeclarator *obj) {
 //   ++num_IDeclarator;
 // }
 
-// void HistogramASTVisitor::postvisitExceptionSpec(ExceptionSpec *obj) {
+// void CodeGenASTVisitor::postvisitExceptionSpec(ExceptionSpec *obj) {
 //   ++num_ExceptionSpec;
 // }
 
-// void HistogramASTVisitor::postvisitOperatorName(OperatorName *obj) {
+// void CodeGenASTVisitor::postvisitOperatorName(OperatorName *obj) {
 //   ++num_OperatorName;
 // }
 
-// void HistogramASTVisitor::postvisitStatement(Statement *obj) {
+// void CodeGenASTVisitor::postvisitStatement(Statement *obj) {
 //   ++num_Statement;
 // }
 
-// void HistogramASTVisitor::postvisitCondition(Condition *obj) {
+// void CodeGenASTVisitor::postvisitCondition(Condition *obj) {
 //   ++num_Condition;
 // }
 
-// void HistogramASTVisitor::postvisitHandler(Handler *obj) {
+// void CodeGenASTVisitor::postvisitHandler(Handler *obj) {
 //   ++num_Handler;
 // }
 
-// void HistogramASTVisitor::postvisitExpression(Expression *obj) {
+// void CodeGenASTVisitor::postvisitExpression(Expression *obj) {
 //   ++num_Expression;
 // }
 
-// void HistogramASTVisitor::postvisitFullExpression(FullExpression *obj) {
+// void CodeGenASTVisitor::postvisitFullExpression(FullExpression *obj) {
 //   ++num_FullExpression;
 // }
 
-// void HistogramASTVisitor::postvisitArgExpression(ArgExpression *obj) {
+// void CodeGenASTVisitor::postvisitArgExpression(ArgExpression *obj) {
 //   ++num_ArgExpression;
 // }
 
-// void HistogramASTVisitor::postvisitArgExpressionListOpt(ArgExpressionListOpt *obj) {
+// void CodeGenASTVisitor::postvisitArgExpressionListOpt(ArgExpressionListOpt *obj) {
 //   ++num_ArgExpressionListOpt;
 // }
 
-// void HistogramASTVisitor::postvisitInitializer(Initializer *obj) {
+// void CodeGenASTVisitor::postvisitInitializer(Initializer *obj) {
 //   ++num_Initializer;
 // }
 
-// void HistogramASTVisitor::postvisitTemplateDeclaration(TemplateDeclaration *obj) {
+// void CodeGenASTVisitor::postvisitTemplateDeclaration(TemplateDeclaration *obj) {
 //   ++num_TemplateDeclaration;
 // }
 
-// void HistogramASTVisitor::postvisitTemplateParameter(TemplateParameter *obj) {
+// void CodeGenASTVisitor::postvisitTemplateParameter(TemplateParameter *obj) {
 //   ++num_TemplateParameter;
 // }
 
-// void HistogramASTVisitor::postvisitTemplateArgument(TemplateArgument *obj) {
+// void CodeGenASTVisitor::postvisitTemplateArgument(TemplateArgument *obj) {
 //   ++num_TemplateArgument;
 // }
 
-// void HistogramASTVisitor::postvisitNamespaceDecl(NamespaceDecl *obj) {
+// void CodeGenASTVisitor::postvisitNamespaceDecl(NamespaceDecl *obj) {
 //   ++num_NamespaceDecl;
 // }
 
-// void HistogramASTVisitor::postvisitFullExpressionAnnot(FullExpressionAnnot *obj) {
+// void CodeGenASTVisitor::postvisitFullExpressionAnnot(FullExpressionAnnot *obj) {
 //   ++num_FullExpressionAnnot;
 // }
 
-// void HistogramASTVisitor::postvisitASTTypeof(ASTTypeof *obj) {
+// void CodeGenASTVisitor::postvisitASTTypeof(ASTTypeof *obj) {
 //   ++num_ASTTypeof;
 // }
 
-// void HistogramASTVisitor::postvisitDesignator(Designator *obj) {
+// void CodeGenASTVisitor::postvisitDesignator(Designator *obj) {
 //   ++num_Designator;
 // }
 
-// void HistogramASTVisitor::postvisitAttributeSpecifierList(AttributeSpecifierList *obj) {
+// void CodeGenASTVisitor::postvisitAttributeSpecifierList(AttributeSpecifierList *obj) {
 //   ++num_AttributeSpecifierList;
 // }
 
-// void HistogramASTVisitor::postvisitAttributeSpecifier(AttributeSpecifier *obj) {
+// void CodeGenASTVisitor::postvisitAttributeSpecifier(AttributeSpecifier *obj) {
 //   ++num_AttributeSpecifier;
 // }
 
-// void HistogramASTVisitor::postvisitAttribute(Attribute *obj) {
+// void CodeGenASTVisitor::postvisitAttribute(Attribute *obj) {
 //   ++num_Attribute;
 // }
