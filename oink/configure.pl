@@ -30,9 +30,11 @@ my @config_vars = qw(
   ELSA_DIR
   LIBQUAL_DIR
   LIBREGION_DIR
+  LLVM_DIR
   TMP_DIR
   CFLAGS_EXTRA
   USE_ZIPIOS
+  USE_LLVM
 );
 
 # not used for now
@@ -44,6 +46,9 @@ my @CFLAGS_EXTRA = ();
 
 # true if we want to link with zipios
 my $USE_ZIPIOS = 1;
+
+# true if we want to link with llvm
+my $USE_LLVM = 1;
 
 # These are implied by NDEBUG
 #push @CFLAGS_EXTRA, "-DDO_SELFCHECK=0", "-DDO_TRACE=0";
@@ -59,8 +64,9 @@ my $SMBASE_DIR  = "../smbase";
 my $AST_DIR     = "../ast";
 my $EHD_DIR     = "../elkhound";
 my $ELSA_DIR    = "../elsa";
-my $LIBQUAL_DIR    = "../libqual";
-my $LIBREGION_DIR    = "../libregion";
+my $LIBQUAL_DIR = "../libqual";
+my $LIBREGION_DIR = "../libregion";
+my $LLVM_DIR    = "../../llvm";
 
 my $TMP_DIR = ".";
 if (-d '/dev/shm' && -w '/dev/shm') {
@@ -79,16 +85,22 @@ options:
   -no-dash-g         disable -g
   -no-dash-O2        disable -O2
   -prof              enable profiling
+
   --enable-archive-srz-zip=yes  enable zip archive serialization
   --enable-archive-srz-zip=no   disable zip archive serialization
   --enable-archive-srz-zip=auto enable zip archive serialization if available
+
+  --enable-llvm=yes  enable llvm
+  --enable-llvm=no   disable llvm
+  --enable-llvm=auto enable llvm if available
 
   -smbase=<dir>:     specify where the smbase library is [$SMBASE_DIR]
   -ast=<dir>:        specify where the ast system is [$AST_DIR]
   -elkhound=<dir>:   specify where the elkhound system is [$EHD_DIR]
   -elsa=<dir>:       specify where the elsa system is [$ELSA_DIR]
-  -libqual=<dir>:    specify where the elkhound system is [$LIBQUAL_DIR]
-  -libregion=<dir>:  specify where the elkhound system is [$LIBREGION_DIR]
+  -libqual=<dir>:    specify where the libqual library is [$LIBQUAL_DIR]
+  -libregion=<dir>:  specify where the libregion library is [$LIBREGION_DIR]
+  -llvm=<dir>:       specify where the llvm library is [$LLVM_DIR]
 EOF
 }
 #    -devel             add options useful while developing
@@ -96,6 +108,7 @@ EOF
 #                         including forms: -W*, -D*, -O*, -m*
 
 my $enable_archive_srz_zip = 'auto';
+my $enable_llvm = 'auto';
 
 # process command-line arguments
 my $originalArgs = join(' ', @ARGV);
@@ -163,6 +176,8 @@ while (@ARGV) {
     $LIBQUAL_DIR = $tmp;
   } elsif (($tmp) = ($arg =~ m/^-libregion=(.*)$/)) {
     $LIBREGION_DIR = $tmp;
+  } elsif (($tmp) = ($arg =~ m/^-llvm=(.*)$/)) {
+    $LLVM_DIR = $tmp;
   }
 
   elsif ($arg eq "-useSerialNumbers") {
@@ -178,6 +193,17 @@ while (@ARGV) {
   }
   elsif ($arg eq "-require-no-archive-srz-zip") {
       $enable_archive_srz_zip = 'no';
+  }
+
+  elsif ($arg eq '-enable-llvm') {
+      $enable_llvm = 'yes';
+  } elsif ($arg =~ m,^-enable-llvm=(yes|no|auto)$,) {
+      $enable_llvm = $1;
+  } elsif ($arg eq "-require-llvm") {
+      $enable_llvm = 'yes';
+  }
+  elsif ($arg eq "-require-no-llvm") {
+      $enable_llvm = 'no';
   }
 
   else {
@@ -226,6 +252,7 @@ I couldn't compile with it.
 
     Note that you also need zlib (the Debian package libzipios++-dev
     is missing the dependency on zlib1g-dev).
+
 EOF
 ;
         $enable_archive_srz_zip = 'no';
@@ -238,6 +265,47 @@ if ($enable_archive_srz_zip eq 'yes') {
     push(@CFLAGS_EXTRA, "-DARCHIVE_SRZ_ZIP=1");
 }
 $USE_ZIPIOS = ($enable_archive_srz_zip eq 'yes' ? 1 : 0);
+
+die unless $enable_llvm;
+my $llvm_failure_message = <<EOF
+You wanted to enable LLVM, but you don't have llvm or
+I couldn't compile with it.
+
+    You can get it at http://llvm.org/
+
+EOF
+;
+if ($enable_llvm eq 'no') {
+    print "Note: LLVM disabled.  No support for generating executables.\n";
+} elsif ($enable_llvm eq 'yes') {
+    my $have_llvm = (0==system("./configure-check-llvm"));
+    if (!$have_llvm) {
+        print STDERR $llvm_failure_message;
+        print STDERR <<EOF
+Stopping because you specified --enable-llvm=yes.
+EOF
+;
+        exit 1;
+    }
+    print "LLVM enabled and seems to work.\n\n";
+} elsif ($enable_llvm eq 'auto') {
+#     my $have_llvm = (0==system("./configure-check-llvm"));
+    my $have_llvm = -d $LLVM_DIR;
+    if ($have_llvm) {
+        print "LLVM seems to work so enabling it.\n\n";
+        $enable_llvm = 'yes';
+    } else {
+        print STDERR $llvm_failure_message;
+        $enable_llvm = 'no';
+    }
+} else {
+    die "Can't get here.";
+}
+
+if ($enable_llvm eq 'yes') {
+#    push(@CFLAGS_EXTRA, "-DLLVM=1");
+}
+$USE_LLVM = ($enable_llvm eq 'yes' ? 1 : 0);
 
 if (!$debug) {
   if ($allow_dash_O2) {
@@ -294,15 +362,24 @@ if (! -f "$ELSA_DIR/cc_type.h") {
 # libqual
 if (! -f "$LIBQUAL_DIR/quals.h") {
   die "I cannot find quals.h in `$LIBQUAL_DIR'.\n" .
-      "The libqual system is required for oink.\n" .
+      "The libqual library is required for oink.\n" .
       "If it's in a different location, use the -libqual=<dir> option.\n";
 }
 
 # libregion
 if (! -f "$LIBREGION_DIR/regions.h") {
   die "I cannot find regions.h in `$LIBREGION_DIR'.\n" .
-      "The libregion system is required for oink.\n" .
+      "The libregion library is required for oink.\n" .
       "If it's in a different location, use the -libregion=<dir> option.\n";
+}
+
+# llvm
+if ($USE_LLVM &&
+    ! -f "$LLVM_DIR/include/llvm/AbstractTypeUser.h")
+{
+  die "I cannot find include/llvm/AbstractTypeUser.h in `$LLVM_DIR'.\n" .
+      "You enabled llvm but you didn't tell me where to find it.\n" .
+      "If it's in a different location, use the -llvm=<dir> option.\n";
 }
 
 #  # use smbase's $BASE_FLAGS if I can find them
@@ -335,12 +412,14 @@ Location flags:
   ELSA_DIR:      $ELSA_DIR
   LIBQUAL_DIR:   $LIBQUAL_DIR
   LIBREGION_DIR: $LIBREGION_DIR
+  LLVM_DIR:      $LLVM_DIR
 
   TMP_DIR:       $TMP_DIR
 
 Compile flags:
   debug:        $debug
   enable_archive_srz_zip: $enable_archive_srz_zip
+  enable_llvm: $enable_llvm
   CFLAGS_EXTRA:      $CFLAGS_EXTRA
 EOF
 

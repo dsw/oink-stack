@@ -7,21 +7,92 @@
 #include "strutil.h"            // quoted
 #include "oink_util.h"
 
+// LLVM headers ****
+
+#define _DEBUG
+
+// the headers seem to want these macros to be defined
+// #define _GNU_SOURCE
+#define __STDC_LIMIT_MACROS
+#define __STDC_CONSTANT_MACROS
+
+#include <llvm/Module.h>
+#include <llvm/Function.h>
+#include <llvm/PassManager.h>
+#include <llvm/CallingConv.h>
+#include <llvm/Analysis/Verifier.h>
+#include <llvm/Assembly/PrintModulePass.h>
+#include <llvm/Support/IRBuilder.h>
+
+#include <llvm/Pass.h>
+
 // Emit stage ****
 
 void Bullet::emit_stage() {
   printStage("emit");
-  foreachSourceFile {
-    File *file = files.data();
-    maybeSetInputLangFromSuffix(file);
-    printStart(file->name.c_str());
-    TranslationUnit *unit = file2unit.get(file);
-    CodeGenASTVisitor vis;
-    unit->traverse(vis.loweredVisitor);
-    // post-processing here
-//     vis.printHistogram(cout);
-    printStop();
-  }
+//   foreachSourceFile {
+//     File *file = files.data();
+//     maybeSetInputLangFromSuffix(file);
+//     printStart(file->name.c_str());
+//     TranslationUnit *unit = file2unit.get(file);
+//     CodeGenASTVisitor vis;
+//     unit->traverse(vis.loweredVisitor);
+//     // post-processing here
+// //     vis.printHistogram(cout);
+//     printStop();
+//   }
+
+  // modified from:
+  // file:///Users/dsw/Notes/llvm-2.5-src/docs/tutorial/JITTutorial1.html
+
+  // make an LLVM module
+  printf("%s:%d make module\n", __FILE__, __LINE__);
+//   Module* Mod = makeLLVMModule();
+  llvm::Module *mod = new llvm::Module("test");
+
+  // make a function object
+  printf("%s:%d make function\n", __FILE__, __LINE__);
+//   Constant* c = mod->getOrInsertFunction
+//     ("mul_add",
+//      /*ret type*/ IntegerType::get(32),
+//      /*args*/ IntegerType::get(32),
+//      IntegerType::get(32),
+//      IntegerType::get(32),
+//      /*varargs terminated with null*/ NULL);
+  llvm::Constant *c = mod->getOrInsertFunction
+    ("main",                    // function name
+     llvm::IntegerType::get(32), // return type
+     llvm::IntegerType::get(32), // one argument (argc)
+     NULL                       // terminate list of varargs
+     );
+  llvm::Function *main_function = llvm::cast<llvm::Function>(c);
+  main_function->setCallingConv(llvm::CallingConv::C);
+
+  // make the body of the function
+  printf("%s:%d make body\n", __FILE__, __LINE__);
+  llvm::Function::arg_iterator args = main_function->arg_begin();
+  llvm::Value* arg1 = args++;
+  arg1->setName("argc");
+
+  printf("%s:%d make block\n", __FILE__, __LINE__);
+  llvm::BasicBlock *block = llvm::BasicBlock::Create("entry", main_function);
+  llvm::IRBuilder<> builder(block);
+  builder.CreateRet(arg1);
+
+  // verify the module
+  printf("%s:%d verify\n", __FILE__, __LINE__);
+  verifyModule(*mod, llvm::PrintMessageAction);
+
+  // render the module
+  printf("%s:%d render\n", __FILE__, __LINE__);
+  llvm::PassManager PM;
+  llvm::ModulePass *pmp = llvm::createPrintModulePass(0); // (&llvm::cout);
+  PM.add(pmp);
+  PM.run(*mod);
+
+  // delete the module
+  printf("%s:%d delete module\n", __FILE__, __LINE__);
+  delete mod;
 }
 
 void CodeGenASTVisitor::postvisitStatement(Statement *obj) {

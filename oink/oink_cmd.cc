@@ -337,6 +337,11 @@ void OinkCmd::dump() { // for -fo-verbose
   printf(" ARCHIVE_SRZ_ZIP");
 #endif
 
+  printf("code-gen:");
+#ifdef LLVM
+  printf(" LLVM");
+#endif
+
   // FIX: this is really a property of the ast package, which could
   // have been built with different flags; in fact, right now it is
   // just defined there

@@ -9,6 +9,10 @@ endif
 
 CXX := g++
 
+USE_ZIPIOS := @USE_ZIPIOS@
+USE_LLVM := @USE_LLVM@
+LLVM_CONFIG := $(LLVM_DIR)/Release/bin/llvm-config
+
 # Makefile for building Oink
 
 .PHONY: build-prereqs exe
@@ -30,10 +34,16 @@ FRONTEND_EXE += oink
 FRONTEND_EXE += staticprint
 FRONTEND_EXE += dfgprint
 FRONTEND_EXE += cfgprint
-FRONTEND_EXE += bullet
+FRONTEND_LLVM_EXE += bullet
 FRONTEND_EXE += qual
 exe: $(FRONTEND_EXE)
+ifeq ($(USE_LLVM),1)
+  exe: $(FRONTEND_LLVM_EXE)
+else
+  $(warning Not building since they depend on llvm: $(FRONTEND_LLVM_EXE))
+endif
 
+# FIX: if you turn this back on, consider FRONTEND_LLVM_EXE
 # $(FRONTEND_EXE): build-prereqs
 
 TEST_EXE := 
@@ -296,6 +306,8 @@ INCL_CC += -ILibCpdInit
 # stackdir; would like to do the same for elsa etc. but Scott's build
 # process and include files don't work that way.
 INCL_CC += -I$(STACK_DIR)
+
+INCL_CC += -I$(LLVM_DIR)/include
 
 DEP_INCL_CC := $(filter-out -I-,$(INCL_CC))
 
@@ -683,7 +695,6 @@ lib_FLAGS += -lsmbase
 lib_FLAGS += -lqual
 lib_FLAGS += -lregion
 
-USE_ZIPIOS := @USE_ZIPIOS@
 ifeq ($(USE_ZIPIOS),1)
   lib_FLAGS += -lzipios
 endif
@@ -693,6 +704,16 @@ endif
 TOCLEAN += $(FRONTEND_EXE) $(TEST_EXE)
 $(FRONTEND_EXE) $(TEST_EXE):
 	$(CXX) -o $@ $(CCFLAGS) $(L_FLAGS) $(filter %.o,$^) $(lib_FLAGS)
+
+# We would have to hide this inside an "ifeq ($(USE_LLVM),1)" so
+# instead we just run it on the command-line below
+# # NOTE: this includes both -l and -L flags and .o files; I think it
+# # works to just leave it that way
+# LLVM_LIB_FLAGS := $(shell $(LLVM_CONFIG) --ldflags --libs all)
+
+TOCLEAN += $(FRONTEND_LLVM_EXE) $(TEST_LLVM_EXE)
+$(FRONTEND_LLVM_EXE) $(TEST_LLVM_EXE):
+	$(CXX) -o $@ $(CCFLAGS) $(L_FLAGS) $(filter %.o,$^) $(lib_FLAGS) `$(LLVM_CONFIG) --ldflags --libs all`
 
 # ****
 
