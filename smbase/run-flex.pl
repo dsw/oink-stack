@@ -255,6 +255,16 @@ for ($i=0; $i < @lines; $i++) {
   }
 
   elsif ($state == 4) {
+    # Versions of flex >= 2.5.34 add a trivial yywrap() even if you say noyywrap.
+    # Include them in the NO_YYFLEXLEXER_METHODS block.
+    if ($line =~ m/^int yyFlexLexer::yywrap/) {
+      chomp($line);
+      $lineno += 3;
+      print OUT ("#ifndef NO_YYFLEXLEXER_METHODS\n" .
+                 $line . "\n" .
+                 "#endif\n");
+      next;
+    }
     if ($line =~ m/^int yyFlexLexer::yylex/) {
       $state++;
       $i++;       # skip the '{' line, to keep #line numbers in sync
