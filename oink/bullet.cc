@@ -28,24 +28,8 @@
 
 // Emit stage ****
 
-void Bullet::emit_stage() {
-  printStage("emit");
-//   foreachSourceFile {
-//     File *file = files.data();
-//     maybeSetInputLangFromSuffix(file);
-//     printStart(file->name.c_str());
-//     TranslationUnit *unit = file2unit.get(file);
-//     CodeGenASTVisitor vis;
-//     unit->traverse(vis.loweredVisitor);
-//     // post-processing here
-// //     vis.printHistogram(cout);
-//     printStop();
-//   }
-
-  // modified from:
-  // file:///Users/dsw/Notes/llvm-2.5-src/docs/tutorial/JITTutorial1.html
-
-  // make an LLVM module
+// make an LLVM module
+llvm::Module *makeModule() {
   printf("%s:%d make module\n", __FILE__, __LINE__);
 //   Module* Mod = makeLLVMModule();
   llvm::Module *mod = new llvm::Module("test");
@@ -78,6 +62,27 @@ void Bullet::emit_stage() {
   llvm::BasicBlock *block = llvm::BasicBlock::Create("entry", main_function);
   llvm::IRBuilder<> builder(block);
   builder.CreateRet(arg1);
+
+  return mod;
+}
+
+void Bullet::emit_stage() {
+  printStage("emit");
+//   foreachSourceFile {
+//     File *file = files.data();
+//     maybeSetInputLangFromSuffix(file);
+//     printStart(file->name.c_str());
+//     TranslationUnit *unit = file2unit.get(file);
+//     CodeGenASTVisitor vis;
+//     unit->traverse(vis.loweredVisitor);
+//     // post-processing here
+// //     vis.printHistogram(cout);
+//     printStop();
+//   }
+
+  // modified from:
+  // file:///Users/dsw/Notes/llvm-2.5-src/docs/tutorial/JITTutorial1.html
+  llvm::Module *mod = makeModule();
 
   // verify the module
   printf("%s:%d verify\n", __FILE__, __LINE__);
