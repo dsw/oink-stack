@@ -61,7 +61,8 @@ llvm::Module *makeModule() {
   printf("%s:%d make block\n", __FILE__, __LINE__);
   llvm::BasicBlock *block = llvm::BasicBlock::Create("entry", main_function);
   llvm::IRBuilder<> builder(block);
-  builder.CreateRet(arg1);
+  llvm::Value* tmp = builder.CreateBinOp(llvm::Instruction::Mul, arg1, arg1, "tmp");
+  builder.CreateRet(tmp);
 
   return mod;
 }
@@ -91,7 +92,8 @@ void Bullet::emit_stage() {
   // render the module
   printf("%s:%d render\n", __FILE__, __LINE__);
   llvm::PassManager PM;
-  llvm::ModulePass *pmp = llvm::createPrintModulePass(0); // (&llvm::cout);
+  llvm::raw_os_ostream out(std::cout);
+  llvm::ModulePass *pmp = createPrintModulePass(&out);
   PM.add(pmp);
   PM.run(*mod);
 
