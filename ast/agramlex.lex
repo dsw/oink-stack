@@ -47,6 +47,8 @@ ANYBUTNL  .
 /* starting character in a name */
 LETTER    [a-zA-Z_]
 
+/* Namespace separator */
+NAMESPACE_SEPARATOR "::"
 /* starting character in a numeric literal */
 DIGIT     [0-9]
 
@@ -306,7 +308,7 @@ SLWHITE   [ \t]
 
 
   /* -------- name literal --------- */
-{LETTER}({LETTER}|{DIGIT})* {
+{LETTER}({LETTER}|{DIGIT}|{NAMESPACE_SEPARATOR})* {
   // get text from yytext and yyleng
   TOK_UPD_COL;
   return TOK_NAME;
