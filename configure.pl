@@ -120,7 +120,7 @@ sub configure_dir {
 sub do_configure {
     configure_dir('smbase', \@ELSA_OINK_CONF);
     configure_dir('ast', \@ELSA_OINK_CONF);
-    configure_dir('elkhound', [ ]);
+    configure_dir('elkhound', [ '-endloc' ]);
     #configure_dir('mcpp', [ '--enable-replace-cpp', '--enable-modular-cpp', 'CFLAGS='.$AUTOMAKE_CFLAGS ]);
     configure_dir('elsa', [ '-gnu=1', '-kandr=1', @ELSA_OINK_CONF, @SERIAL_NO ]);
     configure_dir('libregion', [ ]);
