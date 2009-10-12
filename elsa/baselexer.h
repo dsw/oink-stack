@@ -15,7 +15,8 @@
 #include <iostream>         // istream
 #include "lexerint.h"       // LexerInterface
 #include "strtable.h"       // StringRef, StringTable
-
+#include "cppundolog.h"
+#include "exprloc.h"
 
 // lexer object
 class BaseLexer : public yyFlexLexer, public LexerInterface {
@@ -39,6 +40,7 @@ protected:  // funcs
   void updLoc() {
     loc = nextLoc;                 // location of *this* token
     nextLoc = advText(nextLoc, yytext, yyleng);
+    ENDLOC1(endloc = nextLoc;)
   }
 
   // adds a string with only the specified # of chars; writes (but

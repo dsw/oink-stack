@@ -590,5 +590,17 @@ enum TemplateParameterKind {
 
 char const *toString(TemplateParameterKind tpk);
 
+//
+// Sizes of basic types that depend on the underlying architecture
+// and/or compiler flags.
+//
+// See https://bugzilla.mozilla.org/show_bug.cgi?id=510515
+//
+// FIXME: hardcoding |sizeof(wchar_t) == 2| for Mozilla's sake
+//
+enum PlatformTypeSize {
+    PTS_WORDSIZE = sizeof(void*),
+    PTS_WCHAR_T_SIZE = 2
+};
 
 #endif // CC_FLAGS_H

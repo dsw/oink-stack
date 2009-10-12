@@ -54,7 +54,7 @@ terminals {
 // http://gcc.gnu.org/onlinedocs/gcc-3.2.2/gcc/Statement-Exprs.html
 nonterm(Expression*) PrimaryExpression {
   -> "(" cs:CompoundStatement ")"
-       { return new E_statement(cs); }
+       { return new E_statement(loc ENDLOCARG(endloc), cs); }
 }
 
 
@@ -67,7 +67,7 @@ nonterm(Expression*) PrimaryExpression {
 // which would assign x=4 and y=5 in 'myfoo'
 nonterm(Expression*) PrimaryExpression {
   -> "(" t:TypeId ")" i:CompoundInitializer
-       { return new E_compoundLit(t, i); }
+       { return new E_compoundLit(loc ENDLOCARG(endloc), t, i); }
 }
 
 
@@ -81,41 +81,64 @@ nonterm(StringRef) PreprocString {
   -> TOK___PRETTY_FUNCTION__                { return str("__PRETTY_FUNCTION__"); }
 }
 
-nonterm(Expression*) UnaryExpression {
+// dmandelin@mozilla.com
+// These are like function calls; they should have the same nonterminal
+nonterm(Expression*) PostfixExpression {
   // GNU extension; dsw: Since the argument is an expression, I know
   // of no way to handle this other than putting it into the grammar
   // directly.
   -> "__builtin_constant_p" pe:ParenthesizedExpression
-       { return new E___builtin_constant_p(loc, pe); }
+       { return new E___builtin_constant_p(loc ENDLOCARG(endloc), pe); }
 
   // http://gcc.gnu.org/onlinedocs/gcc-3.2.2/gcc/Alignment.html
   -> "__alignof__" "(" t:TypeId ")"
-       { return new E_alignofType(t); }
+       { return new E_alignofType(loc ENDLOCARG(endloc), t); }
   -> "__alignof__" "(" e:Expression ")"
-       { return new E_alignofExpr(e); }
+       { return new E_alignofExpr(loc ENDLOCARG(endloc), e); }
 
   // quarl 2006-07-12
   //    Handle __offsetof__ (gcc-3.4), __builtin_offsetof (gcc-4.x)
-  -> "__builtin_offsetof" "(" t:TypeId "," n:NameAfterDot ")"
-       // { return new E_offsetof(t, n); }
+  -> "__builtin_offsetof" "(" t:TypeId "," n:NamesAfterDot ")"
+       // { return new E_offsetof(loc ENDLOCARG(endloc), t, n); }
        {
          // just create "(unsigned long) &((t*)0)->n)"
 
-         // make it a pointer
+         // Create the ASTTypeId to represent the pointer-to-t
+         // dmandelin@mozilla.com -- Need to clone the type before modifying.
+         // Otherwise, the mod can get run more than once when in an ambiguous
+	 // context, which would make t be pointer-to-pointer-to-t.
+         t = t->clone();
          t->decl->decl = new D_pointer(loc, CV_NONE, t->decl->decl);
 
          ASTTypeId *ulong = new ASTTypeId(new TS_simple(loc, ST_UNSIGNED_INT),
                                           new Declarator(new D_name(loc, NULL), NULL));
 
-         return new E_cast(ulong,
-                           (new E_addrOf(
-                             new E_arrow(
-                               new E_cast(t, new E_intLit("0")),
-                               n))));
+
+	 // dmandelin@mozilla.com   bug 416051
+         Expression *einner = n;
+         Expression::Kind kind = einner->kind();
+         while (kind == Expression::E_BINARY || 
+                kind == Expression::E_FIELDACC) {
+           if (kind == Expression::E_BINARY) {
+             xassert(einner->asE_binary()->op == BIN_BRACKETS);
+             einner = einner->asE_binary()->e1;
+           }
+           else {
+             einner = einner->asE_fieldAcc()->obj;
+           }
+           kind = einner->kind();
+         }
+         E_arrow *inner = einner->asE_arrow();
+         inner->loc = loc;
+         inner->endloc = endloc;
+         inner->obj = new E_cast(loc ENDLOCARG(endloc), t,
+                                 new E_intLit(loc ENDLOCARG(endloc), "0"));
+         return new E_cast(loc ENDLOCARG(endloc), ulong,
+                           (new E_addrOf(loc ENDLOCARG(endloc), n)));
        }
 
   -> "__offsetof__" "(" e:Expression ")"
-       { return new E_grouping(e); }
+       { return new E_grouping(loc ENDLOCARG(endloc), e); }
 
   // sm: __builtin_expect is for static branch prediction, but none of
   // the analyses I forsee for this parser care about such things, so
@@ -129,39 +152,54 @@ nonterm(Expression*) UnaryExpression {
   // be one kind.  I'm not sure what other kinds there would be,
   // though.
   -> "__builtin_expect" "(" e:Expression "," /*prediction*/Expression ")"
-       { return new E_grouping(e); }
+       { return new E_grouping(loc ENDLOCARG(endloc), e); }
 
   // varargs; dsw: I think that we should make all of these their own
   // AST node, I just don't want to deal with the parsing ambiguity
   // with E_funCall right now
 //   -> "__builtin_va_start" "(" e:Expression "," e2:Expression ")"
-//        { return new E___builtin_va_start(loc, e, e2); }
+//        { return new E___builtin_va_start(loc ENDLOCARG(endloc), loc, e, e2); }
 //   -> "__builtin_va_copy" "(" e:Expression "," e2:Expression ")"
-//        { return new E___builtin_va_copy(loc, e, e2); }
+//        { return new E___builtin_va_copy(loc ENDLOCARG(endloc), loc, e, e2); }
   -> "__builtin_va_arg" "(" e:Expression "," t:TypeId ")"
-       { return new E___builtin_va_arg(loc, e, t); }
+       { return new E___builtin_va_arg(loc ENDLOCARG(endloc), e, t); }
 //   -> "__builtin_va_end" "(" e:Expression ")"
-//        { return new E___builtin_va_end(loc, e); }
+//        { return new E___builtin_va_end(loc ENDLOCARG(endloc), loc, e); }
+}
+
+// dmandelin@mozilla.com  bug 416051
+// Represents something that can appear as arg2 of the builtin offsetof
+// operator in gcc. This will be used to make an expression of the form
+//    ((A*) NULL)->a.b
+// so we construct the right-hand part of that expression here, and let
+// the context fill in the cast and NULL in the offsetof action.
+nonterm(Expression*) NamesAfterDot {
+  -> n:NameAfterDot
+       { return new E_arrow(loc ENDLOCARG(endloc), NULL, n); }
+  -> n:NamesAfterDot "." n2:NameAfterDot
+       { return new E_fieldAcc(loc ENDLOCARG(endloc), n, n2); }
+  -> n:NamesAfterDot "[" e:Expression "]"
+       { return new E_binary(loc ENDLOCARG(endloc), n, BIN_BRACKETS, e); }
 }
 
 // dsw: had to break this out for location recording reasons
 nonterm(Expression*) ParenthesizedExpression {
   -> "(" e:Expression ")"
-       { return new E_grouping(e); }
+       { return new E_grouping(loc ENDLOCARG(endloc), e); }
 }
 
 
 // http://gcc.gnu.org/onlinedocs/gcc-3.2.2/gcc/Conditionals.html
 nonterm(Expression*) ConditionalExpression {
   -> cond:BinaryExpression "?" /*th:Expression*/ ":" el:AssignmentExpression
-       { return new E_gnuCond(cond, el); }
+       { return new E_gnuCond(loc ENDLOCARG(endloc), cond, el); }
 }
 
 
 // http://gcc.gnu.org/onlinedocs/gcc-3.2.2/gcc/Nested-Functions.html
 nonterm(Statement*) Statement {
   -> f:FunctionDefinition
-       { return new S_function(loc, f); }
+       { return new S_function(loc ENDLOCARG(endloc), f); }
   // quarl 2006-06-15
   //    nested K&R functions; unimplemented for now but I guess we just need
   //    to do the same as above?  see in/gnu/k0010.c
@@ -183,7 +221,7 @@ nonterm(TopForm*) ExplicitInstantiation {
 // http://gcc.gnu.org/onlinedocs/gcc-3.4.1/gcc/Case-Ranges.html
 nonterm(Statement*) Statement {
   -> "case" e:ConstantExpression "..." e2:ConstantExpression ":" s:Statement
-       { return new S_rangeCase(loc, e, e2, s); }
+       { return new S_rangeCase(loc ENDLOCARG(endloc), e, e2, s); }
 }
 
 
@@ -211,18 +249,18 @@ nonterm(S_compound*) CompoundStatement {
 // a sequence of labels with no statement following, not even a skip
 nonterm(Statement*) LabeledEmptyStatementList {
   -> n:LabelAndColon s:LabeledEmptyStatementListOpt
-       { return new S_label(loc, n, s); }
+       { return new S_label(loc ENDLOCARG(endloc), n, s); }
   -> "case" e:ConstantExpression ":" s:LabeledEmptyStatementListOpt
-       { return new S_case(loc, e, new S_skip(loc)); }
+       { return new S_case(loc ENDLOCARG(endloc), e, new S_skip(loc ENDLOCARG(endloc))); }
   -> "case" e:ConstantExpression "..." e2:ConstantExpression ":" s:LabeledEmptyStatementListOpt
-       { return new S_rangeCase(loc, e, e2, s); }
+       { return new S_rangeCase(loc ENDLOCARG(endloc), e, e2, s); }
   -> "default" ":" s:LabeledEmptyStatementListOpt
-       { return new S_default(loc, new S_skip(loc)); }
+       { return new S_default(loc ENDLOCARG(endloc), new S_skip(loc ENDLOCARG(endloc))); }
 }
 
 nonterm(Statement*) LabeledEmptyStatementListOpt {
   -> empty
-       { return new S_skip(loc); }
+       { return new S_skip(loc ENDLOCARG(endloc)); }
   -> s:LabeledEmptyStatementList
        { return s; }
 }
@@ -297,9 +335,9 @@ nonterm(ASTTypeId*) TypeofType {
 // http://gcc.gnu.org/onlinedocs/gcc-3.1/gcc/Min-and-Max.html
 nonterm(Expression*) BinExp_mid {
   -> left:BinExp_mid "<?" right:BinExp_high
-       { return new E_binary(left, BIN_MINIMUM, right); }
+       { return new E_binary(loc ENDLOCARG(endloc), left, BIN_MINIMUM, right); }
   -> left:BinExp_mid ">?" right:BinExp_high
-       { return new E_binary(left, BIN_MAXIMUM, right); }
+       { return new E_binary(loc ENDLOCARG(endloc), left, BIN_MAXIMUM, right); }
 }
 
 // it turns out gcc lets users overload them too (in/gnu/k0004.cc)
@@ -513,12 +551,12 @@ nonterm BuggyGccTypeModifier {
 // http://gcc.gnu.org/onlinedocs/gcc-3.1/gcc/Labels-as-Values.html
 nonterm(Expression*) UnaryExpression {
   -> "&&" n:Identifier
-       { return new E_addrOfLabel(n); }
+       { return new E_addrOfLabel(loc ENDLOCARG(endloc), n); }
 }
 
 nonterm(Statement*) Statement {
   -> "goto" "*" e:Expression ";"
-       { return new S_computedGoto(loc, e); }
+       { return new S_computedGoto(loc ENDLOCARG(endloc), e); }
 }
 
 
@@ -539,9 +577,9 @@ nonterm(UberModifiers) UberTypeKeyword {
 // in that these are component accesses.
 nonterm(Expression*) PrimaryExpression {
   -> "__real__" e:PrimaryExpression
-     { return new E_fieldAcc(e, new PQ_name(loc, str("__real__"))); }
+     { return new E_fieldAcc(loc ENDLOCARG(endloc), e, new PQ_name(loc, str("__real__"))); }
   -> "__imag__" e:PrimaryExpression
-     { return new E_fieldAcc(e, new PQ_name(loc, str("__imag__"))); }
+     { return new E_fieldAcc(loc ENDLOCARG(endloc), e, new PQ_name(loc, str("__imag__"))); }
 }
 
 
@@ -554,11 +592,26 @@ nonterm(StringRef) LabelAndColon {
        { return n; }
 }
 
+// tglek: Commenting this out so I can attach attributes to classes below
+// // attributes between classkeys and their names
+// nonterm(enum TypeIntr) ClassKey {
+//   // *not* AttributeSpecifierList; this context is naturally repeating
+//   -> k:ClassKey / *DROPPED* /AttributeSpecifier       { return k; }
+//}
 
-// attributes between classkeys and their names
-nonterm(enum TypeIntr) ClassKey {
-  // *not* AttributeSpecifierList; this context is naturally repeating
-  -> k:ClassKey /*DROPPED*/AttributeSpecifier       { return k; }
+
+nonterm(TypeSpecifier*) ElaboratedTypeSpecifier {
+  -> k:ClassKey /*DROPPED*/AttributeSpecifier n:PQTypeName    { return new TS_elaborated(loc, k, n); }
+}
+
+nonterm(TS_classSpec*) ClassSpecifier {
+  -> k:ClassKey as:AttributeSpecifierList n:ClassHeadNameOpt b:BaseClauseOpt "{" memb:MemberDeclarationSeqOpt "}"
+    { 
+      popClassName();
+      TS_classSpec *ts = new TS_classSpec(loc, k, n, b, memb);
+      ts->alist = as;
+      return ts;
+    }
 }
 
 // attributes after "enum"
@@ -645,8 +698,8 @@ nonterm(IDeclarator*) Declarator {
 
 
 nonterm(IDeclarator*) DirectDeclarator {
-  -> "(" /*DROPPED*/AttributeSpecifierList d:Declarator ")"
-       { return new D_grouping(loc, d); }
+  -> "(" attr:AttributeSpecifierList d:Declarator ")"
+       { return new D_attribute(loc, d, attr); }
 }
 
 

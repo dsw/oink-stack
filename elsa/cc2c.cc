@@ -10,6 +10,8 @@
 #include "exc.h"             // xunimp
 #include "macros.h"          // Restorer
 
+// node position macros
+#include "exprloc.h"
 
 // for now
 SourceLoc const SL_GENERATED = SL_UNKNOWN;
@@ -22,7 +24,7 @@ SourceLoc const SL_GENERATED = SL_UNKNOWN;
 
 // define an S_compound to trap generated statements
 #define TRAP_SIDE_EFFECTS_STMT(name)              \
-  S_compound name(SL_GENERATED, NULL /*stmts*/);  \
+  S_compound name(SL_GENERATED ENDLOCARG(SL_GENERATED), NULL /*stmts*/); \
   SET_CUR_COMPOUND_STMT(&name);
 
 
@@ -78,7 +80,7 @@ void CC2CEnv::addStatement(Statement *s)
 void CC2CEnv::addDeclaration(Declaration *d)
 {
   if (curCompoundStmt) {
-    addStatement(new S_decl(SL_GENERATED, d));
+    addStatement(new S_decl(SL_GENERATED ENDLOCARG(SL_GENERATED), d));
   }
   else {
     addTopForm(new TF_decl(SL_GENERATED, d));
@@ -369,7 +371,7 @@ Function *Function::cc2c(CC2CEnv &env) const
   }
 
   // Translate the body.
-  S_compound *genBody = new S_compound(SL_GENERATED, NULL /*stmts*/);
+  S_compound *genBody = new S_compound(SL_GENERATED ENDLOCARG(SL_GENERATED), NULL /*stmts*/);
   {
     SET_CUR_COMPOUND_STMT(genBody);
     body->cc2c(env);
@@ -475,7 +477,7 @@ void Declaration::cc2c(CC2CEnv &env) const
 // -------------------- Statement --------------------
 static S_skip *makeSkip()
 {
-  return new S_skip(SL_GENERATED);
+  return new S_skip(SL_GENERATED ENDLOCARG(SL_GENERATED));
 }
 
 
@@ -486,7 +488,7 @@ void S_skip::cc2c(CC2CEnv &env) const
 void S_label::cc2c(CC2CEnv &env) const
 {
   env.addStatement(
-    new S_label(SL_GENERATED, env.str(name), makeSkip()));
+    new S_label(SL_GENERATED ENDLOCARG(SL_GENERATED), env.str(name), makeSkip()));
   s->cc2c(env);
 }
 
@@ -494,7 +496,7 @@ void S_label::cc2c(CC2CEnv &env) const
 void S_case::cc2c(CC2CEnv &env) const
 {
   env.addStatement(
-    new S_case(SL_GENERATED, expr->cc2cNoSideEffects(env), makeSkip()));
+    new S_case(SL_GENERATED ENDLOCARG(SL_GENERATED), expr->cc2cNoSideEffects(env), makeSkip()));
   s->cc2c(env);
 }
 
@@ -502,7 +504,7 @@ void S_case::cc2c(CC2CEnv &env) const
 void S_default::cc2c(CC2CEnv &env) const
 {
   env.addStatement(
-    new S_default(SL_GENERATED, makeSkip()));
+    new S_default(SL_GENERATED ENDLOCARG(SL_GENERATED), makeSkip()));
   s->cc2c(env);
 }
 
@@ -515,7 +517,7 @@ void S_expr::cc2c(CC2CEnv &env) const
 
 void S_compound::cc2c(CC2CEnv &env) const
 {
-  S_compound *ret = new S_compound(SL_GENERATED, NULL /*stmts*/);
+  S_compound *ret = new S_compound(SL_GENERATED ENDLOCARG(SL_GENERATED), NULL /*stmts*/);
 
   {
     SET_CUR_COMPOUND_STMT(ret);
@@ -540,29 +542,29 @@ void S_for::cc2c(CC2CEnv &env) const { xunimp("for"); }
 void S_break::cc2c(CC2CEnv &env) const
 {
   env.addStatement(
-    new S_break(SL_GENERATED));
+    new S_break(SL_GENERATED ENDLOCARG(SL_GENERATED)));
 }
 
 
 void S_continue::cc2c(CC2CEnv &env) const
 {
   env.addStatement(
-    new S_continue(SL_GENERATED));
+    new S_continue(SL_GENERATED ENDLOCARG(SL_GENERATED)));
 }
 
 
 void S_return::cc2c(CC2CEnv &env) const
 {
   env.addStatement(expr?
-    new S_return(SL_GENERATED, expr->cc2c(env)) :
-    new S_return(SL_GENERATED, NULL));
+    new S_return(SL_GENERATED ENDLOCARG(SL_GENERATED), expr->cc2c(env)) :
+    new S_return(SL_GENERATED ENDLOCARG(SL_GENERATED), NULL));
 }
 
 
 void S_goto::cc2c(CC2CEnv &env) const
 {
   env.addStatement(
-    new S_goto(SL_GENERATED, env.str(target)));
+    new S_goto(SL_GENERATED ENDLOCARG(SL_GENERATED), env.str(target)));
 }
 
 
@@ -578,7 +580,7 @@ void S_try::cc2c(CC2CEnv &env) const { xunimp("try"); }
 void S_asm::cc2c(CC2CEnv &env) const
 {
   env.addStatement(
-    new S_asm(SL_GENERATED, text->cc2c(env)->asE_stringLit()));
+    new S_asm(SL_GENERATED ENDLOCARG(SL_GENERATED), text->cc2c(env)->asE_stringLit()));
 }
 
 
@@ -613,7 +615,7 @@ Expression *E_boolLit::cc2c(CC2CEnv &env) const { xunimp(""); return NULL; }
 
 Expression *E_intLit::cc2c(CC2CEnv &env) const
 {
-  return new E_intLit(text);
+  return new E_intLit(EXPR_LOC(SL_GENERATED ENDLOCARG(SL_GENERATED)) text);
 }
 
 
@@ -625,7 +627,7 @@ Expression *E_this::cc2c(CC2CEnv &env) const { xunimp(""); return NULL; }
 
 Expression *E_variable::cc2c(CC2CEnv &env) const
 {
-  return new E_variable(env.makeName(var));
+  return new E_variable(EXPR_LOC(SL_GENERATED ENDLOCARG(SL_GENERATED)) env.makeName(var));
 }
 
 

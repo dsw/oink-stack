@@ -259,6 +259,24 @@ bool IMType::imatchSTemplateArgument(STemplateArgument const *conc,
     return imatchNontypeWithVariable(conc, pat->getDepExpr()->asE_variableC(), flags);
   }
 
+  // dmandelin@mozilla.com fix for Elsa ticket #27
+  // tested by t0580.cc
+  // C++ Draft Standard 14.1.3 -- enums and ints
+  if (pat->kind == STemplateArgument::STA_ENUMERATOR) {
+    if (conc->kind == STemplateArgument::STA_INT)
+      return conc->getInt() == pat->getEnumerator()->getEnumeratorValue();
+    if (conc->kind == STemplateArgument::STA_ENUMERATOR)
+      return conc->getEnumerator()->getEnumeratorValue() == pat->getEnumerator()->getEnumeratorValue();
+    return false;
+  }
+  if (pat->kind == STemplateArgument::STA_INT) {
+    if (conc->kind == STemplateArgument::STA_INT)
+      return pat->getInt() == conc->getInt();
+    if (conc->kind == STemplateArgument::STA_ENUMERATOR)
+      return conc->getEnumerator()->getEnumeratorValue() == pat->getInt();
+    return false;
+  }
+
   if (conc->kind != pat->kind) {
     return false;
   }
@@ -277,12 +295,6 @@ bool IMType::imatchSTemplateArgument(STemplateArgument const *conc,
       Type const *pt = pat->getType();
       return imatchType(ct, pt, flags);
     }
-
-    case STemplateArgument::STA_INT:
-      return conc->getInt() == pat->getInt();
-      
-    case STemplateArgument::STA_ENUMERATOR:
-      return conc->getEnumerator() == pat->getEnumerator();
 
     case STemplateArgument::STA_REFERENCE:
       return conc->getReference() == pat->getReference();
@@ -1142,6 +1154,7 @@ bool IMType::imatchExceptionSpecs(FunctionType const *conc, FunctionType const *
 // 'flags' are the match flags from above.
 static MatchFlags propagateFlagsForArray(MatchFlags flags, Type *eltType)
 {
+  // what flags to propagate?
   MatchFlags propFlags = (flags & MF_PROP);
 
   if (flags & MF_IGNORE_ELT_CV) {
@@ -1169,6 +1182,10 @@ bool IMType::imatchArrayType(ArrayType const *conc, ArrayType const *pat, MatchF
          conc->hasSize() == pat->hasSize() )) {
     return false;
   }
+
+  // TODO: At some point I will implement dependent-sized arrays
+  // (t0435.cc), at which point the size comparison code here will
+  // have to be generalized.
 
   if (conc->hasSize()) {
     return conc->size == pat->size;
@@ -1386,7 +1403,7 @@ bool MType::commonMatchType(Type const *conc, Type const *pat, MatchFlags flags)
   #ifndef NDEBUG
     static bool doTrace = tracingSys("mtype");
     if (doTrace) {
-      ostream &os = trace("mtype");
+      std::ostream &os = trace("mtype");
       os << "conc=`" << conc->toString()
          << "' pat=`" << pat->toString()
          << "' flags={" << toString(flags)
@@ -1401,7 +1418,7 @@ bool MType::commonMatchType(Type const *conc, Type const *pat, MatchFlags flags)
         os << bindingsToString();
       }
 
-      os << endl;
+      os << std::endl;
     }
   #endif // NDEBUG
 
@@ -1434,7 +1451,7 @@ bool MType::commonMatchSTemplateArguments(ObjList<STemplateArgument> const &conc
   #ifndef NDEBUG
     static bool doTrace = tracingSys("mtype");
     if (doTrace) {
-      ostream &os = trace("mtype");
+      std::ostream &os = trace("mtype");
       os << "conc=" << sargsToString(conc)
          << " pat=" << sargsToString(pat)
          << " flags={" << toString(flags)
@@ -1445,7 +1462,7 @@ bool MType::commonMatchSTemplateArguments(ObjList<STemplateArgument> const &conc
         os << bindingsToString();
       }
 
-      os << endl;
+      os << std::endl;
     }
   #endif // NDEBUG
 

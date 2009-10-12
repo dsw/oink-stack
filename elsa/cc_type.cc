@@ -266,9 +266,9 @@ string SimpleType::toCString() const
 }
 
 
-int SimpleType::reprSize() const
+void SimpleType::sizeInfo(int &size, int &align) const
 {
-  return simpleTypeReprSize(type);
+  size = align = simpleTypeReprSize(type);
 }
 
 
@@ -490,7 +490,7 @@ string CompoundType::toCString() const
     // if we're not a template, since template instantiations
     // usually don't include the keyword 'class' (this isn't perfect..
     // I think I need more context)
-    sb << keywordName(keyword) << " ";
+    //sb << keywordName(keyword) << " ";
   }
 
   //sb << (instName? instName : "/*anonymous*/");
@@ -524,10 +524,48 @@ string CompoundType::toCString() const
 }
 
 
-int CompoundType::reprSize() const
+// dmandelin@mozilla.com
+void CompoundType::sizeInfo(int &size, int &align) const
 {
-  int total = 0;
+  size = 0;
+  align = 1;
 
+  if (hasVirtualFns()) {
+    size += PTS_WORDSIZE;
+    align = PTS_WORDSIZE;
+  }
+
+  memSizeInfo(size, align);
+}  
+
+// dmandelin@mozilla.com
+// Helper for memSizeInfo. Add one data item to the given size/align pair.
+static void sizeInfoAddData(int &size, int &align, int memSize, int memAlign)
+{
+  //  cout << "SIAD " << size << " " << align << " " << memSize << " " << memAlign << endl;
+  size = (size + memAlign - 1) / memAlign * memAlign + memSize;
+  align = max(align, memAlign);
+}
+
+// dmandelin@mozilla.com
+// Helper for memSizeInfo. Add a bitfield group to the given size/align pair.
+static void sizeInfoAddBitfield(int &size, int &align, int &bits)
+{
+  if (bits) {
+    int bfSize = 1;
+    while (bfSize * 8 < bits) bfSize *= 2;
+    sizeInfoAddData(size, align, bfSize, bfSize);
+    bits = 0;
+  }
+}
+
+// dmandelin@mozilla.com
+// Following ABI at http://www.codesourcery.com/cxx-abi/abi.html#layout
+// Compute the size of everything except the vptr. Note that size and
+// align must be initialized on entry.
+// We need this separate from sizeInfo so that we can add the vptr only once.
+void CompoundType::memSizeInfo(int &size, int &align) const
+{
   // base classes
   {
     SObjList<BaseClassSubobj const> subobjs;
@@ -537,65 +575,35 @@ int CompoundType::reprSize() const
         // skip my own subobject, as that will be accounted for below
       }
       else {
-        total += iter.data()->ct->reprSize();
+	int baseSize = 0, baseAlign = 1;
+	iter.data()->ct->memSizeInfo(baseSize, baseAlign);
+	sizeInfoAddData(size, align, baseSize, baseAlign);
       }
     }
   }
 
-  // This algorithm is a very crude approximation of the packing and
-  // alignment behavior of some nominal compiler.  Ideally, we'd have
-  // a layout algorithm for each compiler we want to emulate, or
-  // perhaps even a generic algorithm with sufficient
-  // parameterization, but for now it's just a best effort driven by
-  // specific pieces of code that know how big their own structures
-  // are supposed to be.
-  //
-  // Were I to try to do a better job, a good starting point would be
-  // to research any published ABIs I could find for C and C++, as
-  // they would have to specify a layout algorithm.  Presumably, if I
-  // can emulate any published ABI then I will have the flexibility to
-  // emulate any compiler also.
-  //
-  // One test is in/t0513.cc.
-
-  // Maintain information about accumulated members that do not occupy
-  // a complete word.
-  int bits = 0;        // bitfield bits
-  int bytes = 0;       // unaligned bytes
-  int align = 1;       // prevailing alignment in bytes
+  // Number of bits in current bitfield group.
+  int bits = 0;
 
   // data members
   SFOREACH_OBJLIST(Variable, dataMembers, iter) {
     Variable const *v = iter.data();
+    int memSize, memAlign;
 
     if (keyword == K_UNION) {
-      // representation size is max over field sizes
-      total = max(total, v->type->reprSize());
+      v->type->sizeInfo(memSize, memAlign);
+      size = max(size, memSize);
+      align = max(align, memAlign);
       continue;
     }
 
     if (v->isBitfield()) {
-      // consolidate bytes as bits
-      bits += bytes*8;
-      bytes = 0;
-
-      int membBits = v->getBitfieldSize();
-      bits += membBits;
-
-      // increase alignment to accomodate this member
-      while (membBits > align*8 && align < 4) {
-        align *= 2;
-      }
-
+      bits += v->getBitfieldSize();
       continue;
     }
 
-    // 'v' is not a bitfield, so pack the bits seen so far into
-    // 'align' units
-    if (bits > 0) {
-      total += ((bits + (align*8-1)) / (align*8)) * align;
-      bits = 0;
-    }
+    // 'v' is not a bitfield, so pack the bits seen so far into bytes
+    sizeInfoAddBitfield(size, align, bits);
 
     if (v->type->isArrayType() &&
         !v->type->asArrayTypeC()->hasSize()) {
@@ -606,40 +614,15 @@ int CompoundType::reprSize() const
       continue;
     }
 
-    int membSize = v->type->reprSize();
-
-    if (membSize >= align) {
-      // increase alignment if necessary, up to 4 bytes;
-      // this is wrong because you can't tell the alignment
-      // of a structure just from its size
-      while (membSize > align && align < 4) {
-        align *= 2;
-      }
-
-      // consolidate any remaining bytes into 'align' units
-      if (bytes > 0) {
-        total += ((bytes + align-1) / align) * align;
-        bytes = 0;
-      }
-
-      // add 'membSize'
-      total += (membSize / align) * align;
-      bytes += membSize % align;
-    }
-    else {
-      // less than one alignment, just stuff it into 'bytes'; this
-      // is wrong because it doesn't take account of alignment
-      // less than 'align', e.g. 2-byte alignment of a 16-bit qty..
-      // oh well
-      bytes += membSize;
-    }
+    v->type->sizeInfo(memSize, memAlign);
+    sizeInfoAddData(size, align, memSize, memAlign);
   }
 
-  // pad out to the next 'align' boundary
-  bits += bytes*8;
-  total += ((bits + (align*8-1)) / (align*8)) * align;
+  // Last bitfield group, if any
+  sizeInfoAddBitfield(size, align, bits);
 
-  return total;
+  // Pad to align
+  size = (size + align - 1) / align * align;
 }
 
 
@@ -1157,10 +1140,10 @@ string EnumType::toCString() const
 }
 
 
-int EnumType::reprSize() const
+void EnumType::sizeInfo(int &size, int &align) const
 {
   // this is the usual choice
-  return simpleTypeReprSize(ST_INT);
+  size = align = simpleTypeReprSize(ST_INT);
 }
 
 
@@ -1789,9 +1772,9 @@ string CVAtomicType::leftString(bool /*innerParen*/) const
 }
 
 
-int CVAtomicType::reprSize() const
+void CVAtomicType::sizeInfo(int &size, int &align) const
 {
-  return atomic->reprSize();
+  atomic->sizeInfo(size, align);
 }
 
 
@@ -1803,7 +1786,7 @@ bool CVAtomicType::anyCtorSatisfies(TypePred &pred) const
 
 CVFlags CVAtomicType::getCVFlags() const
 {
-  return cv;
+  return cv & (~CV_UNLOCKED);
 }
 
 
@@ -1890,10 +1873,9 @@ string PointerType::rightString(bool /*innerParen*/) const
 }
 
 
-int PointerType::reprSize() const
+void PointerType::sizeInfo(int &size, int &align) const
 {
-  // a typical value .. (architecture-dependent)
-  return 4;
+  size = align = PTS_WORDSIZE;
 }
 
 
@@ -1906,7 +1888,7 @@ bool PointerType::anyCtorSatisfies(TypePred &pred) const
 
 CVFlags PointerType::getCVFlags() const
 {
-  return cv;
+  return cv & (~CV_UNLOCKED);
 }
 
 
@@ -1973,9 +1955,9 @@ string ReferenceType::rightString(bool /*innerParen*/) const
   return s;
 }
 
-int ReferenceType::reprSize() const
+void ReferenceType::sizeInfo(int &size, int &align) const
 {
-  return 4;
+  size = align = PTS_WORDSIZE;
 }
 
 
@@ -2217,7 +2199,7 @@ string FunctionType::rightStringUpToQualifiers(bool innerParen) const
     if (isMethod() && ct==1) {
       // don't actually print the first parameter;
       // the 'm' stands for nonstatic member function
-      sb << "/""*m: " << iter.data()->type->toCString() << " *""/ ";
+      //sb << "/""*m: " << iter.data()->type->toCString() << " *""/ ";
       continue;
     }
     if (ct >= 3 || (!isMethod() && ct>=2)) {
@@ -2300,11 +2282,12 @@ bool FunctionType::usesPostfixTypeConstructorSyntax() const
 }
 
 
-int FunctionType::reprSize() const
+void FunctionType::sizeInfo(int &size, int &align) const
 {
   // thinking here about how this works when we're summing
   // the fields of a class with member functions ..
-  return 0;
+  size = 0;
+  align = 1;
 }
 
 
@@ -2460,13 +2443,13 @@ unsigned ArrayType::innerHashValue() const
 }
 
 
-int ArrayType::reprSize() const
+void ArrayType::sizeInfo(int &size, int &align) const
 {
   if (!hasSize()) {
-    throw_XReprSize(size == DYN_SIZE /*isDynamic*/);
+    throw_XReprSize(this->size == DYN_SIZE /*isDynamic*/);
   }
-
-  return eltType->reprSize() * size;
+  eltType->sizeInfo(size, align);
+  size *= this->size;
 }
 
 
@@ -2531,10 +2514,9 @@ string PointerToMemberType::rightString(bool /*innerParen*/) const
 }
 
 
-int PointerToMemberType::reprSize() const
+void PointerToMemberType::sizeInfo(int &size, int &align) const
 {
-  // a typical value .. (architecture-dependent)
-  return 4;
+  size = align = PTS_WORDSIZE;
 }
 
 
@@ -2547,7 +2529,7 @@ bool PointerToMemberType::anyCtorSatisfies(TypePred &pred) const
 
 CVFlags PointerToMemberType::getCVFlags() const
 {
-  return cv;
+  return cv & (~CV_UNLOCKED);
 }
 
 

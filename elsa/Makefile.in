@@ -132,7 +132,9 @@ LEXER_OBJS := \
   baselexer.o \
   lexer.o \
   lexer.yy.o \
-  cc_tokens.o
+  cc_tokens.o \
+  cppundolog.o
+
 -include $(LEXER_OBJS:.o=.d)
 -include tlexer.d
 
@@ -283,7 +285,6 @@ $(CC_GR_GEN_FILES): $(CC_GR_MODS) cc_tokens.ids $(ELKHOUND)/elkhound
 # that finds serious compilation problems earliest (it's ok to
 # rearrange as different parts of the code are in flux)
 CCPARSE_OBJS := \
-  cc2c.o \
   bpprint.o \
   ia64mangle.o \
   mtype.o \
@@ -320,7 +321,9 @@ CCPARSE_OBJS := \
   cc_ast_aux.o \
   variable.o \
   lookupset.o \
-  ccparse.o
+  ccparse.o \
+  cc2c.o
+
 -include $(CCPARSE_OBJS:.o=.d) main.d
 
 

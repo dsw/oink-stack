@@ -570,7 +570,7 @@ string CTypePrinter::printRightUpToQualifiers(FunctionType const *type, bool inn
     if (type->isMethod() && ct==1) {
       // don't actually print the first parameter;
       // the 'm' stands for nonstatic member function
-      sb << "/""*m: " << print(iter.data()->type) << " *""/ ";
+      //sb << "/""*m: " << print(iter.data()->type) << " *""/ ";
       continue;
     }
     if (ct >= 3 || (!type->isMethod() && ct>=2)) {

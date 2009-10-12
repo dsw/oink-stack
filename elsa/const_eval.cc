@@ -174,17 +174,17 @@ void CValue::convertToType(SimpleTypeId newType)
 
   type = newType;
 
-  // truncate the value based on the final type
+  // dmandelin@mozilla.com
+  // Fixes Oink ticket #164, Mozilla bug #411178
+  // Truncate value according to C++ semantics
   int reprSize = simpleTypeReprSize(type);
-  if (reprSize >= 4) {
-    // do no truncation
-  }
-  else {
-    int maxValue = (1 << 8*reprSize) - 1;
-    switch (kind()) {
-      case K_SIGNED:     if (si > maxValue) { si=maxValue; }  break;
-      case K_UNSIGNED:   if (ui > (unsigned)maxValue) { ui=(unsigned)maxValue; }  break;
-      default: break;   // ignore
+  // Mask for bits to be kept in truncation.
+  long mask = (1L << 8*reprSize) - 1;
+  if (mask) { // zero mask means no truncation required
+    si &= mask;
+    if (kind() == K_SIGNED) {
+      long signTestMask = 1 << (8*reprSize-1);
+      if (si & signTestMask) { si |= ~mask; }
     }
   }
 }
@@ -639,12 +639,14 @@ CValue Expression::iconstEval(ConstEval &env) const
       }
 
       CValue v1 = b->e1->constEval(env);
-      if (b->op == BIN_AND && v1.isZero()) {
+      // dmandelin -- fixed bug with template params causing spurious error
+      if (b->op == BIN_AND && v1.isZero() && !v1.isSticky()) {
         CValue ret;
         ret.setBool(false);   // short-circuit: propagate false
         return ret;
       }
-      if (b->op == BIN_OR && !v1.isZero()) {
+      // dmandelin -- fixed bug with template params causing spurious error
+      if (b->op == BIN_OR && !v1.isZero() && !v1.isSticky()) {
         CValue ret;
         ret.setBool(true);    // short-circuit: propagate false
         return ret;

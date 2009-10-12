@@ -244,7 +244,7 @@ class TypeSpecifier {
   -> TS_classSpec {
        public(xml_TY) CompoundType *ctype = NULL;
        public void tcheckIntoCompound(
-         Env &env, DeclFlags dflags, CompoundType *ct);
+           Env &env, DeclFlags dflags, CompoundType *ct, bool suppressErrors = false);
        private void tcheckFunctionBodies(Env &env);
 
        public void printExtras(std::ostream &os, int indent) const;

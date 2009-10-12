@@ -76,6 +76,7 @@ verbatim {
 #include "cc_ast.h"       // C++ abstract syntax
 #include "cc_lang.h"      // CCLang
 #include "ccparse.h"      // ParseEnv, the parser context class
+#include "exprloc.h"      // EXPR_LOCK macros
 
 #define D(msg) \
   trace("cc") << msg << endl
@@ -284,22 +285,22 @@ nonterm(Expression*) PrimaryExpression {
        { return e; }
 
   -> "this"
-       { return new E_this; }
+       { return new E_this(EXPR_LOC1(loc ENDLOCARG(endloc))); }
 
   -> "(" e:Expression ")"
-       { return new E_grouping(e); }
+       { return new E_grouping(EXPR_LOC(loc ENDLOCARG(endloc)) e); }
 
   -> e:IdExpression
-       { return new E_variable(e); }
+       { return new E_variable(EXPR_LOC(loc ENDLOCARG(endloc)) e); }
 }
 
 nonterm(Expression*) Literal {
-  -> i:TOK_INT_LITERAL    { return new E_intLit(i); }
-  -> f:TOK_FLOAT_LITERAL  { return new E_floatLit(f); }
+  -> i:TOK_INT_LITERAL    { return new E_intLit(EXPR_LOC(loc ENDLOCARG(endloc)) i); }
+  -> f:TOK_FLOAT_LITERAL  { return new E_floatLit(EXPR_LOC(loc ENDLOCARG(endloc)) f); }
   -> s:StringLiteral      { return s; }
-  -> c:TOK_CHAR_LITERAL   { return new E_charLit(c); }
-  -> TOK_TRUE             { return new E_boolLit(true); }
-  -> TOK_FALSE            { return new E_boolLit(false); }
+  -> c:TOK_CHAR_LITERAL   { return new E_charLit(EXPR_LOC(loc ENDLOCARG(endloc)) c); }
+  -> TOK_TRUE             { return new E_boolLit(EXPR_LOC(loc ENDLOCARG(endloc)) true); }
+  -> TOK_FALSE            { return new E_boolLit(EXPR_LOC(loc ENDLOCARG(endloc)) false); }
 }
 
 // a single quoted sequence of characters; this nonterminal exists
@@ -310,8 +311,8 @@ nonterm(StringRef) PreprocString {
 
 // a string literal, with all concatenated parts
 nonterm(E_stringLit*) StringLiteral {
-  -> s:PreprocString                        { return new E_stringLit(s); }
-  -> s:PreprocString cont:StringLiteral     { return new E_stringLit(s, cont); }
+  -> s:PreprocString                        { return new E_stringLit(EXPR_LOC(loc ENDLOCARG(endloc)) s); }
+  -> s:PreprocString cont:StringLiteral     { return new E_stringLit(EXPR_LOC(loc ENDLOCARG(endloc)) s, cont); }
 }
 
 
@@ -406,11 +407,11 @@ nonterm(Expression*) PostfixExpression {
 
   // array access
   -> a:PostfixExpression "[" e:Expression "]"
-       { return new E_binary(a, BIN_BRACKETS, e); }
+       { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) a, BIN_BRACKETS, e); }
 
   // fn call
   -> f:PostfixExpression a:ArgumentList
-       { return new E_funCall(f, a); }
+       { return new E_funCall(EXPR_LOC(loc ENDLOCARG(endloc)) f, a); }
 
   // cppstd has two things with "typename", but I can't find anyplace
   // where their semantics are spelled out.. I have some code from
@@ -424,35 +425,35 @@ nonterm(Expression*) PostfixExpression {
   // "typename" can only be used with a qualified name, whereas I
   // enforce that in the type checker (more informative message).
   -> "typename" t:IdExpression a:ArgumentList
-       { return new E_constructor(new TS_name(loc, t, true /*typenameUsed*/),
+       { return new E_constructor(EXPR_LOC(loc ENDLOCARG(endloc)) new TS_name(loc, t, true /*typenameUsed*/),
                                   a); }
 
   // function-style cast, or (equivalently) call to constructor; will
   // almost always be ambiguous with function call, so the distinction
   // will have to be delayed until typechecking
   -> spec:CtorExpressionType a:ArgumentList
-       { return new E_constructor(spec, a); }
+       { return new E_constructor(EXPR_LOC(loc ENDLOCARG(endloc)) spec, a); }
 
   // field access (includes pseudo-destructor)
   -> p:PostfixExpression "." n:NameAfterDot
-       { return new E_fieldAcc(p, n); }
+       { return new E_fieldAcc(EXPR_LOC(loc ENDLOCARG(endloc)) p, n); }
 
   // deref + field access
   -> p:PostfixExpression "->" n:NameAfterDot
-       { return new E_arrow(p, n); }
+       { return new E_arrow(EXPR_LOC(loc ENDLOCARG(endloc)) p, n); }
 
   -> p:PostfixExpression "++"
-       { return new E_effect(EFF_POSTINC, p); }
+       { return new E_effect(EXPR_LOC(loc ENDLOCARG(endloc)) EFF_POSTINC, p); }
   -> p:PostfixExpression "--"
-       { return new E_effect(EFF_POSTDEC, p); }
+       { return new E_effect(EXPR_LOC(loc ENDLOCARG(endloc)) EFF_POSTDEC, p); }
 
   -> k:CastKeyword "<" t:TypeId ">" "(" e:Expression ")"
-       { return new E_keywordCast(k, t, e); }
+       { return new E_keywordCast(EXPR_LOC(loc ENDLOCARG(endloc)) k, t, e); }
 
   -> "typeid" "(" e:Expression ")"
-       { return new E_typeidExpr(e); }
+       { return new E_typeidExpr(EXPR_LOC(loc ENDLOCARG(endloc)) e); }
   -> "typeid" "(" t:TypeId ")"
-       { return new E_typeidType(t); }
+       { return new E_typeidType(EXPR_LOC(loc ENDLOCARG(endloc)) t); }
 }
 
 // the std calls this SimpleTypeSpecifier, but then also uses that
@@ -521,26 +522,26 @@ nonterm(Expression*) UnaryExpression {
 
   -> e:PostfixExpression         { return e; }
 
-  -> "++" e:CastExpression       { return new E_effect(EFF_PREINC, e); }
-  -> "--" e:CastExpression       { return new E_effect(EFF_PREDEC, e); }
+  -> "++" e:CastExpression       { return new E_effect(EXPR_LOC(loc ENDLOCARG(endloc)) EFF_PREINC, e); }
+  -> "--" e:CastExpression       { return new E_effect(EXPR_LOC(loc ENDLOCARG(endloc)) EFF_PREDEC, e); }
 
   // size of expression
-  -> "sizeof" e:UnaryExpression  { return new E_sizeof(e); }
+  -> "sizeof" e:UnaryExpression  { return new E_sizeof(EXPR_LOC(loc ENDLOCARG(endloc)) e); }
 
   -> e:DeleteExpression          { return e; }
 
   // dereference, addrof
-  -> "*" e:CastExpression        { return new E_deref(e); }
-  -> "&" e:CastExpression        { return new E_addrOf(e); }
+  -> "*" e:CastExpression        { return new E_deref(EXPR_LOC(loc ENDLOCARG(endloc)) e); }
+  -> "&" e:CastExpression        { return new E_addrOf(EXPR_LOC(loc ENDLOCARG(endloc)) e); }
 
   // other unary operators
-  -> "+" e:CastExpression        { return new E_unary(UNY_PLUS, e); }
-  -> "-" e:CastExpression        { return new E_unary(UNY_MINUS, e); }
-  -> "!" e:CastExpression        { return new E_unary(UNY_NOT, e); }
-  -> "~" e:CastExpression        { return new E_unary(UNY_BITNOT, e); }
+  -> "+" e:CastExpression        { return new E_unary(EXPR_LOC(loc ENDLOCARG(endloc)) UNY_PLUS, e); }
+  -> "-" e:CastExpression        { return new E_unary(EXPR_LOC(loc ENDLOCARG(endloc)) UNY_MINUS, e); }
+  -> "!" e:CastExpression        { return new E_unary(EXPR_LOC(loc ENDLOCARG(endloc)) UNY_NOT, e); }
+  -> "~" e:CastExpression        { return new E_unary(EXPR_LOC(loc ENDLOCARG(endloc)) UNY_BITNOT, e); }
 
   // size of type
-  -> "sizeof" "(" t:TypeId ")"   { return new E_sizeofType(t); }
+  -> "sizeof" "(" t:TypeId ")"   { return new E_sizeofType(EXPR_LOC(loc ENDLOCARG(endloc)) t); }
 
   -> e:NewExpression             { return e; }
 }
@@ -557,9 +558,9 @@ nonterm(E_new*) NewExpression {
   fun merge(L,R) { L->addAmbiguity(R); return L; }
 
   -> c:ColonColonOpt "new" p:NewPlacementOpt t:NewTypeId i:NewInitializerOpt
-       { return new E_new(c, p, t, i); }
+       { return new E_new(EXPR_LOC(loc ENDLOCARG(endloc)) c, p, t, i); }
   -> c:ColonColonOpt "new" p:NewPlacementOpt "(" t:TypeId ")" i:NewInitializerOpt
-       { return new E_new(c, p, t, i); }
+       { return new E_new(EXPR_LOC(loc ENDLOCARG(endloc)) c, p, t, i); }
 }
 
 nonterm(FakeList<ArgExpression>*) NewPlacementOpt {
@@ -609,9 +610,9 @@ nonterm(ArgExpressionListOpt*) NewInitializerOpt {
 
 nonterm(Expression*) DeleteExpression {
   -> c:ColonColonOpt "delete" e:CastExpression
-       { return new E_delete(c, false /*array*/, e); }
+       { return new E_delete(EXPR_LOC(loc ENDLOCARG(endloc)) c, false /*array*/, e); }
   -> c:ColonColonOpt "delete" "[" "]" e:CastExpression
-       { return new E_delete(c, true /*array*/, e); }
+       { return new E_delete(EXPR_LOC(loc ENDLOCARG(endloc)) c, true /*array*/, e); }
 }
 // ------------ end of "new" and "delete" expressions -------------
 
@@ -694,7 +695,7 @@ nonterm(Expression*) CastExpression {
   -> e:UnaryExpression
        { return e; }
   -> "(" t:TypeId ")" e:CastExpression
-       { return new E_cast(t, e); }
+       { return new E_cast(EXPR_LOC(loc ENDLOCARG(endloc)) t, e); }
 }
 
 // ---- binary operator expression ----
@@ -708,16 +709,16 @@ nonterm(Expression*) BinExp_high {
 
   -> e:CastExpression                          { return e; }
 
-  -> left:BinExp_high ".*"  right:BinExp_high  { return new E_binary(left, BIN_DOT_STAR, right); }
-  -> left:BinExp_high "->*" right:BinExp_high  { return new E_binary(left, BIN_ARROW_STAR, right); }
+  -> left:BinExp_high ".*"  right:BinExp_high  { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_DOT_STAR, right); }
+  -> left:BinExp_high "->*" right:BinExp_high  { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_ARROW_STAR, right); }
 
-  -> left:BinExp_high "*"  right:BinExp_high   { return new E_binary(left, BIN_MULT, right); }
-  -> left:BinExp_high "/"  right:BinExp_high   { return new E_binary(left, BIN_DIV, right); }
-  -> left:BinExp_high "%"  right:BinExp_high   { return new E_binary(left, BIN_MOD, right); }
-  -> left:BinExp_high "+"  right:BinExp_high   { return new E_binary(left, BIN_PLUS, right); }
-  -> left:BinExp_high "-"  right:BinExp_high   { return new E_binary(left, BIN_MINUS, right); }
-  -> left:BinExp_high "<<" right:BinExp_high   { return new E_binary(left, BIN_LSHIFT, right); }
-  -> left:BinExp_high ">>" right:BinExp_high   { return new E_binary(left, BIN_RSHIFT, right); }
+  -> left:BinExp_high "*"  right:BinExp_high   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_MULT, right); }
+  -> left:BinExp_high "/"  right:BinExp_high   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_DIV, right); }
+  -> left:BinExp_high "%"  right:BinExp_high   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_MOD, right); }
+  -> left:BinExp_high "+"  right:BinExp_high   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_PLUS, right); }
+  -> left:BinExp_high "-"  right:BinExp_high   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_MINUS, right); }
+  -> left:BinExp_high "<<" right:BinExp_high   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_LSHIFT, right); }
+  -> left:BinExp_high ">>" right:BinExp_high   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_RSHIFT, right); }
 }
 
 // binary exprs with same precedence as ">"
@@ -740,10 +741,10 @@ nonterm(Expression*) BinExp_mid {
   // must express associativity directly; since these are all
   // left-associative, we require that there not be any reduced
   // ">" operators in the right context
-  -> left:BinExp_mid "<"  right:BinExp_high    { return new E_binary(left, BIN_LESS, right); }
-  -> left:BinExp_mid ">"  right:BinExp_high    { return new E_binary(left, BIN_GREATER, right); }
-  -> left:BinExp_mid "<=" right:BinExp_high    { return new E_binary(left, BIN_LESSEQ, right); }
-  -> left:BinExp_mid ">=" right:BinExp_high    { return new E_binary(left, BIN_GREATEREQ, right); }
+  -> left:BinExp_mid "<"  right:BinExp_high    { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_LESS, right); }
+  -> left:BinExp_mid ">"  right:BinExp_high    { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_GREATER, right); }
+  -> left:BinExp_mid "<=" right:BinExp_high    { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_LESSEQ, right); }
+  -> left:BinExp_mid ">=" right:BinExp_high    { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_GREATEREQ, right); }
 }
 
 // binary exprs with lower precedence than ">"
@@ -756,14 +757,14 @@ nonterm(Expression*) BinaryExpression {
 
   -> e:BinExp_mid                                        { return e; }
 
-  -> left:BinaryExpression "==" right:BinaryExpression   { return new E_binary(left, BIN_EQUAL, right); }
-  -> left:BinaryExpression "!=" right:BinaryExpression   { return new E_binary(left, BIN_NOTEQUAL, right); }
-  -> left:BinaryExpression "&"  right:BinaryExpression   { return new E_binary(left, BIN_BITAND, right); }
-  -> left:BinaryExpression "^"  right:BinaryExpression   { return new E_binary(left, BIN_BITXOR, right); }
-  -> left:BinaryExpression "|"  right:BinaryExpression   { return new E_binary(left, BIN_BITOR, right); }
+  -> left:BinaryExpression "==" right:BinaryExpression   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_EQUAL, right); }
+  -> left:BinaryExpression "!=" right:BinaryExpression   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_NOTEQUAL, right); }
+  -> left:BinaryExpression "&"  right:BinaryExpression   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_BITAND, right); }
+  -> left:BinaryExpression "^"  right:BinaryExpression   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_BITXOR, right); }
+  -> left:BinaryExpression "|"  right:BinaryExpression   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_BITOR, right); }
 
-  -> left:BinaryExpression "&&" right:BinaryExpression   { return new E_binary(left, BIN_AND, right); }
-  -> left:BinaryExpression "||" right:BinaryExpression   { return new E_binary(left, BIN_OR, right); }
+  -> left:BinaryExpression "&&" right:BinaryExpression   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_AND, right); }
+  -> left:BinaryExpression "||" right:BinaryExpression   { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) left, BIN_OR, right); }
 }
 
 
@@ -775,7 +776,7 @@ nonterm(Expression*) ConditionalExpression {
        { return e; }
 
   -> cond:BinaryExpression "?" th:Expression ":" el:AssignmentExpression
-       { return new E_cond(cond, th, el); }
+       { return new E_cond(EXPR_LOC(loc ENDLOCARG(endloc)) cond, th, el); }
 }
 
 // why is conditional not allowed on left side of = ?  can I confirm
@@ -786,7 +787,7 @@ nonterm(Expression*) AssignmentExpression {
        { return e; }
 
   -> e1:BinaryExpression op:AssignmentOperator e2:AssignmentExpression
-       { return new E_assign(e1, op, e2); }
+       { return new E_assign(EXPR_LOC(loc ENDLOCARG(endloc)) e1, op, e2); }
 
   -> e:ThrowExpression
        { return e; }
@@ -825,12 +826,12 @@ nonterm(Expression*) Expression {
        { return ae; }
 
   -> e:Expression "," ae:AssignmentExpression
-       { return new E_binary(e, BIN_COMMA, ae); }
+       { return new E_binary(EXPR_LOC(loc ENDLOCARG(endloc)) e, BIN_COMMA, ae); }
 }
 
 nonterm(Expression*) ExpressionOpt {
   // empty expression is a true no-op
-  -> empty         { return new E_boolLit(true); }
+  -> empty         { return new E_boolLit(EXPR_LOC(loc ENDLOCARG(endloc)) true); }
   -> e:Expression  { return e; }
 }
 
@@ -883,13 +884,13 @@ nonterm(Statement*) Statement {
   fun merge(L,R) { L->addAmbiguity(R); return L; }
 
   -> n:LabelAndColon s:Statement
-       { return new S_label(loc, n, s); }
+       { return new S_label(loc ENDLOCARG(endloc), n, s); }
 
   -> "case" e:ConstantExpression ":" s:Statement
-       { return new S_case(loc, e, s); }
+       { return new S_case(loc ENDLOCARG(endloc), e, s); }
 
   -> "default" ":" s:Statement
-       { return new S_default(loc, s); }
+       { return new S_default(loc ENDLOCARG(endloc), s); }
 
   // expression-statement
   -> s:ExpressionStatement
@@ -902,58 +903,58 @@ nonterm(Statement*) Statement {
   // selection-statement
   // (prefer to shift "else" over reducing by this rule)
   -> "if" "(" e:Condition ")" s:Statement     precedence(TOK_PREFER_SHIFT)
-       { return new S_if(loc, e, s, new S_skip(loc)); }
+       { return new S_if(loc ENDLOCARG(endloc), e, s, new S_skip(loc ENDLOCARG(endloc))); }
 
   // if-then-else preferred over if-then when ambiguous
   -> "if" "(" e:Condition ")" s1:Statement "else" s2:Statement
-       { return new S_if(loc, e, s1, s2); }
+       { return new S_if(loc ENDLOCARG(endloc), e, s1, s2); }
 
   -> "switch" "(" e:Condition ")" s:Statement
-       { return new S_switch(loc, e, s); }
+       { return new S_switch(loc ENDLOCARG(endloc), e, s); }
 
   -> "while" "(" e:Condition ")" s:Statement
-       { return new S_while(loc, e, s); }
+       { return new S_while(loc ENDLOCARG(endloc), e, s); }
 
   -> "do" s:Statement "while" "(" e:Expression ")" ";"
-       { return new S_doWhile(loc, s, new FullExpression(e)); }
+       { return new S_doWhile(loc ENDLOCARG(endloc), s, new FullExpression(e)); }
 
   // I might like to rework this so both semicolons appear here instead
   // of buried in ForInitStatement; it's this way now because that is how
   // the standard does it.
   -> "for" "(" s1:ForInitStatement c:ConditionOpt ";" e:ExpressionOpt ")" s2:Statement
-       { return new S_for(loc, s1, c, new FullExpression(e), s2); }
+       { return new S_for(loc ENDLOCARG(endloc), s1, c, new FullExpression(e), s2); }
 
-  -> "break" ";"                        { return new S_break(loc); }
+  -> "break" ";"                        { return new S_break(loc ENDLOCARG(endloc)); }
 
-  -> "continue" ";"                     { return new S_continue(loc); }
+  -> "continue" ";"                     { return new S_continue(loc ENDLOCARG(endloc)); }
 
-  -> "return" e:Expression ";"          { return new S_return(loc, new FullExpression(e)); }
+  -> "return" e:Expression ";"          { return new S_return(loc ENDLOCARG(endloc), new FullExpression(e)); }
 
-  -> "return" ";"                       { return new S_return(loc, NULL); }
+  -> "return" ";"                       { return new S_return(loc ENDLOCARG(endloc), NULL); }
 
-  -> "goto" n:Identifier ";"            { return new S_goto(loc, n); }
+  -> "goto" n:Identifier ";"            { return new S_goto(loc ENDLOCARG(endloc), n); }
 
   // declaration-statement
-  -> d:BlockDeclaration                 { return new S_decl(loc, d); }
+  -> d:BlockDeclaration                 { return new S_decl(loc ENDLOCARG(endloc), d); }
 
   // try-block
   -> s:TryBlock                         { return s; }
 
   // assembly statement
-  -> a:AsmDefinition                    { return new S_asm(loc, a); }
+  -> a:AsmDefinition                    { return new S_asm(loc ENDLOCARG(endloc), a); }
 
   // namespace declaration
-  -> n:NamespaceDecl                    { return new S_namespaceDecl(loc, n); }
+  -> n:NamespaceDecl                    { return new S_namespaceDecl(loc ENDLOCARG(endloc), n); }
 }
 
 nonterm(Statement*) ExpressionStatement {
-  -> ";"                  { return new S_skip(loc); }
-  -> e:Expression ";"     { return new S_expr(loc, new FullExpression(e)); }
+  -> ";"                  { return new S_skip(loc ENDLOCARG(endloc)); }
+  -> e:Expression ";"     { return new S_expr(loc ENDLOCARG(endloc), new FullExpression(e)); }
 }
 
 nonterm(S_compound*) CompoundStatement {
   -> seq:CompoundStmtHelper "}"
-       { return seq; }
+       { EXPR_LOC1(seq->endloc = endloc); return seq; }
 }
 
 nonterm(S_compound*) CompoundStmtHelper {
@@ -962,9 +963,9 @@ nonterm(S_compound*) CompoundStmtHelper {
   // (and in fact since 'empty' has no location, I wouldn't even have
   // been able to get that..)
   -> "{" empty
-       { return new S_compound(loc, NULL); }
+       { return new S_compound(loc ENDLOCARG(endloc), NULL); }
   -> c:CompoundStmtHelper s:Statement
-       { c->stmts.append(s); return c; }
+       { c->stmts.append(s); ENDLOC1(c->endloc = endloc;) return c; }
 }
 
 
@@ -986,7 +987,7 @@ nonterm(Condition*) Condition {
 
 nonterm(Condition*) ConditionOpt {
   // an empty condition (e.g. in a for loop) is interpreted as true
-  -> empty             { return new CN_expr(new FullExpression(new E_boolLit(true))); }
+  -> empty             { return new CN_expr(new FullExpression(new E_boolLit(EXPR_LOC(loc ENDLOCARG(endloc)) true))); }
   -> c:Condition       { return c; }
 }
 
@@ -997,7 +998,7 @@ nonterm(Statement*) ForInitStatement {
   fun merge(L,R) { L->addAmbiguity(R); return L; }
 
   -> s:ExpressionStatement     { return s; }
-  -> s:SimpleDeclaration       { return new S_decl(loc, s); }
+  -> s:SimpleDeclaration       { return new S_decl(loc ENDLOCARG(endloc), s); }
 }
 
 
@@ -1945,7 +1946,7 @@ nonterm(MemberList*) MemberDeclarationSeqOpt {
   // propagating them in the parser, to avoid the complexities of
   // maintaining the state in the parser context
   -> list:MemberDeclarationSeqOpt k:AccessSpecifier ":"
-       { list->list.append(new MR_access(loc, k)); return list; }
+       { list->list.append(new MR_access(loc ENDLOCARG(endloc), k)); return list; }
 }
 
 nonterm(AccessKeyword) AccessSpecifier {
@@ -1978,7 +1979,7 @@ nonterm(Member*) MemberDeclaration {
          if (!keepDeclaration(spec)) {
            return NULL;
          }
-         return new MR_decl(loc, spec);
+         return new MR_decl(loc ENDLOCARG(endloc), spec);
        }
 
   // inner class or enum with no instance defined
@@ -1991,7 +1992,7 @@ nonterm(Member*) MemberDeclaration {
              spec->spec->isTS_classSpec() ||
              spec->spec->isTS_enumSpec()) {
            // ok
-           return new MR_decl(loc, spec);
+           return new MR_decl(loc ENDLOCARG(endloc), spec);
          }
          else {
            TRACE("cancel", loc << ": bare DeclSpecifier not starting with type keyword");
@@ -2005,15 +2006,15 @@ nonterm(Member*) MemberDeclaration {
   //
   // equivalent to "using n ;" so parse it as such
   -> n:PQualifiedId ";"
-       { return new MR_usingDecl(loc, new ND_usingDecl(n)); }
+       { return new MR_usingDecl(loc ENDLOCARG(endloc), new ND_usingDecl(n)); }
 
   // the general form
   -> "using" /*typename?*/ n:IdExpression ";"
-       { return new MR_usingDecl(loc, new ND_usingDecl(n)); }
+       { return new MR_usingDecl(loc ENDLOCARG(endloc), new ND_usingDecl(n)); }
 
   // inline function definition; includes c/dtor definitions
   -> f:FunctionDefinition
-       { return new MR_func(loc, f); }
+       { return new MR_func(loc ENDLOCARG(endloc), f); }
 
   // declaration (with no definition) of a c/dtor or conversion
   // operator function
@@ -2024,7 +2025,7 @@ nonterm(Member*) MemberDeclaration {
            TRACE("cancel", loc << ": constructor decl in implicit-int language");
            return NULL;
          }
-         return new MR_decl(loc, d);
+         return new MR_decl(loc  ENDLOCARG(endloc), d);
        }
 
   // note above that "explicit" and "virtual" can't be mixed because the former
@@ -2033,7 +2034,7 @@ nonterm(Member*) MemberDeclaration {
 
   // member template
   -> d:TemplateDeclaration
-       { return new MR_template(loc, d); }
+       { return new MR_template(loc ENDLOCARG(endloc), d); }
 }
 
 // declaration (with no definition) of a c/dtor or conversion
@@ -2215,7 +2216,7 @@ nonterm(FakeList<MemberInit>*) MemInitializerList {
 
 nonterm(MemberInit*) MemInitializer {
   -> n:MemInitializerId "(" e:ExpressionListOpt ")"
-       { return new MemberInit(n, e); }
+       { return new MemberInit(EXPR_LOC(loc ENDLOCARG(endloc)) n, e); }
 }
 
 // the std splits cases on whether we're calling a base class ctor
@@ -2526,7 +2527,7 @@ nonterm(TopForm*) ExplicitInstantiation {
 
 // ------ A.13 Exception handling ------
 nonterm(S_try*) TryBlock {
-  -> "try" s:CompoundStatement h:HandlerSeq  { return new S_try(loc, s, h); }
+  -> "try" s:CompoundStatement h:HandlerSeq  { return new S_try(loc ENDLOCARG(endloc), s, h); }
 }
 
 nonterm(FakeList<Handler>*) HandlerSeq {
@@ -2575,8 +2576,8 @@ nonterm(IDeclarator*) UnqualifiedDeclarator {
 
 
 nonterm(E_throw*) ThrowExpression {
-  -> "throw"                         { return new E_throw(NULL); }
-  -> "throw" e:AssignmentExpression  { return new E_throw(e); }
+  -> "throw"                         { return new E_throw(EXPR_LOC(loc ENDLOCARG(endloc)) NULL); }
+  -> "throw" e:AssignmentExpression  { return new E_throw(EXPR_LOC(loc ENDLOCARG(endloc)) e); }
 }
 
 

@@ -927,7 +927,12 @@ public:      // template funcs
     (SourceLoc loc,
      Variable *primary,
      ObjList<STemplateArgument> const &sargs);
-  void instantiateClassTemplateDefn(Variable *inst); // inst defn
+
+  // inst defn; If suppressErrors is true, no errors will be
+  // reported. The method will just silently fail in case of
+  // errors. This is for cases when instantiation is optional (see
+  // ensureClassBodyInstantiated).
+  void instantiateClassTemplateDefn(Variable *inst, bool suppressErrors = false);
 
   // instantiate the given class' body, *if* it is an instantiation
   // and instantiation is possible but hasn't already been done; note

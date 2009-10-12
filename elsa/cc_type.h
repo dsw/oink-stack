@@ -237,7 +237,14 @@ public:     // funcs
 
   // size this type's representation occupies in memory; this
   // might throw XReprSize, see below
-  virtual int reprSize() const = 0;
+  int reprSize() const { int size, align; sizeInfo(size, align); return size; }
+
+  // dmandelin@mozilla.com
+  // size and alignment of this type.
+  // This has replaced reprSize as the primary size computation
+  // function because it is necessary to compute alignments as
+  // well in order to compute sizes correctly.
+  virtual void sizeInfo(int &size, int &align) const = 0;
 
   // invoke 'vis.visitAtomicType(this)', and then traverse subtrees
   virtual void traverse(TypeVisitor &vis) = 0;
@@ -271,7 +278,7 @@ public:     // funcs
   virtual Tag getTag() const { return T_SIMPLE; }
   virtual string toCString() const;
   virtual string toMLString() const;
-  virtual int reprSize() const;
+  virtual void sizeInfo(int &size, int &align) const;
   virtual void traverse(TypeVisitor &vis);
 };
 
@@ -472,8 +479,12 @@ public:      // funcs
   virtual Tag getTag() const { return T_COMPOUND; }
   virtual string toCString() const;
   virtual string toMLString() const;
-  virtual int reprSize() const;
+  virtual void sizeInfo(int &size, int &align) const;
   virtual void traverse(TypeVisitor &vis);
+
+  // Return the sizeInfo not counting any vptr -- we need this
+  // because when we have base classes we don't include vptr twice
+  void memSizeInfo(int &size, int &align) const;
 
   string toStringWithFields() const;
   string keywordAndName() const { return toCString(); }
@@ -593,7 +604,7 @@ public:     // funcs
   virtual Tag getTag() const { return T_ENUM; }
   virtual string toCString() const;
   virtual string toMLString() const;
-  virtual int reprSize() const;
+  virtual void sizeInfo(int &size, int &align) const;
   virtual void traverse(TypeVisitor &vis);
 
   Value *addValue(StringRef name, int value, /*nullable*/ Variable *d);
@@ -739,7 +750,9 @@ public:     // funcs
 
   // size of representation at run-time; for now uses nominal 32-bit
   // values
-  virtual int reprSize() const = 0;
+  int reprSize() const { int size, align; sizeInfo(size, align); return size; }
+
+  virtual void sizeInfo(int &size, int &align) const = 0;
 
   // filter on all constructed types that appear in the type,
   // *including* parameter types; return true if any constructor
@@ -926,7 +939,7 @@ public:
   unsigned innerHashValue() const;
   virtual string toMLString() const;
   virtual string leftString(bool innerParen=true) const;
-  virtual int reprSize() const;
+  virtual void sizeInfo(int &size, int &align) const;
   virtual bool anyCtorSatisfies(TypePred &pred) const;
   virtual CVFlags getCVFlags() const;
   virtual void traverse(TypeVisitor &vis);
@@ -954,7 +967,7 @@ public:
   virtual string toMLString() const;
   virtual string leftString(bool innerParen=true) const;
   virtual string rightString(bool innerParen=true) const;
-  virtual int reprSize() const;
+  virtual void sizeInfo(int &size, int &align) const;
   virtual bool anyCtorSatisfies(TypePred &pred) const;
   virtual CVFlags getCVFlags() const;
   virtual void traverse(TypeVisitor &vis);
@@ -982,7 +995,7 @@ public:
   virtual string toMLString() const;
   virtual string leftString(bool innerParen=true) const;
   virtual string rightString(bool innerParen=true) const;
-  virtual int reprSize() const;
+  virtual void sizeInfo(int &size, int &align) const;
   virtual bool anyCtorSatisfies(TypePred &pred) const;
   virtual CVFlags getCVFlags() const;
   virtual void traverse(TypeVisitor &vis);
@@ -1105,7 +1118,7 @@ public:
   virtual string leftString(bool innerParen=true) const;
   virtual string rightString(bool innerParen=true) const;
   virtual bool usesPostfixTypeConstructorSyntax() const;
-  virtual int reprSize() const;
+  virtual void sizeInfo(int &size, int &align) const;
   virtual bool anyCtorSatisfies(TypePred &pred) const;
   virtual void traverse(TypeVisitor &vis);
 };
@@ -1185,7 +1198,7 @@ public:
   virtual Tag getTag() const { return T_ARRAY; }
   unsigned innerHashValue() const;
   virtual string toMLString() const;
-  virtual int reprSize() const;
+  virtual void sizeInfo(int &size, int &align) const;
 };
 
 
@@ -1222,7 +1235,7 @@ public:
   virtual string toMLString() const;
   virtual string leftString(bool innerParen=true) const;
   virtual string rightString(bool innerParen=true) const;
-  virtual int reprSize() const;
+  virtual void sizeInfo(int &size, int &align) const;
   virtual bool anyCtorSatisfies(TypePred &pred) const;
   virtual CVFlags getCVFlags() const;
   virtual void traverse(TypeVisitor &vis);

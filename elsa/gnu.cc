@@ -626,6 +626,7 @@ void Env::addGNUBuiltins()
     "ctzll",
     "popcountll",
     "parityll",
+    #include "apple.h"
   };
 
   for (int i=0; i < TABLESIZE(arr); i++) {

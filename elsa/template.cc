@@ -14,6 +14,7 @@
 #include "cc_ast_aux.h"    // LoweredASTVisitor
 #include "mtype.h"         // MType
 #include "pair.h"          // pair
+#include "exprloc.h"
 
 
 void copyTemplateArgs(ObjList<STemplateArgument> &dest,
@@ -83,14 +84,14 @@ string TypeVariable::toCString() const
                  << name;
 }
 
-int TypeVariable::reprSize() const
+void TypeVariable::sizeInfo(int &size, int &align) const
 {
   //xfailure("you can't ask a type variable for its size");
 
   // this happens when we're typechecking a template class, without
   // instantiating it, and we want to verify that some size expression
   // is constant.. so make up a number
-  return 4;
+  size = align = 4;
 }
 
 
@@ -131,12 +132,12 @@ string PseudoInstantiation::toCString() const
   return stringc << name << sargsToString(args);
 }
 
-int PseudoInstantiation::reprSize() const
+void PseudoInstantiation::sizeInfo(int &size, int &align) const
 {
   // it shouldn't matter what we say here, since the query will only
   // be made in the context of checking (but not instantiating) a
   // template definition body
-  return 4;
+  size = align = 4;
 }
 
 
@@ -197,9 +198,9 @@ string DependentQType::toMLString() const
   return stringc << "dependentqtype-" << toCString();
 }
 
-int DependentQType::reprSize() const
+void DependentQType::sizeInfo(int &size, int &align) const
 {
-  return 4;    // should not matter
+  size = align = 4;
 }
 
 
@@ -277,9 +278,16 @@ string DependentSizedArrayType::toMLString() const
 }
 
 
-int DependentSizedArrayType::reprSize() const
+void DependentSizedArrayType::sizeInfo(int &size, int &align) const
 {
-  throw XReprSize();
+  // dmandelin@mozilla.com  bug 416182
+  // This represents the result of sizeof inside the template definition.
+  // It's not normally an error to do this (although it could be if it can
+  // be proven that the result is negative somehow). The result doesn't
+  // mean anything, but I don't think it normally gets used for anything 
+  // either.
+  size = 1;
+  align = 1;
 }
 
 
@@ -933,6 +941,10 @@ bool STemplateArgument::containsVariables(MType *map) const
   }
   else if (kind == STA_DEPEXPR) {
     return exprContainsVariables(value.e, map);
+    // in 'map'.  I think a reasonable solution would be to
+    // rehabilitate the TypeVisitor, and design a nice way for
+    // a TypeVisitor and an ASTVisitor to talk to each other.
+    return true;
   }
 
   return false;
@@ -2936,7 +2948,7 @@ void tcheckDeclaratorPQName(Env &env, ScopeSeq &qualifierScopes,
                             PQName *name, LookupFlags lflags);
 
 
-void Env::instantiateClassTemplateDefn(Variable *inst)
+void Env::instantiateClassTemplateDefn(Variable *inst, bool suppressErrors)
 {
   TemplateInfo *instTI = inst->templateInfo();
   CompoundType *instCT = inst->type->asCompoundType();
@@ -3075,7 +3087,7 @@ void Env::instantiateClassTemplateDefn(Variable *inst)
   // method bodies
   {
     Restorer<bool> r(checkFunctionBodies, false);
-    instCT->syntax->tcheckIntoCompound(*this, DF_NONE, instCT);
+    instCT->syntax->tcheckIntoCompound(*this, DF_NONE, instCT, suppressErrors);
   }
 
   // Now, we've just tchecked the clone in an environment that
@@ -3119,6 +3131,10 @@ void Env::ensureClassBodyInstantiatedIfPossible(CompoundType *ct)
   if (!ct->isComplete() && ct->isInstantiation()) {
     Variable *inst = ct->typedefVar;
 
+    // dmandelin@mozilla.com -- The following could probably be removed
+    // using my new error suppression mechanism, but I'm not going to 
+    // mess with it unless needed.
+
     // 2005-04-17: in/k0053.cc: we would like to instantiate this
     // template, but if there has not yet been a definition, then skip
     // it (without error)
@@ -3132,7 +3148,9 @@ void Env::ensureClassBodyInstantiatedIfPossible(CompoundType *ct)
       return;
     }
 
-    instantiateClassTemplateDefn(inst);
+    // The true for the suppressErrors argument allows this to silently
+    // fail if not possible, which is exactly what we need here.
+    instantiateClassTemplateDefn(inst, true);
   }
 }
 
@@ -4858,7 +4876,7 @@ Type *Env::pseudoSelfInstantiation(CompoundType *ct, CVFlags cv)
           // perhaps there should be an STemplateArgument variant that
           // is like STA_DEPEXPR but can only hold a single Variable?
           PQ_name *name = new PQ_name(param->loc, param->name);
-          E_variable *evar = new E_variable(name);
+          E_variable *evar = new E_variable(EXPR_LOC(param->loc ENDLOCARG(SL_UNKNOWN)) name);
           evar->var = param;
           sta->setDepExpr(evar);
           break;
@@ -5508,7 +5526,7 @@ string TemplateTypeVariable::toMLString() const
 }
 
 
-int TemplateTypeVariable::reprSize() const
+void TemplateTypeVariable::sizeInfo(int &size, int &align) const
 {
   throw XReprSize();
 }

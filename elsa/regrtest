@@ -270,6 +270,16 @@ failparse_special() {
 # ---- BEGIN: lots of tests ----
 # (this block of tests is parsed by another program, so should stick to
 # the uniform syntax below)
+testparse moz0001.cc
+testparse moz0002.cc
+testparse moz0003.cc
+testparse moz0004.cc
+testparse moz0005.cc
+testparse moz0006.cc
+testparse moz0007.cc
+testparse moz0008.cc
+testparse moz0009.cc
+testparse moz0010.cc
 testparse t0001.cc
 testparse t0002.cc
 testparse t0003.cc
@@ -863,7 +873,7 @@ testparse t0576.cc
 failparse t0577.cc "flawed abstract enumerator value processing"
 # t0578.cc is arguably valid code, but nobody can handle it
 failparse t0579.cc "tricky rules about enumerator types"
-failparse t0580.cc "use of enumerator in template-id for explicit specializiation"
+testparse t0580.cc #"use of enumerator in template-id for explicit specializiation"
 testparse t0581.cc #"simpler dependent array bound problem"
 testparse t0582.cc #"template array bound problem leads to crash"
 testparse t0583.cc
@@ -915,6 +925,7 @@ testparse t0628.cc
 testparse t0629.cc
 testparse t0630.cc
 testparse t0631.cc
+testparse t0632.cc
 
 # another set of tests, generally isolated by Daniel
 testparse d0001.cc
@@ -1165,7 +1176,7 @@ failparse k0092.cc "template-parameter-instantiated template class without 'type
 failparse k0093.cc "tertiary operator implicitly casting one pointer operand to bool"
 # This is a warning now instead of an error:
 #testparse k0094.cc #declared non-static, cannot re-declare as static
-failparse k0095.cc "templatized enum parameter"
+testparse k0095.cc #"templatized enum parameter"
 testparse k0096.cc "statement expression returning struct"
 testparse k0097.cc "function pointer template"
 failparse k0098.cc "ambiguous operator cast"
@@ -1342,7 +1353,7 @@ if $use_gnu; then
   failparse gnu/k0009.cc "namespace attribute strong"
   failparse gnu/k0010.c "nested K&R function"
   testparse gnu/d0130.cc #"attributes on ctors and dtors"
-
+  testparse gnu/offsetof.cc
 else # tests that only pass when not in gnu mode
   testparse t0228b.cc
 

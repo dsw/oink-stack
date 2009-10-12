@@ -40,6 +40,8 @@
 #include "ast_build.h"         // makeExprList1, etc.
 #include "trace.h"             // TRACE
 #include "cc_print.h"          // PrintEnv
+#include "exprloc.h"
+#include "overload.h"
 
 // cc_type.h
 Type *makeLvalType(TypeFactory &tfac, Type *underlying);
@@ -223,7 +225,7 @@ Function *ElabVisitor::makeFunction(SourceLoc loc, Variable *var,
 // given a Variable, make an E_variable referring to it
 E_variable *ElabVisitor::makeE_variable(SourceLoc loc, Variable *var)
 {
-  E_variable *evar = new E_variable(new PQ_variable(loc, var));
+  E_variable *evar = new E_variable(EXPR_LOC(loc ENDLOCARG(SL_UNKNOWN)) new PQ_variable(loc, var));
   evar->type = makeLvalType(tfac, var->type);
   evar->var = var;
   return evar;
@@ -232,7 +234,7 @@ E_variable *ElabVisitor::makeE_variable(SourceLoc loc, Variable *var)
 E_fieldAcc *ElabVisitor::makeE_fieldAcc
   (SourceLoc loc, Expression *obj, Variable *field)
 {
-  E_fieldAcc *efieldacc = new E_fieldAcc(obj, new PQ_variable(loc, field));
+  E_fieldAcc *efieldacc = new E_fieldAcc(EXPR_LOC(loc ENDLOCARG(SL_UNKNOWN)) obj, new PQ_variable(loc, field));
   efieldacc->type = makeLvalType(tfac, field->type);
   efieldacc->field = field;
   return efieldacc;
@@ -246,7 +248,7 @@ E_funCall *ElabVisitor::makeMemberCall
   E_fieldAcc *efieldacc = makeE_fieldAcc(loc, obj, func);
 
   // "a.f(<args>)"
-  E_funCall *funcall = new E_funCall(efieldacc, args);
+  E_funCall *funcall = new E_funCall(EXPR_LOC(loc ENDLOCARG(SL_UNKNOWN)) efieldacc, args);
   funcall->type = func->type->asFunctionType()->retType;
 
   return funcall;
@@ -264,12 +266,12 @@ Expression *ElabVisitor::makeThisRef(SourceLoc loc)
   Variable *receiver = functionStack.top()->receiver;
 
   // "this"
-  E_this *ths = new E_this;
+  E_this *ths = new E_this(EXPR_LOC1(loc ENDLOCARG(SL_UNKNOWN)));
   ths->receiver = receiver;
   ths->type = tfac.makePointerType(CV_CONST, receiver->type->asRval());
 
   // "*this"
-  E_deref *deref = new E_deref(ths);
+  E_deref *deref = new E_deref(EXPR_LOC(loc ENDLOCARG(SL_UNKNOWN)) ths);
   deref->type = receiver->type;
 
   return deref;
@@ -279,7 +281,7 @@ Expression *ElabVisitor::makeThisRef(SourceLoc loc)
 // wrap up an expression in an S_expr
 S_expr *ElabVisitor::makeS_expr(SourceLoc loc, Expression *e)
 {
-  return new S_expr(loc, new FullExpression(e));
+  return new S_expr(loc ENDLOCARG(e->endloc), new FullExpression(e));
 }
 
 
@@ -289,7 +291,7 @@ S_compound *ElabVisitor::makeS_compound(SourceLoc loc)
   // note that the ASTList object created here is *deleted* by
   // the act of passing it to the S_compound; the S_compound has
   // its own ASTList<Statement> inside it
-  return new S_compound(loc, new ASTList<Statement>);
+  return new S_compound(loc ENDLOCARG(SL_UNKNOWN), new ASTList<Statement>);
 }
 
 
@@ -306,7 +308,7 @@ E_constructor *ElabVisitor::makeCtorExpr(
 {
   xassert(target->type->isReference());
 
-  E_constructor *ector0 = new E_constructor(new TS_type(loc, type), args);
+  E_constructor *ector0 = new E_constructor(EXPR_LOC(loc ENDLOCARG(SL_UNKNOWN)) new TS_type(loc, type), args);
   ector0->type = type;
   ector0->ctorVar = ctor;
   ector0->artificial = true;
@@ -651,7 +653,7 @@ Expression *ElabVisitor::elaborateCallByValue
   // sm: I choose to call 'makeE_variable' twice instead of using clone()
   // since I trust the former more
   Expression *byValueArg = makeE_variable(loc, tempVar);
-  Expression *ret = new E_binary(ector, BIN_COMMA, byValueArg);
+  Expression *ret = new E_binary(EXPR_LOC(loc ENDLOCARG(SL_UNKNOWN)) ector, BIN_COMMA, byValueArg);
   ret->type = byValueArg->type;
   xassert(byValueArg->getType()->isReference()); // the whole point
   return ret;
@@ -867,7 +869,7 @@ void ElabVisitor::completeNoArgMemberInits(Function *ctor, CompoundType *ct)
       MemberInit *mi = findMemberInitSuperclass(oldInits, base->ct);
       if (!mi) {
         PQName *name = new PQ_variable(loc, base->ct->typedefVar);
-        mi = new MemberInit(name, emptyArgs());
+        mi = new MemberInit(EXPR_LOC(loc ENDLOCARG(SL_UNKNOWN)) name, emptyArgs());
         mi->base = base->ct;
         mi->ctorVar = getDefaultCtor(base->ct);
       }
@@ -898,7 +900,7 @@ void ElabVisitor::completeNoArgMemberInits(Function *ctor, CompoundType *ct)
     // class, the entity is default-initialized (8.5). ....
     // -- Otherwise, the entity is not initialized. ....
     if (!mi && var->type->isCompoundType()) {
-      mi = new MemberInit(new PQ_name(loc, var->name), emptyArgs());
+      mi = new MemberInit(EXPR_LOC(loc ENDLOCARG(SL_UNKNOWN)) new PQ_name(loc, var->name), emptyArgs());
       mi->member = var;
       mi->ctorVar = getDefaultCtor(var->type->asCompoundType());
     }
@@ -942,7 +944,7 @@ MR_func *ElabVisitor::makeNoArgCtorBody(CompoundType *ct, Variable *ctor)
   Function *f = makeFunction(loc, ctor, inits, body);
   f->receiver = env.makeCtorReceiver(loc, ct);
 
-  return new MR_func(loc, f);
+  return new MR_func(loc ENDLOCARG(SL_UNKNOWN), f);
 }
 
 
@@ -976,7 +978,7 @@ MemberInit *ElabVisitor::makeCopyCtorMemberInit(
   //         PQ_name:
 
   //       MemberInit:
-  MemberInit *mi = new MemberInit(new PQ_variable(loc, target), args);
+  MemberInit *mi = new MemberInit(EXPR_LOC(loc ENDLOCARG(SL_UNKNOWN)) new PQ_variable(loc, target), args);
   push(mi->getAnnot());
   if (isMember) {
     mi->member = target;
@@ -1067,7 +1069,7 @@ MR_func *ElabVisitor::makeCopyCtorBody(CompoundType *ct, Variable *ctor)
   Function *f = makeFunction(loc, ctor, inits, body);
   f->receiver = env.makeCtorReceiver(loc, ct);
 
-  return new MR_func(loc, f);
+  return new MR_func(loc ENDLOCARG(SL_UNKNOWN), f);
 }
 
 
@@ -1077,7 +1079,7 @@ MR_func *ElabVisitor::makeCopyCtorBody(CompoundType *ct, Variable *ctor)
 S_return *ElabVisitor::make_S_return_this(SourceLoc loc)
 {
   // "return *this;"
-  return new S_return(loc, new FullExpression(makeThisRef(loc)));
+  return new S_return(loc ENDLOCARG(SL_UNKNOWN), new FullExpression(makeThisRef(loc)));
 }
 
 // "this->y = __other.y;"
@@ -1105,7 +1107,7 @@ S_expr *ElabVisitor::make_S_expr_memberCopyAssign
     // use the E_assign built-in operator
 
     // "(*this).y = other.y"
-    action = new E_assign(makeE_fieldAcc(loc, makeThisRef(loc), member),
+    action = new E_assign(EXPR_LOC(loc ENDLOCARG(SL_UNKNOWN)) makeE_fieldAcc(loc, makeThisRef(loc), member),
                           BIN_ASSIGN,
                           otherDotY);
     action->type = otherDotY->type;
@@ -1211,7 +1213,7 @@ MR_func *ElabVisitor::makeCopyAssignBody
   }
 
   functionStack.pop();
-  return new MR_func(loc, f);
+  return new MR_func(loc ENDLOCARG(SL_UNKNOWN), f);
 }
 
 
@@ -1280,7 +1282,7 @@ void ElabVisitor::completeDtorCalls(
   //
   // sm: the reason is that creating an S_compound *deletes* the
   // ASTList<Statement> that is passed to it
-  func->dtorStatement = new S_compound(loc, dtorStatements);
+  func->dtorStatement = new S_compound(loc ENDLOCARG(SL_UNKNOWN), dtorStatements);
 }
 
 // for EA_IMPLICIT_MEMBER_DEFN
@@ -1293,7 +1295,7 @@ MR_func *ElabVisitor::makeDtorBody(CompoundType *ct, Variable *dtor)
                              FakeList<MemberInit>::emptyList(),   // inits
                              makeS_compound(loc));
 
-  return new MR_func(loc, f);
+  return new MR_func(loc ENDLOCARG(SL_UNKNOWN), f);
 }
 
 
@@ -1546,9 +1548,20 @@ bool E_delete::elaborate(ElabVisitor &env)
   // the type of the elements to destroy
   Type *t = expr->type->asRval();
 
+  // dmandelin -- 3.5.3.1 and Oink ticket #32
+  // It looked insanely hard to insert AST nodes for the implicit
+  // conversion operator, so instead we recheck for that condition
+  // here. We'll punt on the result for now because we don't care
+  // too much and it's still an improvement.
+  PointerType *to;
+  if (t->isPointerType()) {
+    to = t->asPointerType();
+  } else {
+    return true;
+  }
   // E_delete::itcheck_x() should have noticed that its not a pointer
   // and aborted before calling us if it wasn't.
-  PointerType *to = t->asPointerType();
+  //  PointerType *to = t->asPointerType();
   if (to->atType->isCompoundType()) {
     if (!to->atType->asCompoundType()->isComplete()) {
       // 10/03/04: cppstd 5.3.5 para 5 explains that, while it *is*
@@ -1563,7 +1576,7 @@ bool E_delete::elaborate(ElabVisitor &env)
     Expression *origExpr = expr;
     expr = env.cloneExpr(expr);
 
-    E_deref *deref = new E_deref(origExpr);
+    E_deref *deref = new E_deref(EXPR_LOC(loc ENDLOCARG(SL_UNKNOWN)) origExpr);
     deref->type = env.tfac.makeReferenceType(to->atType);
 
     dtorStatement = env.makeDtorStatement

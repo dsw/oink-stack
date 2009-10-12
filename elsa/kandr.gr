@@ -73,14 +73,14 @@ nonterm(S_compound*) KandRSimpleDeclarationSeq {
   // allowed; Scott says to do it this way; I prevents an ambiguity
   // with the usual C++ no-arg function declaration
 //    -> empty
-//         { return new S_compound(loc, NULL); }
+//         { return new S_compound(loc ENDLOCARG(endloc), NULL); }
   -> s:KandRSimpleDeclaration
-    { S_compound *c = new S_compound(loc, NULL);
-      c->stmts.append(new S_decl(loc, s));
+    { S_compound *c = new S_compound(loc ENDLOCARG(endloc), NULL);
+      c->stmts.append(new S_decl(loc ENDLOCARG(endloc), s));
       return c;
     }
   -> c:KandRSimpleDeclarationSeq s:KandRSimpleDeclaration
-       { c->stmts.append(new S_decl(loc, s)); return c; }
+       { c->stmts.append(new S_decl(loc ENDLOCARG(endloc), s)); return c; }
 }
 
 
@@ -373,7 +373,7 @@ nonterm(Statement*) Statement {
           << ": implicit-int statement-level Declaration in non-implicit-int language\n";
         return NULL;
       }
-      return new S_decl (loc,
+      return new S_decl (loc ENDLOCARG(endloc),
         new Declaration(uberDeclFlags(m1), new TS_simple(loc, ST_IMPLINT), list));
     }
 }
@@ -412,7 +412,7 @@ nonterm(ASTTypeId*) ParameterDeclaration {
 // ------ implicit int for cast expressions ------
 nonterm(Expression*) CastExpression {
   -> "(" t:ImplicitIntTypeId ")" e:CastExpression
-       { return new E_cast(t, e); }
+    { return new E_cast(loc ENDLOCARG(endloc), t, e); }
 }
 
 nonterm(TypeSpecifier*) ImplicitIntTypeSpecifier {

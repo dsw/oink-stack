@@ -137,6 +137,8 @@ class Function (
 }
 
 class MemberInit (
+  SourceLoc loc, 
+  SourceLoc endloc,
   PQName name,                    // name of member or base class
   FakeList<ArgExpression> *args   // arguments to its constructor
 ) {
@@ -335,7 +337,7 @@ class Enumerator (
 class MemberList (ASTList<Member> list);
 
 // member of a class
-class Member (SourceLoc loc) {
+class Member (SourceLoc loc, SourceLoc endloc) {
   -> MR_decl(Declaration d);            // data members or functions w/o bodies
   -> MR_func(Function f);               // function with body
   -> MR_access(AccessKeyword k);        // section header
@@ -465,7 +467,7 @@ class OperatorName {
 
 
 // ------------------- statements -----------------
-class Statement (SourceLoc loc) {
+class Statement (SourceLoc loc, SourceLoc endloc) {
   // represent ambiguous statements by forming a linked list of alternatives
   public Statement * ambiguity = NULL;
   public void addAmbiguity(Statement *alt);
@@ -549,7 +551,7 @@ class Handler (
 
 // ----------------- expressions -----------------
 // C expressions
-class Expression {
+class Expression(SourceLoc loc, SourceLoc endloc)  {
   // NOTE: we never make lists of Expressions, only of ArgExpressions
 
   // same as we do for statements

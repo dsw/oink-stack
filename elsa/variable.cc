@@ -909,8 +909,9 @@ Scope *Variable::getDenotedScope() const
     CompoundType *ct = type->asCompoundType();
     return ct;
   }
-
-  xfailure(stringc << "expected `" << name << "' to name a scope");
+  // tglek: It makes sense for getDenotedScope() to return NULL
+  // otherwise callers have to replicat isNamespace/isCompoundType()
+  // guard at callsites.
   return NULL;    // silence warning
 }
 

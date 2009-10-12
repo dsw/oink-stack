@@ -420,7 +420,26 @@ PPCHAR        ([^\\\n]|{BACKSL}{NOTNL})
   whitespace();
 }
 
-  /* C comment */
+ /* CPP expansion start */
+"/*<"[^*]+"*"+"/"     {
+  macroUndoStart(yytext + 3, yyleng - 5);
+}
+
+ /* CPP macro definition */
+"/*!"[^*]+"*"+"/"     {
+  macroParamDefinition(yytext + 3, yyleng - 5);
+}
+
+  /* CPP macro parameter definition */
+"/*m"[^*]+"*"+"/"     {
+  macroDefinition(yytext + 3, yyleng - 5);
+}
+
+ /* CPP expansion end */
+"/*"[^*>]*">*/" {
+  macroUndoStop();
+}
+ /* C comment */
 "/""*"([^*]|"*"*[^*/])*"*"+"/"     {
   // the pattern is a little complicated because the naive one,
   //   "/""*"([^*]|"*"[^/])*"*/"

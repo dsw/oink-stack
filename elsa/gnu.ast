@@ -68,14 +68,14 @@ class Expression {
   // miscellanous builtins that for whatever reason find themselves
   // as AST nodes instead of ordinary function calls (...)
   // http://gcc.gnu.org/onlinedocs/gcc-3.1/gcc/Other-Builtins.html
-  -> E___builtin_constant_p(SourceLoc loc, Expression expr);
+  -> E___builtin_constant_p(Expression expr);
 
   // varargs; dsw: I think that we should make all of these their own
   // AST node, I just don't want to deal with the parsing ambiguity
   // with E_funCall right now
 //   -> E___builtin_va_start(SourceLoc loc, Expression expr, Expression expr2);
 //   -> E___builtin_va_copy(SourceLoc loc, Expression expr, Expression expr2);
-  -> E___builtin_va_arg(SourceLoc loc, Expression expr, ASTTypeId atype);
+  -> E___builtin_va_arg(Expression expr, ASTTypeId atype);
 //   -> E___builtin_va_end(SourceLoc loc, Expression expr);
 
   // alignment inquiry
@@ -151,6 +151,11 @@ new class ASTTypeof {
 
 class TypeSpecifier {
   -> TS_typeof(ASTTypeof atype);
+  -> TS_classSpec 
+  {
+  public AttributeSpecifierList *alist=NULL;
+  }
+
 }
 
 

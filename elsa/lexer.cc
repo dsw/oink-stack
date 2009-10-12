@@ -77,6 +77,7 @@ Lexer::Lexer(StringTable &s, CCLang &L, char const *fname)
 
     prevIsNonsep(false),
     prevHashLineFile(s.add(fname)),
+    currentMacro(NULL),
 
     lang(L)
 {
@@ -91,6 +92,7 @@ Lexer::Lexer(StringTable &s, CCLang &L, SourceLoc initLoc,
 
     prevIsNonsep(false),
     prevHashLineFile(s.add(sourceLocManager->getFile(initLoc))),
+    currentMacro(NULL),
 
     lang(L)
 {
@@ -296,5 +298,125 @@ string Lexer::tokenKindDescV(int kind) const
   return s;
 }
 
+// parse line:col expressions
+static SourceLoc str2loc(char *str, char **endptr, char const * file) {
+  int line = strtol(str, &str, 10);
+  if (!line) return SL_UNKNOWN;
+  str++;
+  int col = strtol(str, &str, 10);
+  if (endptr) *endptr = str;
+
+  return sourceLocManager->encodeLineCol(file, line, col); 
+}
+
+// comment of form /*<NAME lineStart:colStart endEnd:colEnd*/
+void Lexer::macroUndoStart(char *comment, int len) {
+  updLoc();
+  prevIsNonsep = false;
+  if (!sourceLocManager->useHashLines) return;
+  StringRef name(NULL);
+  SourceLoc preStartLoc(SL_UNKNOWN);
+  SourceLoc preEndLoc(SL_UNKNOWN);
+  bool isParam = false;
+
+  if (char *spc = strchr(comment, ' ')) {
+    char *in = spc + 1;
+    name = addString(comment, (int)(spc - comment));
+    preStartLoc = str2loc(in, &in, prevHashLineFile);
+    preEndLoc = str2loc(in + 1, NULL, prevHashLineFile);
+  } else {
+    name = addString(comment, len);
+    isParam = strchr(name, ':') != NULL;
+    if (isParam) {
+      //this is a macro parameter
+      MacroUndoEntry *parent = currentMacro;
+      // get the parent that this macro param is defined in
+      for (; strncmp(parent->name, name, strlen(parent->name));
+           parent = parent->parent) {
+      }
+      for (TailListIterNC<MacroDefinition> it(parent->params);
+           !it.isDone();
+           it.adv()) {
+        MacroDefinition *def = it.data();
+        if (def->name != name) continue;
+        preStartLoc = def->fromLoc;
+        preEndLoc = def->toLoc;
+      }
+    }
+  }
+  MacroUndoEntry *current = new MacroUndoEntry(nextLoc, preStartLoc, preEndLoc, name, 
+					       currentMacro);
+  // add top-level and nested params to the list
+  //if (!currentMacro || isParam) {
+  macroUndoLog.append(current);
+    //}
+  currentMacro = current;
+}
+
+// m is only returned if it has a position
+void Lexer::addMacroDefinition(char *macro, int len, MacroDefinition **m) {
+  SourceLoc fromLoc = SL_UNKNOWN;
+  SourceLoc toLoc = SL_UNKNOWN;
+
+  char *spc = strchr(macro, ' ');
+  if (spc) {
+    char *in = spc + 1;
+    fromLoc = str2loc(in, &in, prevHashLineFile);
+    toLoc = str2loc(in + 1, NULL, prevHashLineFile);
+    if (m) {
+      StringRef name = addString(macro, int(spc - macro));
+      *m = new MacroDefinition(name, fromLoc, toLoc);
+    }
+
+  } else {
+    spc = macro + len;
+  }
+}
+
+// comment of form /*<mNAME lineStart:colStart endEnd:colEnd*/
+void Lexer::macroDefinition(char *macro, int len) {
+  updLoc();
+  prevIsNonsep = false;
+
+  if (!sourceLocManager->useHashLines) return;
+  addMacroDefinition(macro, len);
+}
+  
+// comment of form /*<!NAME lineStart:colStart endEnd:colEnd*/
+void Lexer::macroParamDefinition(char *macro, int len) {
+  updLoc();
+  prevIsNonsep = false;
+
+  if (!sourceLocManager->useHashLines) return;
+  MacroDefinition *param = NULL;
+  addMacroDefinition(macro, len, &param);
+  if (!currentMacro) {
+    pp_err("Invalid macro parameter definition");
+    return;
+  }
+  // only record parameters with positions
+  if (param) currentMacro->params.append(param);
+  // macroParamDef always follows macroUndoStart
+  // thus code doesn't start until the last
+  // macroParamDef is done
+  currentMacro->postStartLoc = nextLoc;
+}
+
+void Lexer::macroUndoStop() {
+  SourceLoc postEndLoc = nextLoc;
+
+  updLoc();
+  prevIsNonsep = false;
+  if (!sourceLocManager->useHashLines) return;
+
+  if (!currentMacro) {
+    std::cerr << toString(postEndLoc) << ": Macro end tag without a start tag" << std::endl;
+    exit(1);
+    return;
+  }
+
+  currentMacro->postEndLoc = postEndLoc;
+  currentMacro = currentMacro->parent;
+}
 
 // EOF
