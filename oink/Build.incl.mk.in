@@ -619,6 +619,7 @@ ELSA_O :=
 ELSA_O += cc_lang.o
 ELSA_O += lexer.o
 ELSA_O += baselexer.o
+ELSA_O += cppundolog.o
 ELSA_O += parssppt.o
 ELSA_O += mtype.o
 ELSA_O += cc_env.o

@@ -196,9 +196,9 @@ nonterm(Declaration*) DeclSpecifier {
 // special features of cqual
 nonterm(Statement*) ExpressionStatement {
   -> "__qual_assert_type" "(" e:Expression "," t:TypeId ")"
-       { return new S_assert_type(loc, new FullExpression(e), t); }
+       { return new S_assert_type(loc ENDLOCARG(endloc), new FullExpression(e), t); }
   -> "__qual_change_type" "(" e:Expression "," t:TypeId ")"
-       { return new S_change_type(loc, new FullExpression(e), t); }
+       { return new S_change_type(loc ENDLOCARG(endloc), new FullExpression(e), t); }
 }
 
 nonterm(Handler*) Handler {
