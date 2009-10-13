@@ -164,7 +164,6 @@ public:
     suppressErrors = suppressErrorsArg || 
       env.inUninstTemplate() && !env.doReportTemplateErrors;
     if (suppressErrors) {
-      //    if (1 || env.inUninstTemplate()) {
       existingErrors.takeMessages(env.errors);
     }
   }
@@ -172,15 +171,12 @@ public:
   ~UninstTemplateErrorFilter()
   {
     if (suppressErrors) {
-      //      if (1 || env.inUninstTemplate()) {
-      //if (1 || !env.doReportTemplateErrors) {
-        // remove all messages that are not 'strong'
-        // (see doc/permissive.txt)
-        env.errors.filter(strongMsgFilter);
-	//}
+      // remove all messages that are not 'strong' (see
+      // doc/permissive.txt)
+      env.errors.filter(strongMsgFilter);
 
       // now put back the saved messages
-      //env.errors.prependMessages(existingErrors);
+      // env.errors.prependMessages(existingErrors);
     }
   }
 };
