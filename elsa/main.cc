@@ -810,7 +810,6 @@ void doit(int argc, char **argv)
        << "\n"
        ;
 
-#if 0
   if (!cc2cOutputFname.empty()) {
     TranslationUnit *lowered = cc_to_c(strTable, *unit);
     if (cc2cOutputFname == string("-")) {
@@ -826,7 +825,6 @@ void doit(int argc, char **argv)
       bppTranslationUnit(out, *lowered);
     }
   }
-#endif
 
   //traceProgress() << "cleaning up...\n";
 
