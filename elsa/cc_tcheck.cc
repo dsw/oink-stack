@@ -5693,7 +5693,7 @@ static bool allNonMethods(SObjList<Variable> &set)
 static bool allMethods(SObjList<Variable> &set)
 {
   SFOREACH_OBJLIST(Variable, set, iter) {
-//      cout << "iter.data()->type->asFunctionType() " << iter.data()->type->asFunctionType()->toCString() << endl;
+//      std::cout << "iter.data()->type->asFunctionType() " << iter.data()->type->asFunctionType()->toCString() << std::endl;
     if (!iter.data()->type->asFunctionType()->isMethod()) return false;
   }
   return true;
