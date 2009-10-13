@@ -73,7 +73,7 @@ public:
     return false;
   }
   
-  void ensureInclude (char const *file) {
+  void ensureInclude(char const *file) {
     if (files.find(file) != files.end())
       return;
     files.insert(file);
