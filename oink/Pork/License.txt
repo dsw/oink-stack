@@ -1,15 +1,6 @@
-// NOTE: This license applies to all files in this directory and all
-// subdirectories of this directory that do not have their own
-// License.txt file; for those subdirectories that do have their own
-// License.txt file, that subdirectory License.txt supersedes and this
-// License.txt does not apply there. In particular this License.txt
-// does not apply to the Pork directory.
-
-// ****
-
 //  License.txt
 
-//  Copyright (c) 2002, 2003, 2004, 2005, 2006 Regents of the University of California
+//  Copyright (c) 2009 Mozilla corporation
 //  All rights reserved.
 
 //  Redistribution and use in source and binary forms, with or without
@@ -23,7 +14,7 @@
 //      documentation and/or other materials provided with the
 //      distribution.
 
-//      Neither the name of the University of California, Berkeley nor the
+//      Neither the name of the Mozilla Corporation, nor the
 //      names of its contributors may be used to endorse or promote
 //      products derived from this software without specific prior written
 //      permission.
