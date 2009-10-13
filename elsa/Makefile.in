@@ -127,13 +127,13 @@ notopt.o: notopt.cc
 
 
 # ------------------------ tlexer -------------------
-LEXER_OBJS := \
-  cc_lang.o \
-  baselexer.o \
-  lexer.o \
-  lexer.yy.o \
-  cc_tokens.o \
-  cppundolog.o
+LEXER_OBJS := 	\
+  cppundolog.o 	\
+  baselexer.o 	\
+  lexer.o 	\
+  cc_tokens.o 	\
+  lexer.yy.o 	\
+  cc_lang.o
 
 -include $(LEXER_OBJS:.o=.d)
 -include tlexer.d
