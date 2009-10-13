@@ -270,17 +270,6 @@ failparse_special() {
 # ---- BEGIN: lots of tests ----
 # (this block of tests is parsed by another program, so should stick to
 # the uniform syntax below)
-testparse moz0001.cc
-testparse moz0002.cc
-testparse moz0003.cc
-testparse moz0004.cc
-testparse moz0005.cc
-testparse moz0006.cc
-testparse moz0007.cc
-testparse moz0008.cc
-testparse moz0009.cc
-testparse moz0010.cc
-testparse moz0011.cc
 testparse t0001.cc
 testparse t0002.cc
 testparse t0003.cc
@@ -1206,6 +1195,19 @@ testparse k0119.cc "64-bit stuff"
 failparse k0120.cc "confusion between function template decl and return type"
 
 ### </quarl-testcases-c++>
+
+# from Mozilla
+testparse moz0001.cc
+testparse moz0002.cc
+testparse moz0003.cc
+testparse moz0004.cc
+testparse moz0005.cc
+testparse moz0006.cc
+testparse moz0007.cc
+testparse moz0008.cc
+testparse moz0009.cc
+testparse moz0010.cc
+testparse moz0011.cc
 
 testparse u0001.cc #"template array size"
 
