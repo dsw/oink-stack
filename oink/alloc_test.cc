@@ -53,7 +53,7 @@ void test_alloc1()
   printf("a101 = %p, a101->a = %d, a101->k = %d\n", a101, a101->a, a101->k);
   printf("a102 = %p, a102->a = %d, a102->k = %d\n", a102, a102->a, a102->k);
 
-  printf("alloc.getAllocCount() = %d\n", alloc.getAllocCount());
+  printf("alloc.getAllocCount() = %zd\n", alloc.getAllocCount());
   xassert(alloc.getAllocCount() == 3);
 
   printf("Iter:\n");
@@ -61,7 +61,7 @@ void test_alloc1()
   for (IterableBlockAllocator::Iter iter(alloc); !iter.isDone(); iter.adv())
   {
     A0 *a = iter.data<A0>();
-    printf("  a = %p, a->a = %d, a->k = %d, a->sz = %d\n", a, a->a, a->k, a->sz());
+    printf("  a = %p, a->a = %d, a->k = %d, a->sz = %zd\n", a, a->a, a->k, a->sz());
     // sz = a->sz();
   }
 }
