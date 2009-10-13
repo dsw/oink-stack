@@ -280,6 +280,7 @@ testparse moz0007.cc
 testparse moz0008.cc
 testparse moz0009.cc
 testparse moz0010.cc
+testparse moz0011.cc
 testparse t0001.cc
 testparse t0002.cc
 testparse t0003.cc
