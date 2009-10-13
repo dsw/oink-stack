@@ -1,26 +1,17 @@
-#ifndef SQUASH_EXPR_VISITOR
-#define SQUASH_EXPR_VISITOR
+#ifndef EXPR_VISITOR_H
+#define EXPR_VISITOR_H
 // See License.txt for copyright and terms of use
 
 // Visits all of the expression subtypes
 
-//#include "oink.gr.gen.h"
 #include "cc_ast_aux.h"         // LoweredASTVisitor
-
-class MyLoweredASTVisitor : public LoweredASTVisitor {
-public:
-  MyLoweredASTVisitor(ASTVisitor *client0) : LoweredASTVisitor(client0) {
-  }
-  void setEnsureSingleVisit(bool value) {
-    ensureOneVisit = value;
-  }
-};
 
 class ExpressionVisitor : public ASTVisitor {
 public:
-  MyLoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
-  ExpressionVisitor():loweredVisitor(this) {}
-
+  LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
+  ExpressionVisitor()
+    : loweredVisitor(this)
+  {}
 
   virtual bool visitStatement(Statement *s);
   virtual bool visitExpression(Expression *e);
@@ -88,7 +79,6 @@ public:
   virtual bool visitE_addrOfLabel(E_addrOfLabel *e) {return true;}
 
 
-
   virtual void postvisitStatement(Statement *s);
   virtual void postvisitExpression(Expression *e);
  
@@ -153,4 +143,4 @@ public:
   virtual void postvisitE_addrOfLabel(E_addrOfLabel *e) {}
 };
 
-#endif // SQUASH_EXPR_VISITOR
+#endif // EXPR_VISITOR_H

@@ -1,9 +1,10 @@
-#ifndef PRCHECK_PARSER
-#define PRCHECK_PARSER
-
+#ifndef PATCHER_H
+#define PATCHER_H
 // See License.txt for copyright and terms of use
 
 // Provides patch printing facilities
+
+#include "cppundolog.h"
 
 #include <iostream>
 #include <vector>
@@ -11,12 +12,17 @@
 #include <map>
 #include <list>
 #include <srcloc.h>
-#include "cppundolog.h"
+
+// **** UnboxedLoc
 
 class UnboxedLoc {
 public:
-  UnboxedLoc(unsigned int line = 0, unsigned int col = 0) : line(line), col(col) {
-  }
+  unsigned int line;
+  unsigned int col;
+
+  UnboxedLoc(unsigned int line=0, unsigned int col=0)
+    : line(line), col(col)
+  {}
 
   // returns the filename since that isn't stored
   const char* set(SourceLoc loc);
@@ -25,9 +31,6 @@ public:
     return line < rhs.line
       || (line == rhs.line && col < rhs.col);
   }
-  
-  unsigned int line;
-  unsigned int col;
 };
 
 inline std::ostream& 
@@ -35,11 +38,13 @@ operator<<(std::ostream& os, const UnboxedLoc& pl) {
     return os << pl.line << ":" << pl.col;
 }
 
+// **** PairLoc
+
 class PairLoc : public std::pair<CPPSourceLoc, CPPSourceLoc> {
 public:
-  PairLoc(CPPSourceLoc a, CPPSourceLoc b) : 
-    std::pair<CPPSourceLoc, CPPSourceLoc>(a, b) {
-  }
+  PairLoc(CPPSourceLoc a, CPPSourceLoc b)
+    : std::pair<CPPSourceLoc, CPPSourceLoc>(a, b)
+  {}
 
   bool hasExactPosition() const {
     return first.hasExactPosition() && second.hasExactPosition();
@@ -50,6 +55,8 @@ public:
       second.macroExpansion;
   }
 };
+
+// **** UnboxedPairLoc
  
 class UnboxedPairLoc : public std::pair<UnboxedLoc, UnboxedLoc> {
 public:
@@ -73,10 +80,20 @@ operator<<(std::ostream& os, const UnboxedPairLoc& pl) {
     return os << pl.file <<":("<< pl.first <<", "<< pl.second <<")";
 }
 
+// **** Patcher
+
 typedef std::map<UnboxedPairLoc, std::string> patch_map;
 typedef std::list<patch_map::value_type const *> hunk_queue;
 
 class Patcher {
+private:
+  std::ostream& out;            // where this patch is going
+  std::string file;
+  std::vector<std::string> lines;
+  patch_map output;
+  std::string dir;
+  bool recursive;
+
 public:
   Patcher(std::ostream& out = std::cout, bool recursive = false);
   ~Patcher();
@@ -103,26 +120,20 @@ public:
   void insertBefore(CPPSourceLoc const &csl, std::string const &str,
                     int offset = 0);
 private:
-  void printHunkHeaderAndDeletedLines(unsigned int minLine,
-                                      unsigned int maxLine,
-                                      int added_lines, std::string const &file,
-                                      std::ostream &ostream);
+  void printHunkHeaderAndDeletedLines
+  (unsigned int minLine,
+   unsigned int maxLine,
+   int added_lines, std::string const &file,
+   std::ostream &ostream);
 
   // copies the line range from file into a specified stream and adds a prefix
-  void copy(unsigned int minLine, unsigned int maxLine, std::string const &file,
+  void copy(unsigned int minLine, unsigned int maxLine,
+            std::string const &file,
 	    std::ostream &ostream, std::string const &prefix);
 
   std::string resolveAbsolutePath(std::string const &path) const;
   //flushes a hunk at a time
   void flushQueue(hunk_queue &q);
-
-private:
-  std::ostream& out;            // where this patch is going
-  std::string file;
-  std::vector<std::string> lines;
-  patch_map output;
-  std::string dir;
-  bool recursive;
 };
 
-#endif // PRCHECK_PARSER
+#endif // PATCHER_H

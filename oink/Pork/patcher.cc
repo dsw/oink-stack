@@ -1,14 +1,58 @@
 // See License.txt for copyright and terms of use
 
 #include "patcher.h"
+#include "squash_util.h"
+
 #include <fstream>
 #include <ios>
 #include <sstream>
 #include <map>
-#include "squash_util.h"
 
-// this messes with our namespace
-// using namespace std;
+// **** UnboxedLoc
+
+StringRef UnboxedLoc::set(SourceLoc loc) {
+  StringRef file(NULL);
+  int line(0);
+  int col(0);
+  sourceLocManager->decodeLineCol(loc, file, line, col);
+  this->line = line;
+  this->col = col;
+  return file;
+}
+
+SourceLoc UnboxedLoc::toSourceLoc(StringRef file) {
+  return sourceLocManager->encodeLineCol(file, line, col);
+}
+
+// **** UnboxedPairLoc
+
+UnboxedPairLoc::UnboxedPairLoc(PairLoc const &pairLoc) {
+  xassert(pairLoc.hasExactPosition());
+  this->file = first.set(pairLoc.first.loc());
+
+  if (pairLoc.first.loc() == pairLoc.second.loc()) {
+    second = first;
+    return;
+  }
+  StringRef file = second.set(pairLoc.second.loc());
+  xassert(this->file == file);
+}
+
+UnboxedPairLoc::UnboxedPairLoc(StringRef file, UnboxedLoc const &from,
+                               UnboxedLoc const &to)
+  : std::pair<UnboxedLoc, UnboxedLoc>(from, to)
+{
+  this->file = file;
+}
+
+std::string UnboxedPairLoc::toString() const {
+  std::stringstream ss;
+  ss << file << "(" << first.line << ":" << first.col << "-"
+     << second.line << ":" << second.col << ")";
+  return ss.str();
+}
+
+// **** Patcher
 
 Patcher::Patcher(std::ostream& out, bool recursive)
   : out(out), recursive(recursive) {   
@@ -18,10 +62,9 @@ Patcher::~Patcher() {
   flush();
 }
 
-// This method goes through the pains of 
-// producing correct patch output
-// even in cases of multiple continuous
-// things being modified on the same line
+// This method goes through the pains of producing correct patch
+// output even in cases of multiple continuous things being modified
+// on the same line
 void Patcher::flushQueue(hunk_queue &q) {
   patch_map::value_type const *first = *q.begin();
   patch_map::value_type const *last = *q.rbegin();
@@ -75,9 +118,12 @@ void Patcher::flushQueue(hunk_queue &q) {
   }
   // output remainder of stuff
   ss << line.substr(offset) << '\n';
-  printHunkHeaderAndDeletedLines(first->first.first.line, last->first.second.line,
-				 last->first.second.line - first->first.first.line + extraLines, 
-				 first->first.file, out);
+  printHunkHeaderAndDeletedLines
+    (first->first.first.line,
+     last->first.second.line,
+     last->first.second.line - first->first.first.line + extraLines, 
+     first->first.file,
+     out);
   out << ss.str();
   q.clear();
 }
@@ -139,10 +185,11 @@ void Patcher::copy(unsigned int minLine, unsigned int maxLine,
   }
 }
 
-void Patcher::printHunkHeaderAndDeletedLines(unsigned int minLine, unsigned int maxLine,
-                                             int added_lines,
-                                             std::string const &file,
-                                             std::ostream &ostream)
+void Patcher::printHunkHeaderAndDeletedLines
+(unsigned int minLine, unsigned int maxLine,
+ int added_lines,
+ std::string const &file,
+ std::ostream &ostream)
 {
   ostream << "@@"
   << " -" << minLine << "," << (maxLine - minLine + 1)
@@ -189,7 +236,8 @@ std::string Patcher::getRange(UnboxedPairLoc const &loc) {
            && it->first.first.line == i
            && it->first.file == file;
          ++it) {
-      // it doesn't make sense to cut out part of code that has been patched already
+      // it doesn't make sense to cut out part of code that has been
+      // patched already
       xassert(it->first.second.line < maxLine
               || (it->first.second.line == maxLine 
                   && it->first.second.col <= maxCol));
@@ -237,9 +285,11 @@ std::string Patcher::getRange(UnboxedPairLoc const &loc) {
   return str;
 }
 
-// One is allowed replace an existing patch, but can't have ones that intersect
+// One is allowed replace an existing patch, but can't have ones that
+// intersect
 void Patcher::printPatch(std::string const &str, UnboxedPairLoc const &loc,
-                         bool recursive) {
+                         bool recursive)
+{
   std::string file(loc.file);
   unsigned int minLine = loc.first.line;
   unsigned int minCol = loc.first.col;
@@ -324,44 +374,4 @@ void Patcher::setFile(std::string const &file) {
   if (pos != std::string::npos) {
     dir = file.substr(0, pos + 1);
   }
-}
-
-StringRef UnboxedLoc::set(SourceLoc loc) {
-  StringRef file(NULL);
-  int line(0);
-  int col(0);
-  sourceLocManager->decodeLineCol(loc, file, line, col);
-  this->line = line;
-  this->col = col;
-  return file;
-}
-
-SourceLoc UnboxedLoc::toSourceLoc(StringRef file) {
-  return sourceLocManager->encodeLineCol(file, line, col);
-}
-
-UnboxedPairLoc::UnboxedPairLoc(PairLoc const &pairLoc) {
-  xassert(pairLoc.hasExactPosition());
-  this->file = first.set(pairLoc.first.loc());
-
-  if (pairLoc.first.loc() == pairLoc.second.loc()) {
-    second = first;
-    return;
-  }
-  StringRef file = second.set(pairLoc.second.loc());
-  xassert(this->file == file);
-}
-
-UnboxedPairLoc::UnboxedPairLoc(StringRef file, UnboxedLoc const &from,
-                               UnboxedLoc const &to)
-  : std::pair<UnboxedLoc, UnboxedLoc>(from, to)
-{
-  this->file = file;
-}
-
-std::string UnboxedPairLoc::toString() const {
-  std::stringstream ss;
-  ss << file << "(" << first.line << ":" << first.col << "-"
-     << second.line << ":" << second.col << ")";
-  return ss.str();
 }

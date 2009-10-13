@@ -1,19 +1,25 @@
 // Stopwatch: given a list of methods, injects instrumentation code into them
+
 #include "piglet.h"
 #include "expr_visitor.h"
 #include "patcher.h"
+
 #include <set>
 #include <sstream>
 #include <string>
-// using namespace std;
 
 static std::set<std::string> methods;
 
-class Stopwatch : public ExpressionVisitor
-{
+class Stopwatch : public ExpressionVisitor {
+private:
+  Patcher &patcher;
+  std::set<char const *> files;
+
 public:
-  Stopwatch(Patcher &patcher):patcher(patcher) {
-  }
+  Stopwatch(Patcher &patcher)
+    : patcher(patcher)
+  {}
+
   virtual bool visitFunction(Function *func) {
     Variable *v = func->nameAndParams->var;
     if (v->isImplicitMemberFunc())
@@ -84,14 +90,9 @@ public:
     }
     f.close();
   }
-
-private:
-  Patcher &patcher;
-  std::set<char const *> files;
 };
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   int curarg = 1;
   if (curarg + 1 < argc && !strcmp("--methodlist", argv[curarg])) {
     std::ifstream f(argv[++curarg]);
@@ -102,6 +103,7 @@ int main(int argc, char **argv)
     f.close();
     ++curarg;
   }
+
   PigletParser parser;
   Patcher p;
   Stopwatch visitor(p);
@@ -109,5 +111,6 @@ int main(int argc, char **argv)
     TranslationUnit *unit = parser.getASTNoExc(argv[i]);
     unit->traverse(visitor);
   }
+
   return 0;
 }

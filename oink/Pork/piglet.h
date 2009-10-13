@@ -1,5 +1,5 @@
-#ifndef MOZ_STATIC_ANALYSIS_PIGLET
-#define MOZ_STATIC_ANALYSIS_PIGLET
+#ifndef PIGLET_H
+#define PIGLET_H
 
 #include <stdlib.h>       // exit, getenv, abort
 #include "parssppt.h"     // ParseTreeAndTokens, treeMain
@@ -41,8 +41,9 @@ public:
 
   // Parse the file and call the given fn with the AST.
   template<typename R>
-  static R apply(std::unary_function<TranslationUnit*,R> func,
-		 const char *filename);
+  static R apply
+  (std::unary_function<TranslationUnit*,R> func,
+   const char *filename);
 
   // Parse the file and return the AST. This may throw Elsa exns.
   TranslationUnit *getAST(const char *filename);
@@ -66,4 +67,4 @@ private:
   void elaborate(TranslationUnit *unit);
 };
 
-#endif // MOZ_STATIC_ANALYSIS_PIGLET
+#endif // PIGLET_H

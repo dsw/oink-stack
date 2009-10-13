@@ -1,11 +1,11 @@
 #ifndef SQUASH_UTIL_H
 #define SQUASH_UTIL_H
 
-#include "cc_print.h"
-
 // See License.txt for copyright and terms of use
 
 // Provides useful utility functions
+
+#include "cc_print.h"
 
 // Convenient func to print out arbitrary AST nodes
 template<class T> inline void print(std::ostream &ostream, T *m) {
@@ -38,8 +38,10 @@ inline void killImplicitMembers(TS_classSpec *c) {
 }
 
 // don't worry about efficiency here
-inline std::string replace(std::string const &strin, std::string const &what, 
-                           std::string const &with) {
+inline std::string replace(std::string const &strin,
+                           std::string const &what, 
+                           std::string const &with)
+{
   std::string str = strin;
   std::string::size_type pos = str.find(what, 0);
   while (pos != std::string::npos) {
@@ -48,7 +50,6 @@ inline std::string replace(std::string const &strin, std::string const &what,
   }
   return str;
 }
-
 
 inline Expression* cond2expr(Condition *cond) {
   if (cond->isCN_expr()) {
@@ -61,13 +62,17 @@ inline Expression* cond2expr(Condition *cond) {
 // returns the underlying "target" objected
 inline Expression *expr2obj(Expression *e) {
   switch (e->kind()) {
+
   case Expression::E_VARIABLE:
   case Expression::E_FIELDACC:
     return e;
+
   case Expression::E_DEREF:
     return expr2obj(e->asE_deref()->ptr);
+
   case Expression::E_CAST:
     return expr2obj(e->asE_cast()->expr);
+
   case Expression::E_BINARY://cast(..)->foo..look at foo
     {
       E_binary *b = e->asE_binary();
@@ -90,6 +95,7 @@ inline Expression *expr2obj(Expression *e) {
 	break;
       }
     }
+
   default:
     return NULL;
   }
@@ -122,7 +128,8 @@ inline Type* skipPtrOrRef(Type *t) {
 }
 
 inline std::string resolveAbsolutePath(std::string const &dir,
-                                       std::string const &inPath) {
+                                       std::string const &inPath)
+{
  std::string path = inPath;
   if (path[0] != '/') {
     path = dir + path;
@@ -150,14 +157,5 @@ inline std::string resolveAbsolutePath(std::string const &dir,
   }
   return path;
 }
-
-// dsw: where the heck is x_match defined?  I don't seem to need it.
-// // throws match failure
-// template <class T> T* SOME(T* pointer) 
-//   throw (x_match)
-// {
-//   xmatch(pointer);
-//   return pointer;
-// }
 
 #endif // SQUASH_UTIL_H
