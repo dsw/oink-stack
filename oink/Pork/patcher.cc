@@ -107,12 +107,12 @@ void Patcher::flushQueue(hunk_queue &q) {
     // tokenize replacement string by \n and insert \n+ for diff
     std::string::size_type last_n = 0;
     for (std::string::size_type n = str.find('\n');
-	 n != std::string::npos;
-	 last_n = n + 1, n = str.find('\n', last_n))
+         n != std::string::npos;
+         last_n = n + 1, n = str.find('\n', last_n))
       {
         std::string substr = str.substr(last_n, n - last_n);
-	ss << substr << "\n+";
-	extraLines++;
+        ss << substr << "\n+";
+        extraLines++;
       }
     ss << str.substr(last_n);
   }
@@ -144,7 +144,7 @@ void Patcher::flush() {
       out << "+++ " << real_file << "\n";
       // flush the queue if this chunk isn't on the same line as last chunk
     } else if (!q.empty()
-	       && range.first.line - (*q.rbegin())->first.second.line > 1) {
+               && range.first.line - (*q.rbegin())->first.second.line > 1) {
       flushQueue(q);
     }
     // save pointer to element pointed by iterator
@@ -163,10 +163,10 @@ void Patcher::load(std::string const &inFile) {
 
   std::ifstream f(file.c_str());
   if (!f.is_open())
-  {
-    std::cerr << "Could not open " << file << std::endl;
-    exit(1);
-  }
+    {
+      std::cerr << "Could not open " << file << std::endl;
+      exit(1);
+    }
   std::string line;
   while (getline(f, line)) {
     lines.push_back(line);
@@ -192,9 +192,9 @@ void Patcher::printHunkHeaderAndDeletedLines
  std::ostream &ostream)
 {
   ostream << "@@"
-  << " -" << minLine << "," << (maxLine - minLine + 1)
-  << " +" << minLine << "," << added_lines
-  << " @@\n";
+          << " -" << minLine << "," << (maxLine - minLine + 1)
+          << " +" << minLine << "," << added_lines
+          << " @@\n";
 
   copy(minLine, maxLine, file, ostream, "-");
 }
@@ -347,7 +347,7 @@ void Patcher::printPatch(std::string const &str, UnboxedPairLoc const &loc,
 
 void Patcher::insertBefore(char const *file, UnboxedLoc const &loc,
                            std::string const &str) {
-   output[UnboxedPairLoc (file, loc, loc)] = str;
+  output[UnboxedPairLoc (file, loc, loc)] = str;
 }
 
 void Patcher::insertBefore

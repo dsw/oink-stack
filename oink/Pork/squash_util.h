@@ -76,23 +76,23 @@ inline Expression *expr2obj(Expression *e) {
   case Expression::E_BINARY://cast(..)->foo..look at foo
     {
       E_binary *b = e->asE_binary();
-       switch(b->op) {
+      switch(b->op) {
       case BIN_ARROW_STAR:
-	return expr2obj(e->asE_binary()->e2);
-	case BIN_PLUS:
-	if (b->e1->type->isReferenceType() 
-	    && b->e1->type->getAtType()->isArrayType()) {
-	  Type *t2 = b->e2->type;
-	  if (t2->isReferenceType()) t2 = t2->getAtType();
-	  
-	  if (t2->isCVAtomicType()
-	      && t2->asCVAtomicType()->atomic->isSimpleType()
-	      && t2->asCVAtomicType()->atomic->asSimpleType()->type == ST_INT) {
-	    return expr2obj(b->e1);
-	  }
-	}
+        return expr2obj(e->asE_binary()->e2);
+      case BIN_PLUS:
+        if (b->e1->type->isReferenceType() 
+            && b->e1->type->getAtType()->isArrayType()) {
+          Type *t2 = b->e2->type;
+          if (t2->isReferenceType()) t2 = t2->getAtType();
+          
+          if (t2->isCVAtomicType()
+              && t2->asCVAtomicType()->atomic->isSimpleType()
+              && t2->asCVAtomicType()->atomic->asSimpleType()->type == ST_INT) {
+            return expr2obj(b->e1);
+          }
+        }
       default:
-	break;
+        break;
       }
     }
 
@@ -130,7 +130,7 @@ inline Type *skipPtrOrRef(Type *t) {
 inline std::string resolveAbsolutePath(std::string const &dir,
                                        std::string const &inPath)
 {
- std::string path = inPath;
+  std::string path = inPath;
   if (path[0] != '/') {
     path = dir + path;
   }

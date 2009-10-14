@@ -20,7 +20,7 @@ private:
 
 public:
   Stopwatch(Patcher &patcher)
-//     : loweredVisitor(this)
+    //     : loweredVisitor(this)
     : patcher(patcher)
   {}
 

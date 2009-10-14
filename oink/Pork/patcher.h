@@ -35,7 +35,7 @@ public:
 
 inline std::ostream& 
 operator<<(std::ostream& os, const UnboxedLoc& pl) {
-    return os << pl.line << ":" << pl.col;
+  return os << pl.line << ":" << pl.col;
 }
 
 // **** PairLoc
@@ -68,8 +68,8 @@ public:
     int i = file.compare(rhs.file);
     return i < 0
       || (i == 0 
-	  && static_cast<std::pair<UnboxedLoc, UnboxedLoc> const &>(*this) 
-	  < static_cast<std::pair<UnboxedLoc, UnboxedLoc> const &>(rhs));
+          && static_cast<std::pair<UnboxedLoc, UnboxedLoc> const &>(*this) 
+          < static_cast<std::pair<UnboxedLoc, UnboxedLoc> const &>(rhs));
   }
 
   std::string toString() const;
@@ -78,7 +78,7 @@ public:
 
 inline std::ostream& 
 operator<<(std::ostream& os, const UnboxedPairLoc& pl) {
-    return os << pl.file <<":("<< pl.first <<", "<< pl.second <<")";
+  return os << pl.file <<":("<< pl.first <<", "<< pl.second <<")";
 }
 
 // **** Patcher
@@ -131,7 +131,7 @@ private:
   // copies the line range from file into a specified stream and adds a prefix
   void copy(unsigned int minLine, unsigned int maxLine,
             std::string const &file,
-	    std::ostream &ostream, std::string const &prefix);
+            std::ostream &ostream, std::string const &prefix);
 
   std::string resolveAbsolutePath(std::string const &path) const;
   //flushes a hunk at a time
