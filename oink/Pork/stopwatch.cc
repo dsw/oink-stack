@@ -1,8 +1,9 @@
 // Stopwatch: given a list of methods, injects instrumentation code into them
 
 #include "piglet.h"
-#include "expr_visitor.h"
 #include "patcher.h"
+
+// #include "cc_ast_aux.h"         // LoweredASTVisitor
 
 #include <set>
 #include <sstream>
@@ -10,13 +11,15 @@
 
 static std::set<std::string> methods;
 
-class Stopwatch : public ExpressionVisitor {
+class Stopwatch : public ASTVisitor {
 private:
+// LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
   Patcher &patcher;
   std::set<char const *> files;
 
 public:
   Stopwatch(Patcher &patcher)
+//     : loweredVisitor(this)
     : patcher(patcher)
   {}
 

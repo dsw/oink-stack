@@ -10,7 +10,6 @@ OINK_STACK := $(HOME)/Notes/oink-stack
 EXE := stopwatch
 
 STOPWATCH_O :=
-STOPWATCH_O += expr_visitor.o
 STOPWATCH_O += patcher.o
 STOPWATCH_O += piglet.o
 STOPWATCH_O += stopwatch.o
