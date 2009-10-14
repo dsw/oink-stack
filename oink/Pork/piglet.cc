@@ -30,9 +30,8 @@ PigletParser::PigletParser() : parseWarnings(0) {
 }
 
 template<typename R> R
-PigletParser::apply
-(std::unary_function<TranslationUnit*,R> func,
- const char *filename)
+PigletParser::apply(std::unary_function<TranslationUnit*,R> func,
+                    const char *filename)
 {
   PigletParser parser;
   TranslationUnit *unit = parser.getASTNoExc(filename);

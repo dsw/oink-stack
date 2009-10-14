@@ -34,9 +34,8 @@ public:
 
   // Parse the file and call the given fn with the AST.
   template<typename R>
-  static R apply
-  (std::unary_function<TranslationUnit*,R> func,
-   const char *filename);
+  static R apply(std::unary_function<TranslationUnit*,R> func,
+                 const char *filename);
 
   // Parse the file and return the AST. This may throw Elsa exns.
   TranslationUnit *getAST(const char *filename);
