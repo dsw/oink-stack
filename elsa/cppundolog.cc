@@ -3,16 +3,18 @@
 
 #include "cppundolog.h"      // this module
 
+// FIX: rename _loc to something not starting with an underscore
+
 // main undo log structure
 TailList<MacroUndoEntry> macroUndoLog;
 
 // length of the /*>*/ macro closing comment
 const int MACRO_END_LENGTH = 5;
 
-CPPSourceLoc::CPPSourceLoc(SourceLoc loc):
-  macroExpansion(NULL),
-  _loc(loc),
-  exactPosition(false)
+CPPSourceLoc::CPPSourceLoc(SourceLoc loc)
+  : _loc(loc)
+  , exactPosition(false)
+  , macroExpansion(NULL)
 {
   init(loc);
 }
@@ -28,8 +30,7 @@ void CPPSourceLoc::init(SourceLoc loc) {
   }
 
   // No macro expansions occured before loc: loc is correct
-  if (!priorMacro)
-    return;
+  if (!priorMacro) return;
 
   // The following can determine position on macro boundaries
   // and gives up within them
@@ -37,22 +38,21 @@ void CPPSourceLoc::init(SourceLoc loc) {
   SourceLoc postEndLoc;
   SourceLoc preEndLoc;
   MacroUndoEntry *macroParam = NULL;
-  // stuff within parameters is real code that got displaced
-  // so position calculation logic is the same 
+  // stuff within parameters is real code that got displaced so
+  // position calculation logic is the same
   if (priorMacro->preStartLoc != SL_UNKNOWN
       && priorMacro->postEndLoc >= loc
       && priorMacro->isParam()) {
-    // --check param range, to see if the macro param
-    // starts and ends on the same line..otherwise we are 
-    // probably wayyy off
+    // --check param range, to see if the macro param starts and ends
+    // on the same line..otherwise we are probably wayyy off
     char const * file(NULL); 
     int line(0); 
     int lineEnd(0); 
     int col(0);  
     sourceLocManager->decodeLineCol(priorMacro->preStartLoc, file, line, col);
     sourceLocManager->decodeLineCol(priorMacro->preEndLoc, file, lineEnd, col);
-    // return a position and macro to make sure that other calculations
-    // do not accidentally cross macro boundaries 
+    // return a position and macro to make sure that other
+    // calculations do not accidentally cross macro boundaries
     if (line == lineEnd) {
       preEndLoc = priorMacro->preStartLoc;
       postEndLoc = priorMacro->postStartLoc;
@@ -92,8 +92,9 @@ void CPPSourceLoc::init(SourceLoc loc) {
     }
   }
 
-  // loc is not within a macro expansion, calculate the correct position
-  // lines should be the same as in the original loc, just the friggin cols should be diff
+  // loc is not within a macro expansion, calculate the correct
+  // position; lines should be the same as in the original loc, just
+  // the friggin cols should be diff
   char const * file(NULL); 
   int line(0); 
   int col(0);  
@@ -103,8 +104,8 @@ void CPPSourceLoc::init(SourceLoc loc) {
   sourceLocManager->decodeLineCol(loc, file, line, col);
   sourceLocManager->decodeLineCol(postEndLoc, macroFile, postEndLine,
 				  postEndCol);
-  // if macro is on the same line as loc, then the column must've been affected
-  // use original loc if that's not the case
+  // if macro is on the same line as loc, then the column must've been
+  // affected; use original loc if that's not the case
   if (file != macroFile || line != postEndLine)
     return;
 
@@ -112,8 +113,7 @@ void CPPSourceLoc::init(SourceLoc loc) {
   // override the line with one from macro
   sourceLocManager->decodeLineCol(preEndLoc, file, line, preEndCol);
   col = preEndCol + col - postEndCol;
-  if (!macroParam)
-    col -= MACRO_END_LENGTH;
+  if (!macroParam) col -= MACRO_END_LENGTH;
   
   SourceLoc correctLoc = sourceLocManager->encodeLineCol(file,
 							 line, col);
@@ -121,4 +121,3 @@ void CPPSourceLoc::init(SourceLoc loc) {
   this->macroExpansion = macroParam;
   this->exactPosition = true;
 }
-// EOF

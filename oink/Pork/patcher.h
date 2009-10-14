@@ -15,6 +15,7 @@
 
 // **** UnboxedLoc
 
+// an unboxed source location
 class UnboxedLoc {
 public:
   unsigned int line;
@@ -25,11 +26,10 @@ public:
   {}
 
   // returns the filename since that isn't stored
-  const char* set(SourceLoc loc);
-  SourceLoc toSourceLoc(const char* file);
+  const char *set(SourceLoc loc);
+  SourceLoc toSourceLoc(const char *file);
   int operator<(const UnboxedLoc &rhs) const {
-    return line < rhs.line
-      || (line == rhs.line && col < rhs.col);
+    return line < rhs.line || (line == rhs.line && col < rhs.col);
   }
 };
 
@@ -50,9 +50,10 @@ public:
     return first.hasExactPosition() && second.hasExactPosition();
   }
 
-  MacroUndoEntry* getMacro() const {
-    return first.macroExpansion ? first.macroExpansion :
-      second.macroExpansion;
+  MacroUndoEntry *getMacro() const {
+    return first.macroExpansion
+      ? first.macroExpansion
+      : second.macroExpansion;
   }
 };
 
@@ -119,6 +120,7 @@ public:
                     std::string const &str);
   void insertBefore(CPPSourceLoc const &csl, std::string const &str,
                     int offset = 0);
+
 private:
   void printHunkHeaderAndDeletedLines
   (unsigned int minLine,
