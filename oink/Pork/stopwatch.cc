@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
   PigletParser parser;
   Patcher p;
   Stopwatch visitor(p);
-  for (int i = curarg;i< argc;i++) {
+  for (int i=curarg; i<argc; i++) {
     TranslationUnit *unit = parser.getASTNoExc(argv[i]);
     unit->traverse(visitor);
   }
