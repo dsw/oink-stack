@@ -97,6 +97,8 @@ public:
 };
 
 int main(int argc, char **argv) {
+  // dsw: NOTE this doesn't seem to actually work; but Taras put it in
+  // here so I'll leave it for now
   int curarg = 1;
   if (curarg + 1 < argc && !strcmp("--methodlist", argv[curarg])) {
     std::ifstream f(argv[++curarg]);
