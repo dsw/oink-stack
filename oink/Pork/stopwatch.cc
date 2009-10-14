@@ -8,6 +8,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <fstream>
 
 static std::set<std::string> methods;
 

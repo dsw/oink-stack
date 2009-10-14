@@ -23,10 +23,6 @@
 #include "smregexp.h"     // regexpMatch
 #include "cc_elaborate.h" // ElabVisitor
 #include "integrity.h"    // IntegrityVisitor
-#include "xml_file_writer.h" // XmlFileWriter
-#include "xml_reader.h"   // xmlDanglingPointersAllowed
-#include "xml_do_read.h"  // xmlDoRead()
-#include "xml_type_writer.h" // XmlTypeWriter
 
 #include <functional>
 
