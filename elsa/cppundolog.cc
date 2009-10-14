@@ -25,7 +25,6 @@ void CPPSourceLoc::init(SourceLoc loc) {
   for (TailListIterNC<MacroUndoEntry> it(macroUndoLog);
        !it.isDone() && it.data()->postStartLoc <= loc;
        it.adv()) {
-   
     priorMacro = it.data();
   }
 
@@ -106,8 +105,7 @@ void CPPSourceLoc::init(SourceLoc loc) {
 				  postEndCol);
   // if macro is on the same line as loc, then the column must've been
   // affected; use original loc if that's not the case
-  if (file != macroFile || line != postEndLine)
-    return;
+  if (file != macroFile || line != postEndLine) return;
 
   int preEndCol(0);
   // override the line with one from macro
