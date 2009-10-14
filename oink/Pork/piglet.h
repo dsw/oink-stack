@@ -1,29 +1,26 @@
 #ifndef PIGLET_H
 #define PIGLET_H
 
-#include <stdlib.h>       // exit, getenv, abort
-#include "parssppt.h"     // ParseTreeAndTokens, treeMain
+#include "parssppt.h"          // ParseTreeAndTokens, treeMain
+#include "srcloc.h"            // SourceLocManager
+#include "cc_env.h"            // Env
+#include "cc_ast.h"            // C++ AST (r)
+#include "cc_lang.h"           // CCLang
+#include "parsetables.h"       // ParseTables
+// #include "cc.gr.gen.h"         // CCParse
+#include "oink.gr.gen.h"        // CCParse_Oink
+#include "cc_elaborate.h"       // ElabVisitor
+#include "cc_ast_aux.h"         // class LoweredASTVisitor
 
-// TODO remove some of these headers
-#include "srcloc.h"       // SourceLocManager
-#include "ckheap.h"       // malloc_stats
-#include "cc_env.h"       // Env
-#include "cc_ast.h"       // C++ AST (r)
-#include "cc_ast_aux.h"   // class LoweredASTVisitor
-#include "cc_lang.h"      // CCLang
-#include "parsetables.h"  // ParseTables
-#include "cc_print.h"     // PrintEnv
-// #include "cc.gr.gen.h"    // CCParse
-#include "oink.gr.gen.h"    // CCParse_Oink
-#include "nonport.h"      // getMilliseconds
-#include "ptreenode.h"    // PTreeNode
-#include "ptreeact.h"     // ParseTreeLexer, ParseTreeActions
-#include "sprint.h"       // structurePrint
-#include "strtokp.h"      // StrtokParse
-#include "smregexp.h"     // regexpMatch
-#include "cc_elaborate.h" // ElabVisitor
-#include "integrity.h"    // IntegrityVisitor
+// not being used but you should probably be using them
+// #include "ckheap.h"             // malloc_stats
+// #include "integrity.h"          // IntegrityVisitor
 
+// you might want these
+// #include "nonport.h"            // getMilliseconds
+// #include "cc_print.h"           // PrintEnv
+
+#include <stdlib.h>             // exit, getenv, abort
 #include <functional>
 
 // C++ Parser
