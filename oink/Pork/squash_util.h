@@ -51,7 +51,7 @@ inline std::string replace(std::string const &strin,
   return str;
 }
 
-inline Expression* cond2expr(Condition *cond) {
+inline Expression *cond2expr(Condition *cond) {
   if (cond->isCN_expr()) {
     return cond->asCN_expr()->expr->expr;
   } else {
@@ -114,7 +114,7 @@ inline Variable *expr2var(Expression *eIn) {
   }
 }
 
-inline Type* skipPtrOrRef(Type *t) {
+inline Type *skipPtrOrRef(Type *t) {
   switch(t->getTag()) {
   case BaseType::T_POINTER:
   case BaseType::T_REFERENCE:

@@ -345,7 +345,7 @@ void Patcher::printPatch(std::string const &str, UnboxedPairLoc const &loc,
   output[loc] = str;
 }
 
-void Patcher::insertBefore(char const* file, UnboxedLoc const &loc,
+void Patcher::insertBefore(char const *file, UnboxedLoc const &loc,
                            std::string const &str) {
    output[UnboxedPairLoc (file, loc, loc)] = str;
 }

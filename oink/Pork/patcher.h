@@ -116,7 +116,7 @@ public:
   void setFile(std::string const &file);
   void flush();
   
-  void insertBefore(char const* file, UnboxedLoc const &loc,
+  void insertBefore(char const *file, UnboxedLoc const &loc,
                     std::string const &str);
   void insertBefore(CPPSourceLoc const &csl, std::string const &str,
                     int offset = 0);
