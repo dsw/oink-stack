@@ -110,7 +110,7 @@ OINK_O += $(BASIC_LOCAL_CC_O)
 OINK_O := $(addprefix ../,$(OINK_O))
 
 $(EXE):
-	g++ -o $@ $(L_FLAGS) $^ $(OINK_O) $(l_FLAGS)
+	g++ -g -o $@ $(L_FLAGS) $^ $(OINK_O) $(l_FLAGS)
 
 W_FLAGS := -Wall -Wno-deprecated
 
@@ -129,7 +129,7 @@ OBJS :=
 OBJS += $(STOPWATCH_O)
 
 $(OBJS): %.o: %.cc
-	g++ $(W_FLAGS) $(D_FLAGS) $(I_FLAGS) -o $@ -c $^
+	g++ -g $(W_FLAGS) $(D_FLAGS) $(I_FLAGS) -o $@ -c $^
 
 # **** clean
 
