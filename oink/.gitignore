@@ -25,6 +25,7 @@ alloc_test
 archive_srz_test
 cpdinit_test
 staticprint
+alloctool
 cfgprint
 dfgprint
 oink
