@@ -15,9 +15,9 @@ clean:
 # **** source to source transform
 
 hello.ii: hello.cpp
-# oddly, mcpp is NOT working, whereas g++ seems to work fine
 #	g++ -Wall -E $< > $@
-	$(MCPP) -K $< > $@
+# MCPP doesn't seem to set the __cplusplus macro
+	$(MCPP) -D__cplusplus -K $< > $@
 
 hello_stopwatch.diff: hello.ii
 # the stopwatch --methodlist argument is not working; no matter
