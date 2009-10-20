@@ -10,6 +10,7 @@
 
 #include "oink.h"
 #include "cc_ast_aux.h"         // LoweredASTVisitor
+#include <map>
 
 // LLVM headers need these
 #define __STDC_LIMIT_MACROS
@@ -31,7 +32,7 @@ class Bullet : public virtual Oink {
 class CodeGenASTVisitor : public ASTVisitor {
   llvm::Function* currentFunction;
   llvm::BasicBlock *currentBlock;
-  llvm::Value* lastValue;
+  std::map<Expression*, llvm::Value*> valueMap;
 
   public:
   llvm::Module *mod;

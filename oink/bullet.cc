@@ -351,6 +351,12 @@ bool CodeGenASTVisitor::visitStatement(Statement *obj) {
     assert (currentBlock == NULL); // Nested blocks unimplemented
     currentBlock = llvm::BasicBlock::Create(locToStr(obj->loc).c_str(), currentFunction);
   }
+  else if (obj->kind() == Statement::S_RETURN) {
+    // No action needed in preorder visit
+  }
+  else {
+    assert(false);
+  }
   ++num_Statement;
   return true;
 }
@@ -361,9 +367,13 @@ void CodeGenASTVisitor::postvisitStatement(Statement *obj) {
     currentBlock = NULL;
   }
   else if (obj->kind() == Statement::S_RETURN) {
+    S_return* returnStatement = static_cast<S_return*>(obj);
     assert (currentBlock != NULL);
     llvm::IRBuilder<> builder(currentBlock);
-    builder.CreateRet(lastValue);
+    builder.CreateRet(valueMap[returnStatement->expr->expr]);
+  }
+  else {
+    assert(false);
   }
 }
 
@@ -389,12 +399,25 @@ bool CodeGenASTVisitor::visitExpression(Expression *obj) {
 }
 
 void CodeGenASTVisitor::postvisitExpression(Expression *obj) {
-  lastValue = NULL;
   obj->debugPrint(std::cout, 0);
   if (obj->kind() == Expression::E_INTLIT) {
     E_intLit* intLit = static_cast<E_intLit *>(obj);
     llvm::IRBuilder<> builder(currentBlock);
-    lastValue = llvm::ConstantInt::get(llvm::Type::Int32Ty, intLit->i);
+    valueMap[obj] = llvm::ConstantInt::get(llvm::Type::Int32Ty, intLit->i);
+  }
+  else if (obj->kind() == Expression::E_BINARY) {
+    E_binary* binaryExpr = static_cast<E_binary *>(obj);
+    llvm::IRBuilder<> builder(currentBlock);
+    llvm::BinaryOperator::BinaryOps op;
+
+    switch (binaryExpr->op) {
+    case BIN_PLUS:  op = llvm::Instruction::Add; break;
+    case BIN_MINUS: op = llvm::Instruction::Sub; break;
+    case BIN_MULT:  op = llvm::Instruction::Mul; break;
+    default: assert(false); break;
+    }    
+    assert(valueMap.contains(binaryExpr->e1) && valueMap.contains(binaryExpr->e2));
+    valueMap[obj] = builder.CreateBinOp(op, valueMap[binaryExpr->e1], valueMap[binaryExpr->e2], "expr"/*locToStr(obj->loc).c_str()*/);
   }
 }
 
