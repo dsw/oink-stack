@@ -9,11 +9,16 @@
 #include "qual_value_print.h"
 #include "qual_cmd.h"
 
+class Qual;                     // forward
+
 // An aliased global reference to oinkCmd, but downcast ahead of time for
 // convenience.  I didn't want to have to create this globally, but
 // there is no other way to get it into a few places like the ctor of
 // Var_Q;
 extern QualCmd *qualCmd;
+
+// A global way to get at the Qual object; FIX: this is a hack
+extern Qual *theQual;
 
 // true iff we have run finish_quals(); There are lots of things you
 // must not do after you have run finish_quals and this allows for

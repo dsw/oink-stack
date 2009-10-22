@@ -32,10 +32,10 @@ build-prereqs: ElsaHeaders.links
 FRONTEND_EXE :=
 FRONTEND_EXE += oink
 FRONTEND_EXE += staticprint
-FRONTEND_EXE += alloctool
 FRONTEND_EXE += dfgprint
 FRONTEND_EXE += cfgprint
 FRONTEND_LLVM_EXE += bullet
+FRONTEND_EXE += alloctool
 FRONTEND_EXE += qual
 exe: $(FRONTEND_EXE)
 ifeq ($(USE_LLVM),1)
@@ -391,13 +391,6 @@ STATICPRINT_LOCAL_CC_O += staticprint_cmd.o
 STATICPRINT_LOCAL_CC_O += staticprint_global.o
 STATICPRINT_LOCAL_CC_O += staticprint.o
 
-# additional files that alloctool depends on beyond basic besides oink
-# lexer and parser extensions
-ALLOCTOOL_LOCAL_CC_O :=
-ALLOCTOOL_LOCAL_CC_O += alloctool_cmd.o
-ALLOCTOOL_LOCAL_CC_O += alloctool_global.o
-ALLOCTOOL_LOCAL_CC_O += alloctool.o
-
 # additional files that dfgprint depends on beyond basic besides oink
 # lexer and parser extensions
 DFGPRINT_LOCAL_CC_O :=
@@ -418,6 +411,13 @@ BULLET_LOCAL_CC_O :=
 BULLET_LOCAL_CC_O += bullet_cmd.o
 BULLET_LOCAL_CC_O += bullet_global.o
 BULLET_LOCAL_CC_O += bullet.o
+
+# additional files that alloctool depends on beyond basic besides oink
+# lexer and parser extensions
+ALLOCTOOL_LOCAL_CC_O :=
+ALLOCTOOL_LOCAL_CC_O += alloctool_cmd.o
+ALLOCTOOL_LOCAL_CC_O += alloctool_global.o
+ALLOCTOOL_LOCAL_CC_O += alloctool.o
 
 # additional files qual depends on beyond basic; NOTE that qual
 # DOES extend the lexer and parser and so we DO include those
@@ -457,19 +457,19 @@ LOCAL_CC_O += $(OINK_LOCAL_CC_O)
 LOCAL_CC_O += $(DATAFLOW_LOCAL_CC_O)
 LOCAL_CC_O += $(CPDINIT_TEST_LOCAL_O)
 LOCAL_CC_O += $(STATICPRINT_LOCAL_CC_O)
-LOCAL_CC_O += $(ALLOCTOOL_LOCAL_CC_O)
 LOCAL_CC_O += $(DFGPRINT_LOCAL_CC_O)
 LOCAL_CC_O += $(CFGPRINT_LOCAL_CC_O)
 LOCAL_CC_O += $(BULLET_LOCAL_CC_O)
+LOCAL_CC_O += $(ALLOCTOOL_LOCAL_CC_O)
 LOCAL_CC_O += $(QUAL_LOCAL_CC_O)
 
 LOCAL_CC_O += oink_main.o
 LOCAL_CC_O += cpdinit_test_main.o
 LOCAL_CC_O += staticprint_main.o
-LOCAL_CC_O += alloctool_main.o
 LOCAL_CC_O += dfgprint_main.o
 LOCAL_CC_O += cfgprint_main.o
 LOCAL_CC_O += bullet_main.o
+LOCAL_CC_O += alloctool_main.o
 LOCAL_CC_O += qual_main.o
 
 LOCAL_CC_O += Lib/union_find_test.o
@@ -752,12 +752,6 @@ staticprint: $(STATICPRINT_LOCAL_CC_O)
 staticprint: $(OINK_LOCAL_CC_O)
 staticprint: $(BASIC_LIBS)
 
-alloctool: alloctool_main.o
-alloctool: $(DATAFLOW_LOCAL_CC_O)
-alloctool: $(ALLOCTOOL_LOCAL_CC_O)
-alloctool: $(OINK_LOCAL_CC_O)
-alloctool: $(BASIC_LIBS)
-
 dfgprint: dfgprint_main.o
 dfgprint: $(DATAFLOW_LOCAL_CC_O)
 dfgprint: $(DFGPRINT_LOCAL_CC_O)
@@ -775,6 +769,13 @@ bullet: $(DATAFLOW_LOCAL_CC_O)
 bullet: $(BULLET_LOCAL_CC_O)
 bullet: $(OINK_LOCAL_CC_O)
 bullet: $(BASIC_LIBS)
+
+alloctool: alloctool_main.o
+alloctool: $(ALLOCTOOL_LOCAL_CC_O)
+alloctool: $(DATAFLOW_LOCAL_CC_O)
+# alloctool: $(OINK_LOCAL_CC_O)
+alloctool: $(QUAL_LOCAL_CC_O)
+alloctool: $(BASIC_LIBS)
 
 qual: qual_main.o
 qual: $(DATAFLOW_LOCAL_CC_O)

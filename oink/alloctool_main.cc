@@ -5,7 +5,8 @@
 #include "alloctool.h"
 #include "alloctool_cmd.h"
 #include "alloctool_global.h"
-#include "oink.gr.gen.h"        // CCParse_Oink
+#include "qual.gr.gen.h"        // CCParse_Qual
+// #include "oink.gr.gen.h"        // CCParse_Oink
 #include "trace.h"
 #include "oink_util.h"
 
@@ -20,7 +21,7 @@ int main(int argc, char **argv) {
   m.typePrinter = &typePrinterOink;
   try {
     m.init_stage(argc, argv);
-    CCParse_Oink ccParse(globalStrTable, globalLang);
+    CCParse_Qual ccParse(globalStrTable, globalLang);
     m.parseUserActions = &ccParse;
     m.parseEnv = &ccParse;
     m.parse_stage();

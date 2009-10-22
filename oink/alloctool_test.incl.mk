@@ -8,8 +8,11 @@ endif
 
 .PHONY: alloctool-check
 alloctool-check:
+# check that it does the right thing
 	./alloctool -fa-print-stack-alloc-addr-taken Test/stack_alloc1.cc > Test/stack_alloc1.cc.out
 	diff Test/stack_alloc1.cc.cor Test/stack_alloc1.cc.out
+# check that it can parse C/C++ that has qualifiers in it
+	./alloctool -fa-print-stack-alloc-addr-taken Test/stack_alloc2.cc > /dev/null
 
 # put an input file here to generate its control flow graph as a
 # post-script file

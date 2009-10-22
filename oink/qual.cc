@@ -2128,7 +2128,6 @@ void Qual::qualCompile_nameVars()
 }
 
 // XXX FIXME KLUDGE
-extern Qual *theQual;
 void Qual_doAssignNames()
 {
   theQual->doAssignNames();

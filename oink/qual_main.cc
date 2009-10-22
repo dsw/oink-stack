@@ -16,8 +16,6 @@
 #include "oink_util.h"
 #include "warning_mgr.h"        // WarningManager
 
-Qual *theQual = NULL;
-
 int main(int argc, char **argv) {
   set_argv0(argv[0]);
   traceAddFromEnvVar();
