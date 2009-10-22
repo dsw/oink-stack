@@ -10,10 +10,9 @@
 
 class AllocToolCmd : public virtual OinkCmd {
   public:
-//   bool ben_flag;                // demonstrate a flag for Ben
-//   char *ben_string;             // demonstrate a string variable for Ben
-//   bool print_ihg;               // print out the ihg in 'dot' output format to standard out
-//   bool print_ast_histogram;     // print out how many of each ast kind
+  // print out every declaration (1) allocating a var on the stack
+  // where (2) the var also has its address taken
+  bool print_stack_alloc_addr_taken;
 
   AllocToolCmd();
 

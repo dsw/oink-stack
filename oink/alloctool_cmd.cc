@@ -7,10 +7,7 @@
 #include <cstdlib>              // atoi
 
 AllocToolCmd::AllocToolCmd()
-//   : ben_flag (false)
-//   , ben_string (NULL)
-//   , print_ihg (false)
-//   , print_ast_histogram (false)
+  : print_stack_alloc_addr_taken(false)
 {}
 
 void AllocToolCmd::readOneArg(int &argc, char **&argv) {
@@ -19,16 +16,15 @@ void AllocToolCmd::readOneArg(int &argc, char **&argv) {
   if (old_argc != argc) return; // the superclass read one so we don't
 
   char *arg = argv[0];
-  // please prefix the names of flags with arguments with '-s-'
-//   if (streq(arg, "-s-ben-string")) {
+  // please prefix the names of flags with arguments with '-a-'
+//   if (streq(arg, "-a-ben-string")) {
 //     shift(argc, argv);
 //     ben_string = strdup(shift(argc, argv)); // NOTE: use strdup!
 //     return;
 //   }
-  // please prefix the names of boolean flags with '-fs-'
-//   HANDLE_FLAG(ben_flag, "-fs-", "ben-flag");
-//   HANDLE_FLAG(print_ihg, "-fs-", "print-ihg");
-//   HANDLE_FLAG(print_ast_histogram, "-fs-", "print-ast-histogram");
+  // please prefix the names of boolean flags with '-fa-'
+  HANDLE_FLAG(print_stack_alloc_addr_taken,
+              "-fa-", "print-stack-alloc-addr-taken");
 }
 
 void AllocToolCmd::dump() {
@@ -37,22 +33,26 @@ void AllocToolCmd::dump() {
   //
   // the idea here is to make the internal name be the same as the
   // external name with the dashes replaced by underscores
-//   printf("fs-ben-flag: %s\n", boolToStr(ben_flag));
-//   printf("s-ben-string: %s\n", ben_string);
-//   printf("fs-print-ihg: %s\n", boolToStr(print_ihg));
-//   printf("fs-print-ast-histogram: %s\n", boolToStr(print_ast_histogram));
+  printf("fa-print-stack-alloc-addr-taken: %s\n",
+         boolToStr(print_stack_alloc_addr_taken));
+//   printf("a-ben-string: %s\n", ben_string);
 }
 
 void AllocToolCmd::printHelp() {
-//   OinkCmd::printHelp();
-//   printf
-//     ("alloctool flags that take an argument:\n"
-//      "  -s-ben-string <value>     : set Ben's string\n"
-//      "alloctool boolean flags; preceed by '-fs-' for positive sense, by '-fs-no-' for negative sense.\n"
-//      "  ben-flag                  : set Ben's flag\n"
-//      "  print-ihg                 : print the ihg in 'dot' output format to standard out\n"
-//      "  print-ast-histogram       : print a histogram of the AST nodes to standard out\n"
-//      "");
+  OinkCmd::printHelp();
+  printf
+    (
+     "\n"
+//      "alloctool flags that take an argument:\n"
+//      "  -a-ben-string <value>     : set Ben's string\n"
+     "\n"
+     "alloctool boolean flags;\n"
+     "    preceed by '-fa-' for positive sense,\n"
+     "    by '-fa-no-' for negative sense.\n"
+     "  -fa-print-stack-alloc-addr-taken : print out every declaration\n"
+     "    (1) allocating a var on the stack where\n"
+     "    (2) the var also has its address taken\n"
+     "");
 }
 
 // push the state out to other places where it is needed; return value

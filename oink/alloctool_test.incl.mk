@@ -8,10 +8,8 @@ endif
 
 .PHONY: alloctool-check
 alloctool-check:
-# 	./alloctool -fs-no-print-ihg -fs-ben-flag
-# 	./alloctool -fs-print-ihg Test/alloctool1.cc > /dev/null
-# 	./alloctool -fs-print-ast-histogram Test/alloctool1.cc > /dev/null
-	./alloctool -fo-pretty-print Test/hello.cc > /dev/null
+	./alloctool -fa-print-stack-alloc-addr-taken Test/stack_alloc1.cc > Test/stack_alloc1.cc.out
+	diff Test/stack_alloc1.cc.cor Test/stack_alloc1.cc.out
 
 # put an input file here to generate its control flow graph as a
 # post-script file

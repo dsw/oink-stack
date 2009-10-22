@@ -1,0 +1,9 @@
+
+---- START ---- Test/stack_alloc1.cc
+Test/stack_alloc1.cc:10: decl x
+Test/stack_alloc1.cc:11: decl y
+Test/stack_alloc1.cc:13: use x
+Test/stack_alloc1.cc:24: decl a
+Test/stack_alloc1.cc:25: use a
+---- STOP ----
+

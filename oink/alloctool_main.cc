@@ -30,8 +30,9 @@ int main(int argc, char **argv) {
     m.filter_stage();
     m.prettyPrint_stage();
     // alloctool-specific features go here
-//     if (alloctoolCmd->print_ihg) m.printIhg_stage();
-//     if (alloctoolCmd->print_ast_histogram) m.printASTHistogram_stage();
+    if (alloctoolCmd->print_stack_alloc_addr_taken) {
+      m.printStackAllocAddrTaken_stage();
+    }
   } catch (xBase &e) {
     std::cerr << e << std::endl;
     code = INTERNALERROR_ExitCode;
