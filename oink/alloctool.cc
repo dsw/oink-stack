@@ -130,6 +130,8 @@ bool RealVarAllocAndUseVisitor::visitExpression(Expression *obj) {
   return true;
 }
 
+// **** Pred_RealVarAllocAndUseVisitor
+
 class Pred_RealVarAllocAndUseVisitor : public RealVarAllocAndUseVisitor {
 public:
   VarPredicate &varPred;
