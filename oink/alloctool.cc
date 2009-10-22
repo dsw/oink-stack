@@ -86,12 +86,10 @@ public:
 class RealVarAllocAndUseVisitor : private ASTVisitor {
 public:
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
-  VarPredicate &varPred;
 
   public:
-  RealVarAllocAndUseVisitor(VarPredicate &varPred0)
+  RealVarAllocAndUseVisitor()
     : loweredVisitor(this)
-    , varPred(varPred0)
   {}
   virtual ~RealVarAllocAndUseVisitor() {}
 
@@ -101,8 +99,8 @@ public:
   virtual bool visitExpression(Expression *);
 
   // client methods
-  virtual bool visit2Declarator(Declarator *);
-  virtual bool visit2E_variable(E_variable *);
+  virtual bool visit2Declarator(Declarator *) = 0;
+  virtual bool visit2E_variable(E_variable *) = 0;
 };
 
 bool RealVarAllocAndUseVisitor::visitPQName(PQName *obj) {
@@ -132,7 +130,28 @@ bool RealVarAllocAndUseVisitor::visitExpression(Expression *obj) {
   return true;
 }
 
-bool RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
+class Pred_RealVarAllocAndUseVisitor : public RealVarAllocAndUseVisitor {
+public:
+  VarPredicate &varPred;
+
+  Pred_RealVarAllocAndUseVisitor(VarPredicate &varPred0)
+    : varPred(varPred0)
+  {}
+};
+
+// **** Print_RealVarAllocAndUseVisitor
+
+class Print_RealVarAllocAndUseVisitor : public Pred_RealVarAllocAndUseVisitor {
+public:
+  Print_RealVarAllocAndUseVisitor(VarPredicate &varPred0)
+    : Pred_RealVarAllocAndUseVisitor(varPred0)
+  {}
+
+  virtual bool visit2Declarator(Declarator *);
+  virtual bool visit2E_variable(E_variable *);
+};
+
+bool Print_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
   Variable_O *var = asVariable_O(obj->var);
   if (varPred.pass(var)) {
     printLoc(std::cout, obj->decl->loc);
@@ -141,7 +160,7 @@ bool RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
   return true;
 }
 
-bool RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
+bool Print_RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
   // Note: if you compile without locations for expressions this will
   // stop working.
   Variable_O *var = asVariable_O(evar->var);
@@ -159,7 +178,7 @@ void AllocTool::printStackAllocAddrTaken_stage() {
   printStage("print stack-alloc vars that have their addr taken");
   // print the locations of declarators and uses of stack variables
   StackAlloc_VarPredicate sa_varPred;
-  RealVarAllocAndUseVisitor env(sa_varPred);
+  Print_RealVarAllocAndUseVisitor env(sa_varPred);
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
