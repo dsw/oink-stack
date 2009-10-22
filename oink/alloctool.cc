@@ -7,6 +7,9 @@
 #include "strutil.h"            // quoted
 #include "oink_util.h"
 
+// FIX: The heapify transformation done here has a lot in common with
+// the stackness analysis in qual.cc
+
 // FIX: This function has a lot of duplication with
 // void MarkVarsStackness_VisitRealVars::visitVariableIdem(Variable*);
 //
