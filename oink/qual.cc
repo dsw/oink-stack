@@ -261,7 +261,7 @@ StacknessMarker::StacknessMarker(bool onStack0)
 
 void StacknessMarker::markValue(Value *v) {
   if (onStack) {
-    // v is a value which is on the stack; mark it ias such
+    // v is a value which is on the stack; mark it as such
     //
     // stack variables of reference type do not allocate data on the
     // stack that can have its address taken (they are an
