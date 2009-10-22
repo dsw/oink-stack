@@ -95,9 +95,14 @@ public:
   {}
   virtual ~RealVarAllocAndUseVisitor() {}
 
+  // visitor methods
   virtual bool visitPQName(PQName *obj);
   virtual bool visitDeclarator(Declarator *);
   virtual bool visitExpression(Expression *);
+
+  // client methods
+  virtual bool visit2Declarator(Declarator *);
+  virtual bool visit2E_variable(E_variable *);
 };
 
 bool RealVarAllocAndUseVisitor::visitPQName(PQName *obj) {
@@ -117,6 +122,18 @@ bool RealVarAllocAndUseVisitor::visitPQName(PQName *obj) {
 bool RealVarAllocAndUseVisitor::visitDeclarator(Declarator *obj) {
   Variable_O *var = asVariable_O(obj->var);
   if (var->filteredOut()) return false;
+  return visit2Declarator(obj);
+}
+
+bool RealVarAllocAndUseVisitor::visitExpression(Expression *obj) {
+  if (obj->isE_variable()) {
+    return visit2E_variable(obj->asE_variable());
+  }
+  return true;
+}
+
+bool RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
+  Variable_O *var = asVariable_O(obj->var);
   if (varPred.pass(var)) {
     printLoc(std::cout, obj->decl->loc);
     std::cout << "decl " << var->name << std::endl;
@@ -124,15 +141,13 @@ bool RealVarAllocAndUseVisitor::visitDeclarator(Declarator *obj) {
   return true;
 }
 
-bool RealVarAllocAndUseVisitor::visitExpression(Expression *obj) {
-  if (obj->isE_variable()) {
-    // Note: if you compile without locations for expressions this
-    // will stop working.
-    Variable_O *var = asVariable_O(obj->asE_variable()->var);
-    if (varPred.pass(var)) {
-      printLoc(std::cout, obj->loc);
-      std::cout << "use " << var->name << std::endl;
-    }
+bool RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
+  // Note: if you compile without locations for expressions this will
+  // stop working.
+  Variable_O *var = asVariable_O(evar->var);
+  if (varPred.pass(var)) {
+    printLoc(std::cout, evar->loc);
+    std::cout << "use " << var->name << std::endl;
   }
   return true;
 }
