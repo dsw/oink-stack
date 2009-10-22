@@ -71,20 +71,25 @@ static void printLoc(std::ostream &out, SourceLoc loc) {
     sourceLocManager->getLine(loc) << ": ";
 }
 
+// **** StackAllocVarPredicate
+
+class StackAlloc_VarPredicate : public VarPredicate {
+public:
+  virtual bool pass(Variable *var) {
+    return allocatedOnStack(var);
+  }
+};
+
 // **** RealVarAllocAndUseVisitor
 
 // visit real variables at their declarators and use sites
 class RealVarAllocAndUseVisitor : private ASTVisitor {
 public:
-  // type for opt-in variable predicate function
-  typedef bool (varPred_t)(Variable *var0);
-
-public:
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
-  varPred_t *varPred;
+  VarPredicate &varPred;
 
   public:
-  RealVarAllocAndUseVisitor(varPred_t *varPred0)
+  RealVarAllocAndUseVisitor(VarPredicate &varPred0)
     : loweredVisitor(this)
     , varPred(varPred0)
   {}
@@ -112,7 +117,7 @@ bool RealVarAllocAndUseVisitor::visitPQName(PQName *obj) {
 bool RealVarAllocAndUseVisitor::visitDeclarator(Declarator *obj) {
   Variable_O *var = asVariable_O(obj->var);
   if (var->filteredOut()) return false;
-  if (varPred(var)) {
+  if (varPred.pass(var)) {
     printLoc(std::cout, obj->decl->loc);
     std::cout << "decl " << var->name << std::endl;
   }
@@ -124,7 +129,7 @@ bool RealVarAllocAndUseVisitor::visitExpression(Expression *obj) {
     // Note: if you compile without locations for expressions this
     // will stop working.
     Variable_O *var = asVariable_O(obj->asE_variable()->var);
-    if (varPred(var)) {
+    if (varPred.pass(var)) {
       printLoc(std::cout, obj->loc);
       std::cout << "use " << var->name << std::endl;
     }
@@ -138,7 +143,8 @@ bool RealVarAllocAndUseVisitor::visitExpression(Expression *obj) {
 void AllocTool::printStackAllocAddrTaken_stage() {
   printStage("print stack-alloc vars that have their addr taken");
   // print the locations of declarators and uses of stack variables
-  RealVarAllocAndUseVisitor env(allocatedOnStack);
+  StackAlloc_VarPredicate sa_varPred;
+  RealVarAllocAndUseVisitor env(sa_varPred);
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);

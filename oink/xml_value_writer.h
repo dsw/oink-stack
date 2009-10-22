@@ -13,7 +13,7 @@
 // #include "Lib/union_find_map.h" // UnionFindMap
 
 // a type for predicates for filtering Varibles
-typedef bool VarPredicate(Variable *var);
+typedef bool VarPredicateFunc(Variable *var);
 
 // This class provides generic traversal functionality as well has
 // having build-in serialization functionality.  FIX: It would be
@@ -66,16 +66,16 @@ virtual bool shouldSerialize(TYPE const *x) {return XTW_SerializeOracle::shouldS
   };
 
   // // predicate for filtering for vars we like
-  // VarPredicate *varPred;
+  // VarPredicateFunc *varPred;
   // // predicate for filtering for values we like
-  // ValuePredicate *valuePred;
+  // ValuePredicateFunc *valuePred;
 
   // for providing generic traversal functionality
   ValueVisitor *valueVisitor;
 
   public:
   XmlValueWriter(IdentityManager &idmgr0,
-                 // VarPredicate *varPred0, ValuePredicate *valuePred0,
+                 // VarPredicateFunc *varPred0, ValuePredicateFunc *valuePred0,
                  ASTVisitor *astVisitor0, ValueVisitor *valueVisitor,
                  std::ostream *out0, int &depth0, bool indent0,
                  XVW_SerializeOracle *serializeOracle0);

@@ -1880,7 +1880,7 @@ void markAsInstanceSpecific(Variable *var0) {
       // FIX: this is a violation of the notion of anyCtorSatisfies as
       // taking a predicate that does not modify the Value in
       // question.
-      v->anyCtorSatisfiesF( (ValuePredicate*) markValueInstanceSpecific );
+      v->anyCtorSatisfiesF( (ValuePredicateFunc*) markValueInstanceSpecific );
     }
   }
 }

@@ -309,7 +309,7 @@ bool StatelessValuePred::operator() (Value const *t)
   return f(t);
 }
 
-bool Value::anyCtorSatisfiesF(ValuePredicate *f) const
+bool Value::anyCtorSatisfiesF(ValuePredicateFunc *f) const
 {
   StatelessValuePred stp(f);
   return anyCtorSatisfies(stp);

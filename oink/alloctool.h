@@ -9,6 +9,13 @@
 #include "oink.h"
 #include "cc_ast_aux.h"         // LoweredASTVisitor
 
+// interface for computing a predicate on variables
+class VarPredicate {
+public:
+  virtual bool pass(Variable *var) = 0;
+  virtual ~VarPredicate() {}
+};
+
 class AllocTool : public virtual Oink {
   // tor ****
   public:

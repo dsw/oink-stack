@@ -1975,7 +1975,7 @@ void Oink::linkCheckErrors(int linkErrors) {
 
 // return a list of variables to serialize.
 void Linker::getOrderedExternVars
-  (VarPredicate *varPred, TailList<Variable_O> &externVars)
+  (VarPredicateFunc *varPred, TailList<Variable_O> &externVars)
 {
   xassert(haveLinked);
   if (sortNameMapDomainWhenSerializing) {
@@ -2169,7 +2169,7 @@ void Oink::serialize_abstrValues(ArchiveSerializer* arc) {
 }
 
 void Oink::serialize_abstrValues_stream
-  (XmlValueWriter &valueWriter, VarPredicate *varPred)
+  (XmlValueWriter &valueWriter, VarPredicateFunc *varPred)
 {
   // serialize the Linker contents; first we make a list and then
   // serialize that

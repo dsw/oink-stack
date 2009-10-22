@@ -15,7 +15,7 @@
 #include "oink_file.h"          // File
 #include "oink_cmd.h"           // InputLang
 #include "value_print.h"        // ValueTypePrinter
-#include "xml_value_writer.h"   // VarPredicate
+#include "xml_value_writer.h"   // VarPredicateFunc
 #include "cc_lang.h"            // CCLang
 #include "useract.h"            // UserActions
 #include "ccparse.h"            // ParseEnv
@@ -60,7 +60,7 @@ public:
   Variable_O *getFunctionForLinking(const char *name);
 
   // return a list of variables to serialize.
-  void getOrderedExternVars(VarPredicate *varPred,
+  void getOrderedExternVars(VarPredicateFunc *varPred,
                             TailList<Variable_O> &externVars);
 
   // // get the funcDefn if any for this variable across translation
@@ -282,7 +282,7 @@ class Oink {
   void serialize_files_stream(std::ostream &out);
   void serialize_abstrValues(ArchiveSerializer* arc);
   void serialize_abstrValues_stream
-    (XmlValueWriter &valueWriter, VarPredicate *varPred);
+    (XmlValueWriter &valueWriter, VarPredicateFunc *varPred);
 
   void* expectOneXmlTag(XmlReaderManager &manager, int expectKind);
   virtual void deserialize_1archive

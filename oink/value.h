@@ -46,12 +46,12 @@ public:
 };
 
 // when you just want a stateless predicate
-typedef bool ValuePredicate(Value const *t);
+typedef bool ValuePredicateFunc(Value const *t);
 
 class StatelessValuePred : public ValuePred {
-  ValuePredicate * const f;
+  ValuePredicateFunc * const f;
 public:
-  explicit StatelessValuePred(ValuePredicate *f0) : f(f0) {}
+  explicit StatelessValuePred(ValuePredicateFunc *f0) : f(f0) {}
   virtual bool operator() (Value const *t);
 };
 
@@ -161,7 +161,7 @@ class Value : public TypeLike
   // automatically wrap 'pred' in a StatelessValuePred;
   // trailing 'F' in name means "function", so as to avoid
   // overloading and overriding on the same name
-  bool anyCtorSatisfiesF(ValuePredicate *f) const;
+  bool anyCtorSatisfiesF(ValuePredicateFunc *f) const;
 
   // invoke 'vis.visitType(this)', and then traverse subtrees
   virtual void traverse(ValueVisitor &vis) = 0;
