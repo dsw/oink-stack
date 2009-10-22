@@ -62,3 +62,6 @@ in/t0539_9.cc
 
 # temporary state that has to be global across runs
 .serialno
+
+# debugging support
+.gdbinit
