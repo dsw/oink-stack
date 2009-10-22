@@ -71,32 +71,31 @@ static void printLoc(std::ostream &out, SourceLoc loc) {
     sourceLocManager->getLine(loc) << ": ";
 }
 
-//**** StackAllocAddrTaken
+// **** RealVarAllocAndUseVisitor
 
-// Stackness analysis classes in qual.cc:
-//   class StacknessMarker {
-//   class MarkStackness_ValueVisitor : public ValueVisitor {
-//   class MarkVarsStackness_VisitRealVars : public VisitRealVars_filter {
-//   class MarkAllocStackness_Visitor : private ASTVisitor {
+// visit real variables at their declarators and use sites
+class RealVarAllocAndUseVisitor : private ASTVisitor {
+public:
+  // type for opt-in variable predicate function
+  typedef bool (varPred_t)(Variable *var0);
 
-// print out declarations of stack allocated variables that have their
-// address taken; FIX: right now only prints stack allocated
-class StackAllocAddrTaken : private ASTVisitor {
-  public:
+public:
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
+  varPred_t *varPred;
 
   public:
-  StackAllocAddrTaken()
+  RealVarAllocAndUseVisitor(varPred_t *varPred0)
     : loweredVisitor(this)
+    , varPred(varPred0)
   {}
-  virtual ~StackAllocAddrTaken() {}
+  virtual ~RealVarAllocAndUseVisitor() {}
 
   virtual bool visitPQName(PQName *obj);
   virtual bool visitDeclarator(Declarator *);
   virtual bool visitExpression(Expression *);
 };
 
-bool StackAllocAddrTaken::visitPQName(PQName *obj) {
+bool RealVarAllocAndUseVisitor::visitPQName(PQName *obj) {
   // from RealVarAndTypeASTVisitor::visitPQName(PQName*): Scott points
   // out that we have to filter out the visitation of PQ_template-s:
   //
@@ -110,22 +109,22 @@ bool StackAllocAddrTaken::visitPQName(PQName *obj) {
   return true;
 }
 
-bool StackAllocAddrTaken::visitDeclarator(Declarator *obj) {
+bool RealVarAllocAndUseVisitor::visitDeclarator(Declarator *obj) {
   Variable_O *var = asVariable_O(obj->var);
   if (var->filteredOut()) return false;
-  if (allocatedOnStack(var)) {
+  if (varPred(var)) {
     printLoc(std::cout, obj->decl->loc);
     std::cout << "decl " << var->name << std::endl;
   }
   return true;
 }
 
-bool StackAllocAddrTaken::visitExpression(Expression *obj) {
+bool RealVarAllocAndUseVisitor::visitExpression(Expression *obj) {
   if (obj->isE_variable()) {
     // Note: if you compile without locations for expressions this
     // will stop working.
     Variable_O *var = asVariable_O(obj->asE_variable()->var);
-    if (allocatedOnStack(var)) {
+    if (varPred(var)) {
       printLoc(std::cout, obj->loc);
       std::cout << "use " << var->name << std::endl;
     }
@@ -135,10 +134,11 @@ bool StackAllocAddrTaken::visitExpression(Expression *obj) {
 
 // **** AllocTool
 
+// FIX: doesn't check for addr taken yet
 void AllocTool::printStackAllocAddrTaken_stage() {
   printStage("print stack-alloc vars that have their addr taken");
   // print the locations of declarators and uses of stack variables
-  StackAllocAddrTaken env;
+  RealVarAllocAndUseVisitor env(allocatedOnStack);
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
