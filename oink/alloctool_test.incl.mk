@@ -17,9 +17,9 @@ alloctool-check:
            > Test/stack_alloc1.cc.out
 	diff Test/stack_alloc1.cc.cor Test/stack_alloc1.cc.out
 # check -fa-print-stack-alloc-addr-taken
-	./alloctool -fa-print-stack-alloc-addr-taken Test/stack_alloc3.cc \
-           > Test/stack_alloc3.cc.out
-	diff Test/stack_alloc3.cc.cor Test/stack_alloc3.cc.out
+	./alloctool -fa-print-stack-alloc-addr-taken Test/stack_alloc2.cc \
+           > Test/stack_alloc2.cc.out
+	diff Test/stack_alloc2.cc.cor Test/stack_alloc2.cc.out
 
 # put an input file here to generate its control flow graph as a
 # post-script file
