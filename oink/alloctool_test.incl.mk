@@ -9,7 +9,8 @@ endif
 .PHONY: alloctool-check
 alloctool-check:
 # check that it can parse C/C++ that has qualifiers in it
-	./alloctool -fa-print-stack-alloc-addr-taken Test/stack_alloc2.cc \
+	./alloctool -fa-print-stack-alloc-addr-taken \
+           Test/stack_alloc_parse_qual.cc \
            > /dev/null
 # check -fa-print-stack-alloc
 	./alloctool -fa-print-stack-alloc Test/stack_alloc1.cc \
