@@ -71,12 +71,113 @@ static void printLoc(std::ostream &out, SourceLoc loc) {
     sourceLocManager->getLine(loc) << ": ";
 }
 
+// **** AddrTakenASTVisitor
+
+// make a set of variables that have had their addr taken
+class AddrTakenASTVisitor : private ASTVisitor {
+public:
+  LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
+  SObjSet<Variable*> &addrTaken;
+
+public:
+  AddrTakenASTVisitor(SObjSet<Variable*> &addrTaken0)
+    : loweredVisitor(this)
+    , addrTaken(addrTaken0)
+  {}
+  virtual ~AddrTakenASTVisitor() {}
+
+  // visitor methods
+  virtual bool visitPQName(PQName *);
+  virtual bool visitExpression(Expression *);
+
+  // utility methods
+private:
+  // if this expression ultimately resolves to a variable, find it;
+  // otherwise return NULL
+  void registerUltimateVariable(Expression *);
+};
+
+bool AddrTakenASTVisitor::visitPQName(PQName *obj) {
+  // from RealVarAndTypeASTVisitor::visitPQName(PQName*): Scott points
+  // out that we have to filter out the visitation of PQ_template-s:
+  //
+  // SGM 2007-08-25: Do not look inside PQ_template argument lists.
+  // For template template parameters, the argument list may refer to
+  // an uninstantiated template, but client analyses will just treat
+  // the whole PQ_template as just a name; no need to look inside it.
+  if (obj->isPQ_template()) {
+    return false;
+  }
+  return true;
+}
+
+void AddrTakenASTVisitor::registerUltimateVariable(Expression *expr) {
+  // Note that we do not do the right thing in the presence of
+  // -fo-instance-sensitive, which is why alloctool_cmd.cc refuses to
+  // run if you pass that flag.
+  expr = expr->skipGroups();
+  if (expr->isE_variable()) {
+    addrTaken.add(expr->asE_variable()->var);
+  } else if (expr->isE_fieldAcc()) {
+    E_fieldAcc *efield = expr->asE_fieldAcc();
+    Variable *field = efield->field;
+    addrTaken.add(field);
+    // the address of a field was taken so we consider the address of
+    // the whole expression to have been taken:
+    //   A a;
+    //   &(a.x);
+    // that technically takes the address of x but we consider it to
+    // also take the address of a
+    xassert(field->getScopeKind() == SK_CLASS);
+    // static vars aren't actually allocated in their class
+    if (!field->hasFlag(DF_STATIC)) {
+      registerUltimateVariable(efield->obj);
+    }
+  } else if (expr->isE_arrow()) {
+    xfailure("E_arrow should have been turned into E_fieldAcc "
+             "during typechecking");
+  } else if (expr->isE_cond()) {
+    // gcc complains, but it still lets you do it:
+    //   &(argc==1 ? a : b)
+    // addr_of_econd.c:6: warning: argument to '&' not really an
+    // lvalue; this will be a hard error in the future
+    E_cond *econd = expr->asE_cond();
+    // because of this non-determinisim, we can't make
+    // registerUltimateVariable return a variable and de-couple it from
+    // addrTake.add()
+    registerUltimateVariable(econd->th);
+    registerUltimateVariable(econd->el);
+  }
+  // if an E_addrOf of an E_deref results in a variable having its
+  // address taken, then the variable's address was already taken in
+  // the first place somewhere else
+}
+
+bool AddrTakenASTVisitor::visitExpression(Expression *obj) {
+  if (obj->isE_addrOf()) {
+    registerUltimateVariable(obj->asE_addrOf()->expr);
+  }
+  // FIX: E_funCall and E_constructor and E_throw can take the address
+  // of a variable if it is passed to a reference
+#warning do other expressions here
+  return true;
+}
+
 // **** StackAllocVarPredicate
 
 class StackAlloc_VarPredicate : public VarPredicate {
 public:
+  // require that the variable also be in this set if provided
+  SObjSet<Variable*> *varSetFilter;
+
+  explicit StackAlloc_VarPredicate(SObjSet<Variable*> *varSetFilter0=0)
+    : varSetFilter(varSetFilter0)
+  {}
+
   virtual bool pass(Variable *var) {
-    return allocatedOnStack(var);
+    if (!allocatedOnStack(var)) return false;
+    if (!varSetFilter) return true;
+    return varSetFilter->contains(var);
   }
 };
 
@@ -175,9 +276,13 @@ bool Print_RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
 
 // **** AllocTool
 
-// FIX: doesn't check for addr taken yet
-void AllocTool::printStackAllocAddrTaken_stage() {
-  printStage("print stack-alloc vars that have their addr taken");
+// if it is a parameter we are going to have a hard time
+// auto-heapifying it; we should only do it for those on the stack and
+// give an error for anything else
+#warning cant heapify non-auto (such as params)
+
+void AllocTool::printStackAlloc_stage() {
+  printStage("print stack-allocated vars");
   // print the locations of declarators and uses of stack variables
   StackAlloc_VarPredicate sa_varPred;
   Print_RealVarAllocAndUseVisitor env(sa_varPred);
@@ -187,6 +292,31 @@ void AllocTool::printStackAllocAddrTaken_stage() {
     printStart(file->name.c_str());
     TranslationUnit *unit = file2unit.get(file);
     unit->traverse(env.loweredVisitor);
+    printStop();
+  }
+}
+
+void AllocTool::printStackAllocAddrTaken_stage() {
+  printStage("print stack-allocated addr-taken vars");
+  foreachSourceFile {
+    File *file = files.data();
+    maybeSetInputLangFromSuffix(file);
+    printStart(file->name.c_str());
+    TranslationUnit *unit = file2unit.get(file);
+
+    // optimization: while a variable in one translation unit may have
+    // its address taken in another, this cannot happen to
+    // stack-allocated variables; if you wanted to find all variables
+    // that had their address taken, you would need the linker
+    // imitator
+    SObjSet<Variable*> addrTaken;
+    AddrTakenASTVisitor at_env(addrTaken);
+    unit->traverse(at_env.loweredVisitor);
+
+    StackAlloc_VarPredicate sa_varPred(&addrTaken);
+    Print_RealVarAllocAndUseVisitor env(sa_varPred);
+    unit->traverse(env.loweredVisitor);
+
     printStop();
   }
 }

@@ -10,6 +10,8 @@
 
 class AllocToolCmd : public virtual OinkCmd {
   public:
+  // print out every declaration allocating a var on the stack
+  bool print_stack_alloc;
   // print out every declaration (1) allocating a var on the stack
   // where (2) the var also has its address taken
   bool print_stack_alloc_addr_taken;

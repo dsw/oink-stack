@@ -22,6 +22,7 @@ class AllocTool : public virtual Oink {
   AllocTool() {}
   
   // methods ****
+  void printStackAlloc_stage();
   void printStackAllocAddrTaken_stage();
 };
 

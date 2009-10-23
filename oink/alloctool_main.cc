@@ -31,6 +31,9 @@ int main(int argc, char **argv) {
     m.filter_stage();
     m.prettyPrint_stage();
     // alloctool-specific features go here
+    if (alloctoolCmd->print_stack_alloc) {
+      m.printStackAlloc_stage();
+    }
     if (alloctoolCmd->print_stack_alloc_addr_taken) {
       m.printStackAllocAddrTaken_stage();
     }
