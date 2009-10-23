@@ -7,8 +7,22 @@
 #include "strutil.h"            // quoted
 #include "oink_util.h"
 
+// FIX: some things cannot be heapified easily and will have to be
+// done by hand.  So we should just (1) not transform those cases, but
+// (2) print something.  We should have an option that does not even
+// attempt to transform but just prints what it would do.
+//
+// If a stack-allocated variable is a parameter we are going to have a
+// hard time auto-heapifying it; just give an error.
+//
+// E_funCall, E_constructor, and template instantiation can take the
+// address of a variable if they take arguments by reference.  Further
+// E_throw can take the address of a variable if it is caught by
+// reference.
+
 // FIX: The heapify transformation done here has a lot in common with
-// the stackness analysis in qual.cc
+// the stackness analysis in qual.cc; we should be using that to
+// confirm our transformations here.
 
 // FIX: This function has a lot of duplication with
 // void MarkVarsStackness_VisitRealVars::visitVariableIdem(Variable*);
@@ -157,9 +171,6 @@ bool AddrTakenASTVisitor::visitExpression(Expression *obj) {
   if (obj->isE_addrOf()) {
     registerUltimateVariable(obj->asE_addrOf()->expr);
   }
-  // FIX: E_funCall and E_constructor and E_throw can take the address
-  // of a variable if it is passed to a reference
-#warning do other expressions here
   return true;
 }
 
@@ -275,11 +286,6 @@ bool Print_RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
 }
 
 // **** AllocTool
-
-// if it is a parameter we are going to have a hard time
-// auto-heapifying it; we should only do it for those on the stack and
-// give an error for anything else
-#warning cant heapify non-auto (such as params)
 
 void AllocTool::printStackAlloc_stage() {
   printStage("print stack-allocated vars");
