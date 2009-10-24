@@ -78,6 +78,10 @@ public:
 
   CPPSourceLoc(SourceLoc loc);
 
+  bool operator == (CPPSourceLoc const &other) const {
+    return _loc == other._loc;
+  }
+
   bool hasExactPosition() const {
     return _loc != SL_UNKNOWN && (!macroExpansion || exactPosition);
   }
