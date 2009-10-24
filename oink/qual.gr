@@ -33,7 +33,8 @@ verbatim {
     {
       ASTTypeId *tid =
         new ASTTypeId(new TS_simple(loc, ST_ELLIPSIS),
-                      new Declarator(new D_name(loc ENDLOCARG(SL_GENERATED),
+                      new Declarator(EXPR_LOC(SL_GENERATED)
+                                     new D_name(loc ENDLOCARG(SL_GENERATED),
                                                 NULL /*name*/),
                                      NULL /*init*/));
       appendQLiterals(tid->spec->ql, deepClone(ql));

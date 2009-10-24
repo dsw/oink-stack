@@ -110,9 +110,15 @@ nonterm(Expression*) PostfixExpression {
          t = t->clone();
          t->decl->decl = new D_pointer(loc, CV_NONE, t->decl->decl);
 
+         // dsw: NOTE: I use SL_GENERATED here for the Declarator and
+         // the D_name because they are just abstract things anyway
+         // and the end of the compound statement hardly seems like
+         // the "right" end point for them
          ASTTypeId *ulong = new ASTTypeId
            (new TS_simple(loc, ST_UNSIGNED_INT),
-            new Declarator(new D_name(loc ENDLOCARG(endloc), NULL), NULL));
+            new Declarator(EXPR_LOC(SL_GENERATED)
+                           new D_name(loc ENDLOCARG(SL_GENERATED), NULL),
+                           NULL));
 
 
 	 // dmandelin@mozilla.com   bug 416051
@@ -726,7 +732,9 @@ nonterm(IDeclarator*) DirectAbstractDeclarator {
 nonterm(Declarator*) MemberDeclarator {
   -> n:IdentifierOpt ":" e:ConstantExpression /*DROPPED*/AttributeSpecifierList    // bitfield
        // this body is an exact copy of the cc.gr one without attributes
-       { return new Declarator(new D_bitfield(loc, n? new PQ_name(loc, n) : NULL, e),
+       { return new Declarator(EXPR_LOC(endloc)
+                               new D_bitfield
+                               (loc, n? new PQ_name(loc, n) : NULL, e),
                                NULL /*init*/); }
 }
 

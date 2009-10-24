@@ -106,11 +106,16 @@ public:
 
   // when this is the last element in a parameter list, the function
   // is a vararg function
-  ASTTypeId *ellipsisTypeId(SourceLoc loc ENDLOCARG(SourceLoc endloc))
+  ASTTypeId *ellipsisTypeId(SourceLoc loc)
   {
+    // dsw: NOTE: I use SL_GENERATED here for the Declarator and the
+    // D_name because they are just abstract things anyway and the end
+    // of the compound statement hardly seems like the "right" end
+    // point for them
     ASTTypeId *tid =
       new ASTTypeId(new TS_simple(loc, ST_ELLIPSIS),
-                    new Declarator(new D_name(loc ENDLOCARG(endloc),
+                    new Declarator(EXPR_LOC(SL_GENERATED)
+                                   new D_name(loc ENDLOCARG(SL_GENERATED),
                                               NULL /*name*/),
                                    NULL /*init*/));
     return tid;
@@ -571,7 +576,7 @@ nonterm(FakeList<ArgExpression>*) NewPlacementOpt {
 
 nonterm(ASTTypeId*) NewTypeId {
   -> spec:TypeSpecifier decl:NewDeclaratorOpt
-       { return new ASTTypeId(spec, new Declarator(decl, NULL)); }
+    { return new ASTTypeId(spec, new Declarator(EXPR_LOC(endloc) decl, NULL)); }
 }
 
 // NewDeclaratorOpt is, as a regular expression:
@@ -982,8 +987,10 @@ nonterm(Condition*) Condition {
 
   // variable declaration in the condition clause
   -> spec:TypeSpecifier decl:Declarator "=" e:AssignmentExpression
-       { return new CN_decl(new ASTTypeId(spec,
-                  new Declarator(decl, new IN_expr(loc, e)))); }
+       { return new CN_decl
+           (new ASTTypeId
+            (spec, new Declarator(EXPR_LOC(endloc)
+                                  decl, new IN_expr(loc, e)))); }
 }
 
 nonterm(Condition*) ConditionOpt {
@@ -1404,10 +1411,10 @@ nonterm(Declarator*) InitDeclarator {
   fun merge(L,R) { L->addAmbiguity(R); return L; }
 
   -> d:Declarator                       // (int)  x
-       { return new Declarator(d, NULL); }
+       { return new Declarator(EXPR_LOC(endloc) d, NULL); }
 
   -> d:Declarator i:Initializer         // (int)  x = 5
-       { return new Declarator(d, i); }
+       { return new Declarator(EXPR_LOC(endloc) d, i); }
 }
 
 nonterm(Initializer*) Initializer {
@@ -1597,7 +1604,8 @@ nonterm(enum CVFlags) CVQualifier {
 // it is, for example, what appears inside the parens of a typecast
 nonterm(ASTTypeId*) TypeId {
   -> spec:TypeSpecifier decl:AbstractDeclaratorOpt
-       { return new ASTTypeId(spec, new Declarator(decl, NULL)); }
+       { return new ASTTypeId
+           (spec, new Declarator(EXPR_LOC(endloc) decl, NULL)); }
 }
 
 nonterm(IDeclarator*) AbstractDeclaratorOpt {
@@ -1667,14 +1675,14 @@ nonterm(FakeList<ASTTypeId>*) ParameterDeclarationList {
   // last (and perhaps only) arg is "..."
   -> "..."
        { return FakeList<ASTTypeId>::makeList
-           (ellipsisTypeId(loc ENDLOCARG(endloc)));
+           (ellipsisTypeId(loc));
        }
 
   // last arg is "...", and 2nd-to-last is not separated by
   // a comma from the "..."
   -> d:ParameterDeclaration "..."
        { FakeList<ASTTypeId> *list =
-           FakeList<ASTTypeId>::makeList(ellipsisTypeId(loc ENDLOCARG(endloc)));
+           FakeList<ASTTypeId>::makeList(ellipsisTypeId(loc));
          d->setNext(list->first());
          return FakeList<ASTTypeId>::makeList(d); }
 
@@ -1712,14 +1720,14 @@ nonterm(Declarator*) ParameterDeclarator {
   fun merge(L,R) { L->addAmbiguity(R); return L; }
 
   -> d:UnqualifiedDeclarator
-       { return new Declarator(d, NULL /*init*/); }
+       { return new Declarator(EXPR_LOC(endloc) d, NULL /*init*/); }
   -> d:UnqualifiedDeclarator "=" e:AssignmentExpression
-       { return new Declarator(d, new IN_expr(loc, e)); }
+       { return new Declarator(EXPR_LOC(endloc) d, new IN_expr(loc, e)); }
 
   -> d:AbstractDeclaratorOpt
-       { return new Declarator(d, NULL /*init*/); }
+       { return new Declarator(EXPR_LOC(endloc) d, NULL /*init*/); }
   -> d:AbstractDeclaratorOpt "=" e:AssignmentExpression
-       { return new Declarator(d, new IN_expr(loc, e)); }
+       { return new Declarator(EXPR_LOC(endloc) d, new IN_expr(loc, e)); }
 }
 
 
@@ -1776,7 +1784,8 @@ nonterm(Function*) FunctionDefinition {
          Function *ret = new Function(
            r->dflags,                // decl flags (static, extern, etc.)
            r->spec,                  // type specifier for return value
-           new Declarator(d, NULL),  // declarator with fn name, params
+           new Declarator(EXPR_LOC(endloc)
+                          d, NULL),  // declarator with fn name, params
            NULL,                     // ctor member inits
            b,                        // function body statement
            NULL                      // exception handlers
@@ -1793,7 +1802,8 @@ nonterm(Function*) FunctionDefinition {
          Function *ret = new Function(
            r->dflags,                // decl flags (static, extern, etc.)
            r->spec,                  // type specifier for return value
-           new Declarator(d, NULL),  // declarator with fn name, params
+           new Declarator(EXPR_LOC(endloc)
+                          d, NULL),  // declarator with fn name, params
            NULL,                     // ctor member inits
            b,                        // function body statement
            h                         // exception handlers
@@ -1814,7 +1824,8 @@ nonterm(Function*) FunctionDefinition {
          return new Function(
            m,                             // decl flags: explicit, virtual, or none
            new TS_simple(loc, ST_CDTOR),  // type specifier: ctor or dtor
-           new Declarator(d, NULL),       // declarator with fn name, params
+           new Declarator(EXPR_LOC(endloc)
+                          d, NULL),       // declarator with fn name, params
            c,                             // ctor member inits
            b,                             // function body statement
            NULL                           // exception handlers
@@ -1825,7 +1836,7 @@ nonterm(Function*) FunctionDefinition {
          return new Function(
            DF_NONE,
            new TS_simple(loc, ST_CDTOR),
-           new Declarator(d, NULL),
+           new Declarator(EXPR_LOC(endloc) d, NULL),
            c,
            b,
            NULL
@@ -1839,7 +1850,7 @@ nonterm(Function*) FunctionDefinition {
          return new Function(
            e,                        // decl flags: explicit is only possibility
            new TS_simple(loc, ST_CDTOR),
-           new Declarator(d, NULL),
+           new Declarator(EXPR_LOC(endloc) d, NULL),
            c,
            b,
            h                         // exception handlers
@@ -1850,7 +1861,7 @@ nonterm(Function*) FunctionDefinition {
          return new Function(
            DF_NONE,
            new TS_simple(loc, ST_CDTOR),
-           new Declarator(d, NULL),
+           new Declarator(EXPR_LOC(endloc) d, NULL),
            c,
            b,
            h
@@ -2088,7 +2099,7 @@ nonterm(FakeList<Declarator>*) MemberDeclaratorList {
 // a place to put member initializers
 nonterm(Declarator*) MemberDeclarator {
   -> d:Declarator
-       { return new Declarator(d, NULL /*init*/); }
+       { return new Declarator(EXPR_LOC(endloc) d, NULL /*init*/); }
 
   // here I merge two cases (PureSpecifier and ConstantInitializer) that
   // the std splits; given that the parser doesn't track at this level
@@ -2096,11 +2107,13 @@ nonterm(Declarator*) MemberDeclarator {
   // difference between PureSpecifier and ConstantInitializer just by
   // looking at their syntax, we'd be disambiguating this later anyway
   -> d:Declarator "=" e:ConstantExpression       // pure, and member inits
-       { return new Declarator(d, new IN_expr(loc, e)); }
+       { return new Declarator(EXPR_LOC(endloc) d, new IN_expr(loc, e)); }
 
   -> n:IdentifierOpt ":" e:ConstantExpression    // bitfield
-       { return new Declarator(new D_bitfield(loc, n? new PQ_name(loc, n) : NULL, e),
-                               NULL /*init*/); }
+       { return new Declarator
+           (EXPR_LOC(endloc)
+            new D_bitfield(loc, n? new PQ_name(loc, n) : NULL, e),
+            NULL /*init*/); }
 }
 
 nonterm(StringRef) IdentifierOpt {
@@ -2188,7 +2201,8 @@ nonterm(OperatorName*) ConversionFunctionId {
 
 nonterm(ASTTypeId*) ConversionTypeId {
   -> s:TypeSpecifier d:ConversionDeclaratorOpt
-       { return new ASTTypeId(s, new Declarator(d, NULL /*init*/)); }
+       { return new ASTTypeId
+           (s, new Declarator(EXPR_LOC(endloc) d, NULL /*init*/)); }
 }
 
 // collects the stars that might follow a type specifier in a
@@ -2544,9 +2558,15 @@ nonterm(Handler*) Handler {
        { return new Handler(d, s); }
 
   -> "catch" "(" "..." ")" s:CompoundStatement
-       { return new Handler(
+       {
+         // dsw: NOTE: I use SL_GENERATED here for the Declarator and
+         // the D_name because they are just abstract things anyway
+         // and the end of the compound statement hardly seems like
+         // the "right" end point for them
+         return new Handler(
            new ASTTypeId(new TS_simple(loc, ST_ELLIPSIS),
-                         new Declarator(new D_name(loc ENDLOCARG(endloc),
+                         new Declarator(EXPR_LOC(SL_GENERATED)
+                                        new D_name(loc ENDLOCARG(SL_GENERATED),
                                                    NULL /*name*/),
                                         NULL /*init*/)),
            s); }
@@ -2554,9 +2574,11 @@ nonterm(Handler*) Handler {
 
 nonterm(ASTTypeId*) HandlerParameter {
   -> s:TypeSpecifier d:UnqualifiedDeclarator
-       { return new ASTTypeId(s, new Declarator(d, NULL /*init*/)); }
+       { return new ASTTypeId(s, new Declarator(EXPR_LOC(endloc)
+                                                d, NULL /*init*/)); }
   -> s:TypeSpecifier d:AbstractDeclaratorOpt
-       { return new ASTTypeId(s, new Declarator(d, NULL /*init*/)); }
+       { return new ASTTypeId(s, new Declarator(EXPR_LOC(endloc)
+                                                d, NULL /*init*/)); }
 }
 
 

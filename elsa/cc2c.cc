@@ -13,9 +13,6 @@
 // node position macros
 #include "exprloc.h"
 
-// for now
-SourceLoc const SL_GENERATED = SL_UNKNOWN;
-
 
 // set/restore the current compound statement
 #define SET_CUR_COMPOUND_STMT(newValue) \
@@ -165,7 +162,7 @@ StringRef CC2CEnv::getTypeName(Type *t)
       DF_TYPEDEF,
       typeSpec,
       FakeList<Declarator>::makeList(
-        new Declarator(decl, NULL /*init*/)
+        new Declarator(EXPR_LOC(SL_GENERATED) decl, NULL /*init*/)
       )
     )
   ));
@@ -296,6 +293,7 @@ FakeList<ASTTypeId> *CC2CEnv::makeParameterTypes(FunctionType *ft)
       new ASTTypeId(
         new TS_simple(SL_GENERATED, ST_ELLIPSIS),
         new Declarator(
+          EXPR_LOC(SL_GENERATED)
           new D_name(SL_GENERATED ENDLOCARG(SL_GENERATED), NULL /*name*/),
           NULL /*init*/
         )
@@ -310,6 +308,7 @@ FakeList<ASTTypeId> *CC2CEnv::makeParameterTypes(FunctionType *ft)
       new ASTTypeId(
         makeTypeSpecifier(param->type),
         new Declarator(
+          EXPR_LOC(SL_GENERATED)
           new D_name(SL_GENERATED ENDLOCARG(SL_GENERATED), makeName(param)),
           NULL /*init*/
         )
@@ -384,6 +383,7 @@ Function *Function::cc2c(CC2CEnv &env) const
     dflags & (DF_STATIC | DF_EXTERN | DF_INLINE),
     env.makeTypeSpecifier(funcType->retType),
     new Declarator(
+      EXPR_LOC(SL_GENERATED)
       new D_func(
         SL_GENERATED,
         new D_name(SL_GENERATED ENDLOCARG(SL_GENERATED),
@@ -466,6 +466,7 @@ void Declaration::cc2c(CC2CEnv &env) const
         env.makeTypeSpecifier(var->type),
         FakeList<Declarator>::makeList(
           new Declarator(
+            EXPR_LOC(SL_GENERATED)
             new D_name(SL_GENERATED ENDLOCARG(SL_GENERATED), env.makeName(var)),
             genInit
           )

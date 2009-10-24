@@ -35,7 +35,7 @@ nonterm(Function*) KandRFunctionDefinition {
   //     body
          b:FunctionBody
     {
-      return makeKandRdefn(loc, rds, id, ds, b);
+      return makeKandRdefn(loc, endloc, rds, id, ds, b);
     }
 }
 
@@ -54,7 +54,7 @@ nonterm(Function*) KandRFunctionDefinition_implInt {
 
       // the return type defaults to int
       Declaration *rds = new Declaration(DF_NONE, new TS_simple(loc, ST_IMPLINT), NULL);
-      return makeKandRdefn(loc, rds, id, ds, b);
+      return makeKandRdefn(loc, endloc, rds, id, ds, b);
     }
 
   // one more, for "static" (etc.)
@@ -64,7 +64,7 @@ nonterm(Function*) KandRFunctionDefinition_implInt {
       DeclFlags df = uberDeclFlags(m);
       CVFlags cv = uberCVFlags(m);
       Declaration *rds = new Declaration(df, new_TS_simple(loc, cv, ST_IMPLINT), NULL);
-      return makeKandRdefn(loc, rds, id, ds, b);
+      return makeKandRdefn(loc, endloc, rds, id, ds, b);
     }
 }
 
@@ -117,11 +117,11 @@ nonterm(Declarator*) KandRInitDeclarator {
   fun merge(L,R) { L->addAmbiguity(R); return L; }
 
   -> d:Declarator                       // (int)  x
-       { return new Declarator(d, NULL); }
+       { return new Declarator(EXPR_LOC(endloc) d, NULL); }
 
   // The whole point is to omit this possibility
 //    -> d:Declarator i:Initializer         // (int)  x = 5
-//         { return new Declarator(d, i); }
+//         { return new Declarator(EXPR_LOC(endloc) d, i); }
 }
 
 
@@ -140,7 +140,7 @@ nonterm(IDeclarator*) KandRDirectDeclarator {
   // FIX: not sure I'm not ruling out something in the grammar that
   // should be legal here
 //    -> n:IdExpression_no_colon_colon
-//         { return new D_name(loc, n); }
+//         { return new D_name(loc ENDLOCARG(endloc), n); }
 
   // function declarator; the return type comes from the type
   // specifier that precedes this
@@ -275,7 +275,8 @@ nonterm(Function*) ImplIntFunctionDefinition {
          return new Function(
            df,                                // decl flags
            new_TS_simple(loc, cv, ST_CDTOR),  // type specifier: ctor or dtor
-           new Declarator(d, NULL),           // declarator with fn name, params
+           new Declarator(EXPR_LOC(endloc)
+                          d, NULL),           // declarator with fn name, params
            NULL,                              // ctor member inits
            b,                                 // function body statement
            NULL                               // exception handlers
@@ -292,7 +293,8 @@ nonterm(Function*) ImplIntFunctionDefinition {
          return new Function(
            df,                                // decl flags
            new_TS_simple(loc, cv, ST_CDTOR),  // type specifier: ctor or dtor
-           new Declarator(d, NULL),           // declarator with fn name, params
+           new Declarator(EXPR_LOC(endloc)
+                          d, NULL),           // declarator with fn name, params
            NULL,                              // ctor member inits
            b,                                 // function body statement
            NULL                               // exception handlers
@@ -312,7 +314,8 @@ nonterm(Function*) ImplIntFunctionDefinition {
          return new Function(
            df,                                // decl flags
            new_TS_simple(loc, cv, ST_CDTOR),  // type specifier: ctor or dtor
-           new Declarator(d, NULL),           // declarator with fn name, params
+           new Declarator(EXPR_LOC(endloc)
+                          d, NULL),           // declarator with fn name, params
            NULL,                              // ctor member inits
            b,                                 // function body statement
            NULL                               // exception handlers
@@ -391,7 +394,7 @@ nonterm(ASTTypeId*) ParameterDeclaration {
       }
       return new ASTTypeId
         (new TS_simple(loc, ST_IMPLINT),
-         new Declarator(d, NULL /*init*/));
+         new Declarator(EXPR_LOC(endloc) d, NULL /*init*/));
     }
 
   -> "register" /*implicit-int*/ d:UnqualifiedDeclarator
@@ -404,7 +407,7 @@ nonterm(ASTTypeId*) ParameterDeclaration {
       }
       return new ASTTypeId
         (new TS_simple(loc, ST_IMPLINT),
-         new Declarator(d, NULL /*init*/));
+         new Declarator(EXPR_LOC(endloc) d, NULL /*init*/));
     }
 }
 
@@ -425,7 +428,8 @@ nonterm(ASTTypeId*) ImplicitIntTypeId {
   -> spec:ImplicitIntTypeSpecifier
        { return new ASTTypeId
            (spec, new Declarator
-            (new D_name(loc ENDLOCARG(endloc), NULL), NULL)); }
+            (EXPR_LOC(endloc) new D_name
+             (loc ENDLOCARG(endloc), NULL), NULL)); }
 }
 
 

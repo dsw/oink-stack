@@ -43,9 +43,6 @@
 #include "exprloc.h"
 #include "overload.h"
 
-// FIX: move this somewhere else
-#define SL_GENERATED SL_UNKNOWN
-
 // cc_type.h
 Type *makeLvalType(TypeFactory &tfac, Type *underlying);
 
@@ -130,7 +127,9 @@ Declarator *ElabVisitor::makeDeclarator(SourceLoc loc, Variable *var, Declarator
 {
   IDeclarator *idecl = makeD_name(loc, var);
 
-  Declarator *decl = new Declarator(idecl, NULL /*init*/);
+  Declarator *decl = new Declarator
+    (EXPR_LOC(SL_GENERATED)
+     idecl, NULL /*init*/);
   decl->var = var;
   decl->type = var->type;
   xassert(decl->context == DC_UNKNOWN);
@@ -181,7 +180,8 @@ Declarator *ElabVisitor::makeFuncDeclarator(SourceLoc loc, Variable *var, Declar
                                       CV_NONE,
                                       NULL /*exnSpec*/);
 
-  Declarator *funcDecl = new Declarator(funcIDecl, NULL /*init*/);
+  Declarator *funcDecl = new Declarator
+    (EXPR_LOC(SL_GENERATED) funcIDecl, NULL /*init*/);
   funcDecl->var = var;
   funcDecl->type = var->type;
   xassert(funcDecl->context == DC_UNKNOWN);

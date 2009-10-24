@@ -55,6 +55,10 @@ enum SourceLoc {
   SL_UNKNOWN=0
 };
 
+// FIX: perhaps make this its own thing; note that there are tests
+// against SL_UNKNOWN that would have to be generalized to include
+// SL_GENERATED
+#define SL_GENERATED SL_UNKNOWN
 
 // This class manages all the data associated with creating and
 // interpreting SourceLocs.  It's expected to be a singleton in the

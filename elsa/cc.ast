@@ -351,6 +351,7 @@ class Member (SourceLoc loc, SourceLoc endloc) {
 // specifier.  It may have an initializing expression, depending on
 // the context.
 class Declarator (
+  SourceLoc endloc,                    // end of the whole Declarator
   IDeclarator decl,                    // syntax of type designation
   Initializer init                     // (nullable) optional data initializer
 ) {

@@ -6,9 +6,6 @@
 #include "cc_lang.h"        // CCLang
 #include "exprloc.h"        // ENDLOCARG
 
-// FIX: move this somewhere else
-#define SL_GENERATED SL_UNKNOWN
-
 // implemented in implint.cc
 bool filterOutImplIntFirstParam
   (SourceLoc loc,
@@ -58,7 +55,8 @@ FakeList<ASTTypeId>* kAndR_makeParamList
     d = new ASTTypeId
       (new TS_simple(pqName->loc, ST_INT),
        new Declarator
-       (new D_name
+       (EXPR_LOC(SL_GENERATED)
+        new D_name
         (pqName->loc ENDLOCARG(SL_GENERATED),
          // I'll make a new PQ_name to be safe that we have no
          // aliasing problems
@@ -78,13 +76,15 @@ FakeList<ASTTypeId>* kAndR_makeParamList
 }
 
 // create a Function definition with K&R params
-Function *makeKandRdefn(SourceLoc loc, Declaration *rds, IDeclarator *id,
+Function *makeKandRdefn(SourceLoc loc, SourceLoc endloc,
+                        Declaration *rds, IDeclarator *id,
                         S_compound *ds, S_compound *b)
 {
   Function *ret = new Function (
      rds->dflags,           // decl flags (static, extern, etc.)
      rds->spec,             // type specifier for return value
-     new Declarator(id, NULL), // declarator with fn name, params
+     new Declarator(endloc,
+                    id, NULL),  // declarator with fn name, params
      NULL,                  // ctor member inits
      b,                     // function body statement
      NULL                   // exception handlers

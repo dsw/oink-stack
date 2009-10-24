@@ -6,7 +6,8 @@
 
 #include "cc_ast.h"         // AST
 
-Function *makeKandRdefn(SourceLoc loc, Declaration *rds, IDeclarator *id,
+Function *makeKandRdefn(SourceLoc loc, SourceLoc endloc,
+                        Declaration *rds, IDeclarator *id,
                         S_compound *ds, S_compound *b);
 void fixUpKandRFunctionDef
   (Declaration *rds, IDeclarator *id, S_compound *ds);
