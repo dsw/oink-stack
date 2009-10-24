@@ -8,25 +8,55 @@
 #include "oink_util.h"
 #include "Pork/patcher.h"       // Patcher
 
-// FIX:
+// FIX tests:
 //
-// If a stack-allocated variable is a parameter we are going to have a
-// hard time auto-heapifying it; just print it out.
+// Tests should test declarators that are complex: pointers and arrays
+// etc.
+//
+// Tests should test with and without initializers
+//
+// Tests should test arrays and multiple forms of embedding
+//
+// Tests should test inserting before returns at and not at the end of
+// blocks.
+
+// FIX C:
+//
+// Do array derefs as well, not just members of structs.
+//
+// And what about when those are embedded in each other?
+//
+// DONE: If a stack-allocated variable is a parameter we are going to
+// have a hard time auto-heapifying it; just print it out.
+//
+// Optimization: track where the pointer goes and if it is passed only
+// to the same module then elide the heapify.
+
+// FIX C++:
 //
 // In C++ E_funCall, E_constructor, and template instantiation can
-// take the address of a variable if they take arguments by reference;
-// further E_throw can take the address of a variable if it is caught
-// by reference.
-
-// FIX: The heapify transformation done here has a lot in common with
-// the stackness analysis in qual.cc; we should be using that to
-// confirm our transformations here.
-
-// FIX: This function has a lot of duplication with
-// void MarkVarsStackness_VisitRealVars::visitVariableIdem(Variable*);
+// take the address of a variable if they take arguments by reference.
 //
+// Further E_throw can take the address of a variable if it is caught
+// by reference; actually, I think a throw starts with one copy by
+// value, so maybe it doesn't count, but the catch by ref would get a
+// pointer to that copy, which is yet another problem depending on
+// where the value in the sky lives.
+
+// FIX commonality with qual.cc stackness analysis: The heapify
+// transformation done here has a lot in common with the stackness
+// analysis in qual.cc; we should be using that to confirm our
+// transformations here.
+//
+// Actually, the qual.cc stackness analysis doesn't seem to do the
+// right thing: it looks for pointers from the heap to the stack, but
+// we also need to know about pointers from the stack to the stack.
+
 // Is this variable allocated on the stack?  Note that if it is in a
-// class/struct/union we say no as it's container decides it
+// class/struct/union we say no as it's container decides it.
+//
+// FIX: This function has a lot of duplication with qual.cc function
+// void MarkVarsStackness_VisitRealVars::visitVariableIdem(Variable*);
 static bool allocatedOnStack(Variable *var0) {
   Variable_O *var = asVariable_O(var0);
   xassert(var->getReal());
@@ -371,30 +401,78 @@ static D_name *find_D_name(IDeclarator *decl) {
 
 bool Heapify_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
   Variable_O *var = asVariable_O(obj->var);
-  if (varPred.pass(var)) {
-    if (var->getScopeKind() == SK_PARAMETER) {
-      printLoc(std::cout, obj->decl->loc);
-      std::cout << "param decl " << var->name << std::endl;
-    } else if (var->getScopeKind() == SK_FUNCTION) {
-//       printLoc(std::cout, obj->decl->loc);
-//       std::cout << "auto decl " << var->name << std::endl;
-      // find the D_name
-      D_name *dname = find_D_name(obj->decl);
-      // it shouldn't be possible to take the address of a bitfield
-      // and that's the only way this can fail
-      xassert(dname);
-      CPPSourceLoc ppLoc(dname->loc);
-      CPPSourceLoc ppLoc_end(dname->endloc);
-      if (!(ppLoc_end.hasExactPosition() && ppLoc_end.hasExactPosition())) {
-        printLoc(std::cout, obj->decl->loc);
-        std::cout << "auto decl does not have exact position"
-                  << var->name << std::endl;
-        return true;
-      }
-      patcher.insertBefore(ppLoc, "(*");
-      patcher.insertBefore(ppLoc_end, ")");
-    } else xfailure("non-param non-auto var can't be stack allocated");
+  xassert(var->name);
+  if (!varPred.pass(var)) return true;
+
+  // parameter vars
+  if (var->getScopeKind() == SK_PARAMETER) {
+    // we can't transform these so we just tell the user about them
+    printLoc(std::cout, obj->decl->loc);
+    std::cout << "param decl " << var->name << std::endl;
+    return true;
   }
+
+  // function auto vars
+  xassert(var->getScopeKind() == SK_FUNCTION);
+  // this would be the error message if xassert allowed for one
+//   xfailure("non-param non-auto var can't be stack allocated");
+//
+//   printLoc(std::cout, obj->decl->loc);
+//   std::cout << "auto decl " << var->name << std::endl;
+
+  // set up to transform the declaration
+  D_name *dname = find_D_name(obj->decl);
+  // it shouldn't be possible to take the address of a bitfield and
+  // that's the only way this can fail
+  xassert(dname);
+  CPPSourceLoc dname_ploc(dname->loc);
+  CPPSourceLoc dname_ploc_end(dname->endloc);
+  bool const dname_ploc_exact =
+    dname_ploc.hasExactPosition() &&
+    dname_ploc_end.hasExactPosition();
+  if (!dname_ploc_exact) {
+    // if the location is not exact, we can't insert anything
+    printLoc(std::cout, obj->decl->loc);
+    std::cout << "FAIL: auto decl does not have exact position"
+              << var->name << std::endl;
+    return true;
+  }
+  // don't actually do this yet because it could interfere with the
+  // below transformation
+  stringBuilder insert_at_dname_end = ")";
+
+  // transform the initializer
+  if (obj->init) {
+    // copy the initializer so we can paste it later
+    //   CPPSourceLoc pre_startInit_loc(obj->init->loc);
+    //   CPPSourceLoc pre_stopInit_loc(obj->endloc);
+    //   PairLoc initPairLoc(pre_startInit_loc, pre_stopInit_loc);
+    //   UnboxedPairLoc initUnboxedPairLoc(initPairLoc);
+    //   std::string initStr = patcher.getRange(initUnboxedPairLoc);
+  } else {
+    // no initializer to transform; so add one that calls xmalloc()
+    CPPSourceLoc decltor_ploc_end(obj->endloc);
+    if (decltor_ploc_end.hasExactPosition()) {
+      // FIX: not sure how this simplistic approach to names is going
+      // to hold up in C++; note that if you don't want to use
+      // var->name you can use this:
+      //   StringRef name = dname->name->getName();
+      char const *newInit =
+        stringb(" = xmalloc(sizeof *" << var->name << ")");
+      // make sure to insert twice in the same place
+
+      if (dname_ploc_end == decltor_ploc_end) {
+        insert_at_dname_end << newInit;
+      } else {
+        patcher.insertBefore(decltor_ploc_end, newInit);
+      }
+    }
+  }
+
+  // finish transforming the declaration
+  patcher.insertBefore(dname_ploc, "(*");
+  patcher.insertBefore(dname_ploc_end, insert_at_dname_end.c_str());
+
   return true;
 }
 
@@ -409,8 +487,8 @@ bool Heapify_RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
     } else if (var->getScopeKind() == SK_FUNCTION) {
 //       printLoc(std::cout, evar->loc);
 //       std::cout << "auto use " << var->name << std::endl;
-      CPPSourceLoc ppLoc(evar->loc);
-      patcher.insertBefore(ppLoc, "\n// xform this use\n");
+      CPPSourceLoc evar_ploc(evar->loc);
+      patcher.insertBefore(evar_ploc, "\n// xform this use\n");
     } else xfailure("non-param non-auto var can't be stack allocated");
   }
   return true;
