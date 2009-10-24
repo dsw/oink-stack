@@ -8,8 +8,8 @@ struct Foo {
 };
 
 void f(int x,
-       int x2)
-{                               // paramter: stack
+       int x2)                  // paramter: stack
+{
   int *x2_p = &x2;              // and addr taken: yes
   int y;                        // function/auto: stack
   int y2;

@@ -20,16 +20,7 @@ alloctool-check:
 	./alloctool -fa-print-stack-alloc-addr-taken Test/stack_alloc2.cc \
            > Test/stack_alloc2.cc.out
 	diff Test/stack_alloc2.cc.cor Test/stack_alloc2.cc.out
-
-# put an input file here to generate its control flow graph as a
-# post-script file
-CHK_ALLOCTOOL :=
-# CHK_ALLOCTOOL += Test/alloctool1.cc
-
-# .PHONY: alloctool-check-print/%
-# alloctool-check-print/%:
-# 	rm -f $*.ihg.dot $*.ihg.dot.ps
-# 	./alloctool -fs-print-ihg $* > $*.ihg.dot
-# 	dot -Tps -o $*.ihg.dot.ps $*.ihg.dot
-# .PHONY: alloctool-check-print
-# alloctool-check-print: $(addprefix alloctool-check-print/,$(CHK_ALLOCTOOL))
+# check -fa-heapify-stack-alloc-addr-taken
+	./alloctool -fa-heapify-stack-alloc-addr-taken Test/stack_alloc3.c \
+           > Test/stack_alloc3.c.patch.out
+	diff Test/stack_alloc3.c.patch.cor Test/stack_alloc3.c.patch.out

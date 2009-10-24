@@ -6,6 +6,7 @@
 #include "oink.gr.gen.h"        // CCParse_Oink
 #include "strutil.h"            // quoted
 #include "oink_util.h"
+#include "Pork/patcher.h"       // Patcher
 
 // FIX: some things cannot be heapified easily and will have to be
 // done by hand.  So we should just (1) not transform those cases, but
@@ -268,8 +269,13 @@ public:
 bool Print_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
   Variable_O *var = asVariable_O(obj->var);
   if (varPred.pass(var)) {
-    printLoc(std::cout, obj->decl->loc);
-    std::cout << "decl " << var->name << std::endl;
+    if (var->getScopeKind() == SK_PARAMETER) {
+      printLoc(std::cout, obj->decl->loc);
+      std::cout << "param decl " << var->name << std::endl;
+    } else if (var->getScopeKind() == SK_FUNCTION) {
+      printLoc(std::cout, obj->decl->loc);
+      std::cout << "auto decl " << var->name << std::endl;
+    } else xfailure("non param auto var can't be stack allocated");
   }
   return true;
 }
@@ -279,8 +285,64 @@ bool Print_RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
   // stop working.
   Variable_O *var = asVariable_O(evar->var);
   if (varPred.pass(var)) {
-    printLoc(std::cout, evar->loc);
-    std::cout << "use " << var->name << std::endl;
+    if (var->getScopeKind() == SK_PARAMETER) {
+      printLoc(std::cout, evar->loc);
+      std::cout << "param use " << var->name << std::endl;
+    } else if (var->getScopeKind() == SK_FUNCTION) {
+      printLoc(std::cout, evar->loc);
+      std::cout << "auto use " << var->name << std::endl;
+    } else xfailure("non param auto var can't be stack allocated");
+  }
+  return true;
+}
+
+// **** Heapify_RealVarAllocAndUseVisitor
+
+class Heapify_RealVarAllocAndUseVisitor
+  : public Pred_RealVarAllocAndUseVisitor
+{
+public:
+  // NOTE: this emits the diff in its dtor
+  Patcher patcher;
+
+  Heapify_RealVarAllocAndUseVisitor(VarPredicate &varPred0)
+    : Pred_RealVarAllocAndUseVisitor(varPred0)
+  {}
+
+  virtual bool visit2Declarator(Declarator *);
+  virtual bool visit2E_variable(E_variable *);
+};
+
+bool Heapify_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
+  Variable_O *var = asVariable_O(obj->var);
+  if (varPred.pass(var)) {
+    if (var->getScopeKind() == SK_PARAMETER) {
+      printLoc(std::cout, obj->decl->loc);
+      std::cout << "param decl " << var->name << std::endl;
+    } else if (var->getScopeKind() == SK_FUNCTION) {
+//       printLoc(std::cout, obj->decl->loc);
+//       std::cout << "auto decl " << var->name << std::endl;
+      CPPSourceLoc ppLoc(obj->decl->loc);
+      patcher.insertBefore(ppLoc, "\n// xform this declarator\n");
+    } else xfailure("non param auto var can't be stack allocated");
+  }
+  return true;
+}
+
+bool Heapify_RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
+  // Note: if you compile without locations for expressions this will
+  // stop working.
+  Variable_O *var = asVariable_O(evar->var);
+  if (varPred.pass(var)) {
+    if (var->getScopeKind() == SK_PARAMETER) {
+      printLoc(std::cout, evar->loc);
+      std::cout << "param use " << var->name << std::endl;
+    } else if (var->getScopeKind() == SK_FUNCTION) {
+//       printLoc(std::cout, evar->loc);
+//       std::cout << "auto use " << var->name << std::endl;
+      CPPSourceLoc ppLoc(evar->loc);
+      patcher.insertBefore(ppLoc, "\n// xform this use\n");
+    } else xfailure("non param auto var can't be stack allocated");
   }
   return true;
 }
@@ -324,5 +386,33 @@ void AllocTool::printStackAllocAddrTaken_stage() {
     unit->traverse(env.loweredVisitor);
 
     printStop();
+  }
+}
+
+void AllocTool::heapifyStackAllocAddrTaken_stage() {
+  printStage("heapify stack-allocated addr-taken vars");
+  foreachSourceFile {
+    File *file = files.data();
+    maybeSetInputLangFromSuffix(file);
+    printStart(file->name.c_str());
+    TranslationUnit *unit = file2unit.get(file);
+
+    // optimization: while a variable in one translation unit may have
+    // its address taken in another, this cannot happen to
+    // stack-allocated variables; if you wanted to find all variables
+    // that had their address taken, you would need the linker
+    // imitator
+    SObjSet<Variable*> addrTaken;
+    AddrTakenASTVisitor at_env(addrTaken);
+    unit->traverse(at_env.loweredVisitor);
+
+    StackAlloc_VarPredicate sa_varPred(&addrTaken);
+    Heapify_RealVarAllocAndUseVisitor env(sa_varPred);
+    unit->traverse(env.loweredVisitor);
+
+    printStop();
+    // NOTE: the Heapify_RealVarAllocAndUseVisitor will be dtored
+    // after this so anything we print above will be delimited from
+    // the patch
   }
 }

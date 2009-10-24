@@ -120,7 +120,6 @@ public:
                     std::string const &str);
   void insertBefore(CPPSourceLoc const &csl, std::string const &str,
                     int offset = 0);
-
 private:
   void printHunkHeaderAndDeletedLines
   (unsigned int minLine,

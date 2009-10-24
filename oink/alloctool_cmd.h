@@ -15,6 +15,9 @@ class AllocToolCmd : public virtual OinkCmd {
   // print out every declaration (1) allocating a var on the stack
   // where (2) the var also has its address taken
   bool print_stack_alloc_addr_taken;
+  // heapify every declaration (1) allocating a var on the stack where
+  // (2) the var also has its address taken
+  bool heapify_stack_alloc_addr_taken;
 
   AllocToolCmd();
 

@@ -37,6 +37,9 @@ int main(int argc, char **argv) {
     if (alloctoolCmd->print_stack_alloc_addr_taken) {
       m.printStackAllocAddrTaken_stage();
     }
+    if (alloctoolCmd->heapify_stack_alloc_addr_taken) {
+      m.heapifyStackAllocAddrTaken_stage();
+    }
   } catch (xBase &e) {
     std::cerr << e << std::endl;
     code = INTERNALERROR_ExitCode;

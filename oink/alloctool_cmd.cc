@@ -10,6 +10,7 @@
 AllocToolCmd::AllocToolCmd()
   : print_stack_alloc(false)
   , print_stack_alloc_addr_taken(false)
+  , heapify_stack_alloc_addr_taken(false)
 {}
 
 void AllocToolCmd::readOneArg(int &argc, char **&argv) {
@@ -30,6 +31,8 @@ void AllocToolCmd::readOneArg(int &argc, char **&argv) {
               "-fa-", "print-stack-alloc");
   HANDLE_FLAG(print_stack_alloc_addr_taken,
               "-fa-", "print-stack-alloc-addr-taken");
+  HANDLE_FLAG(heapify_stack_alloc_addr_taken,
+              "-fa-", "heapify-stack-alloc-addr-taken");
 }
 
 void AllocToolCmd::dump() {
@@ -42,6 +45,8 @@ void AllocToolCmd::dump() {
          boolToStr(print_stack_alloc));
   printf("fa-print-stack-alloc-addr-taken: %s\n",
          boolToStr(print_stack_alloc_addr_taken));
+  printf("fa-heapify-stack-alloc-addr-taken: %s\n",
+         boolToStr(heapify_stack_alloc_addr_taken));
 }
 
 void AllocToolCmd::printHelp() {
@@ -61,6 +66,9 @@ void AllocToolCmd::printHelp() {
      "  -fa-print-stack-alloc-addr-taken : print out every declaration\n"
      "    (1) allocating a var on the stack where\n"
      "    (2) the var also has its address taken\n"
+     "  -fa-heapify-stack-alloc-addr-taken : heapify every declaration\n"
+     "    (1) allocating a var on the stack where\n"
+     "    (2) the var also has its address taken\n"
      "");
 }
 
@@ -74,11 +82,16 @@ void AllocToolCmd::initializeFromFlags() {
                     "Can't use -fo-instance-sensitive with alloctool.");
   }
 
-  if (print_stack_alloc &&
-      print_stack_alloc_addr_taken) {
-    throw UserError(USER_ERROR_ExitCode,
-                    "Don't use -fo-print-stack-alloc and "
-                    "-fo-print-stack-alloc-addr-taken together.");
+  if (print_stack_alloc +
+      print_stack_alloc_addr_taken +
+      heapify_stack_alloc_addr_taken > 2) {
+    throw UserError
+      (USER_ERROR_ExitCode,
+       "Use at most one of:\n"
+       "\t-fo-print-stack-alloc\n"
+       "\t-fo-print-stack-alloc-addr-taken\n"
+       "\t-fo-heapify-stack-alloc-addr-taken\n"
+       );
   }
 
 }

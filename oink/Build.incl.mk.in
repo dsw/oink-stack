@@ -511,6 +511,11 @@ $(LOCAL_CC_O): %.o: %.cc
 	@$(DEP)   -o $@ -DOINK $(INCL_MACRO_FLAGS_D) $(CCFLAGS) $(DEP_INCL_CC) $< > $*.d
 -include $(LOCAL_CC_O:.o=.d)
 
+# build Pork extensions
+Pork/%.o: Pork/%.cc
+# 	$(CXX) -c -o $@ $(CCFLAGS) $<
+	$(MAKE) -C Pork $*.o
+
 # built from the LibCpdInit tree
 CPDINIT_O :=
 CPDINIT_O += cpdinit.o
@@ -772,6 +777,7 @@ bullet: $(BASIC_LIBS)
 
 alloctool: alloctool_main.o
 alloctool: $(ALLOCTOOL_LOCAL_CC_O)
+alloctool: Pork/patcher.o
 alloctool: $(DATAFLOW_LOCAL_CC_O)
 # alloctool: $(OINK_LOCAL_CC_O)
 alloctool: $(QUAL_LOCAL_CC_O)

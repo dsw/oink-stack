@@ -1,20 +1,20 @@
 
 ---- START ---- Test/stack_alloc2.cc
-Test/stack_alloc2.cc:11: decl x2
-Test/stack_alloc2.cc:13: use x2
-Test/stack_alloc2.cc:15: decl y2
-Test/stack_alloc2.cc:16: use y2
-Test/stack_alloc2.cc:19: decl foo1
-Test/stack_alloc2.cc:19: use foo1
-Test/stack_alloc2.cc:19: use foo1
-Test/stack_alloc2.cc:20: use foo1
-Test/stack_alloc2.cc:22: decl foo3
-Test/stack_alloc2.cc:22: use foo3
-Test/stack_alloc2.cc:22: use foo3
-Test/stack_alloc2.cc:23: use foo3
-Test/stack_alloc2.cc:36: decl a2
-Test/stack_alloc2.cc:36: decl a3
-Test/stack_alloc2.cc:37: use a2
-Test/stack_alloc2.cc:38: use a3
+Test/stack_alloc2.cc:11: param decl x2
+Test/stack_alloc2.cc:13: param use x2
+Test/stack_alloc2.cc:15: auto decl y2
+Test/stack_alloc2.cc:16: auto use y2
+Test/stack_alloc2.cc:19: auto decl foo1
+Test/stack_alloc2.cc:19: auto use foo1
+Test/stack_alloc2.cc:19: auto use foo1
+Test/stack_alloc2.cc:20: auto use foo1
+Test/stack_alloc2.cc:22: auto decl foo3
+Test/stack_alloc2.cc:22: auto use foo3
+Test/stack_alloc2.cc:22: auto use foo3
+Test/stack_alloc2.cc:23: auto use foo3
+Test/stack_alloc2.cc:36: param decl a2
+Test/stack_alloc2.cc:36: param decl a3
+Test/stack_alloc2.cc:37: param use a2
+Test/stack_alloc2.cc:38: param use a3
 ---- STOP ----
 

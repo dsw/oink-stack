@@ -10,7 +10,8 @@ struct Foo {
 int f(int x) {                  // paramter: yes
   int y;                        // function/auto: yes
   static int z;                 // function/static == global: no
-  ++x;                          // use
+  ++x;                          // param use
+  ++y;                          // auto use
 }
 
 template<class T>               // template param: no
@@ -22,7 +23,9 @@ Quux<int> Q1;                   // global: no
 
 template<class T>               // template param: no
 T gronk(T a) {                  // param: yes
-  return a;                     // use
+  T b;                          // function/auto: yes
+  b;                            // auto use
+  return a;                     // param use
 }
 
 void blort() {
