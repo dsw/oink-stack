@@ -10,7 +10,7 @@ Test/stack_alloc3.c:12: param use x2
 -  int y2;
 -  int *y2_p = &y2;              // and addr taken: yes
 +  int 
-+// xform this declarator
++// xform this dname
 +y2;
 +  int *y2_p = &
 +// xform this use
@@ -19,7 +19,7 @@ Test/stack_alloc3.c:12: param use x2
 -  struct Foo foo1;              // function/auto: stack
 -  struct Foo *foo1_p = &foo1;   // and addr taken: yes
 +  struct Foo 
-+// xform this declarator
++// xform this dname
 +foo1;              // function/auto: stack
 +  struct Foo *foo1_p = &
 +// xform this use
@@ -28,7 +28,7 @@ Test/stack_alloc3.c:12: param use x2
 -  struct Foo foo3;              // function/auto: stack
 -  int *foo3_q_p = &(foo3.q);    // and addr taken: yes
 +  struct Foo 
-+// xform this declarator
++// xform this dname
 +foo3;              // function/auto: stack
 +  int *foo3_q_p = &(
 +// xform this use

@@ -272,7 +272,7 @@ bool Print_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
     } else if (var->getScopeKind() == SK_FUNCTION) {
       printLoc(std::cout, obj->decl->loc);
       std::cout << "auto decl " << var->name << std::endl;
-    } else xfailure("non param auto var can't be stack allocated");
+    } else xfailure("non-param non-auto var can't be stack allocated");
   }
   return true;
 }
@@ -288,7 +288,7 @@ bool Print_RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
     } else if (var->getScopeKind() == SK_FUNCTION) {
       printLoc(std::cout, evar->loc);
       std::cout << "auto use " << var->name << std::endl;
-    } else xfailure("non param auto var can't be stack allocated");
+    } else xfailure("non-param non-auto var can't be stack allocated");
   }
   return true;
 }
@@ -310,6 +310,65 @@ public:
   virtual bool visit2E_variable(E_variable *);
 };
 
+// find the D_name nested down within an IDeclarator
+static D_name *find_D_name(IDeclarator *decl) {
+  if (false) {                  // orthogonality
+
+  // "x" (NULL means abstract declarator or anonymous parameter);
+  // this is used for ctors and dtors as well as ordinary names
+  // (dtor names start with "~"); it's also used for operator names
+//   -> D_name(PQName /*nullable*/ name);
+  } else if (decl->isD_name()) {
+    return decl->asD_name();
+
+  // "*x" (as in "int *x")
+//   -> D_pointer(CVFlags cv,  // optional qualifiers applied to ptr type
+//                IDeclarator base);
+  } else if (decl->isD_pointer()) {
+    return find_D_name(decl->asD_pointer()->base);
+
+  // "&x"
+//   -> D_reference(IDeclarator base);
+  } else if (decl->isD_reference()) {
+    return find_D_name(decl->asD_pointer()->base);
+
+  // "f(int)"
+//   -> D_func(IDeclarator base,                       // D_name of function, typically
+//             FakeList<ASTTypeId> *params,            // params with optional default values
+//             CVFlags cv,                             // optional "const" for member functions
+//             ExceptionSpec /*nullable*/ exnSpec);    // throwable exceptions
+  } else if (decl->isD_func()) {
+    return find_D_name(decl->asD_pointer()->base);
+
+  // "a[5]" or "b[]"
+//   -> D_array(IDeclarator base, Expression /*nullable*/ size);
+  } else if (decl->isD_array()) {
+    return find_D_name(decl->asD_pointer()->base);
+
+  // "c : 2"
+  //
+  // I use a PQName here instead of a StringRef for uniformity
+  // (so every IDeclarator ends with a PQName); there are never
+  // qualifiers on a bitfield name
+//   -> D_bitfield(PQName /*nullable*/ name, Expression bits);
+  } else if (decl->isD_bitfield()) {
+    return NULL;
+
+  // "X::*p"
+//   -> D_ptrToMember(PQName nestedName, CVFlags cv, IDeclarator base);
+  } else if (decl->isD_ptrToMember()) {
+    return find_D_name(decl->asD_pointer()->base);
+
+  // declarator grouping operator: it's semantically irrelevant
+  // (i.e. equivalent to just 'base' alone), but plays a role in
+  // disambiguation
+//   -> D_grouping(IDeclarator base);
+  } else if (decl->isD_grouping()) {
+    return find_D_name(decl->asD_pointer()->base);
+
+  } else xfailure("can't happen");
+}
+
 bool Heapify_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
   Variable_O *var = asVariable_O(obj->var);
   if (varPred.pass(var)) {
@@ -319,9 +378,14 @@ bool Heapify_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
     } else if (var->getScopeKind() == SK_FUNCTION) {
 //       printLoc(std::cout, obj->decl->loc);
 //       std::cout << "auto decl " << var->name << std::endl;
-      CPPSourceLoc ppLoc(obj->decl->loc);
-      patcher.insertBefore(ppLoc, "\n// xform this declarator\n");
-    } else xfailure("non param auto var can't be stack allocated");
+      // find the D_name
+      D_name *dname = find_D_name(obj->decl);
+      // it shouldn't be possible to take the address of a bitfield
+      // and that's the only way this can fail
+      xassert(dname);
+      CPPSourceLoc ppLoc(dname->loc);
+      patcher.insertBefore(ppLoc, "\n// xform this dname\n");
+    } else xfailure("non-param non-auto var can't be stack allocated");
   }
   return true;
 }
@@ -339,7 +403,7 @@ bool Heapify_RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
 //       std::cout << "auto use " << var->name << std::endl;
       CPPSourceLoc ppLoc(evar->loc);
       patcher.insertBefore(ppLoc, "\n// xform this use\n");
-    } else xfailure("non param auto var can't be stack allocated");
+    } else xfailure("non-param non-auto var can't be stack allocated");
   }
   return true;
 }
@@ -391,6 +455,8 @@ void AllocTool::heapifyStackAllocAddrTaken_stage() {
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
+    // FIX: this doesn't work for C++ yet
+    #warning fail if it isnt C
     printStart(file->name.c_str());
     TranslationUnit *unit = file2unit.get(file);
 
