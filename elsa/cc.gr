@@ -106,11 +106,12 @@ public:
 
   // when this is the last element in a parameter list, the function
   // is a vararg function
-  ASTTypeId *ellipsisTypeId(SourceLoc loc)
+  ASTTypeId *ellipsisTypeId(SourceLoc loc ENDLOCARG(SourceLoc endloc))
   {
     ASTTypeId *tid =
       new ASTTypeId(new TS_simple(loc, ST_ELLIPSIS),
-                    new Declarator(new D_name(loc, NULL /*name*/),
+                    new Declarator(new D_name(loc ENDLOCARG(endloc),
+                                              NULL /*name*/),
                                    NULL /*init*/));
     return tid;
   }
@@ -583,7 +584,7 @@ nonterm(ASTTypeId*) NewTypeId {
 // it (so I'll see the counterexample syntax if it exists)
 nonterm(IDeclarator*) NewDeclaratorOpt {
   -> empty
-       { return new D_name(loc, NULL); }
+       { return new D_name(loc ENDLOCARG(endloc), NULL); }
 
   // pointers
   -> "*" cv:CVQualifierSeqOpt d:NewDeclaratorOpt
@@ -598,7 +599,7 @@ nonterm(IDeclarator*) DirectNewDeclarator {
   fun keep(x) { return x!=NULL; }
 
   -> /*abstract declarator*/ "[" sz:Expression "]"
-       { return new_D_array(loc, new D_name(loc, NULL), sz); }
+       { return new_D_array(loc, new D_name(loc ENDLOCARG(endloc), NULL), sz); }
   -> d:DirectNewDeclarator "[" sz:ConstantExpression "]"
        { return new_D_array(loc, d, sz); }
 }
@@ -1495,11 +1496,11 @@ nonterm(IDeclarator*) DirectDeclarator {
   // note: this rule handles constructor names!
   // note: this also handles operator names!
   -> n:IdExpression//_no_colon_colon
-       { return new D_name(loc, n); }
+       { return new D_name(loc ENDLOCARG(endloc), n); }
 
   // dtor
   -> n:PQDtorName
-       { return new D_name(loc, n); }
+       { return new D_name(loc ENDLOCARG(endloc), n); }
 
   // function declarator; the return type comes from the type
   // specifier that precedes this
@@ -1600,7 +1601,7 @@ nonterm(ASTTypeId*) TypeId {
 }
 
 nonterm(IDeclarator*) AbstractDeclaratorOpt {
-  -> empty                 { return new D_name(loc, NULL); }
+  -> empty                 { return new D_name(loc ENDLOCARG(endloc), NULL); }
   -> d:AbstractDeclarator  { return d; }
 }
 
@@ -1617,7 +1618,8 @@ nonterm(IDeclarator*) AbstractDeclarator {
 }
 
 nonterm(IDeclarator*) DirectAbstractDeclaratorOpt {
-  -> empty                       { return new D_name(loc, NULL /*name*/); }
+  -> empty                       { return new D_name(loc ENDLOCARG(endloc),
+                                                     NULL /*name*/); }
   -> d:DirectAbstractDeclarator  { return d; }
 }
 
@@ -1664,13 +1666,15 @@ nonterm(FakeList<ASTTypeId>*) ParameterDeclarationClause {
 nonterm(FakeList<ASTTypeId>*) ParameterDeclarationList {
   // last (and perhaps only) arg is "..."
   -> "..."
-       { return FakeList<ASTTypeId>::makeList(ellipsisTypeId(loc)); }
+       { return FakeList<ASTTypeId>::makeList
+           (ellipsisTypeId(loc ENDLOCARG(endloc)));
+       }
 
   // last arg is "...", and 2nd-to-last is not separated by
   // a comma from the "..."
   -> d:ParameterDeclaration "..."
        { FakeList<ASTTypeId> *list =
-           FakeList<ASTTypeId>::makeList(ellipsisTypeId(loc));
+           FakeList<ASTTypeId>::makeList(ellipsisTypeId(loc ENDLOCARG(endloc)));
          d->setNext(list->first());
          return FakeList<ASTTypeId>::makeList(d); }
 
@@ -2196,7 +2200,7 @@ nonterm(IDeclarator*) ConversionDeclaratorOpt {
   // there is still an S/R conflict for "::" and I'm not sure how
   // to resolve that one...
   -> empty                             precedence(TOK_PREFER_SHIFT)
-       { return new D_name(loc, NULL /*name*/); }
+       { return new D_name(loc ENDLOCARG(endloc), NULL /*name*/); }
 
   -> "*" cv:CVQualifierSeqOpt d:ConversionDeclaratorOpt
        { return new D_pointer(loc, cv, d); }
@@ -2542,7 +2546,8 @@ nonterm(Handler*) Handler {
   -> "catch" "(" "..." ")" s:CompoundStatement
        { return new Handler(
            new ASTTypeId(new TS_simple(loc, ST_ELLIPSIS),
-                         new Declarator(new D_name(loc, NULL /*name*/),
+                         new Declarator(new D_name(loc ENDLOCARG(endloc),
+                                                   NULL /*name*/),
                                         NULL /*init*/)),
            s); }
 }

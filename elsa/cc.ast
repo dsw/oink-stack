@@ -408,7 +408,7 @@ class IDeclarator(SourceLoc loc) {
   // "x" (NULL means abstract declarator or anonymous parameter);
   // this is used for ctors and dtors as well as ordinary names
   // (dtor names start with "~"); it's also used for operator names
-  -> D_name(PQName /*nullable*/ name);
+  -> D_name(SourceLoc endloc, PQName /*nullable*/ name);
 
   // "*x" (as in "int *x")
   -> D_pointer(CVFlags cv,  // optional qualifiers applied to ptr type

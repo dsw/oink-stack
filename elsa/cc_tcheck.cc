@@ -43,6 +43,9 @@
 #endif
 
 
+// FIX: move this somewhere else
+#define SL_GENERATED SL_UNKNOWN
+
 // forwards in this file
 
 void tcheckPQName(PQName *&name, Env &env, Scope *scope = NULL,
@@ -6236,8 +6239,10 @@ Type *E_funCall::itcheck_x(Env &env, Expression *&replacement)
       }
       ASTTypeId *voidId =
         new ASTTypeId(new TS_simple(env.loc(), ST_VOID),
-                      new Declarator(new D_name(env.loc(), NULL /*name*/),
-                                     NULL /*init*/));
+                      new Declarator
+                      (new D_name(env.loc() ENDLOCARG(SL_GENERATED),
+                                  NULL /*name*/),
+                       NULL /*init*/));
       replacement = new E_cast(EXPR_LOC(SL_UNKNOWN ENDLOCARG(SL_UNKNOWN)) voidId, fa->obj);
       replacement->tcheck(env, replacement);
       return replacement->type;
@@ -7031,8 +7036,10 @@ Type *E_constructor::inner2_itcheck(Env &env, Expression *&replacement)
     // contortions, but that's silly since the E_constructor already
     // carries a perfectly good type specifier ('this->spec'), and so
     // all we need to do is add an empty declarator
-    ASTTypeId *typeSyntax = new ASTTypeId(this->spec,
-      new Declarator(new D_name(this->spec->loc, NULL /*name*/), NULL /*init*/));
+    ASTTypeId *typeSyntax = new ASTTypeId
+      (this->spec,
+       new Declarator(new D_name(this->spec->loc ENDLOCARG(SL_GENERATED),
+                                 NULL /*name*/), NULL /*init*/));
     if (args->count() == 1) {
       replacement =
         new E_cast(EXPR_LOC(SL_UNKNOWN ENDLOCARG(SL_UNKNOWN)) typeSyntax, args->first()->expr);

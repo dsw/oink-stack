@@ -113,7 +113,8 @@ StringRef CC2CEnv::getTypeName(Type *t)
   IDeclarator *decl = NULL;
 
   // 'decl' will always be built on top of this.
-  D_name *baseName = new D_name(SL_GENERATED, makePQ_name(entry->name));
+  D_name *baseName = new D_name(SL_GENERATED ENDLOCARG(SL_GENERATED),
+                                makePQ_name(entry->name));
 
   switch (t->getTag()) {
     case Type::T_ATOMIC: {
@@ -295,7 +296,7 @@ FakeList<ASTTypeId> *CC2CEnv::makeParameterTypes(FunctionType *ft)
       new ASTTypeId(
         new TS_simple(SL_GENERATED, ST_ELLIPSIS),
         new Declarator(
-          new D_name(SL_GENERATED, NULL /*name*/),
+          new D_name(SL_GENERATED ENDLOCARG(SL_GENERATED), NULL /*name*/),
           NULL /*init*/
         )
       )
@@ -309,7 +310,7 @@ FakeList<ASTTypeId> *CC2CEnv::makeParameterTypes(FunctionType *ft)
       new ASTTypeId(
         makeTypeSpecifier(param->type),
         new Declarator(
-          new D_name(SL_GENERATED, makeName(param)),
+          new D_name(SL_GENERATED ENDLOCARG(SL_GENERATED), makeName(param)),
           NULL /*init*/
         )
       )
@@ -385,7 +386,8 @@ Function *Function::cc2c(CC2CEnv &env) const
     new Declarator(
       new D_func(
         SL_GENERATED,
-        new D_name(SL_GENERATED, env.makeName(nameAndParams->var)),
+        new D_name(SL_GENERATED ENDLOCARG(SL_GENERATED),
+                   env.makeName(nameAndParams->var)),
         env.makeParameterTypes(funcType),
         CV_NONE,
         NULL /*exnSpec*/
@@ -464,7 +466,7 @@ void Declaration::cc2c(CC2CEnv &env) const
         env.makeTypeSpecifier(var->type),
         FakeList<Declarator>::makeList(
           new Declarator(
-            new D_name(SL_GENERATED, env.makeName(var)),
+            new D_name(SL_GENERATED ENDLOCARG(SL_GENERATED), env.makeName(var)),
             genInit
           )
         )

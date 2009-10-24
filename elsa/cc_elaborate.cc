@@ -43,6 +43,9 @@
 #include "exprloc.h"
 #include "overload.h"
 
+// FIX: move this somewhere else
+#define SL_GENERATED SL_UNKNOWN
+
 // cc_type.h
 Type *makeLvalType(TypeFactory &tfac, Type *underlying);
 
@@ -114,7 +117,8 @@ Variable *ElabVisitor::makeVariable(SourceLoc loc, StringRef name, Type *type, D
 // Variable -> D_name
 D_name *ElabVisitor::makeD_name(SourceLoc loc, Variable *var)
 {
-  D_name *ret = new D_name(loc, new PQ_variable(loc, var));
+  D_name *ret = new D_name(loc ENDLOCARG(SL_GENERATED),
+                           new PQ_variable(loc, var));
   return ret;
 }
 

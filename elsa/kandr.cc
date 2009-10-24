@@ -4,7 +4,10 @@
 #include "kandr.h"          // this module
 #include "generic_aux.h"    // genericSetNext
 #include "cc_lang.h"        // CCLang
+#include "exprloc.h"        // ENDLOCARG
 
+// FIX: move this somewhere else
+#define SL_GENERATED SL_UNKNOWN
 
 // implemented in implint.cc
 bool filterOutImplIntFirstParam
@@ -56,7 +59,7 @@ FakeList<ASTTypeId>* kAndR_makeParamList
       (new TS_simple(pqName->loc, ST_INT),
        new Declarator
        (new D_name
-        (pqName->loc,
+        (pqName->loc ENDLOCARG(SL_GENERATED),
          // I'll make a new PQ_name to be safe that we have no
          // aliasing problems
          new PQ_name(pqName->loc, pqName->name)),

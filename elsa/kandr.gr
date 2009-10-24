@@ -212,7 +212,7 @@ nonterm(IDeclarator*) KandRDirectDeclarator {
 // too strict
 nonterm(IDeclarator*) KandRIdExpression {
   -> n:KandRIdentifier
-       { return new D_name(loc, n); }
+       { return new D_name(loc ENDLOCARG(endloc), n); }
 }
 
 //  nonterm(FakeList<StringRef>*) IdentifierListOpt {
@@ -423,7 +423,9 @@ nonterm(TypeSpecifier*) ImplicitIntTypeSpecifier {
 
 nonterm(ASTTypeId*) ImplicitIntTypeId {
   -> spec:ImplicitIntTypeSpecifier
-       { return new ASTTypeId(spec, new Declarator(new D_name(loc, NULL), NULL)); }
+       { return new ASTTypeId
+           (spec, new Declarator
+            (new D_name(loc ENDLOCARG(endloc), NULL), NULL)); }
 }
 
 

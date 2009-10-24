@@ -110,8 +110,9 @@ nonterm(Expression*) PostfixExpression {
          t = t->clone();
          t->decl->decl = new D_pointer(loc, CV_NONE, t->decl->decl);
 
-         ASTTypeId *ulong = new ASTTypeId(new TS_simple(loc, ST_UNSIGNED_INT),
-                                          new Declarator(new D_name(loc, NULL), NULL));
+         ASTTypeId *ulong = new ASTTypeId
+           (new TS_simple(loc, ST_UNSIGNED_INT),
+            new Declarator(new D_name(loc ENDLOCARG(endloc), NULL), NULL));
 
 
 	 // dmandelin@mozilla.com   bug 416051

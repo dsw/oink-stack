@@ -13,6 +13,8 @@
 #include "typelistiter.h"  // TypeListIter_GrowArray
 #include "exprloc.h"
 
+// FIX: move this somewhere else
+#define SL_GENERATED SL_UNKNOWN
 
 // forwards in this file
 
@@ -5729,7 +5731,8 @@ ASTTypeId *Env::buildASTTypeId(Type *type)
   // there used to be a big function here that built the full syntax
   // of a type, but I am going to try to use TS_type instead
   return new ASTTypeId(new TS_type(loc(), type),
-                       new Declarator(new D_name(loc(), NULL /*name*/),
+                       new Declarator(new D_name(loc() ENDLOCARG(SL_GENERATED),
+                                                 NULL /*name*/),
                                       NULL /*init*/));
 }
 
