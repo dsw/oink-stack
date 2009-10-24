@@ -14,6 +14,9 @@ option shift_reduce_conflicts 64;
 verbatim {
 #include "qual_literal.h"
 
+// FIX: move this somewhere else
+#define SL_GENERATED SL_UNKNOWN
+
   class CCParse_Qual_Shareable : public CCParse_Oink_Shareable {
     public:
     CCParse_Qual_Shareable(StringTable &table, CCLang &lang)
@@ -30,7 +33,8 @@ verbatim {
     {
       ASTTypeId *tid =
         new ASTTypeId(new TS_simple(loc, ST_ELLIPSIS),
-                      new Declarator(new D_name(loc, NULL /*name*/),
+                      new Declarator(new D_name(loc ENDLOCARG(SL_GENERATED),
+                                                NULL /*name*/),
                                      NULL /*init*/));
       appendQLiterals(tid->spec->ql, deepClone(ql));
       return tid;
