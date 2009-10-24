@@ -384,7 +384,15 @@ bool Heapify_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
       // and that's the only way this can fail
       xassert(dname);
       CPPSourceLoc ppLoc(dname->loc);
-      patcher.insertBefore(ppLoc, "\n// xform this dname\n");
+      CPPSourceLoc ppLoc_end(dname->endloc);
+      if (!(ppLoc_end.hasExactPosition() && ppLoc_end.hasExactPosition())) {
+        printLoc(std::cout, obj->decl->loc);
+        std::cout << "auto decl does not have exact position"
+                  << var->name << std::endl;
+        return true;
+      }
+      patcher.insertBefore(ppLoc, "(*");
+      patcher.insertBefore(ppLoc_end, ")");
     } else xfailure("non-param non-auto var can't be stack allocated");
   }
   return true;
