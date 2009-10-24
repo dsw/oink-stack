@@ -4,6 +4,68 @@
 
 // Provides patch printing facilities
 
+// dsw: The API for Patcher is less than clear to me, so after reading
+// Taras's docs and having email conversations with him, here is my
+// summary for people thinking of editing code as if you were editing
+// a document:
+//
+//   copy    is getRange
+//   insert  is insertBefore
+//   replace is printPatch
+//   delete  is printPatch("")
+//
+//   Not yet sure if cut works as (copy;delete).
+//
+// Note that the behavior when inserting twice at the same location
+// seems to be not well defined; therefore one must maintain a mapping
+// from locations to string to insert at that location and then insert
+// them once.  In general attempt to avoid overlapping insertions.
+// The mysterious "recursive" flag might help; see the conversation
+// below with Taras.
+
+// Taras Glek, Fri, Oct 23, 2009 at 4:06 PM:
+//
+//     Daniel Wilkerson wrote:
+//     Can you give a hint as to what the recursive flag means?  I
+//     don't see any recursion going on in your code.
+//
+// so if you have a function like
+//
+//   void foo(){
+//     do_stuff();
+//   }
+//
+// and you have 2 transformations.
+//
+//   1. Rename do_stuff to  mess_with_stuff()
+//
+//   2. Add function entry/exit markers
+//
+// So you want to end up with.
+//
+//   void foo() {
+//     entry;
+//     mess_with_stuff();
+//     exit;
+//   }
+//
+// Then you need to call printPatch bread-first(ie on do_stuff()) and
+// then make sure you do printPatch on foo's body with the recursive
+// flag.
+//
+// So recursion in this case means don't throw away mods nested in the
+// chunk of code you are modifying.
+
+// Taras Glek, Fri, Oct 23, 2009 at 5:05 PM:
+//
+//     Daniel Wilkerson wrote:
+//     Shouldn't recurse just be true by default?  Why even allow it
+//     to be false?
+//
+// Recursive rewrites make things a lot more complicated. I added it
+// for a complex rewrite that we never landed. I believe it still has
+// a few bugs, so I don't turn it on by default.
+
 #include "cppundolog.h"
 
 #include <iostream>
