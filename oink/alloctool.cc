@@ -8,18 +8,15 @@
 #include "oink_util.h"
 #include "Pork/patcher.h"       // Patcher
 
-// FIX: some things cannot be heapified easily and will have to be
-// done by hand.  So we should just (1) not transform those cases, but
-// (2) print something.  We should have an option that does not even
-// attempt to transform but just prints what it would do.
+// FIX:
 //
 // If a stack-allocated variable is a parameter we are going to have a
-// hard time auto-heapifying it; just give an error.
+// hard time auto-heapifying it; just print it out.
 //
-// E_funCall, E_constructor, and template instantiation can take the
-// address of a variable if they take arguments by reference.  Further
-// E_throw can take the address of a variable if it is caught by
-// reference.
+// In C++ E_funCall, E_constructor, and template instantiation can
+// take the address of a variable if they take arguments by reference;
+// further E_throw can take the address of a variable if it is caught
+// by reference.
 
 // FIX: The heapify transformation done here has a lot in common with
 // the stackness analysis in qual.cc; we should be using that to
