@@ -24,6 +24,6 @@ alloctool-check:
 	./alloctool -fa-heapify-stack-alloc-addr-taken Test/stack_alloc2.cc \
            2>&1 | grep "Can't heapify C++ with alloctool yet." > /dev/null
 # check -fa-heapify-stack-alloc-addr-taken
-	./alloctool -fa-heapify-stack-alloc-addr-taken Test/stack_alloc3.c \
-           > Test/stack_alloc3.c.patch.out
-	diff Test/stack_alloc3.c.patch.cor Test/stack_alloc3.c.patch.out
+	./alloctool -fa-heapify-stack-alloc-addr-taken Test/heapify1.c \
+           > Test/heapify1.c.patch.out
+	diff Test/heapify1.c.patch.cor Test/heapify1.c.patch.out

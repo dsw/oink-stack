@@ -1,11 +1,11 @@
 
----- START ---- Test/stack_alloc3.c
-Test/stack_alloc3.c:10: param decl x2
-Test/stack_alloc3.c:12: param use x2
+---- START ---- Test/heapify1.c
+Test/heapify1.c:10: param decl x2
+Test/heapify1.c:12: param use x2
 ---- STOP ----
 
---- Test/stack_alloc3.c
-+++ Test/stack_alloc3.c
+--- Test/heapify1.c
++++ Test/heapify1.c
 @@ -14,2 +14,6 @@
 -  int y2;
 -  int *y2_p = &y2;              // and addr taken: yes
