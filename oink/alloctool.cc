@@ -456,7 +456,10 @@ void AllocTool::heapifyStackAllocAddrTaken_stage() {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
     // FIX: this doesn't work for C++ yet
-    #warning fail if it isnt C
+    if (globalLang.isCplusplus) {
+      throw UserError(USER_ERROR_ExitCode,
+                      "Can't heapify C++ with alloctool yet.");
+    }
     printStart(file->name.c_str());
     TranslationUnit *unit = file2unit.get(file);
 
