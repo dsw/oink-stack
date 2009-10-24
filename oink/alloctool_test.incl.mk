@@ -20,7 +20,7 @@ alloctool-check:
 	./alloctool -fa-print-stack-alloc-addr-taken Test/stack_alloc2.cc \
            > Test/stack_alloc2.cc.out
 	diff Test/stack_alloc2.cc.cor Test/stack_alloc2.cc.out
-# check -fa-heapify-stack-alloc-addr-taken
+# check -fa-heapify-stack-alloc-addr-taken rejects C++
 	./alloctool -fa-heapify-stack-alloc-addr-taken Test/stack_alloc2.cc \
            2>&1 | grep "Can't heapify C++ with alloctool yet." > /dev/null
 # check -fa-heapify-stack-alloc-addr-taken
