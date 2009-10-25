@@ -1126,7 +1126,8 @@
 #set args -fq-module-access -fq-poly -fo-no-instance-sensitive -fq-no-use-const-subtyping -q-config Test/mod_gronk_baz_method.lattice -o-mod-spec gronk:Test/mod_gronk.mod -o-mod-spec baz:Test/mod_baz.mod -o-mod-default default -fo-print-stages Test/mod_gronk_baz_method.ii
 
 file ./alloctool
-set args -fa-print-stack-alloc-addr-taken Test/stack_alloc1.cc
+# set args -fa-print-stack-alloc-addr-taken Test/stack_alloc1.cc
+set args -fa-heapify-stack-alloc-addr-taken Test/heapify1.c
 
 break main
 break breaker

@@ -10,10 +10,14 @@
 
 // FIX tests:
 //
+// Should fail if there are multiple declarators in a declaration.
+//
 // Tests should test declarators that are complex: pointers and arrays
 // etc.
+//    done
 //
 // Tests should test with and without initializers
+//    done
 //
 // Tests should test arrays and multiple forms of embedding
 //
@@ -368,7 +372,7 @@ static D_name *find_D_name(IDeclarator *decl) {
   // "&x"
 //   -> D_reference(IDeclarator base);
   } else if (decl->isD_reference()) {
-    return find_D_name(decl->asD_pointer()->base);
+    return find_D_name(decl->asD_reference()->base);
 
   // "f(int)"
 //   -> D_func(IDeclarator base,                       // D_name of function, typically
@@ -376,12 +380,12 @@ static D_name *find_D_name(IDeclarator *decl) {
 //             CVFlags cv,                             // optional "const" for member functions
 //             ExceptionSpec /*nullable*/ exnSpec);    // throwable exceptions
   } else if (decl->isD_func()) {
-    return find_D_name(decl->asD_pointer()->base);
+    return find_D_name(decl->asD_func()->base);
 
   // "a[5]" or "b[]"
 //   -> D_array(IDeclarator base, Expression /*nullable*/ size);
   } else if (decl->isD_array()) {
-    return find_D_name(decl->asD_pointer()->base);
+    return find_D_name(decl->asD_array()->base);
 
   // "c : 2"
   //
@@ -395,14 +399,14 @@ static D_name *find_D_name(IDeclarator *decl) {
   // "X::*p"
 //   -> D_ptrToMember(PQName nestedName, CVFlags cv, IDeclarator base);
   } else if (decl->isD_ptrToMember()) {
-    return find_D_name(decl->asD_pointer()->base);
+    return find_D_name(decl->asD_ptrToMember()->base);
 
   // declarator grouping operator: it's semantically irrelevant
   // (i.e. equivalent to just 'base' alone), but plays a role in
   // disambiguation
 //   -> D_grouping(IDeclarator base);
   } else if (decl->isD_grouping()) {
-    return find_D_name(decl->asD_pointer()->base);
+    return find_D_name(decl->asD_grouping()->base);
 
   } else xfailure("can't happen");
 }

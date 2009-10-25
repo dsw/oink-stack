@@ -21,7 +21,7 @@ void f(int x1,
   int y3 = 3;                   // function/auto: stack
   &y3;                          // and addr taken: yes
 
-  int **y4;                     // function/auto: stack
+  int *y4[3];                   // function/auto: stack
   &y4;                          // and addr taken: yes
 
   int *y5 = &x;                 // function/auto: stack
