@@ -1,29 +1,50 @@
 
 ---- START ---- Test/heapify1.c
 Test/heapify1.c:10: param decl x2
-Test/heapify1.c:12: param use x2
+Test/heapify1.c:14: param use x2
 ---- STOP ----
 
 --- Test/heapify1.c
 +++ Test/heapify1.c
-@@ -14,2 +14,4 @@
--  int y2;
--  int *y2_p = &y2;              // and addr taken: yes
-+  int (*y2) = xmalloc(sizeof *y2);
-+  int *y2_p = &
-+// xform this use
-+y2;              // and addr taken: yes
 @@ -18,2 +18,4 @@
--  struct Foo foo1;              // function/auto: stack
--  struct Foo *foo1_p = &foo1;   // and addr taken: yes
-+  struct Foo (*foo1) = xmalloc(sizeof *foo1);              // function/auto: stack
-+  struct Foo *foo1_p = &
+-  int y2;                       // function/auto: stack
+-  &y2;                          // and addr taken: yes
++  int (*y2)=xmalloc(sizeof *y2);                       // function/auto: stack
++  &
 +// xform this use
-+foo1;   // and addr taken: yes
++y2;                          // and addr taken: yes
 @@ -21,2 +21,4 @@
--  struct Foo foo3;              // function/auto: stack
--  int *foo3_q_p = &(foo3.q);    // and addr taken: yes
-+  struct Foo (*foo3) = xmalloc(sizeof *foo3);              // function/auto: stack
-+  int *foo3_q_p = &(
+-  int y3 = 3;                   // function/auto: stack
+-  &y3;                          // and addr taken: yes
++  int (*y3) = xmalloc(sizeof *y3); *y3=3;                   // function/auto: stack
++  &
 +// xform this use
-+foo3.q);    // and addr taken: yes
++y3;                          // and addr taken: yes
+@@ -24,2 +24,4 @@
+-  int **y4;                     // function/auto: stack
+-  &y4;                          // and addr taken: yes
++  int **(*y4)=xmalloc(sizeof *y4);                     // function/auto: stack
++  &
++// xform this use
++y4;                          // and addr taken: yes
+@@ -27,2 +27,4 @@
+-  int *y5 = &x;                 // function/auto: stack
+-  &y5;                          // and addr taken: yes
++  int *(*y5) = xmalloc(sizeof *y5); *y5=&x;                 // function/auto: stack
++  &
++// xform this use
++y5;                          // and addr taken: yes
+@@ -32,2 +32,4 @@
+-  struct Foo foo1;              // function/auto: stack
+-  &foo1;                        // and addr taken: yes
++  struct Foo (*foo1)=xmalloc(sizeof *foo1);              // function/auto: stack
++  &
++// xform this use
++foo1;                        // and addr taken: yes
+@@ -37,2 +37,4 @@
+-  struct Foo foo3;              // function/auto: stack
+-  &(foo3.q);                    // and addr taken: yes
++  struct Foo (*foo3)=xmalloc(sizeof *foo3);              // function/auto: stack
++  &(
++// xform this use
++foo3.q);                    // and addr taken: yes

@@ -22,6 +22,9 @@
 
 // FIX C:
 //
+// Doesn't work for multiple Declarators in one Declaration; we could
+// make it work, but give an error instead.
+//
 // Do array derefs as well, not just members of structs.
 //
 // And what about when those are embedded in each other?
@@ -33,6 +36,9 @@
 // to the same module then elide the heapify.
 
 // FIX C++:
+//
+// Doesn't work for this kind of initializer:
+//    int x(3);
 //
 // In C++ E_funCall, E_constructor, and template instantiation can
 // take the address of a variable if they take arguments by reference.
@@ -334,6 +340,8 @@ public:
 
   Heapify_RealVarAllocAndUseVisitor(VarPredicate &varPred0)
     : Pred_RealVarAllocAndUseVisitor(varPred0)
+    , patcher(std::cout /*ostream for the diff*/,
+              true /*recursive*/)
   {}
 
   virtual bool visit2Declarator(Declarator *);
@@ -416,62 +424,84 @@ bool Heapify_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
   xassert(var->getScopeKind() == SK_FUNCTION);
   // this would be the error message if xassert allowed for one
 //   xfailure("non-param non-auto var can't be stack allocated");
-//
-//   printLoc(std::cout, obj->decl->loc);
-//   std::cout << "auto decl " << var->name << std::endl;
 
-  // set up to transform the declaration
+  // find the D_name
   D_name *dname = find_D_name(obj->decl);
   // it shouldn't be possible to take the address of a bitfield and
   // that's the only way this can fail
   xassert(dname);
   CPPSourceLoc dname_ploc(dname->loc);
   CPPSourceLoc dname_ploc_end(dname->endloc);
-  bool const dname_ploc_exact =
-    dname_ploc.hasExactPosition() &&
-    dname_ploc_end.hasExactPosition();
-  if (!dname_ploc_exact) {
+  PairLoc dname_PairLoc(dname_ploc, dname_ploc_end);
+  UnboxedPairLoc dname_UnboxedPairLoc(dname_PairLoc);
+  if (!dname_PairLoc.hasExactPosition()) {
     // if the location is not exact, we can't insert anything
     printLoc(std::cout, obj->decl->loc);
-    std::cout << "FAIL: auto decl does not have exact position"
+    std::cout << "FAIL: auto decl does not have exact start position: "
               << var->name << std::endl;
     return true;
   }
-  // don't actually do this yet because it could interfere with the
-  // below transformation
-  stringBuilder insert_at_dname_end = ")";
 
-  // transform the initializer
-  if (obj->init) {
-    // copy the initializer so we can paste it later
-    //   CPPSourceLoc pre_startInit_loc(obj->init->loc);
-    //   CPPSourceLoc pre_stopInit_loc(obj->endloc);
-    //   PairLoc initPairLoc(pre_startInit_loc, pre_stopInit_loc);
-    //   UnboxedPairLoc initUnboxedPairLoc(initPairLoc);
-    //   std::string initStr = patcher.getRange(initUnboxedPairLoc);
-  } else {
-    // no initializer to transform; so add one that calls xmalloc()
-    CPPSourceLoc decltor_ploc_end(obj->endloc);
-    if (decltor_ploc_end.hasExactPosition()) {
-      // FIX: not sure how this simplistic approach to names is going
-      // to hold up in C++; note that if you don't want to use
-      // var->name you can use this:
-      //   StringRef name = dname->name->getName();
-      char const *newInit =
-        stringb(" = xmalloc(sizeof *" << var->name << ")");
-      // make sure to insert twice in the same place
-
-      if (dname_ploc_end == decltor_ploc_end) {
-        insert_at_dname_end << newInit;
-      } else {
-        patcher.insertBefore(decltor_ploc_end, newInit);
-      }
-    }
+  // find the end of the Declarator
+  CPPSourceLoc decltor_ploc_end(obj->endloc);
+  // if the location is not exact, we can't insert anything
+  if (!decltor_ploc_end.hasExactPosition()) {
+    printLoc(std::cout, obj->endloc);
+    std::cout << "FAIL: auto decl does not have exact end position: "
+              << var->name << std::endl;
+    return true;
   }
 
-  // finish transforming the declaration
-  patcher.insertBefore(dname_ploc, "(*");
-  patcher.insertBefore(dname_ploc_end, insert_at_dname_end.c_str());
+  // make the new initializer
+  stringBuilder newInit;
+  // FIX: not sure how this simplistic approach to names is going to
+  // hold up in C++; if you don't want to use var->name you can use
+  // this:
+  //   StringRef name = dname->name->getName();
+  newInit << "xmalloc(sizeof *" << var->name << ")";
+  if (obj->init) {
+    // copy the initializer so we can paste it later
+    CPPSourceLoc init_ploc(obj->init->loc);
+    if (!init_ploc.hasExactPosition()) {
+      printLoc(std::cout, obj->endloc);
+      std::cout << "FAIL: auto decl init does not have exact start position: "
+                << var->name << std::endl;
+      return true;
+    }
+    // FIX: we should be using the obj->init->endloc IDeclarator, but
+    // only D_name-s have one; FIX: this trick prevents us being able
+    // to handle multiple Declarators in one Declaration.
+//     PairLoc initPairLoc(init_ploc, init_ploc_end);
+    PairLoc init_PairLoc(init_ploc, decltor_ploc_end);
+    UnboxedPairLoc init_UnboxedPairLoc(init_PairLoc);
+    std::string initStr = patcher.getRange(init_UnboxedPairLoc);
+
+    // replace the initializer
+    patcher.printPatch(newInit.c_str(), init_UnboxedPairLoc);
+
+    // make the new init statement
+    stringBuilder newInitStmt;
+    newInitStmt << "; *" << var->name << "=" << initStr.c_str();
+
+    // add the new init statement at the end of the Declarator; FIX:
+    // move this to after the whole Declaration; need to add an endloc
+    // to IDeclarator-s to do that; FIX: this trick prevents us from
+    // being able to handle multiple Declarators in one Declaration.
+    patcher.insertBefore(decltor_ploc_end, newInitStmt.c_str());
+  } else {
+    // add an initializer
+    stringBuilder newInit2;
+    newInit2 << "=" << newInit;
+    patcher.insertBefore(decltor_ploc_end, newInit2.c_str());
+  }
+
+  // fix the declarator; note: this doesn't work due to the inability
+  // of Patcher to deal with multiple insertions at the same location
+//   patcher.insertBefore(dname_ploc, "(*");
+//   patcher.insertBefore(dname_ploc_end, ")");
+  stringBuilder newInnerIDecl;
+  newInnerIDecl << "(*" << var->name << ")";
+  patcher.printPatch(newInnerIDecl.c_str(), dname_UnboxedPairLoc);
 
   return true;
 }

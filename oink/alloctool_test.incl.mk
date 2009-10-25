@@ -27,3 +27,7 @@ alloctool-check:
 	./alloctool -fa-heapify-stack-alloc-addr-taken Test/heapify1.c \
            > Test/heapify1.c.patch.out
 	diff Test/heapify1.c.patch.cor Test/heapify1.c.patch.out
+
+.PHONY: alloctool-check2
+alloctool-check2:
+	./alloctool -fa-heapify-stack-alloc-addr-taken Test/heapify2.c
