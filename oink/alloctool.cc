@@ -12,6 +12,22 @@
 //
 // When promoting a member addr-taken to a container do array derefs
 // as well, not just members of structs.  Take the transitive closure.
+//     DONE
+//
+// Punt on transforming compound initializers; check out the whole
+// list of Initializer subclasses.
+//
+// If an array is ever promoted to a pointer and stored somewhere,
+// that counts as taking its address; that is, we shouldn't just be
+// looking at the arguments of E_addrOf, we should be looking at all
+// assignments and initializations of a pointer type.
+//
+// Factor the filtering in heapify that factors out params and
+// multi-declarator declarations into a separate pass so that its
+// conclusions can be used for the use-transform and free insertion.
+//
+// Associate the variables to be transformed with the enclosing
+// S_compound for use in rendering the calls to free.
 //
 // Transform uses.
 //
@@ -173,9 +189,27 @@ void AddrTakenASTVisitor::registerUltimateVariable(Expression *expr) {
     if (!field->hasFlag(DF_STATIC)) {
       registerUltimateVariable(efield->obj);
     }
-  } else if (expr->isE_arrow()) {
-    xfailure("E_arrow should have been turned into E_fieldAcc "
-             "during typechecking");
+  } else if (expr->isE_deref()) {
+    Expression *expr2 = expr->asE_deref()->ptr;
+    if (!expr2->isE_binary()) {
+      // if an E_addrOf of an E_deref results in a variable having its
+      // address taken, then the variable's address was already taken
+      // in the first place somewhere else and stored in a variable,
+      // unless it is an immediate array plus an int (a lowered array
+      // dereference)
+    }
+    E_binary *ebin = expr2->asE_binary();
+    if (ebin->op == BIN_PLUS) {
+      // NOTE: BIN_BRACKETS becomes this
+      bool const leftIsArray = ebin->e1->type->asRval()->isArrayType();
+      bool const rightIsInt = ebin->e2->type->asRval()->isIntegerType();
+      if (leftIsArray) {
+        xassert(rightIsInt);    // how can this not be?
+        registerUltimateVariable(ebin->e1);
+      }
+    } else {
+      xfailure("how can you deref this kind of binary expr?");
+    }
   } else if (expr->isE_cond()) {
     // gcc complains, but it still lets you do it:
     //   &(argc==1 ? a : b)
@@ -187,10 +221,27 @@ void AddrTakenASTVisitor::registerUltimateVariable(Expression *expr) {
     // addrTake.add()
     registerUltimateVariable(econd->th);
     registerUltimateVariable(econd->el);
+  } else if (expr->isE_binary()) {
+    E_binary *ebin = expr->asE_binary();
+    if (ebin->op == BIN_COMMA) {
+      registerUltimateVariable(ebin->e2);
+    } else if (ebin->op == BIN_ASSIGN) {
+      xfailure("taking the address of a BIN_ASSIGN not implemented");
+    } else if (ebin->op == BIN_DOT_STAR) {
+      xfailure("taking the address of a BIN_DOT_STAR not implemented");
+    } else if (ebin->op == BIN_ARROW_STAR) {
+      xfailure("taking the address of a BIN_ARROW_STAR not implemented");
+    } else if (ebin->op == BIN_BRACKETS) {
+      xfailure("E_binary BIN_BRACKETS should have been eliminated "
+               "during typechecking");
+    } else {
+      xfailure("how can you take the address of this kind of binary expr?");
+    }
+  } else if (expr->isE_arrow()) {
+    xfailure("E_arrow should have been eliminated during typechecking");
+  } else {
+    xfailure("how can you take the address of this kind of expression?");
   }
-  // if an E_addrOf of an E_deref results in a variable having its
-  // address taken, then the variable's address was already taken in
-  // the first place somewhere else
 }
 
 bool AddrTakenASTVisitor::visitExpression(Expression *obj) {

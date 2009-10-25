@@ -6,6 +6,10 @@ struct Foo {
   int q;                        // class: no, as depends on container
 };
 
+struct Bar {
+  int q2[10];
+};
+
 void f(int x1,
        int x2)                  // parameter: stack
 {
@@ -39,4 +43,14 @@ void f(int x1,
 
   int q1, q2, q3;               // function/auto: multiple stack
   &q2;                          // and addr taken: yes
+
+  int r[2][3][4][5];            // function/auto: stack
+  // note: this is deliberately partial
+  &r[1][2][3];                  // and addr taken: yes
+
+  struct Foo foo4[3];           // function/auto: stack
+  &(foo4[2].q);                 // and addr taken: yes
+
+  struct Bar bar1;              // function/auto: stack
+  &(bar1.q2[3]);                // and addr taken: yes
 }
