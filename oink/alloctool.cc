@@ -8,35 +8,21 @@
 #include "oink_util.h"
 #include "Pork/patcher.h"       // Patcher
 
-// FIX tests:
-//
-// Should warn and not xform if there are multiple declarators in a
-// declaration and one of them needs to be xformed.
-//    done
-//
-// Tests should test declarators that are complex: pointers and arrays
-// etc.
-//    done
-//
-// Tests should test with and without initializers
-//    done
-//
-// Tests should test arrays and multiple forms of embedding
-//
-// Tests should test inserting before returns at and not at the end of
-// blocks.
-
 // FIX C:
 //
-// Doesn't work for multiple Declarators in one Declaration; we could
-// make it work, but give an error instead.
+// When promoting a member addr-taken to a container do array derefs
+// as well, not just members of structs.  Take the transitive closure.
 //
-// Do array derefs as well, not just members of structs.
+// Transform uses.
 //
-// And what about when those are embedded in each other?
+// Insert frees before returns and at the end of a block if there is
+// no return there.
 //
 // DONE: If a stack-allocated variable is a parameter we are going to
 // have a hard time auto-heapifying it; just print it out.
+//
+// DONE: Doesn't work for multiple Declarators in one Declaration; we
+// could make it work, but we give an error instead.
 //
 // Optimization: track where the pointer goes and if it is passed only
 // to the same module then elide the heapify.
