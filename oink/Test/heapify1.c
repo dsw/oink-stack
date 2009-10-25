@@ -36,4 +36,7 @@ void f(int x1,
 
   struct Foo foo3;              // function/auto: stack
   &(foo3.q);                    // and addr taken: yes
+
+  int q1, q2, q3;               // function/auto: multiple stack
+  &q2;                          // and addr taken: yes
 }

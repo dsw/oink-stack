@@ -10,7 +10,9 @@
 
 // FIX tests:
 //
-// Should fail if there are multiple declarators in a declaration.
+// Should warn and not xform if there are multiple declarators in a
+// declaration and one of them needs to be xformed.
+//    done
 //
 // Tests should test declarators that are complex: pointers and arrays
 // etc.
@@ -348,6 +350,8 @@ public:
               true /*recursive*/)
   {}
 
+  virtual bool visitDeclaration(Declaration *);
+
   virtual bool visit2Declarator(Declarator *);
   virtual bool visit2E_variable(E_variable *);
 };
@@ -411,6 +415,27 @@ static D_name *find_D_name(IDeclarator *decl) {
   } else xfailure("can't happen");
 }
 
+bool Heapify_RealVarAllocAndUseVisitor::visitDeclaration(Declaration *obj) {
+  // we can't handle Declaration-s right now that have multiple
+  // Declarator-s
+  int numDecltors = 0;
+  int numDecltorsPass = 0;
+  FAKELIST_FOREACH_NC(Declarator, obj->decllist, iter) {
+    Variable_O *var = asVariable_O(iter->var);
+    // if you filter out vars you get what you deserve
+    if (var->filteredOut()) continue;
+    ++numDecltors;
+    if (varPred.pass(var)) ++numDecltorsPass;
+  }
+  if (numDecltors > 1 && numDecltorsPass > 0) {
+    printLoc(std::cout, obj->decllist->first()->decl->loc);
+    std::cout << "declaration having multiple declarators "
+      "some of which need heapifying" << std::endl;
+    return false;               // prune subtree
+  }
+  return true;
+}
+
 bool Heapify_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
   Variable_O *var = asVariable_O(obj->var);
   xassert(var->name);
@@ -420,7 +445,7 @@ bool Heapify_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
   if (var->getScopeKind() == SK_PARAMETER) {
     // we can't transform these so we just tell the user about them
     printLoc(std::cout, obj->decl->loc);
-    std::cout << "param decl " << var->name << std::endl;
+    std::cout << "param decl needs heapifying " << var->name << std::endl;
     return true;
   }
 
