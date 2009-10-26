@@ -8,57 +8,9 @@
 #include "oink_util.h"
 #include "Pork/patcher.h"       // Patcher
 
-// FIX C:
-//
-// When promoting a member addr-taken to a container do array derefs
-// as well, not just members of structs.  Take the transitive closure.
-//     DONE
-//
-// Punt on transforming compound initializers; check out the whole
-// list of Initializer subclasses.
-//     DONE
-//
-// Factor the filtering in heapify that factors out params and
-// multi-declarator declarations into a separate pass so that its
-// conclusions can be used for the use-transform and free-insertion.
-//
-// Associate the variables to be transformed with the enclosing
-// S_compound for use in rendering the calls to free.
-//
-// If an array is ever promoted to a pointer and stored somewhere,
-// that counts as taking its address; that is, we shouldn't just be
-// looking at the arguments of E_addrOf, we should be looking at all
-// assignments and initializations of a pointer type.
-//
-// Transform uses.
-//
-// Insert frees before returns and at the end of a block if there is
-// no return there.
-//
-// DONE: If a stack-allocated variable is a parameter we are going to
-// have a hard time auto-heapifying it; just print it out.
-//
-// DONE: Doesn't work for multiple Declarators in one Declaration; we
-// could make it work, but we give an error instead.
-//
-// Optimization: track where the pointer goes and if it is passed only
-// to the same module then elide the heapify.
+// FIX: this analysis is incomplete
 
-// FIX C++:
-//
-// Doesn't work for this kind of initializer:
-//    int x(3);
-//
-// In C++ E_funCall, E_constructor, and template instantiation can
-// take the address of a variable if they take arguments by reference.
-//
-// Further E_throw can take the address of a variable if it is caught
-// by reference; actually, I think a throw starts with one copy by
-// value, so maybe it doesn't count, but the catch by ref would get a
-// pointer to that copy, which is yet another problem depending on
-// where the value in the sky lives.
-
-// FIX commonality with qual.cc stackness analysis: The heapify
+// FIX: commonality with qual.cc stackness analysis: The heapify
 // transformation done here has a lot in common with the stackness
 // analysis in qual.cc; we should be using that to confirm our
 // transformations here.

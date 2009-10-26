@@ -1,8 +1,8 @@
-#include <stdlib.h>
+// #include <stdlib.h>
 
-struct Foo {
-  int q;                        // class: no, as depends on container
-};
+// struct Foo {
+//   int q;                        // class: no, as depends on container
+// };
 
 int main() {
 //   int *x = 3;
@@ -10,7 +10,14 @@ int main() {
 
 //   struct Foo foo4[3];           // function/auto: stack
 //   &(foo4[2].q);                 // and addr taken: yes
-  struct Foo (*foo4)[3]=malloc(sizeof *foo4);
-  int *q_p = &((*foo4)[2].q);
-  return *q_p;
+//   struct Foo (*foo4)[3]=malloc(sizeof *foo4);
+//   int *q_p = &((*foo4)[2].q);
+//   return *q_p;
+
+  int x = 1;
+  for(int i=0; i<10; ++i) {
+    ++x;
+  }
+
+  return 0;
 }
