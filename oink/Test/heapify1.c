@@ -10,6 +10,10 @@ struct Bar {
   int q2[10];
 };
 
+struct Gronk {
+  struct Foo f;
+};
+
 void f(int x1,
        int x2)                  // parameter: stack
 {
@@ -53,4 +57,13 @@ void f(int x1,
 
   struct Bar bar1;              // function/auto: stack
   &(bar1.q2[3]);                // and addr taken: yes
+
+  struct Bar bar2;              // function/auto: stack
+  bar2.q2[3];                   // and addr taken: NO
+
+  struct Gronk gronk1;          // function/auto: stack
+  &(gronk1.f.q);                // and addr taken: yes
+
+  struct Gronk gronk2;          // function/auto: stack
+  gronk1.f.q;                   // and addr taken: NO
 }
