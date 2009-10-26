@@ -66,4 +66,7 @@ void f(int x1,
 
   struct Gronk gronk2;          // function/auto: stack
   gronk1.f.q;                   // and addr taken: NO
+
+  struct Foo foo5 = { .q = 3 }; // function/auto: stack, but compound init
+  &foo5.q;                      // and addr taken: yes
 }

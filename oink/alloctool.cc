@@ -16,6 +16,7 @@
 //
 // Punt on transforming compound initializers; check out the whole
 // list of Initializer subclasses.
+//     DONE
 //
 // If an array is ever promoted to a pointer and stored somewhere,
 // that counts as taking its address; that is, we shouldn't just be
@@ -526,6 +527,18 @@ bool Heapify_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
   //   StringRef name = dname->name->getName();
   newInit << "xmalloc(sizeof *" << var->name << ")";
   if (obj->init) {
+    if (obj->init->isIN_compound()) {
+      printLoc(std::cout, obj->endloc);
+      std::cout << "auto decl has compound initializer: "
+                << var->name << std::endl;
+      return true;
+    } else if (obj->init->isIN_ctor()) {
+      printLoc(std::cout, obj->endloc);
+      std::cout << "auto decl has ctor initializer: "
+                << var->name << std::endl;
+      return true;
+    }
+    xassert(obj->init->isIN_expr());
     // copy the initializer so we can paste it later
     CPPSourceLoc init_ploc(obj->init->loc);
     if (!init_ploc.hasExactPosition()) {
@@ -581,8 +594,9 @@ bool Heapify_RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
       printLoc(std::cout, evar->loc);
       std::cout << "param use " << var->name << std::endl;
     } else if (var->getScopeKind() == SK_FUNCTION) {
-//       printLoc(std::cout, evar->loc);
-//       std::cout << "auto use " << var->name << std::endl;
+      // FIX: this predicate has to change to avoid transforming the
+      // uses of variables that don't pass the additional checks in
+      // visit2Declarator()
       CPPSourceLoc evar_ploc(evar->loc);
       patcher.insertBefore(evar_ploc, "\n// xform this use\n");
     } else xfailure("non-param non-auto var can't be stack allocated");
@@ -637,7 +651,6 @@ void AllocTool::heapifyStackAllocAddrTaken_stage() {
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
-    // FIX: this doesn't work for C++ yet
     if (globalLang.isCplusplus) {
       throw UserError(USER_ERROR_ExitCode,
                       "Can't heapify C++ with alloctool yet.");
