@@ -562,10 +562,24 @@ bool Heapify_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
     stringBuilder newInitStmt;
     newInitStmt << "; *" << var->name << "=" << initStr.c_str();
 
-    // add the new init statement at the end of the Declarator; FIX:
-    // move this to after the whole Declaration; need to add an endloc
-    // to IDeclarator-s to do that; FIX: this trick prevents us from
-    // being able to handle multiple Declarators in one Declaration.
+    // add the new init statement at the end of the Declarator
+    //
+    // FIX: move this to after the whole Declaration; need to add an
+    // endloc to IDeclarator-s to do that; FIX: this trick prevents us
+    // from being able to handle multiple Declarators in one
+    // Declaration.
+    //
+    // NOTE: one must in general be careful when turing one statement
+    // (here an S_Decl) into multiple statements as the single
+    // statement could be the statement argument to an 'if', 'else',
+    // 'while', 'for', 'do', and possibly (depending on the weirdness
+    // of the compiler) 'try', 'sizeof', and 'return'.  In the
+    // particular case of this analysis, it can't happen because you
+    // can't stack allocate a var and take it's address in one
+    // statement and you can't take it's address later because the
+    // scope would have closed.  FIX: Maybe you could stack allocate
+    // it and then in the initializer somehow take its address and
+    // store it on the heap?
     patcher.insertBefore(decltor_ploc_end, newInitStmt.c_str());
   } else {
     // add an initializer
