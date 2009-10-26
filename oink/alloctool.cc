@@ -18,17 +18,17 @@
 // list of Initializer subclasses.
 //     DONE
 //
+// Factor the filtering in heapify that factors out params and
+// multi-declarator declarations into a separate pass so that its
+// conclusions can be used for the use-transform and free-insertion.
+//
+// Associate the variables to be transformed with the enclosing
+// S_compound for use in rendering the calls to free.
+//
 // If an array is ever promoted to a pointer and stored somewhere,
 // that counts as taking its address; that is, we shouldn't just be
 // looking at the arguments of E_addrOf, we should be looking at all
 // assignments and initializations of a pointer type.
-//
-// Factor the filtering in heapify that factors out params and
-// multi-declarator declarations into a separate pass so that its
-// conclusions can be used for the use-transform and free insertion.
-//
-// Associate the variables to be transformed with the enclosing
-// S_compound for use in rendering the calls to free.
 //
 // Transform uses.
 //
