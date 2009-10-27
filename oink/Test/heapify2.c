@@ -19,5 +19,15 @@ int main() {
     &b;
     return 3;                   // b, y, x
   }
+  for(;;) {
+    int c;
+    int d;
+    &c;
+                                // c
+  }
+  for(;;) {
+    int e;
+                                // <nothing>
+  }
   return 100;                   // y, x
 }

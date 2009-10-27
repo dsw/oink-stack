@@ -459,7 +459,28 @@ visitStatement(Statement *obj) {
 void HeapifyStackAllocAddrTakenVars_ASTVisitor::
 postvisitStatement(Statement *obj) {
   if (obj->isS_compound()) {
-    delete scopeStack.pop();
+    S_compound_Scope *scopeStackTop = scopeStack.pop();
+    ASTList<Statement> *stmts = &obj->asS_compound()->stmts;
+    if (!stmts->isEmpty()) {
+      Statement *lastStatement = stmts->last();
+      if (!lastStatement->isS_return()) {
+        // the last statement of the block was not an S_return so we can
+        // fall off the end of the block
+        stringBuilder freeBlock;
+        freeBlock << "{";
+        int numVarsToFree = 0;
+        SFOREACH_OBJLIST(Variable, scopeStackTop->s_decl_vars.list, iter) {
+          ++numVarsToFree;
+          freeBlock << "free(" << iter.data()->name << ");";
+        }
+        if (numVarsToFree > 0) {
+          freeBlock << "};";
+          CPPSourceLoc lastStatement_ploc_end(lastStatement->endloc);
+          patcher.insertBefore(lastStatement_ploc_end, freeBlock.c_str());
+        }
+      }
+    }
+    delete scopeStackTop;
   }
 }
 

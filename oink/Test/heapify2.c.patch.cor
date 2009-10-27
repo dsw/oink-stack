@@ -35,6 +35,12 @@
 +    int (*b)=xmalloc(sizeof *b);
 +    &(*b);
 +    {free(b);free(y);free(x);return 3;}                   // b, y, x
-@@ -22,1 +22,1 @@
+@@ -23,1 +23,1 @@
+-    int c;
++    int (*c)=xmalloc(sizeof *c);
+@@ -25,1 +25,1 @@
+-    &c;
++    &(*c);{free(c);};
+@@ -32,1 +32,1 @@
 -  return 100;                   // y, x
 +  {free(y);free(x);return 100;}                   // y, x
