@@ -10,6 +10,8 @@
 
 // FIX: this analysis is incomplete
 
+// FIX: the analysis should honor Variable_O::filteredOut() semantics.
+
 // FIX: commonality with qual.cc stackness analysis: The heapify
 // transformation done here has a lot in common with the stackness
 // analysis in qual.cc; we should be using that to confirm our
@@ -19,8 +21,15 @@
 // right thing: it looks for pointers from the heap to the stack, but
 // we also need to know about pointers from the stack to the stack.
 
-// Is this variable allocated on the stack?  Note that if it is in a
-// class/struct/union we say no as it's container decides it.
+// **** utilities
+
+static void printLoc(std::ostream &out, SourceLoc loc) {
+  out << sourceLocManager->getFile(loc) << ":" <<
+    sourceLocManager->getLine(loc) << ": ";
+}
+
+// Decides if this variable allocated on the stack.  Note that if it
+// is in a class/struct/union we say no as it's container decides it.
 //
 // FIX: This function has a lot of duplication with qual.cc function
 // void MarkVarsStackness_VisitRealVars::visitVariableIdem(Variable*);
@@ -75,38 +84,82 @@ static bool allocatedOnStack(Variable *var0) {
   xfailure("can't happen");
 }
 
-static void printLoc(std::ostream &out, SourceLoc loc) {
-  out << sourceLocManager->getFile(loc) << ":" <<
-    sourceLocManager->getLine(loc) << ": ";
+// find the D_name nested down within an IDeclarator
+static D_name *find_D_name(IDeclarator *decl) {
+  if (false) {                  // orthogonality
+
+  // "x" (NULL means abstract declarator or anonymous parameter);
+  // this is used for ctors and dtors as well as ordinary names
+  // (dtor names start with "~"); it's also used for operator names
+//   -> D_name(PQName /*nullable*/ name);
+  } else if (decl->isD_name()) {
+    return decl->asD_name();
+
+  // "*x" (as in "int *x")
+//   -> D_pointer(CVFlags cv,  // optional qualifiers applied to ptr type
+//                IDeclarator base);
+  } else if (decl->isD_pointer()) {
+    return find_D_name(decl->asD_pointer()->base);
+
+  // "&x"
+//   -> D_reference(IDeclarator base);
+  } else if (decl->isD_reference()) {
+    return find_D_name(decl->asD_reference()->base);
+
+  // "f(int)"
+//   -> D_func(IDeclarator base,                       // D_name of function, typically
+//             FakeList<ASTTypeId> *params,            // params with optional default values
+//             CVFlags cv,                             // optional "const" for member functions
+//             ExceptionSpec /*nullable*/ exnSpec);    // throwable exceptions
+  } else if (decl->isD_func()) {
+    return find_D_name(decl->asD_func()->base);
+
+  // "a[5]" or "b[]"
+//   -> D_array(IDeclarator base, Expression /*nullable*/ size);
+  } else if (decl->isD_array()) {
+    return find_D_name(decl->asD_array()->base);
+
+  // "c : 2"
+  //
+  // I use a PQName here instead of a StringRef for uniformity
+  // (so every IDeclarator ends with a PQName); there are never
+  // qualifiers on a bitfield name
+//   -> D_bitfield(PQName /*nullable*/ name, Expression bits);
+  } else if (decl->isD_bitfield()) {
+    return NULL;
+
+  // "X::*p"
+//   -> D_ptrToMember(PQName nestedName, CVFlags cv, IDeclarator base);
+  } else if (decl->isD_ptrToMember()) {
+    return find_D_name(decl->asD_ptrToMember()->base);
+
+  // declarator grouping operator: it's semantically irrelevant
+  // (i.e. equivalent to just 'base' alone), but plays a role in
+  // disambiguation
+//   -> D_grouping(IDeclarator base);
+  } else if (decl->isD_grouping()) {
+    return find_D_name(decl->asD_grouping()->base);
+
+  } else xfailure("can't happen");
 }
 
-// **** AddrTakenASTVisitor
+// **** OnlyDecltorsOfRealVars_ASTVisitor
 
-// make a set of variables that have had their addr taken
-class AddrTakenASTVisitor : private ASTVisitor {
+// visit only declarators of real variables
+class OnlyDecltorsOfRealVars_ASTVisitor : private ASTVisitor {
 public:
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
-  SObjSet<Variable*> &addrTaken;
 
-public:
-  AddrTakenASTVisitor(SObjSet<Variable*> &addrTaken0)
+  public:
+  OnlyDecltorsOfRealVars_ASTVisitor()
     : loweredVisitor(this)
-    , addrTaken(addrTaken0)
   {}
-  virtual ~AddrTakenASTVisitor() {}
+  virtual ~OnlyDecltorsOfRealVars_ASTVisitor() {}
 
-  // visitor methods
   virtual bool visitPQName(PQName *);
-  virtual bool visitExpression(Expression *);
-
-  // utility methods
-private:
-  // if this expression ultimately resolves to a variable, find it;
-  // otherwise return NULL
-  void registerUltimateVariable(Expression *);
 };
 
-bool AddrTakenASTVisitor::visitPQName(PQName *obj) {
+bool OnlyDecltorsOfRealVars_ASTVisitor::visitPQName(PQName *obj) {
   // from RealVarAndTypeASTVisitor::visitPQName(PQName*): Scott points
   // out that we have to filter out the visitation of PQ_template-s:
   //
@@ -120,7 +173,35 @@ bool AddrTakenASTVisitor::visitPQName(PQName *obj) {
   return true;
 }
 
-void AddrTakenASTVisitor::registerUltimateVariable(Expression *expr) {
+// **** AddrTaken_ASTVisitor
+
+// make a set of variables that have had their addr taken
+class AddrTaken_ASTVisitor : public OnlyDecltorsOfRealVars_ASTVisitor {
+public:
+  SObjSet<Variable*> &addrTaken;
+
+public:
+  AddrTaken_ASTVisitor(SObjSet<Variable*> &addrTaken0)
+    : addrTaken(addrTaken0)
+  {}
+  // visitor methods
+  virtual bool visitExpression(Expression *);
+
+  // utility methods
+private:
+  // if this expression ultimately resolves to a variable, find it;
+  // otherwise return NULL
+  void registerUltimateVariable(Expression *);
+};
+
+bool AddrTaken_ASTVisitor::visitExpression(Expression *obj) {
+  if (obj->isE_addrOf()) {
+    registerUltimateVariable(obj->asE_addrOf()->expr);
+  }
+  return true;
+}
+
+void AddrTaken_ASTVisitor::registerUltimateVariable(Expression *expr) {
   // Note that we do not do the right thing in the presence of
   // -fo-instance-sensitive, which is why alloctool_cmd.cc refuses to
   // run if you pass that flag.
@@ -197,107 +278,25 @@ void AddrTakenASTVisitor::registerUltimateVariable(Expression *expr) {
   }
 }
 
-bool AddrTakenASTVisitor::visitExpression(Expression *obj) {
-  if (obj->isE_addrOf()) {
-    registerUltimateVariable(obj->asE_addrOf()->expr);
-  }
-  return true;
-}
+// **** VarDeclAndUse_ASTVisitor
 
-// **** StackAllocVarPredicate
-
-class StackAlloc_VarPredicate : public VarPredicate {
+class VarDeclAndUse_ASTVisitor
+  : public OnlyDecltorsOfRealVars_ASTVisitor {
 public:
-  // require that the variable also be in this set if provided
-  SObjSet<Variable*> *varSetFilter;
+  VarDeclAndUse_ASTVisitor() {}
 
-  explicit StackAlloc_VarPredicate(SObjSet<Variable*> *varSetFilter0=0)
-    : varSetFilter(varSetFilter0)
-  {}
-
-  virtual bool pass(Variable *var) {
-    if (!allocatedOnStack(var)) return false;
-    if (!varSetFilter) return true;
-    return varSetFilter->contains(var);
-  }
-};
-
-// **** RealVarAllocAndUseVisitor
-
-// visit real variables at their declarators and use sites
-class RealVarAllocAndUseVisitor : private ASTVisitor {
-public:
-  LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
-
-  public:
-  RealVarAllocAndUseVisitor()
-    : loweredVisitor(this)
-  {}
-  virtual ~RealVarAllocAndUseVisitor() {}
-
-  // visitor methods
-  virtual bool visitPQName(PQName *obj);
   virtual bool visitDeclarator(Declarator *);
   virtual bool visitExpression(Expression *);
 
-  // client methods
-  virtual bool visit2Declarator(Declarator *) = 0;
-  virtual bool visit2E_variable(E_variable *) = 0;
+  bool subVisitE_variable(E_variable *);
+
+  // are we interested in this variable?
+  virtual bool pass(Variable *) = 0;
 };
 
-bool RealVarAllocAndUseVisitor::visitPQName(PQName *obj) {
-  // from RealVarAndTypeASTVisitor::visitPQName(PQName*): Scott points
-  // out that we have to filter out the visitation of PQ_template-s:
-  //
-  // SGM 2007-08-25: Do not look inside PQ_template argument lists.
-  // For template template parameters, the argument list may refer to
-  // an uninstantiated template, but client analyses will just treat
-  // the whole PQ_template as just a name; no need to look inside it.
-  if (obj->isPQ_template()) {
-    return false;
-  }
-  return true;
-}
-
-bool RealVarAllocAndUseVisitor::visitDeclarator(Declarator *obj) {
+bool VarDeclAndUse_ASTVisitor::visitDeclarator(Declarator *obj) {
   Variable_O *var = asVariable_O(obj->var);
-  if (var->filteredOut()) return false;
-  return visit2Declarator(obj);
-}
-
-bool RealVarAllocAndUseVisitor::visitExpression(Expression *obj) {
-  if (obj->isE_variable()) {
-    return visit2E_variable(obj->asE_variable());
-  }
-  return true;
-}
-
-// **** Pred_RealVarAllocAndUseVisitor
-
-class Pred_RealVarAllocAndUseVisitor : public RealVarAllocAndUseVisitor {
-public:
-  VarPredicate &varPred;
-
-  Pred_RealVarAllocAndUseVisitor(VarPredicate &varPred0)
-    : varPred(varPred0)
-  {}
-};
-
-// **** Print_RealVarAllocAndUseVisitor
-
-class Print_RealVarAllocAndUseVisitor : public Pred_RealVarAllocAndUseVisitor {
-public:
-  Print_RealVarAllocAndUseVisitor(VarPredicate &varPred0)
-    : Pred_RealVarAllocAndUseVisitor(varPred0)
-  {}
-
-  virtual bool visit2Declarator(Declarator *);
-  virtual bool visit2E_variable(E_variable *);
-};
-
-bool Print_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
-  Variable_O *var = asVariable_O(obj->var);
-  if (varPred.pass(var)) {
+  if (pass(var)) {
     if (var->getScopeKind() == SK_PARAMETER) {
       printLoc(std::cout, obj->decl->loc);
       std::cout << "param decl " << var->name << std::endl;
@@ -309,11 +308,18 @@ bool Print_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
   return true;
 }
 
-bool Print_RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
+bool VarDeclAndUse_ASTVisitor::visitExpression(Expression *obj) {
+  if (obj->isE_variable()) {
+    return subVisitE_variable(obj->asE_variable());
+  }
+  return true;
+}
+
+bool VarDeclAndUse_ASTVisitor::subVisitE_variable(E_variable *evar) {
   // Note: if you compile without locations for expressions this will
   // stop working.
   Variable_O *var = asVariable_O(evar->var);
-  if (varPred.pass(var)) {
+  if (pass(var)) {
     if (var->getScopeKind() == SK_PARAMETER) {
       printLoc(std::cout, evar->loc);
       std::cout << "param use " << var->name << std::endl;
@@ -325,124 +331,203 @@ bool Print_RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
   return true;
 }
 
-// **** Heapify_RealVarAllocAndUseVisitor
+// **** PrintStackAllocVars_ASTVisitor
 
-class Heapify_RealVarAllocAndUseVisitor
-  : public Pred_RealVarAllocAndUseVisitor
-{
+class PrintStackAllocVars_ASTVisitor
+  : public VarDeclAndUse_ASTVisitor {
 public:
-  // NOTE: this emits the diff in its dtor
-  Patcher patcher;
+  PrintStackAllocVars_ASTVisitor() {}
 
-  Heapify_RealVarAllocAndUseVisitor(VarPredicate &varPred0)
-    : Pred_RealVarAllocAndUseVisitor(varPred0)
-    , patcher(std::cout /*ostream for the diff*/,
-              true /*recursive*/)
-  {}
-
-  virtual bool visitDeclaration(Declaration *);
-
-  virtual bool visit2Declarator(Declarator *);
-  virtual bool visit2E_variable(E_variable *);
+  // are we interested in this variable?
+  virtual bool pass(Variable *);
 };
 
-// find the D_name nested down within an IDeclarator
-static D_name *find_D_name(IDeclarator *decl) {
-  if (false) {                  // orthogonality
-
-  // "x" (NULL means abstract declarator or anonymous parameter);
-  // this is used for ctors and dtors as well as ordinary names
-  // (dtor names start with "~"); it's also used for operator names
-//   -> D_name(PQName /*nullable*/ name);
-  } else if (decl->isD_name()) {
-    return decl->asD_name();
-
-  // "*x" (as in "int *x")
-//   -> D_pointer(CVFlags cv,  // optional qualifiers applied to ptr type
-//                IDeclarator base);
-  } else if (decl->isD_pointer()) {
-    return find_D_name(decl->asD_pointer()->base);
-
-  // "&x"
-//   -> D_reference(IDeclarator base);
-  } else if (decl->isD_reference()) {
-    return find_D_name(decl->asD_reference()->base);
-
-  // "f(int)"
-//   -> D_func(IDeclarator base,                       // D_name of function, typically
-//             FakeList<ASTTypeId> *params,            // params with optional default values
-//             CVFlags cv,                             // optional "const" for member functions
-//             ExceptionSpec /*nullable*/ exnSpec);    // throwable exceptions
-  } else if (decl->isD_func()) {
-    return find_D_name(decl->asD_func()->base);
-
-  // "a[5]" or "b[]"
-//   -> D_array(IDeclarator base, Expression /*nullable*/ size);
-  } else if (decl->isD_array()) {
-    return find_D_name(decl->asD_array()->base);
-
-  // "c : 2"
-  //
-  // I use a PQName here instead of a StringRef for uniformity
-  // (so every IDeclarator ends with a PQName); there are never
-  // qualifiers on a bitfield name
-//   -> D_bitfield(PQName /*nullable*/ name, Expression bits);
-  } else if (decl->isD_bitfield()) {
-    return NULL;
-
-  // "X::*p"
-//   -> D_ptrToMember(PQName nestedName, CVFlags cv, IDeclarator base);
-  } else if (decl->isD_ptrToMember()) {
-    return find_D_name(decl->asD_ptrToMember()->base);
-
-  // declarator grouping operator: it's semantically irrelevant
-  // (i.e. equivalent to just 'base' alone), but plays a role in
-  // disambiguation
-//   -> D_grouping(IDeclarator base);
-  } else if (decl->isD_grouping()) {
-    return find_D_name(decl->asD_grouping()->base);
-
-  } else xfailure("can't happen");
+bool PrintStackAllocVars_ASTVisitor::pass(Variable *var) {
+  return allocatedOnStack(var);
 }
 
-bool Heapify_RealVarAllocAndUseVisitor::visitDeclaration(Declaration *obj) {
-  // we can't handle Declaration-s right now that have multiple
-  // Declarator-s
-  int numDecltors = 0;
-  int numDecltorsPass = 0;
-  FAKELIST_FOREACH_NC(Declarator, obj->decllist, iter) {
-    Variable_O *var = asVariable_O(iter->var);
-    // if you filter out vars you get what you deserve
-    if (var->filteredOut()) continue;
-    ++numDecltors;
-    if (varPred.pass(var)) ++numDecltorsPass;
+// **** PrintStackAllocAddrTakenVars_ASTVisitor
+
+class PrintStackAllocAddrTakenVars_ASTVisitor
+  : public VarDeclAndUse_ASTVisitor {
+public:
+  SObjSet<Variable*> &addrTaken;
+
+  PrintStackAllocAddrTakenVars_ASTVisitor(SObjSet<Variable*> &addrTaken0)
+    : addrTaken(addrTaken0)
+  {}
+
+  // are we interested in this variable?
+  virtual bool pass(Variable *);
+};
+
+bool PrintStackAllocAddrTakenVars_ASTVisitor::pass(Variable *var) {
+  if (!allocatedOnStack(var)) return false;
+  return addrTaken.contains(var);
+}
+
+// **** HeapifyStackAllocAddrTakenVars_ASTVisitor
+
+// the scope created by an S_compound
+class S_compound_Scope {
+public:
+  // the variables encountered in S_decls in this scope
+  SObjStack<Variable> s_decl_vars;
+
+  explicit S_compound_Scope() {}
+};
+
+class HeapifyStackAllocAddrTakenVars_ASTVisitor
+  : public OnlyDecltorsOfRealVars_ASTVisitor {
+public:
+  SObjSet<Variable*> &addrTaken;
+  Patcher &patcher;
+  Function *root;               // root of the traversal
+  SObjSet<Variable> xformVars;
+  SObjStack<S_compound_Scope> scopeStack;
+  
+// #define SFOREACH_OBJLIST(T, list, iter) 
+//   for(SObjListIter< T > iter(list); !iter.isDone(); iter.adv())
+
+  HeapifyStackAllocAddrTakenVars_ASTVisitor
+  (SObjSet<Variable*> &addrTaken0, Patcher &patcher0, Function *root0)
+    : addrTaken(addrTaken0)
+    , patcher(patcher0)
+    , root(root0)
+  {}
+
+  bool pass(Variable *);
+
+  virtual bool visitFunction(Function *);
+  virtual bool visitStatement(Statement *);
+  virtual bool visitExpression(Expression *);
+
+  virtual void postvisitStatement(Statement *);
+
+  bool subVisitS_return(S_return *);
+  bool subVisitS_decl(S_decl *);
+  bool processDeclarator(Declarator *);
+  bool subVisitE_variable(E_variable *);
+};
+
+bool HeapifyStackAllocAddrTakenVars_ASTVisitor::pass(Variable *var) {
+  if (!allocatedOnStack(var)) return false;
+  return addrTaken.contains(var);
+}
+
+bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
+visitFunction(Function *obj) {
+  if (obj == root) {
+    // if this is the start of the traversal, we have visited this
+    // S_compound before: skip this node and keep going down the tree
+    return true;
   }
-  if (numDecltors > 1 && numDecltorsPass > 0) {
-    printLoc(std::cout, obj->decllist->first()->decl->loc);
-    std::cout << "declaration having multiple declarators "
-      "some of which need heapifying" << std::endl;
-    return false;               // prune subtree
+
+  // warn about any params
+  FAKELIST_FOREACH_NC(ASTTypeId,
+                      obj->nameAndParams->decl->asD_func()->params, iter) {
+    Declarator *paramDeclarator = iter->decl;
+    xassert(paramDeclarator->var->getScopeKind() == SK_PARAMETER);
+    if (pass(paramDeclarator->var)) {
+      // we can't transform these so we just tell the user about them
+      printLoc(std::cout, paramDeclarator->decl->loc);
+      std::cout << "param decl needs heapifying " <<
+        paramDeclarator->var->name << std::endl;
+    }
+  }
+
+  // re-launch the traversal
+  HeapifyStackAllocAddrTakenVars_ASTVisitor newEnv
+    (this->addrTaken, this->patcher, obj /*skip this node the second time*/);
+  obj->traverse(newEnv.loweredVisitor);
+  return false;         // IMPORTANT: prune the rest of the visitation
+}
+
+bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
+visitStatement(Statement *obj) {
+  if (obj->isS_compound()) {
+    scopeStack.push(new S_compound_Scope());
+    return true;
+//   } else if (obj->isS_return()) {
+//     return subVisitS_return(obj->asS_return());
+  } else if (obj->isS_decl()) {
+    return subVisitS_decl(obj->asS_decl());
   }
   return true;
 }
 
-bool Heapify_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
-  Variable_O *var = asVariable_O(obj->var);
-  xassert(var->name);
-  if (!varPred.pass(var)) return true;
+void HeapifyStackAllocAddrTakenVars_ASTVisitor::
+postvisitStatement(Statement *obj) {
+  if (obj->isS_compound()) {
+    delete scopeStack.pop();
+  }
+}
 
-  // parameter vars
-  if (var->getScopeKind() == SK_PARAMETER) {
-    // we can't transform these so we just tell the user about them
-    printLoc(std::cout, obj->decl->loc);
-    std::cout << "param decl needs heapifying " << var->name << std::endl;
+// emit the free() expressions for all vars on the var stack of for
+// all scopes on the scope stack
+bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
+subVisitS_return(S_return *obj) {
+  // get the current return string
+  CPPSourceLoc ret_ploc(obj->loc);
+  CPPSourceLoc ret_ploc_end(obj->endloc);
+  PairLoc ret_PairLoc(ret_ploc, ret_ploc_end);
+  UnboxedPairLoc ret_UnboxedPairLoc(ret_PairLoc);
+  std::string retStr = patcher.getRange(ret_UnboxedPairLoc);
+
+  // build the replacement
+  stringBuilder newRet;
+  newRet << "{";
+  SFOREACH_OBJLIST(S_compound_Scope, scopeStack.list, iter) {
+    SFOREACH_OBJLIST(Variable, iter.data()->s_decl_vars.list, iter2) {
+      newRet << "free(" << iter2.data()->name << ");";
+    }
+  }
+  newRet << retStr.c_str() << "}";
+
+  // replace it
+  patcher.printPatch(newRet.c_str(), ret_UnboxedPairLoc);
+  return true;
+}
+
+bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
+  Declaration *declaration = obj->decl;
+
+  // skip handle Declaration-s that have multiple Declarator-s
+  int numDecltors = 0;
+  int numDecltorsPass = 0;
+  FAKELIST_FOREACH_NC(Declarator, declaration->decllist, iter) {
+    ++numDecltors;
+    if (pass(iter->var)) ++numDecltorsPass;
+  }
+  if (numDecltorsPass == 0) {
+    // nothing to do
     return true;
   }
+  if (numDecltors > 1) {
+    printLoc(std::cout, declaration->decllist->first()->decl->loc);
+    std::cout << "declaration having multiple declarators "
+      "some of which need heapifying" << std::endl;
+    return false;               // prune subtree
+  }
 
-  // function auto vars
+  // process this Declarator
+  xassert(numDecltors == 1 && numDecltorsPass == 1);
+  Declarator *declarator = declaration->decllist->first();
+  processDeclarator(declarator);
+
+  // push the var onto the var stack in the first scope on the scope
+  // stack
+  scopeStack.top()->s_decl_vars.push(declarator->var);
+
+  return true;
+}
+
+bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
+processDeclarator(Declarator *obj) {
+  Variable_O *var = asVariable_O(obj->var);
+  xassert(pass(var));
   xassert(var->getScopeKind() == SK_FUNCTION);
-  // this would be the error message if xassert allowed for one
-//   xfailure("non-param non-auto var can't be stack allocated");
+  xassert(var->name);
 
   // find the D_name
   D_name *dname = find_D_name(obj->decl);
@@ -514,24 +599,18 @@ bool Heapify_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
     stringBuilder newInitStmt;
     newInitStmt << "; *" << var->name << "=" << initStr.c_str();
 
-    // add the new init statement at the end of the Declarator
-    //
-    // FIX: move this to after the whole Declaration; need to add an
-    // endloc to IDeclarator-s to do that; FIX: this trick prevents us
-    // from being able to handle multiple Declarators in one
-    // Declaration.
+    // add the new init statement at the end of the Declarator; FIX:
+    // move this to after the whole Declaration
     //
     // NOTE: one must in general be careful when turing one statement
     // (here an S_Decl) into multiple statements as the single
     // statement could be the statement argument to an 'if', 'else',
-    // 'while', 'for', 'do', and possibly (depending on the weirdness
-    // of the compiler) 'try', 'sizeof', and 'return'.  In the
-    // particular case of this analysis, it can't happen because you
-    // can't stack allocate a var and take it's address in one
-    // statement and you can't take it's address later because the
-    // scope would have closed.  FIX: Maybe you could stack allocate
-    // it and then in the initializer somehow take its address and
-    // store it on the heap?
+    // 'while', 'for', 'do'.  In the particular case of this analysis,
+    // it can't happen because you can't stack allocate a var and take
+    // it's address in one statement and you can't take it's address
+    // later because the scope would have closed.  FIX: Maybe you
+    // could stack allocate it and then in the initializer somehow
+    // take its address and store it on the heap?
     patcher.insertBefore(decltor_ploc_end, newInitStmt.c_str());
   } else {
     // add an initializer
@@ -551,18 +630,27 @@ bool Heapify_RealVarAllocAndUseVisitor::visit2Declarator(Declarator *obj) {
   return true;
 }
 
-bool Heapify_RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
+bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
+visitExpression(Expression *obj) {
+  if (obj->isE_variable()) {
+    return subVisitE_variable(obj->asE_variable());
+  }
+  return true;
+}
+
+bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
+subVisitE_variable(E_variable *evar) {
   // Note: if you compile without locations for expressions this will
   // stop working.
   Variable_O *var = asVariable_O(evar->var);
-  if (varPred.pass(var)) {
+  if (pass(var)) {
     if (var->getScopeKind() == SK_PARAMETER) {
       printLoc(std::cout, evar->loc);
       std::cout << "param use " << var->name << std::endl;
     } else if (var->getScopeKind() == SK_FUNCTION) {
       // FIX: this predicate has to change to avoid transforming the
       // uses of variables that don't pass the additional checks in
-      // visit2Declarator()
+      // visitDeclarator()
       CPPSourceLoc evar_ploc(evar->loc);
       patcher.insertBefore(evar_ploc, "\n// xform this use\n");
     } else xfailure("non-param non-auto var can't be stack allocated");
@@ -572,11 +660,11 @@ bool Heapify_RealVarAllocAndUseVisitor::visit2E_variable(E_variable *evar) {
 
 // **** AllocTool
 
+// print the locations of declarators and uses of stack allocated
+// variables
 void AllocTool::printStackAlloc_stage() {
   printStage("print stack-allocated vars");
-  // print the locations of declarators and uses of stack variables
-  StackAlloc_VarPredicate sa_varPred;
-  Print_RealVarAllocAndUseVisitor env(sa_varPred);
+  PrintStackAllocVars_ASTVisitor env;
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
@@ -587,6 +675,8 @@ void AllocTool::printStackAlloc_stage() {
   }
 }
 
+// print the locations of declarators and uses of stack allocated
+// variables that have had their addr taken
 void AllocTool::printStackAllocAddrTaken_stage() {
   printStage("print stack-allocated addr-taken vars");
   foreachSourceFile {
@@ -601,11 +691,10 @@ void AllocTool::printStackAllocAddrTaken_stage() {
     // that had their address taken, you would need the linker
     // imitator
     SObjSet<Variable*> addrTaken;
-    AddrTakenASTVisitor at_env(addrTaken);
+    AddrTaken_ASTVisitor at_env(addrTaken);
     unit->traverse(at_env.loweredVisitor);
 
-    StackAlloc_VarPredicate sa_varPred(&addrTaken);
-    Print_RealVarAllocAndUseVisitor env(sa_varPred);
+    PrintStackAllocAddrTakenVars_ASTVisitor env(addrTaken);
     unit->traverse(env.loweredVisitor);
 
     printStop();
@@ -630,16 +719,20 @@ void AllocTool::heapifyStackAllocAddrTaken_stage() {
     // that had their address taken, you would need the linker
     // imitator
     SObjSet<Variable*> addrTaken;
-    AddrTakenASTVisitor at_env(addrTaken);
+    AddrTaken_ASTVisitor at_env(addrTaken);
     unit->traverse(at_env.loweredVisitor);
 
-    StackAlloc_VarPredicate sa_varPred(&addrTaken);
-    Heapify_RealVarAllocAndUseVisitor env(sa_varPred);
+    // NOTE: this emits the diff in its dtor which happens after
+    // printStop() below
+    Patcher patcher(std::cout /*ostream for the diff*/,
+                    true /*recursive*/);
+    HeapifyStackAllocAddrTakenVars_ASTVisitor env
+      (addrTaken, patcher, NULL /*root*/);
     unit->traverse(env.loweredVisitor);
 
     printStop();
-    // NOTE: the Heapify_RealVarAllocAndUseVisitor will be dtored
-    // after this so anything we print above will be delimited from
-    // the patch
+    // NOTE: the HeapifyStackAllocAddrTakenVars_ASTVisitor will be
+    // dtored after this so anything we print above will be delimited
+    // from the patch by printStop()
   }
 }
