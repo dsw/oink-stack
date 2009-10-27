@@ -64,4 +64,4 @@ Test/heapify1.c:70: auto decl has compound initializer: foo5
 +  (*gronk1).f.q;                   // and addr taken: NO
 @@ -71,1 +71,1 @@
 -  &foo5.q;                      // and addr taken: yes
-+  &(*foo5).q;{free(foo5);free(gronk1);free(bar1);free(foo4);free(r);free(foo3);free(foo1);free(y5);free(y4);free(y3);free(y2);};                      // and addr taken: yes
++  &foo5.q;{free(gronk1);free(bar1);free(foo4);free(r);free(foo3);free(foo1);free(y5);free(y4);free(y3);free(y2);};                      // and addr taken: yes

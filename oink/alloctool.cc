@@ -548,18 +548,30 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
       "some of which need heapifying" << std::endl;
     return false;               // prune subtree
   }
-
-  // process this Declarator
   xassert(numDecltors == 1 && numDecltorsPass == 1);
+
+  // skip those where we can't handle the initializer
   Declarator *declarator = declaration->decllist->first();
+  if (declarator->init) {
+    Initializer *init = declarator->init;
+    if (init->isIN_compound()) {
+      printLoc(std::cout, declarator->decl->loc);
+      std::cout << "auto decl has compound initializer: "
+                << declarator->var->name << std::endl;
+      return false;
+    } else if (init->isIN_ctor()) {
+      printLoc(std::cout, declarator->decl->loc);
+      std::cout << "auto decl has ctor initializer: "
+                << declarator->var->name << std::endl;
+      return false;
+    }
+  }
+
+  // xform this Declarator
   xformDeclarator(declarator);
-
-  // record that we processed this var so we know to transform uses of
-  // it
+  // record that we processed this var so we know to xfor uses of it
   xformedVars.add(declarator->var);
-
-  // push the var onto the var stack in the top scope on the scope
-  // stack
+  // push the var onto the var stack in the top scope on scope stack
   scopeStack.top()->s_decl_vars.push(declarator->var);
 
   return true;
@@ -607,17 +619,6 @@ xformDeclarator(Declarator *obj) {
   //   StringRef name = dname->name->getName();
   newInit << "xmalloc(sizeof *" << var->name << ")";
   if (obj->init) {
-    if (obj->init->isIN_compound()) {
-      printLoc(std::cout, obj->endloc);
-      std::cout << "auto decl has compound initializer: "
-                << var->name << std::endl;
-      return true;
-    } else if (obj->init->isIN_ctor()) {
-      printLoc(std::cout, obj->endloc);
-      std::cout << "auto decl has ctor initializer: "
-                << var->name << std::endl;
-      return true;
-    }
     xassert(obj->init->isIN_expr());
     // copy the initializer so we can paste it later
     CPPSourceLoc init_ploc(obj->init->loc);
