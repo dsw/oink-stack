@@ -25,8 +25,8 @@
 #include <llvm/Analysis/Verifier.h>
 #include <llvm/Assembly/PrintModulePass.h>
 #include <llvm/Support/IRBuilder.h>
-#include <llvm/Pass.h>
 #include <llvm/Support/raw_ostream.h>
+#include <llvm/Pass.h>
 
 using std::cout;
 using std::ostream;
@@ -37,7 +37,7 @@ using std::ostream;
 llvm::Module *makeModule() {
   printf("%s:%d make module\n", __FILE__, __LINE__);
 //   Module* Mod = makeLLVMModule();
-  llvm::Module *mod = new llvm::Module("test");
+  llvm::Module *mod = new llvm::Module("test", llvm::getGlobalContext());
 
   // make a function object
   printf("%s:%d make function\n", __FILE__, __LINE__);
@@ -50,8 +50,8 @@ llvm::Module *makeModule() {
 //      /*varargs terminated with null*/ NULL);
   llvm::Constant *c = mod->getOrInsertFunction
     ("main",                    // function name
-     llvm::IntegerType::get(32), // return type
-     llvm::IntegerType::get(32), // one argument (argc)
+     llvm::IntegerType::get(llvm::getGlobalContext(), 32), // return type
+     llvm::IntegerType::get(llvm::getGlobalContext(), 32), // one argument (argc)
      NULL                       // terminate list of varargs
      );
   llvm::Function *main_function = llvm::cast<llvm::Function>(c);
@@ -64,7 +64,7 @@ llvm::Module *makeModule() {
   arg1->setName("argc");
 
   printf("%s:%d make block\n", __FILE__, __LINE__);
-  llvm::BasicBlock *block = llvm::BasicBlock::Create("entry", main_function);
+  llvm::BasicBlock *block = llvm::BasicBlock::Create(llvm::getGlobalContext(), "entry", main_function);
   llvm::IRBuilder<> builder(block);
   llvm::Value* tmp = builder.CreateBinOp(llvm::Instruction::Mul, arg1, arg1, "tmp");
   builder.CreateRet(tmp);
@@ -165,7 +165,7 @@ CodeGenASTVisitor::CodeGenASTVisitor()
   , num_AttributeSpecifier(0)
   , num_Attribute(0)
 {
-  mod = new llvm::Module("test");
+  mod = new llvm::Module("test", llvm::getGlobalContext());
 }
 
 void CodeGenASTVisitor::printHistogram(ostream &out) {
@@ -228,7 +228,7 @@ bool CodeGenASTVisitor::visitFunction(Function *obj) {
   
   std::vector<const llvm::Type*> paramTypes;
   llvm::FunctionType* funcType =
-    llvm::FunctionType::get(llvm::IntegerType::get(32), paramTypes, /*isVarArg*/false);
+    llvm::FunctionType::get(llvm::IntegerType::get(llvm::getGlobalContext(), 32), paramTypes, /*isVarArg*/false);
   llvm::Constant *c = mod->getOrInsertFunction
     (obj->nameAndParams->var->name,  // function name
      funcType);
@@ -349,7 +349,7 @@ bool CodeGenASTVisitor::visitStatement(Statement *obj) {
   obj->debugPrint(std::cout, 0);
   if (obj->kind() == Statement::S_COMPOUND) {
     assert (currentBlock == NULL); // Nested blocks unimplemented
-    currentBlock = llvm::BasicBlock::Create(locToStr(obj->loc).c_str(), currentFunction);
+    currentBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), locToStr(obj->loc).c_str(), currentFunction);
   }
   else if (obj->kind() == Statement::S_RETURN) {
     // No action needed in preorder visit
@@ -403,7 +403,7 @@ void CodeGenASTVisitor::postvisitExpression(Expression *obj) {
   if (obj->kind() == Expression::E_INTLIT) {
     E_intLit* intLit = static_cast<E_intLit *>(obj);
     llvm::IRBuilder<> builder(currentBlock);
-    valueMap[obj] = llvm::ConstantInt::get(llvm::Type::Int32Ty, intLit->i);
+    valueMap[obj] = llvm::ConstantInt::get(llvm::Type::getInt32Ty(llvm::getGlobalContext()), intLit->i);
   }
   else if (obj->kind() == Expression::E_BINARY) {
     E_binary* binaryExpr = static_cast<E_binary *>(obj);
