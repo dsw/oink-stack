@@ -452,6 +452,24 @@ visitStatement(Statement *obj) {
     return subVisitS_return(obj->asS_return());
   } else if (obj->isS_decl()) {
     return subVisitS_decl(obj->asS_decl());
+  } else if (obj->isS_goto()) {
+    // we don't know if we have to free here or not; FIX: we might be
+    // able to refine this
+    printLoc(std::cout, obj->loc);
+    std::cout << "goto may require some variables to be free()-ed"
+              << std::endl;
+  } else if (obj->isS_break()) {
+    // we don't know if we have to free here or not; FIX: we might be
+    // able to refine this
+    printLoc(std::cout, obj->loc);
+    std::cout << "break may require some variables to be free()-ed"
+              << std::endl;
+  } else if (obj->isS_continue()) {
+    // we don't know if we have to free here or not; FIX: we might be
+    // able to refine this
+    printLoc(std::cout, obj->loc);
+    std::cout << "continue may require some variables to be free()-ed"
+              << std::endl;
   }
   return true;
 }

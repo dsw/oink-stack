@@ -29,5 +29,13 @@ int main() {
     int e;
                                 // <nothing>
   }
+
+ foo:
+  goto foo;
+  while(1) {
+    break;
+    continue;
+  }
+
   return 100;                   // y, x
 }
