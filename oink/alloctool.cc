@@ -383,7 +383,7 @@ public:
   SObjSet<Variable*> &addrTaken;
   Patcher &patcher;
   Function *root;               // root of the traversal
-  SObjSet<Variable> xformVars;
+  SObjSet<Variable*> xformedVars;
   SObjStack<S_compound_Scope> scopeStack;
   
 // #define SFOREACH_OBJLIST(T, list, iter) 
@@ -406,7 +406,7 @@ public:
 
   bool subVisitS_return(S_return *);
   bool subVisitS_decl(S_decl *);
-  bool processDeclarator(Declarator *);
+  bool xformDeclarator(Declarator *);
   bool subVisitE_variable(E_variable *);
 };
 
@@ -513,9 +513,13 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
   // process this Declarator
   xassert(numDecltors == 1 && numDecltorsPass == 1);
   Declarator *declarator = declaration->decllist->first();
-  processDeclarator(declarator);
+  xformDeclarator(declarator);
 
-  // push the var onto the var stack in the first scope on the scope
+  // record that we processed this var so we know to transform uses of
+  // it
+  xformedVars.add(declarator->var);
+
+  // push the var onto the var stack in the top scope on the scope
   // stack
   scopeStack.top()->s_decl_vars.push(declarator->var);
 
@@ -523,7 +527,7 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
 }
 
 bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
-processDeclarator(Declarator *obj) {
+xformDeclarator(Declarator *obj) {
   Variable_O *var = asVariable_O(obj->var);
   xassert(pass(var));
   xassert(var->getScopeKind() == SK_FUNCTION);
@@ -643,17 +647,24 @@ subVisitE_variable(E_variable *evar) {
   // Note: if you compile without locations for expressions this will
   // stop working.
   Variable_O *var = asVariable_O(evar->var);
+
+  // FIX: get rid of this
   if (pass(var)) {
     if (var->getScopeKind() == SK_PARAMETER) {
       printLoc(std::cout, evar->loc);
       std::cout << "param use " << var->name << std::endl;
-    } else if (var->getScopeKind() == SK_FUNCTION) {
-      // FIX: this predicate has to change to avoid transforming the
-      // uses of variables that don't pass the additional checks in
-      // visitDeclarator()
-      CPPSourceLoc evar_ploc(evar->loc);
-      patcher.insertBefore(evar_ploc, "\n// xform this use\n");
-    } else xfailure("non-param non-auto var can't be stack allocated");
+    }
+  }
+
+  if (xformedVars.contains(var)) {
+    xassert(var->getScopeKind() == SK_FUNCTION);
+    CPPSourceLoc evar_ploc(evar->loc);
+    CPPSourceLoc evar_ploc_end(evar->endloc);
+    PairLoc evar_PairLoc(evar_ploc, evar_ploc_end);
+    UnboxedPairLoc evar_UnboxedPairLoc(evar_PairLoc);
+    stringBuilder newEvar;
+    newEvar << "(*" << var->name << ")";
+    patcher.printPatch(newEvar.c_str(), evar_UnboxedPairLoc);
   }
   return true;
 }

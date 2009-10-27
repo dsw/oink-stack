@@ -8,89 +8,60 @@ Test/heapify1.c:70: auto decl has compound initializer: foo5
 
 --- Test/heapify1.c
 +++ Test/heapify1.c
-@@ -26,2 +26,4 @@
+@@ -26,2 +26,2 @@
 -  int y2;                       // function/auto: stack
 -  &y2;                          // and addr taken: yes
 +  int (*y2)=xmalloc(sizeof *y2);                       // function/auto: stack
-+  &
-+// xform this use
-+y2;                          // and addr taken: yes
-@@ -29,2 +29,4 @@
++  &(*y2);                          // and addr taken: yes
+@@ -29,2 +29,2 @@
 -  int y3 = 3;                   // function/auto: stack
 -  &y3;                          // and addr taken: yes
 +  int (*y3) = xmalloc(sizeof *y3); *y3=3;                   // function/auto: stack
-+  &
-+// xform this use
-+y3;                          // and addr taken: yes
-@@ -32,2 +32,4 @@
++  &(*y3);                          // and addr taken: yes
+@@ -32,2 +32,2 @@
 -  int *y4[3];                   // function/auto: stack
 -  &y4;                          // and addr taken: yes
 +  int *(*y4)[3]=xmalloc(sizeof *y4);                   // function/auto: stack
-+  &
-+// xform this use
-+y4;                          // and addr taken: yes
-@@ -35,2 +35,4 @@
++  &(*y4);                          // and addr taken: yes
+@@ -35,2 +35,2 @@
 -  int *y5 = &x;                 // function/auto: stack
 -  &y5;                          // and addr taken: yes
 +  int *(*y5) = xmalloc(sizeof *y5); *y5=&x;                 // function/auto: stack
-+  &
-+// xform this use
-+y5;                          // and addr taken: yes
-@@ -40,2 +40,4 @@
++  &(*y5);                          // and addr taken: yes
+@@ -40,2 +40,2 @@
 -  struct Foo foo1;              // function/auto: stack
 -  &foo1;                        // and addr taken: yes
 +  struct Foo (*foo1)=xmalloc(sizeof *foo1);              // function/auto: stack
-+  &
-+// xform this use
-+foo1;                        // and addr taken: yes
-@@ -45,2 +45,4 @@
++  &(*foo1);                        // and addr taken: yes
+@@ -45,2 +45,2 @@
 -  struct Foo foo3;              // function/auto: stack
 -  &(foo3.q);                    // and addr taken: yes
 +  struct Foo (*foo3)=xmalloc(sizeof *foo3);              // function/auto: stack
-+  &(
-+// xform this use
-+foo3.q);                    // and addr taken: yes
-@@ -49,1 +49,3 @@
--  &q2;                          // and addr taken: yes
-+  &
-+// xform this use
-+q2;                          // and addr taken: yes
++  &((*foo3).q);                    // and addr taken: yes
 @@ -51,1 +51,1 @@
 -  int r[2][3][4][5];            // function/auto: stack
 +  int (*r)[2][3][4][5]=xmalloc(sizeof *r);            // function/auto: stack
-@@ -53,1 +53,3 @@
+@@ -53,1 +53,1 @@
 -  &r[1][2][3];                  // and addr taken: yes
-+  &
-+// xform this use
-+r[1][2][3];                  // and addr taken: yes
-@@ -55,2 +55,4 @@
++  &(*r)[1][2][3];                  // and addr taken: yes
+@@ -55,2 +55,2 @@
 -  struct Foo foo4[3];           // function/auto: stack
 -  &(foo4[2].q);                 // and addr taken: yes
 +  struct Foo (*foo4)[3]=xmalloc(sizeof *foo4);           // function/auto: stack
-+  &(
-+// xform this use
-+foo4[2].q);                 // and addr taken: yes
-@@ -58,2 +58,4 @@
++  &((*foo4)[2].q);                 // and addr taken: yes
+@@ -58,2 +58,2 @@
 -  struct Bar bar1;              // function/auto: stack
 -  &(bar1.q2[3]);                // and addr taken: yes
 +  struct Bar (*bar1)=xmalloc(sizeof *bar1);              // function/auto: stack
-+  &(
-+// xform this use
-+bar1.q2[3]);                // and addr taken: yes
-@@ -64,2 +64,4 @@
++  &((*bar1).q2[3]);                // and addr taken: yes
+@@ -64,2 +64,2 @@
 -  struct Gronk gronk1;          // function/auto: stack
 -  &(gronk1.f.q);                // and addr taken: yes
 +  struct Gronk (*gronk1)=xmalloc(sizeof *gronk1);          // function/auto: stack
-+  &(
-+// xform this use
-+gronk1.f.q);                // and addr taken: yes
-@@ -68,1 +68,3 @@
++  &((*gronk1).f.q);                // and addr taken: yes
+@@ -68,1 +68,1 @@
 -  gronk1.f.q;                   // and addr taken: NO
-+  
-+// xform this use
-+gronk1.f.q;                   // and addr taken: NO
-@@ -71,1 +71,3 @@
++  (*gronk1).f.q;                   // and addr taken: NO
+@@ -71,1 +71,1 @@
 -  &foo5.q;                      // and addr taken: yes
-+  &
-+// xform this use
-+foo5.q;                      // and addr taken: yes
++  &(*foo5).q;                      // and addr taken: yes
