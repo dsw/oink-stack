@@ -677,6 +677,18 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
 visitExpression(Expression *obj) {
   if (obj->isE_variable()) {
     return subVisitE_variable(obj->asE_variable());
+  } else if (obj->isE_funCall()) {
+    E_funCall *efun = obj->asE_funCall();
+    if (efun->func->isE_variable()) {
+      StringRef name = efun->func->asE_variable()->var->name;
+      if (streq("longjmp", name) || streq("siglongjmp", name)) {
+        // we don't know if we have to free here or not; FIX: we might
+        // be able to refine this
+        printLoc(std::cout, obj->loc);
+        std::cout << name << " may require some variables to be free()-ed"
+                  << std::endl;
+      }
+    }
   }
   return true;
 }

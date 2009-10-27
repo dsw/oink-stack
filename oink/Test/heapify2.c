@@ -1,5 +1,8 @@
 // #include <stdlib.h>
 
+// fake
+void longjmp();
+
 int main() {
   int x;
   &x;
@@ -36,6 +39,7 @@ int main() {
     break;
     continue;
   }
+  longjmp();
 
   return 100;                   // y, x
 }

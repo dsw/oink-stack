@@ -1,13 +1,14 @@
 
 ---- START ---- Test/heapify2.c
-Test/heapify2.c:34: goto may require some variables to be free()-ed
-Test/heapify2.c:36: break may require some variables to be free()-ed
-Test/heapify2.c:37: continue may require some variables to be free()-ed
+Test/heapify2.c:37: goto may require some variables to be free()-ed
+Test/heapify2.c:39: break may require some variables to be free()-ed
+Test/heapify2.c:40: continue may require some variables to be free()-ed
+Test/heapify2.c:42: longjmp may require some variables to be free()-ed
 ---- STOP ----
 
 --- Test/heapify2.c
 +++ Test/heapify2.c
-@@ -4,4 +4,4 @@
+@@ -7,4 +7,4 @@
 -  int x;
 -  &x;
 -  int y = 200;
@@ -16,34 +17,34 @@ Test/heapify2.c:37: continue may require some variables to be free()-ed
 +  &(*x);
 +  int (*y) = xmalloc(sizeof *y); *y=200;
 +  &(*y);
-@@ -9,2 +9,2 @@
+@@ -12,2 +12,2 @@
 -    int z;
 -    &z;
 +    int (*z)=xmalloc(sizeof *z);
 +    &(*z);
-@@ -12,3 +12,3 @@
+@@ -15,3 +15,3 @@
 -      int a = 300;
 -      &a;
 -      return 1;                 // a, z, y, x
 +      int (*a) = xmalloc(sizeof *a); *a=300;
 +      &(*a);
 +      {free(a);free(z);free(y);free(x);return 1;}                 // a, z, y, x
-@@ -16,1 +16,1 @@
+@@ -19,1 +19,1 @@
 -    return 2;                   // z, y, x
 +    {free(z);free(y);free(x);return 2;}                   // z, y, x
-@@ -18,3 +18,3 @@
+@@ -21,3 +21,3 @@
 -    int b;
 -    &b;
 -    return 3;                   // b, y, x
 +    int (*b)=xmalloc(sizeof *b);
 +    &(*b);
 +    {free(b);free(y);free(x);return 3;}                   // b, y, x
-@@ -23,1 +23,1 @@
+@@ -26,1 +26,1 @@
 -    int c;
 +    int (*c)=xmalloc(sizeof *c);
-@@ -25,1 +25,1 @@
+@@ -28,1 +28,1 @@
 -    &c;
 +    &(*c);{free(c);};
-@@ -40,1 +40,1 @@
+@@ -44,1 +44,1 @@
 -  return 100;                   // y, x
 +  {free(y);free(x);return 100;}                   // y, x
