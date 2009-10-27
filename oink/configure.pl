@@ -373,7 +373,8 @@ if (! -f "$LIBREGION_DIR/regions.h") {
       "If it's in a different location, use the -libregion=<dir> option.\n";
 }
 
-# llvm
+# llvm; FIX: add something here to check (1) the version of llvm and
+# (2) that it is built
 if ($USE_LLVM &&
     ! -f "$LLVM_DIR/include/llvm/AbstractTypeUser.h")
 {
