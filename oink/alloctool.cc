@@ -448,8 +448,8 @@ visitStatement(Statement *obj) {
   if (obj->isS_compound()) {
     scopeStack.push(new S_compound_Scope());
     return true;
-//   } else if (obj->isS_return()) {
-//     return subVisitS_return(obj->asS_return());
+  } else if (obj->isS_return()) {
+    return subVisitS_return(obj->asS_return());
   } else if (obj->isS_decl()) {
     return subVisitS_decl(obj->asS_decl());
   }

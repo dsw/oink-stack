@@ -1,0 +1,50 @@
+
+---- START ---- Test/heapify2.c
+---- STOP ----
+
+--- Test/heapify2.c
++++ Test/heapify2.c
+@@ -4,4 +4,8 @@
+-  int x;
+-  &x;
+-  int y = 200;
+-  &y;
++  int (*x)=xmalloc(sizeof *x);
++  &
++// xform this use
++x;
++  int (*y) = xmalloc(sizeof *y); *y=200;
++  &
++// xform this use
++y;
+@@ -9,2 +9,4 @@
+-    int z;
+-    &z;
++    int (*z)=xmalloc(sizeof *z);
++    &
++// xform this use
++z;
+@@ -12,3 +12,5 @@
+-      int a = 300;
+-      &a;
+-      return 1;                 // a, z, y, x
++      int (*a) = xmalloc(sizeof *a); *a=300;
++      &
++// xform this use
++a;
++      {free(a);free(z);free(y);free(x);return 1;}                 // a, z, y, x
+@@ -16,1 +16,1 @@
+-    return 2;                   // z, y, x
++    {free(z);free(y);free(x);return 2;}                   // z, y, x
+@@ -18,3 +18,5 @@
+-    int b;
+-    &b;
+-    return 3;                   // b, y, x
++    int (*b)=xmalloc(sizeof *b);
++    &
++// xform this use
++b;
++    {free(b);free(y);free(x);return 3;}                   // b, y, x
+@@ -22,1 +22,1 @@
+-  return 100;                   // y, x
++  {free(y);free(x);return 100;}                   // y, x

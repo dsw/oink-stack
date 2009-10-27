@@ -1,23 +1,23 @@
 // #include <stdlib.h>
 
-// struct Foo {
-//   int q;                        // class: no, as depends on container
-// };
-
 int main() {
-//   int *x = 3;
-//   &x;
-
-//   struct Foo foo4[3];           // function/auto: stack
-//   &(foo4[2].q);                 // and addr taken: yes
-//   struct Foo (*foo4)[3]=malloc(sizeof *foo4);
-//   int *q_p = &((*foo4)[2].q);
-//   return *q_p;
-
-  int x = 1;
-  for(int i=0; i<10; ++i) {
-    ++x;
+  int x;
+  &x;
+  int y = 200;
+  &y;
+  if (1) {
+    int z;
+    &z;
+    while (1) {
+      int a = 300;
+      &a;
+      return 1;                 // a, z, y, x
+    }
+    return 2;                   // z, y, x
+  } else {
+    int b;
+    &b;
+    return 3;                   // b, y, x
   }
-
-  return 0;
+  return 100;                   // y, x
 }
