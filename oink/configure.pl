@@ -7,6 +7,9 @@
 # produce FILE.  Generates config.status which will actually do the
 # substitution.
 
+# FIX: move the llvm link to oink-stack rather than to the directory
+# above it
+
 use strict;
 use warnings;
 
