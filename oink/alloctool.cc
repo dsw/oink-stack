@@ -642,6 +642,7 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
 
 bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
 xformDeclarator(Declarator *obj) {
+  xassert(obj->context == DC_S_DECL);
   Variable_O *var = asVariable_O(obj->var);
   xassert(pass(var));
   xassert(var->getScopeKind() == SK_FUNCTION);
