@@ -1,6 +1,7 @@
 // see License.txt for copyright and terms of use
 
 #include <iostream>
+#include <fstream>
 
 #include "bullet.h"        // this module
 #include "bullet_cmd.h"    // BulletCmd
@@ -33,6 +34,13 @@ using std::ostream;
 
 // Emit stage ****
 
+/// createTempAlloca - This creates a alloca and inserts it into the entry
+/// block.
+llvm::AllocaInst *CodeGenASTVisitor::createTempAlloca(const llvm::Type *ty, const char *name)
+{
+  return new llvm::AllocaInst(ty, 0, name, allocaInsertPt);
+}
+
 // make an LLVM module
 llvm::Module *makeModule() {
   printf("%s:%d make module\n", __FILE__, __LINE__);
@@ -41,13 +49,6 @@ llvm::Module *makeModule() {
 
   // make a function object
   printf("%s:%d make function\n", __FILE__, __LINE__);
-//   Constant* c = mod->getOrInsertFunction
-//     ("mul_add",
-//      /*ret type*/ IntegerType::get(32),
-//      /*args*/ IntegerType::get(32),
-//      IntegerType::get(32),
-//      IntegerType::get(32),
-//      /*varargs terminated with null*/ NULL);
   llvm::Constant *c = mod->getOrInsertFunction
     ("main",                    // function name
      llvm::IntegerType::get(llvm::getGlobalContext(), 32), // return type
@@ -88,10 +89,6 @@ void Bullet::emit_stage() {
       printStop();
   }
 
-  // modified from:
-  // file:///Users/dsw/Notes/llvm-2.5-src/docs/tutorial/JITTutorial1.html
-  // llvm::Module *mod = makeModule();
-
   // verify the module
   printf("%s:%d verify\n", __FILE__, __LINE__);
   verifyModule(*mod, llvm::PrintMessageAction);
@@ -99,13 +96,12 @@ void Bullet::emit_stage() {
   // render the module
   printf("%s:%d render\n", __FILE__, __LINE__);
   llvm::PassManager PM;
-  llvm::raw_os_ostream out(std::cout);
+  std::ofstream outFile("out.ll");
+  llvm::raw_os_ostream out(outFile);
   llvm::ModulePass *pmp = createPrintModulePass(&out);
   PM.add(pmp);
   PM.run(*mod);
 
-  // delete the module
-  printf("%s:%d delete module\n", __FILE__, __LINE__);
   delete mod;
 }
 
@@ -129,7 +125,8 @@ void Bullet::printASTHistogram_stage() {
 // CodeGenASTVisitor ****
 
 CodeGenASTVisitor::CodeGenASTVisitor()
-  : loweredVisitor(this)
+  : context(llvm::getGlobalContext())
+  , loweredVisitor(this)
   , num_TranslationUnit(0)
   , num_TopForm(0)
   , num_Function(0)
@@ -165,7 +162,7 @@ CodeGenASTVisitor::CodeGenASTVisitor()
   , num_AttributeSpecifier(0)
   , num_Attribute(0)
 {
-  mod = new llvm::Module("test", llvm::getGlobalContext());
+  mod = new llvm::Module("test", context);
 }
 
 void CodeGenASTVisitor::printHistogram(ostream &out) {
@@ -228,11 +225,23 @@ bool CodeGenASTVisitor::visitFunction(Function *obj) {
   
   std::vector<const llvm::Type*> paramTypes;
   llvm::FunctionType* funcType =
-    llvm::FunctionType::get(llvm::IntegerType::get(llvm::getGlobalContext(), 32), paramTypes, /*isVarArg*/false);
+    llvm::FunctionType::get(llvm::IntegerType::get(context, 32), paramTypes, /*isVarArg*/false);
   llvm::Constant *c = mod->getOrInsertFunction
     (obj->nameAndParams->var->name,  // function name
      funcType);
   currentFunction = llvm::cast<llvm::Function>(c);
+
+  entryBlock = llvm::BasicBlock::Create(context, "entry", currentFunction);
+  prevBlock = entryBlock;
+
+  // Create a marker to make it easy to insert allocas into the entryblock
+  // later.  Don't create this with the builder, because we don't want it
+  // folded.
+  llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::getInt32Ty(context));
+  allocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::getInt32Ty(context), "",
+					 entryBlock);
+
+
   ++num_Function;
   return true;
 }
@@ -254,7 +263,102 @@ bool CodeGenASTVisitor::visitDeclaration(Declaration *obj) {
   return true;
 }
 
+const llvm::Type* CodeGenASTVisitor::makeTypeSpecifier(Type *t)
+{
+  const llvm::Type* type = NULL;
+
+  switch (t->getTag())
+  {
+  case Type::T_ATOMIC: {
+    CVAtomicType *cvat = t->asCVAtomicType();
+    AtomicType *at = cvat->atomic;
+    switch (at->getTag()) {
+    case AtomicType::T_SIMPLE: {
+      SimpleType *st = at->asSimpleType();
+      SimpleTypeId id = st->type;
+      switch (id) {
+      case ST_CHAR: {
+	type = llvm::IntegerType::get(context, 8);
+	break;
+      }
+      case ST_UNSIGNED_CHAR: {
+	type = llvm::IntegerType::get(context, 8);
+	break;
+      }
+      case ST_SIGNED_CHAR: {
+	type = llvm::IntegerType::get(context, 8);
+	break;
+      }
+      case ST_INT: {
+	type = llvm::IntegerType::get(context, 32);
+	break;
+      }
+      case ST_UNSIGNED_INT: {
+	type = llvm::IntegerType::get(context, 32);
+	break;
+      }
+      case ST_LONG_INT: {
+	type = llvm::IntegerType::get(context, 32);
+	break;
+      }
+      case ST_UNSIGNED_LONG_INT: {
+	type = llvm::IntegerType::get(context, 32);
+	break;
+      }
+      case ST_LONG_LONG: {             // GNU/C99 extension
+	type = llvm::IntegerType::get(context, 64);
+	break;
+      }
+      case ST_UNSIGNED_LONG_LONG: {     // GNU/C99 extension
+	type = llvm::IntegerType::get(context, 64);
+	break;
+      }
+      case ST_SHORT_INT: {
+	type = llvm::IntegerType::get(context, 16);
+	break;
+      }
+      case ST_UNSIGNED_SHORT_INT: {
+	type = llvm::IntegerType::get(context, 16);
+	break;
+      }
+      case ST_WCHAR_T: {
+	type = llvm::IntegerType::get(context, 16);
+	break;
+      }
+      case ST_BOOL: {
+	type = llvm::IntegerType::get(context, 8);
+	break;
+      }
+      default: {
+	assert(0);
+      }
+      }
+      break;
+    }
+    default: {
+      assert(0);
+    }
+    }
+    break;
+  }
+  default: {
+    assert(0);
+  }
+  }
+  return type;
+}
+
 void CodeGenASTVisitor::postvisitDeclaration(Declaration *obj) {
+  FAKELIST_FOREACH_NC(Declarator, obj->decllist, iter) {
+    Variable* var = iter->var;
+    const llvm::Type* type = makeTypeSpecifier(var->type);
+
+    if (var->flags & (DF_DEFINITION|DF_TEMPORARY)) {
+      // A local variable.
+      llvm::AllocaInst* lv = createTempAlloca(type, var->name);
+      variables[var] = lv;
+    }  
+  }
 }
 
 bool CodeGenASTVisitor::visitASTTypeId(ASTTypeId *obj) {
@@ -349,7 +453,9 @@ bool CodeGenASTVisitor::visitStatement(Statement *obj) {
   obj->debugPrint(std::cout, 0);
   if (obj->kind() == Statement::S_COMPOUND) {
     assert (currentBlock == NULL); // Nested blocks unimplemented
-    currentBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), locToStr(obj->loc).c_str(), currentFunction);
+    currentBlock = llvm::BasicBlock::Create(context, locToStr(obj->loc).c_str(), currentFunction);
+    llvm::IRBuilder<> builder(prevBlock);
+    builder.CreateBr(currentBlock);
   }
   else if (obj->kind() == Statement::S_RETURN) {
     // No action needed in preorder visit
@@ -364,13 +470,14 @@ bool CodeGenASTVisitor::visitStatement(Statement *obj) {
 void CodeGenASTVisitor::postvisitStatement(Statement *obj) {
   if (obj->kind() == Statement::S_COMPOUND) {
     assert (currentBlock != NULL);
+    prevBlock = currentBlock;
     currentBlock = NULL;
   }
   else if (obj->kind() == Statement::S_RETURN) {
     S_return* returnStatement = static_cast<S_return*>(obj);
     assert (currentBlock != NULL);
     llvm::IRBuilder<> builder(currentBlock);
-    builder.CreateRet(valueMap[returnStatement->expr->expr]);
+    builder.CreateRet(getValueFor(returnStatement->expr->expr));
   }
   else {
     assert(false);
@@ -398,26 +505,81 @@ bool CodeGenASTVisitor::visitExpression(Expression *obj) {
   return true;
 }
 
+struct LlvmExpressionType {
+  enum LlvmExpressionType_t {
+    BinOpExpr,
+    ICmpExpr,
+  };
+};
+
+llvm::Value* CodeGenASTVisitor::getValueFor(Expression* expr) {
+  if (valueMap.find(expr) == valueMap.end()) {
+    if (lvalueMap.find(expr) != valueMap.end()) {
+      llvm::IRBuilder<> builder(currentBlock);
+      valueMap[expr] = builder.CreateLoad(lvalueMap[expr], names[expr]);
+      return valueMap[expr];
+    }
+    else {
+      return NULL;
+    }
+  } else {
+    return valueMap[expr];
+  }
+}
+
 void CodeGenASTVisitor::postvisitExpression(Expression *obj) {
   obj->debugPrint(std::cout, 0);
   if (obj->kind() == Expression::E_INTLIT) {
     E_intLit* intLit = static_cast<E_intLit *>(obj);
+    valueMap[obj] = llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), intLit->i);
+  }
+  else if (obj->kind() == Expression::E_VARIABLE) {
+    E_variable* variableExpr = static_cast<E_variable *>(obj);
     llvm::IRBuilder<> builder(currentBlock);
-    valueMap[obj] = llvm::ConstantInt::get(llvm::Type::getInt32Ty(llvm::getGlobalContext()), intLit->i);
+    lvalueMap[obj] = variables[variableExpr->var];
+    names[obj] = variableExpr->var->name;
+  }
+  else if (obj->kind() == Expression::E_ASSIGN) {
+    E_assign* assignExpr = static_cast<E_assign *>(obj);
+    llvm::IRBuilder<> builder(currentBlock);
+    switch (assignExpr->op) {
+    case BIN_ASSIGN: 
+      valueMap[obj] = builder.CreateStore(getValueFor(assignExpr->src), getLvalueFor(assignExpr->target));
+      break;
+    default:
+      assert(0);
+      break;
+    }
   }
   else if (obj->kind() == Expression::E_BINARY) {
     E_binary* binaryExpr = static_cast<E_binary *>(obj);
     llvm::IRBuilder<> builder(currentBlock);
+    LlvmExpressionType::LlvmExpressionType_t exprType;
     llvm::BinaryOperator::BinaryOps op;
+    llvm::CmpInst::Predicate pred;
 
     switch (binaryExpr->op) {
-    case BIN_PLUS:  op = llvm::Instruction::Add; break;
-    case BIN_MINUS: op = llvm::Instruction::Sub; break;
-    case BIN_MULT:  op = llvm::Instruction::Mul; break;
+    case BIN_EQUAL:     pred = llvm::CmpInst::ICMP_EQ;  exprType = LlvmExpressionType::ICmpExpr; break;
+    case BIN_NOTEQUAL:  pred = llvm::CmpInst::ICMP_NE;  exprType = LlvmExpressionType::ICmpExpr; break;
+    case BIN_LESS:      pred = llvm::CmpInst::ICMP_SLT; exprType = LlvmExpressionType::ICmpExpr; break;
+    case BIN_GREATER:   pred = llvm::CmpInst::ICMP_SGT; exprType = LlvmExpressionType::ICmpExpr; break;
+    case BIN_LESSEQ:    pred = llvm::CmpInst::ICMP_SLE; exprType = LlvmExpressionType::ICmpExpr; break;
+    case BIN_GREATEREQ: pred = llvm::CmpInst::ICMP_SGE; exprType = LlvmExpressionType::ICmpExpr; break;
+    case BIN_PLUS:  op = llvm::Instruction::Add; exprType = LlvmExpressionType::BinOpExpr; break;
+    case BIN_MINUS: op = llvm::Instruction::Sub; exprType = LlvmExpressionType::BinOpExpr; break;
+    case BIN_MULT:  op = llvm::Instruction::Mul; exprType = LlvmExpressionType::BinOpExpr; break;
     default: assert(false); break;
     }    
     assert(valueMap.contains(binaryExpr->e1) && valueMap.contains(binaryExpr->e2));
-    valueMap[obj] = builder.CreateBinOp(op, valueMap[binaryExpr->e1], valueMap[binaryExpr->e2], "expr"/*locToStr(obj->loc).c_str()*/);
+    switch (exprType) {
+    case LlvmExpressionType::ICmpExpr:
+      valueMap[obj] = builder.CreateICmp(pred, getValueFor(binaryExpr->e1), getValueFor(binaryExpr->e2), "expr"/*locToStr(obj->loc).c_str()*/);
+      valueMap[obj] = builder.CreateIntCast(getValueFor(obj), llvm::Type::getInt32Ty(context), /*isSigned*/true); 
+      break;
+    case LlvmExpressionType::BinOpExpr:
+      valueMap[obj] = builder.CreateBinOp(op, getValueFor(binaryExpr->e1), getValueFor(binaryExpr->e2), "expr"/*locToStr(obj->loc).c_str()*/);
+      break;
+    }
   }
 }
 
