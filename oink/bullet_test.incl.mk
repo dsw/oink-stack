@@ -11,7 +11,7 @@ $(error This makefile should be included in Test.incl.mk, not used stand-alone)
 endif
 
 .PHONY: bullet-check
-bullet-check: startup.o hello_1 hello_2 hello_variables
+bullet-check: hello_1 hello_2 hello_variables
 
 .SECONDEXPANSION:
 hello_1 hello_2 hello_variables: ./bullet bullet_test.incl.mk Test/bullet/$$@.c
