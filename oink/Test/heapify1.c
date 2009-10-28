@@ -70,3 +70,23 @@ void f(int x1,
   struct Foo foo5 = { .q = 3 }; // function/auto: stack, but compound init
   &foo5.q;                      // and addr taken: yes
 }
+
+void g() {
+  int x[10];                    // no addr taken
+  x[3];
+  *(x+4);
+
+  int y[10];                    // no addr taken
+  sizeof(y);
+  sizeof(&y);
+  sizeof(&(y[3]));
+
+  int z[10];                    // addr taken
+  &z[3];
+
+  int z2[10];                   // addr taken
+  &(*(z2+3));
+
+  int z3[10];
+  z3;                           // addr taken
+}

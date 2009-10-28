@@ -65,3 +65,18 @@ Test/heapify1.c:70: auto decl has compound initializer: foo5
 @@ -71,1 +71,1 @@
 -  &foo5.q;                      // and addr taken: yes
 +  &foo5.q;{free(gronk1);free(bar1);free(foo4);free(r);free(foo3);free(foo1);free(y5);free(y4);free(y3);free(y2);};                      // and addr taken: yes
+@@ -84,2 +84,2 @@
+-  int z[10];                    // addr taken
+-  &z[3];
++  int (*z)[10]=xmalloc(sizeof *z);                    // addr taken
++  &(*z)[3];
+@@ -87,2 +87,2 @@
+-  int z2[10];                   // addr taken
+-  &(*(z2+3));
++  int (*z2)[10]=xmalloc(sizeof *z2);                   // addr taken
++  &(*((*z2)+3));
+@@ -90,2 +90,2 @@
+-  int z3[10];
+-  z3;                           // addr taken
++  int (*z3)[10]=xmalloc(sizeof *z3);
++  (*z3);{free(z3);free(z2);free(z);};                           // addr taken

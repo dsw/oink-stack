@@ -175,7 +175,12 @@ bool OnlyDecltorsOfRealVars_ASTVisitor::visitPQName(PQName *obj) {
 
 // **** AddrTaken_ASTVisitor
 
-// make a set of variables that have had their addr taken
+// make a set of variables that have had their addr taken; FIX: this
+// analysis should probably be renamed to "address escapes" rather
+// than just "addr taken" as just about any use of an array takes its
+// address, but an immediate de-reference doesn't cause the address to
+// escape unless there is an explicit addr-of (&) operator wrapped
+// around it or more trickery from C++
 class AddrTaken_ASTVisitor : public OnlyDecltorsOfRealVars_ASTVisitor {
 public:
   SObjSet<Variable*> &addrTaken;
@@ -186,6 +191,9 @@ public:
   {}
   // visitor methods
   virtual bool visitExpression(Expression *);
+#ifdef GNU_EXTENSION
+  bool visitASTTypeof(ASTTypeof *);
+#endif // GNU_EXTENSION
 
   // utility methods
 private:
@@ -194,9 +202,64 @@ private:
   void registerUltimateVariable(Expression *);
 };
 
+#ifdef GNU_EXTENSION
+bool AddrTaken_ASTVisitor::visitASTTypeof(ASTTypeof *obj) {
+  if (obj->isTS_typeof_expr()) {
+    return false;
+  }
+  return true;
+}
+#endif // GNU_EXTENSION
+
 bool AddrTaken_ASTVisitor::visitExpression(Expression *obj) {
   if (obj->isE_addrOf()) {
     registerUltimateVariable(obj->asE_addrOf()->expr);
+  } else if (obj->isE_sizeof()) {
+    return false;
+#ifdef GNU_EXTENSION
+  } else if (obj->isE_alignofExpr()) {
+    return false;
+#endif // GNU_EXTENSION
+  } else if (obj->isE_deref()) {
+    E_deref *ederef = obj->asE_deref();
+    if (ederef->ptr->isE_binary()) {
+      E_binary *ebin = ederef->ptr->asE_binary();
+      if (ebin->op == BIN_PLUS) {
+        // NOTE: BIN_BRACKETS becomes this
+        bool const leftIsArray = ebin->e1->type->asRval()->isArrayType();
+        bool const rightIsInt =  ebin->e2->type->asRval()->isIntegerType();
+        if (leftIsArray) {
+          xassert(rightIsInt);    // how can this not be?
+          // we want to prune the left child but not the right, so we
+          // have to prune the whole thing and then launch the traversal
+          // on the right
+          ebin->e2->traverse(this->loweredVisitor);
+          return false;           // prune
+        }
+      }
+    }
+  } else if (obj->isE_variable()) {
+    // almost any use of an E_variable of array type takes the address
+    // of the array: ISO/IEC 9899:1999 C99 spec 6.3.2.1 paragraph 3:
+    //
+    // "Except when it is the operand of the sizeof operator or the
+    // unary & operator, or is a string literal used to initialize an
+    // array, an expression that has type ''array of type'' is
+    // converted to an expression with type ''pointer to type'' that
+    // points to the initial element of the array object and is not an
+    // lvalue. If the array object has register storage class, the
+    // behavior is undefined."
+    //
+    // a string literal is not a variable, we already take the address
+    // of arrays that are arguments to the addr-of operator, and we
+    // filter out sizeof, typeof, and alignof in this traversal
+    //
+    // what we really care about is an escape analysis "is the address
+    // taken and then stored somewhere?"; therefore we also filter out
+    // immediate array uses, unless those got wrapped in an addr-of
+    if (obj->asE_variable()->var->type->asRval()->isArrayType()) {
+      registerUltimateVariable(obj);
+    }
   }
   return true;
 }
