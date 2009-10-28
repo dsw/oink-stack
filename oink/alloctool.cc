@@ -553,7 +553,8 @@ postvisitStatement(Statement *obj) {
         int numVarsToFree = 0;
         SFOREACH_OBJLIST(Variable, scopeStackTop->s_decl_vars.list, iter) {
           ++numVarsToFree;
-          freeBlock << "free(" << iter.data()->name << ");";
+          freeBlock << alloctoolCmd->free_func
+                    << "(" << iter.data()->name << ");";
         }
         if (numVarsToFree > 0) {
           freeBlock << "};";
@@ -582,7 +583,7 @@ subVisitS_return(S_return *obj) {
   newRet << "{";
   SFOREACH_OBJLIST(S_compound_Scope, scopeStack.list, iter) {
     SFOREACH_OBJLIST(Variable, iter.data()->s_decl_vars.list, iter2) {
-      newRet << "free(" << iter2.data()->name << ");";
+      newRet << alloctoolCmd->free_func << "(" << iter2.data()->name << ");";
     }
   }
   newRet << retStr.c_str() << "}";
@@ -714,7 +715,7 @@ xformDeclarator(Declarator *obj) {
   // hold up in C++; if you don't want to use var->name you can use
   // this:
   //   StringRef name = dname->name->getName();
-  newInit << "xmalloc(sizeof *" << var->name << ")";
+  newInit << alloctoolCmd->xmalloc_func << "(sizeof *" << var->name << ")";
   if (obj->init) {
     xassert(obj->init->isIN_expr());
     // copy the old initializer

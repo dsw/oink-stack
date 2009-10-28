@@ -36,6 +36,8 @@ alloctool-check-heapify:
            > Test/heapify1.c.patch.out
 	diff Test/heapify1.c.patch.cor Test/heapify1.c.patch.out
 # check handles return
-	./alloctool -fa-heapify-stack-alloc-addr-taken Test/heapify2.c \
+	./alloctool -fa-heapify-stack-alloc-addr-taken \
+           -a-free-func free2 -a-xmalloc-func xmalloc2 \
+           Test/heapify2.c \
            > Test/heapify2.c.patch.out
 	diff Test/heapify2.c.patch.cor Test/heapify2.c.patch.out

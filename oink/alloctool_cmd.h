@@ -19,6 +19,11 @@ class AllocToolCmd : public virtual OinkCmd {
   // (2) the var also has its address taken
   bool heapify_stack_alloc_addr_taken;
 
+  // string to use to call free()
+  char *free_func;
+  // string to use to call xmalloc()
+  char *xmalloc_func;
+
   AllocToolCmd();
 
   void readOneArg(int &argc, char **&argv);

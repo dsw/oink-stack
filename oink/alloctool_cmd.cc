@@ -11,6 +11,8 @@ AllocToolCmd::AllocToolCmd()
   : print_stack_alloc(false)
   , print_stack_alloc_addr_taken(false)
   , heapify_stack_alloc_addr_taken(false)
+  , free_func("free")
+  , xmalloc_func("xmalloc")
 {}
 
 void AllocToolCmd::readOneArg(int &argc, char **&argv) {
@@ -19,13 +21,17 @@ void AllocToolCmd::readOneArg(int &argc, char **&argv) {
   if (old_argc != argc) return; // the superclass read one so we don't
 
   char *arg = argv[0];
-  // Example:
   // please prefix the names of flags with arguments with '-a-'
-//   if (streq(arg, "-a-ben-string")) {
-//     shift(argc, argv);
-//     ben_string = strdup(shift(argc, argv)); // NOTE: use strdup!
-//     return;
-//   }
+  if (streq(arg, "-a-free-func")) {
+    shift(argc, argv);
+    free_func = strdup(shift(argc, argv)); // NOTE: use strdup!
+    return;
+  }
+  else if (streq(arg, "-a-xmalloc-func")) {
+    shift(argc, argv);
+    xmalloc_func = strdup(shift(argc, argv)); // NOTE: use strdup!
+    return;
+  }
   // please prefix the names of boolean flags with '-fa-'
   HANDLE_FLAG(print_stack_alloc,
               "-fa-", "print-stack-alloc");
@@ -47,6 +53,8 @@ void AllocToolCmd::dump() {
          boolToStr(print_stack_alloc_addr_taken));
   printf("fa-heapify-stack-alloc-addr-taken: %s\n",
          boolToStr(heapify_stack_alloc_addr_taken));
+  printf("a-free-func '%s'\n", free_func);
+  printf("a-xmalloc-func '%s'\n", xmalloc_func);
 }
 
 void AllocToolCmd::printHelp() {
@@ -54,9 +62,9 @@ void AllocToolCmd::printHelp() {
   printf
     (
      "\n"
-     // Example:
-//      "alloctool flags that take an argument:\n"
-//      "  -a-ben-string <value>     : set Ben's string\n"
+     "alloctool flags that take an argument:\n"
+     "  -a-free-func <value>     : set the name of the free function\n"
+     "  -a-xmalloc-func <value>  : set the name of the xmalloc function\n"
      "\n"
      "alloctool boolean flags;\n"
      "    preceed by '-fa-' for positive sense,\n"
