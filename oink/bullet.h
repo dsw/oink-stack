@@ -16,7 +16,10 @@
 #define __STDC_LIMIT_MACROS
 #define __STDC_CONSTANT_MACROS
 
-#include <llvm/Module.h>
+// Squelch LLVM warnings
+#pragma GCC diagnostic ignored "-Wconversion"
+#define INT64_C(C)  ((int64_t) C ## LL)
+#define UINT64_C(C) ((uint64_t) C ## ULL)
 #include <llvm/Module.h>
 #include <llvm/Function.h>
 #include <llvm/PassManager.h>

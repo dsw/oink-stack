@@ -627,7 +627,9 @@ void out_of_memory()
 {
   if (nomem_h)
     nomem_h();
-  write(2, "out of memory\n", 14);
+  if (write(2, "out of memory\n", 14) == -1) {
+    /* Do nothing, about to abort anyway */
+  }
   abort();
 }
 

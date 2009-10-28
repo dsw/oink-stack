@@ -71,7 +71,7 @@ struct s18n_context_t {
   // for io_custom=1:
   void* stream;
   int (*readf)(void*,void*,int);
-  int (*writef)(void*,void*,int);
+  int (*writef)(void*,const void*,int);
 };
 
 /******************************************
@@ -103,7 +103,7 @@ s18n_context * s18n_new_context(int fd)
 
 s18n_context * s18n_new_context_io_custom(void* stream,
                                           int (*readf)(void*,void*,int),
-                                          int (*writef)(void*,void*,int))
+                                          int (*writef)(void*,const void*,int))
 {
   s18n_context * sc;
 
@@ -129,8 +129,11 @@ s18n_context * s18n_new_context_io_custom(void* stream,
 
 void s18n_destroy_context(s18n_context *sc)
 {
-  if (sc->io_custom==0 && sc->buf_len != 0)
-    write(sc->fd, sc->output_buffer, sc->buf_len);
+  if (sc->io_custom==0 && sc->buf_len != 0) {
+    if (write(sc->fd, sc->output_buffer, sc->buf_len) == -1) {
+      fprintf(stderr, "INTERNAL ERROR: write() call failed\n");
+    }
+  }
 
   deleteregion(sc->r);
   destroy_pointer_hashset(sc->serialized_objects);
@@ -222,7 +225,7 @@ int s18n_lookup_serialized(s18n_context *sc, void *data)
   return pointer_hashset_member(sc->serialized_objects, data);
 }
 
-int s18n_write(s18n_context *sc, void *buf, int len)
+int s18n_write(s18n_context *sc, const void *buf, int len)
 {
   if (sc->io_custom) {
     return ( len == (sc->writef) (sc->stream, buf, len) ) ? len : -EIO;

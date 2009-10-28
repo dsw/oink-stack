@@ -188,7 +188,7 @@ bool Variable::linkerVisibleName(bool evenIfStaticLinkage) const {
   if (hasFlag(DF_NAMESPACE)) return false;
 
   // dsw: nothing starting with __builtin_va is linker-visible
-  static char *builtin_va_prefix = "__builtin_va";
+  static const char *builtin_va_prefix = "__builtin_va";
   static int builtin_va_prefix_len = strlen(builtin_va_prefix);
   if (name && 0==strncmp(name, builtin_va_prefix, builtin_va_prefix_len)) return false;
 

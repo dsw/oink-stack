@@ -57,7 +57,7 @@ bool XmlFileReader::registerStringToken(void *target, int kind, char const *yyte
   case XTOK_LineLengths: {
     ArrayStack<unsigned char> *lineLengths = (ArrayStack<unsigned char>*)target;
     // FIX: this does not detect any errors if it is not a non-neg int
-    lineLengths->push(atoi(yytext0));
+    lineLengths->push((unsigned char)min(atoi(yytext0), 255));
     break;
   }
 

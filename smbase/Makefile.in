@@ -40,7 +40,7 @@ RANLIB := ranlib
 
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
-	@perl ./depend.pl -o $@ $< $(CCFLAGS) > $*.d
+	@perl ./depend.pl -o $@ $< $(CFLAGS) > $*.d
 
 
 # remake the generated Makefile if its inputs have changed
@@ -102,14 +102,14 @@ ifeq (@TRACE_HEAP@,1)
 endif
 
 $(MALLOC_MODULE).o: $(MALLOC_MODULE).c
-	$(CC) -c -g $(MALLOC_CCFLAGS) $(MALLOC_MODULE).c
+	$(CC) -Wall -Werror -c -g $(MALLOC_CCFLAGS) $(MALLOC_MODULE).c
 
 
 # --------------------- main target ---------------------
 
 # mysig needs some flags to *not* be set ....
 mysig.o: mysig.cc mysig.h
-	$(CXX) -c -g mysig.cc
+	$(CXX) -Wall -Werror -c -g mysig.cc
 
 # library itself
 OBJS := \

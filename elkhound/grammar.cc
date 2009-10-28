@@ -399,7 +399,7 @@ unsigned char *TerminalSet::getByte(int id) const
 bool TerminalSet::contains(int id) const
 {
   unsigned char *p = getByte(id);
-  return (*p >> getBit(id)) & 1 == 1;
+  return ((*p >> getBit(id)) & 1) == 1;
 }
 
 

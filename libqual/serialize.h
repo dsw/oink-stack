@@ -22,7 +22,7 @@ typedef struct s18n_context_t s18n_context;
 
 /* Begin/end a (de)serialization */
 s18n_context * s18n_new_context(int fd);
-s18n_context * s18n_new_context_io_custom(void* stream, int (*readf)(void*,void*,int), int (*writef)(void*,void*,int));
+s18n_context * s18n_new_context_io_custom(void* stream, int (*readf)(void*,void*,int), int (*writef)(void*,const void*,int));
 void s18n_destroy_context(s18n_context *sc);
 
 /***********************************************
@@ -40,7 +40,7 @@ typedef void (*s18n_register_func)(s18n_type *t);
 
 /* Describes a single data type for serialization */
 struct s18n_type_t {
-  char *name; /* Must be exactly 8 characters and globally unique */
+  const char *name; /* Must be exactly 8 characters and globally unique */
 
   s18n_serialize_func serialize;
   s18n_deserialize_func deserialize;
@@ -73,7 +73,7 @@ int s18n_lookup_serialized(s18n_context *sc, void *data);
 /* For use by new deserializers only! */
 int _s18n_deserialize(s18n_context *sc, s18n_type *expected_type, void *newdata);
 
-int s18n_write(s18n_context *sc, void *buf, int len);
+int s18n_write(s18n_context *sc, const void *buf, int len);
 int s18n_read(s18n_context *sc, void *buf, int len);
 
 /********************************

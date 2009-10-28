@@ -10,24 +10,7 @@
 #include "strutil.h"            // quoted
 #include "oink_util.h"
 
-// LLVM headers ****
-
 #define _DEBUG
-
-// the headers seem to want these macros to be defined
-// #define _GNU_SOURCE
-#define __STDC_LIMIT_MACROS
-#define __STDC_CONSTANT_MACROS
-
-#include <llvm/Module.h>
-#include <llvm/Function.h>
-#include <llvm/PassManager.h>
-#include <llvm/CallingConv.h>
-#include <llvm/Analysis/Verifier.h>
-#include <llvm/Assembly/PrintModulePass.h>
-#include <llvm/Support/IRBuilder.h>
-#include <llvm/Support/raw_ostream.h>
-#include <llvm/Pass.h>
 
 using std::cout;
 using std::ostream;

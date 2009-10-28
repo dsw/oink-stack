@@ -165,7 +165,7 @@ TreeWalkOutStream & TreeWalkOutStream::operator << (std::ostream& (*manipfunc)(s
 
 // **** class TreeWalkDebug
 
-TreeWalkDebug::TreeWalkDebug(char *message, TreeWalkOutStream &out)
+TreeWalkDebug::TreeWalkDebug(const char *message, TreeWalkOutStream &out)
   : out(out)
 {
   out << message << std::endl;

@@ -589,11 +589,11 @@ void emitMLSwitchCode(Grammar const &g, EmitCode &out,
   FOREACH_OBJLIST(Symbol, syms, symIter) {
     Symbol const &sym = *(symIter.data());
 
-    if (whichFunc==0 && sym.dupCode ||
-        whichFunc==1 && sym.delCode ||
-        whichFunc==2 && sym.asNonterminalC().mergeCode ||
-        whichFunc==3 && sym.asNonterminalC().keepCode ||
-        whichFunc==4 && sym.asTerminalC().classifyCode) {
+    if ((whichFunc==0 && sym.dupCode) ||
+        (whichFunc==1 && sym.delCode) ||
+        (whichFunc==2 && sym.asNonterminalC().mergeCode) ||
+        (whichFunc==3 && sym.asNonterminalC().keepCode) ||
+        (whichFunc==4 && sym.asTerminalC().classifyCode)) {
       out << "  | " << sym.getTermOrNontermIndex() << " -> (\n";
       out << replace(replace(templateCode,
                "$symName", string(sym.name)),

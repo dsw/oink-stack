@@ -1178,7 +1178,7 @@ int referenceCompatibility(Type *t1, Type *t2)
     return 2;      // exact match
   }
   
-  if (cv1 & cv2 == cv2) {
+  if ((cv1 & cv2) == cv2) {
     // cv1 is a superset
     return 1;      // "compatible with added qualification"
   }

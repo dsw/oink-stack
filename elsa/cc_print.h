@@ -224,7 +224,7 @@ extern TreeWalkOutStream treeWalkOut;
 class TreeWalkDebug {
   TreeWalkOutStream &out;
   public:
-  TreeWalkDebug(char *message, TreeWalkOutStream &out = treeWalkOut);
+  TreeWalkDebug(const char *message, TreeWalkOutStream &out = treeWalkOut);
   ~TreeWalkDebug();
 };
 

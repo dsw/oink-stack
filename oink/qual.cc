@@ -647,9 +647,9 @@ class QvarSerializationContextHolder {
   }
 
 private:
-  static int writef(void* stream, void* buf, int len) {
+  static int writef(void* stream, const void* buf, int len) {
     std::ostream& o = *( (std::ostream*)stream );
-    o.write((char*) buf, len);
+    o.write((const char*) buf, len);
     return o ? len : -1;
   }
 
@@ -2330,9 +2330,9 @@ class ExcludeQualData_ValueVisitor : public ValueVisitor {
   public:
   // Exclude declarators containing the given qualifier.
   ASTList<char> &exclude;
-  char * const context;
+  const char * const context;
 
-  ExcludeQualData_ValueVisitor(ASTList<char> &exclude0, char * const context0)
+  ExcludeQualData_ValueVisitor(ASTList<char> &exclude0, const char * const context0)
     : exclude(exclude0)
     , context(context0)
   {}

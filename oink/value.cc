@@ -907,8 +907,8 @@ BucketOValues *CVAtomicValue::unifyBuckets(CVAtomicValue *tgt)
     xfailure("internal error 30812c73-8559-4ae2-8c2d-1987ab959378");
   }
 
-  xassert(srcRep->bucket == NULL && tgtRep->bucket != NULL ||
-          srcRep->bucket != NULL && tgtRep->bucket == NULL);
+  xassert((srcRep->bucket == NULL && tgtRep->bucket != NULL) ||
+          (srcRep->bucket != NULL && tgtRep->bucket == NULL));
 
   xassert(src->getBucket() && src->getBucket() == tgt->getBucket());
   return discardedValue;

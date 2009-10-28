@@ -82,6 +82,6 @@ extern bool ignoreTraceEnvVar;    // initially false
 
 
 // render the tracers as a string for examination
-void printTracers(std::ostream &out, char *delim = ", ");
+void printTracers(std::ostream &out, const char *delim = ", ");
 
 #endif // TRACE_H
