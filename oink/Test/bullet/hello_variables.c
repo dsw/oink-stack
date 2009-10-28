@@ -3,5 +3,5 @@ int main() {
   int y;
   x = 1;
   y = 2;
-  return x + y;
+  return x + y != 3;
 }

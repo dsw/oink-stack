@@ -1,6 +1,7 @@
 // see License.txt for copyright and terms of use
 
 #include <iostream>
+#include <fstream>
 
 #include "bullet.h"        // this module
 #include "bullet_cmd.h"    // BulletCmd
@@ -48,13 +49,6 @@ llvm::Module *makeModule() {
 
   // make a function object
   printf("%s:%d make function\n", __FILE__, __LINE__);
-//   Constant* c = mod->getOrInsertFunction
-//     ("mul_add",
-//      /*ret type*/ IntegerType::get(32),
-//      /*args*/ IntegerType::get(32),
-//      IntegerType::get(32),
-//      IntegerType::get(32),
-//      /*varargs terminated with null*/ NULL);
   llvm::Constant *c = mod->getOrInsertFunction
     ("main",                    // function name
      llvm::IntegerType::get(llvm::getGlobalContext(), 32), // return type
@@ -95,10 +89,6 @@ void Bullet::emit_stage() {
       printStop();
   }
 
-  // modified from:
-  // file:///Users/dsw/Notes/llvm-2.5-src/docs/tutorial/JITTutorial1.html
-  // llvm::Module *mod = makeModule();
-
   // verify the module
   printf("%s:%d verify\n", __FILE__, __LINE__);
   verifyModule(*mod, llvm::PrintMessageAction);
@@ -106,13 +96,12 @@ void Bullet::emit_stage() {
   // render the module
   printf("%s:%d render\n", __FILE__, __LINE__);
   llvm::PassManager PM;
-  llvm::raw_os_ostream out(std::cout);
+  std::ofstream outFile("out.ll");
+  llvm::raw_os_ostream out(outFile);
   llvm::ModulePass *pmp = createPrintModulePass(&out);
   PM.add(pmp);
   PM.run(*mod);
 
-  // delete the module
-  printf("%s:%d delete module\n", __FILE__, __LINE__);
   delete mod;
 }
 
@@ -516,6 +505,13 @@ bool CodeGenASTVisitor::visitExpression(Expression *obj) {
   return true;
 }
 
+struct LlvmExpressionType {
+  enum LlvmExpressionType_t {
+    BinOpExpr,
+    ICmpExpr,
+  };
+};
+
 void CodeGenASTVisitor::postvisitExpression(Expression *obj) {
   obj->debugPrint(std::cout, 0);
   if (obj->kind() == Expression::E_INTLIT) {
@@ -543,16 +539,32 @@ void CodeGenASTVisitor::postvisitExpression(Expression *obj) {
   else if (obj->kind() == Expression::E_BINARY) {
     E_binary* binaryExpr = static_cast<E_binary *>(obj);
     llvm::IRBuilder<> builder(currentBlock);
+    LlvmExpressionType::LlvmExpressionType_t exprType;
     llvm::BinaryOperator::BinaryOps op;
+    llvm::CmpInst::Predicate pred;
 
     switch (binaryExpr->op) {
-    case BIN_PLUS:  op = llvm::Instruction::Add; break;
-    case BIN_MINUS: op = llvm::Instruction::Sub; break;
-    case BIN_MULT:  op = llvm::Instruction::Mul; break;
+    case BIN_EQUAL:     pred = llvm::CmpInst::ICMP_EQ;  exprType = LlvmExpressionType::ICmpExpr; break;
+    case BIN_NOTEQUAL:  pred = llvm::CmpInst::ICMP_NE;  exprType = LlvmExpressionType::ICmpExpr; break;
+    case BIN_LESS:      pred = llvm::CmpInst::ICMP_SLT; exprType = LlvmExpressionType::ICmpExpr; break;
+    case BIN_GREATER:   pred = llvm::CmpInst::ICMP_SGT; exprType = LlvmExpressionType::ICmpExpr; break;
+    case BIN_LESSEQ:    pred = llvm::CmpInst::ICMP_SLE; exprType = LlvmExpressionType::ICmpExpr; break;
+    case BIN_GREATEREQ: pred = llvm::CmpInst::ICMP_SGE; exprType = LlvmExpressionType::ICmpExpr; break;
+    case BIN_PLUS:  op = llvm::Instruction::Add; exprType = LlvmExpressionType::BinOpExpr; break;
+    case BIN_MINUS: op = llvm::Instruction::Sub; exprType = LlvmExpressionType::BinOpExpr; break;
+    case BIN_MULT:  op = llvm::Instruction::Mul; exprType = LlvmExpressionType::BinOpExpr; break;
     default: assert(false); break;
     }    
     assert(valueMap.contains(binaryExpr->e1) && valueMap.contains(binaryExpr->e2));
-    valueMap[obj] = builder.CreateBinOp(op, valueMap[binaryExpr->e1], valueMap[binaryExpr->e2], "expr"/*locToStr(obj->loc).c_str()*/);
+    switch (exprType) {
+    case LlvmExpressionType::ICmpExpr:
+      valueMap[obj] = builder.CreateICmp(pred, valueMap[binaryExpr->e1], valueMap[binaryExpr->e2], "expr"/*locToStr(obj->loc).c_str()*/);
+      valueMap[obj] = builder.CreateIntCast(valueMap[obj], llvm::Type::getInt32Ty(context), /*isSigned*/true); 
+      break;
+    case LlvmExpressionType::BinOpExpr:
+      valueMap[obj] = builder.CreateBinOp(op, valueMap[binaryExpr->e1], valueMap[binaryExpr->e2], "expr"/*locToStr(obj->loc).c_str()*/);
+      break;
+    }
   }
 }
 
