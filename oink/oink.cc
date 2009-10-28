@@ -1455,6 +1455,7 @@ class CheckForUsedVarsASTVisitor : private ASTVisitor {
     return true;
   }
 #ifdef GNU_EXTENSION
+  // FIX: also don't look inside E_sizeof and E_alignofExpr
   virtual bool visitASTTypeof(ASTTypeof *obj) {
     // we do not want to do dataflow down inside a typeof expression
     // because that code isn't actually run and so it makes it look
