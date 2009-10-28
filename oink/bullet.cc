@@ -477,7 +477,7 @@ void CodeGenASTVisitor::postvisitStatement(Statement *obj) {
     S_return* returnStatement = static_cast<S_return*>(obj);
     assert (currentBlock != NULL);
     llvm::IRBuilder<> builder(currentBlock);
-    builder.CreateRet(valueMap[returnStatement->expr->expr]);
+    builder.CreateRet(getValueFor(returnStatement->expr->expr));
   }
   else {
     assert(false);
@@ -512,6 +512,21 @@ struct LlvmExpressionType {
   };
 };
 
+llvm::Value* CodeGenASTVisitor::getValueFor(Expression* expr) {
+  if (valueMap.find(expr) == valueMap.end()) {
+    if (lvalueMap.find(expr) != valueMap.end()) {
+      llvm::IRBuilder<> builder(currentBlock);
+      valueMap[expr] = builder.CreateLoad(lvalueMap[expr], names[expr]);
+      return valueMap[expr];
+    }
+    else {
+      return NULL;
+    }
+  } else {
+    return valueMap[expr];
+  }
+}
+
 void CodeGenASTVisitor::postvisitExpression(Expression *obj) {
   obj->debugPrint(std::cout, 0);
   if (obj->kind() == Expression::E_INTLIT) {
@@ -522,14 +537,14 @@ void CodeGenASTVisitor::postvisitExpression(Expression *obj) {
     E_variable* variableExpr = static_cast<E_variable *>(obj);
     llvm::IRBuilder<> builder(currentBlock);
     lvalueMap[obj] = variables[variableExpr->var];
-    valueMap[obj] = builder.CreateLoad(variables[variableExpr->var], variableExpr->var->name);
+    names[obj] = variableExpr->var->name;
   }
   else if (obj->kind() == Expression::E_ASSIGN) {
     E_assign* assignExpr = static_cast<E_assign *>(obj);
     llvm::IRBuilder<> builder(currentBlock);
     switch (assignExpr->op) {
     case BIN_ASSIGN: 
-      valueMap[obj] = builder.CreateStore(valueMap[assignExpr->src], lvalueMap[assignExpr->target]);
+      valueMap[obj] = builder.CreateStore(getValueFor(assignExpr->src), getLvalueFor(assignExpr->target));
       break;
     default:
       assert(0);
@@ -558,11 +573,11 @@ void CodeGenASTVisitor::postvisitExpression(Expression *obj) {
     assert(valueMap.contains(binaryExpr->e1) && valueMap.contains(binaryExpr->e2));
     switch (exprType) {
     case LlvmExpressionType::ICmpExpr:
-      valueMap[obj] = builder.CreateICmp(pred, valueMap[binaryExpr->e1], valueMap[binaryExpr->e2], "expr"/*locToStr(obj->loc).c_str()*/);
-      valueMap[obj] = builder.CreateIntCast(valueMap[obj], llvm::Type::getInt32Ty(context), /*isSigned*/true); 
+      valueMap[obj] = builder.CreateICmp(pred, getValueFor(binaryExpr->e1), getValueFor(binaryExpr->e2), "expr"/*locToStr(obj->loc).c_str()*/);
+      valueMap[obj] = builder.CreateIntCast(getValueFor(obj), llvm::Type::getInt32Ty(context), /*isSigned*/true); 
       break;
     case LlvmExpressionType::BinOpExpr:
-      valueMap[obj] = builder.CreateBinOp(op, valueMap[binaryExpr->e1], valueMap[binaryExpr->e2], "expr"/*locToStr(obj->loc).c_str()*/);
+      valueMap[obj] = builder.CreateBinOp(op, getValueFor(binaryExpr->e1), getValueFor(binaryExpr->e2), "expr"/*locToStr(obj->loc).c_str()*/);
       break;
     }
   }

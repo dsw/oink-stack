@@ -45,11 +45,17 @@ class CodeGenASTVisitor : public ASTVisitor {
   llvm::BasicBlock* entryBlock;
   llvm::BasicBlock *currentBlock;
   llvm::BasicBlock *prevBlock;
-  std::map<Expression*, llvm::Value*> valueMap;
+  std::map<Expression*, llvm::Value*> valueMap; // Do not use directly, use getValueFor()
   std::map<Expression*, llvm::Value*> lvalueMap;
+  std::map<Expression*, std::string> names;
   // The alloca instruction insertion point
   llvm::Instruction* allocaInsertPt;
   std::map<Variable*, llvm::Value*> variables;
+
+  llvm::Value* getValueFor(Expression* expr);
+  llvm::Value* getLvalueFor(Expression* expr) {
+    return lvalueMap[expr];
+  }
 
   public:
   llvm::Module *mod;
