@@ -13,38 +13,38 @@ Test/heapify2.c:42: longjmp may require some variables to be free()-ed
 -  &x;
 -  int y = 200;
 -  &y;
-+  int (*x)=xmalloc(sizeof *x);
++  int (*x)=xmalloc2(sizeof *x);
 +  &(*x);
-+  int (*y) = xmalloc(sizeof *y); *y=200;
++  int (*y) = xmalloc2(sizeof *y); *y=200;
 +  &(*y);
 @@ -12,2 +12,2 @@
 -    int z;
 -    &z;
-+    int (*z)=xmalloc(sizeof *z);
++    int (*z)=xmalloc2(sizeof *z);
 +    &(*z);
 @@ -15,3 +15,3 @@
 -      int a = 300;
 -      &a;
 -      return 1;                 // a, z, y, x
-+      int (*a) = xmalloc(sizeof *a); *a=300;
++      int (*a) = xmalloc2(sizeof *a); *a=300;
 +      &(*a);
-+      {free(a);free(z);free(y);free(x);return 1;}                 // a, z, y, x
++      {free2(a);free2(z);free2(y);free2(x);return 1;}                 // a, z, y, x
 @@ -19,1 +19,1 @@
 -    return 2;                   // z, y, x
-+    {free(z);free(y);free(x);return 2;}                   // z, y, x
++    {free2(z);free2(y);free2(x);return 2;}                   // z, y, x
 @@ -21,3 +21,3 @@
 -    int b;
 -    &b;
 -    return 3;                   // b, y, x
-+    int (*b)=xmalloc(sizeof *b);
++    int (*b)=xmalloc2(sizeof *b);
 +    &(*b);
-+    {free(b);free(y);free(x);return 3;}                   // b, y, x
++    {free2(b);free2(y);free2(x);return 3;}                   // b, y, x
 @@ -26,1 +26,1 @@
 -    int c;
-+    int (*c)=xmalloc(sizeof *c);
++    int (*c)=xmalloc2(sizeof *c);
 @@ -28,1 +28,1 @@
 -    &c;
-+    &(*c);{free(c);};
++    &(*c);{free2(c);};
 @@ -44,1 +44,1 @@
 -  return 100;                   // y, x
-+  {free(y);free(x);return 100;}                   // y, x
++  {free2(y);free2(x);return 100;}                   // y, x
