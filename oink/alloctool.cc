@@ -469,8 +469,9 @@ public:
 
   bool subVisitS_return(S_return *);
   bool subVisitS_decl(S_decl *);
-  bool xformDeclarator(Declarator *);
   bool subVisitE_variable(E_variable *);
+
+  char *xformDeclarator(Declarator *);
 };
 
 bool HeapifyStackAllocAddrTakenVars_ASTVisitor::pass(Variable *var) {
@@ -594,55 +595,86 @@ subVisitS_return(S_return *obj) {
 bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
   Declaration *declaration = obj->decl;
 
-  // skip handle Declaration-s that have multiple Declarator-s
-  int numDecltors = 0;
-  int numDecltorsPass = 0;
-  FAKELIST_FOREACH_NC(Declarator, declaration->decllist, iter) {
-    ++numDecltors;
-    if (pass(iter->var)) ++numDecltorsPass;
-  }
-  if (numDecltorsPass == 0) {
-    // nothing to do
-    return true;
-  }
-  if (numDecltors > 1) {
-    printLoc(std::cout, declaration->decllist->first()->decl->loc);
-    std::cout << "declaration having multiple declarators "
-      "some of which need heapifying" << std::endl;
-    return false;               // prune subtree
-  }
-  xassert(numDecltors == 1 && numDecltorsPass == 1);
+  // find a Declarator to transform
+  Declarator *declarator0 = NULL;
+  FAKELIST_FOREACH_NC(Declarator, declaration->decllist, declarator) {
+    if (pass(declarator->var)) {
 
-  // skip those where we can't handle the initializer
-  Declarator *declarator = declaration->decllist->first();
-  if (declarator->init) {
-    Initializer *init = declarator->init;
-    if (init->isIN_compound()) {
-      printLoc(std::cout, declarator->decl->loc);
-      std::cout << "auto decl has compound initializer: "
-                << declarator->var->name << std::endl;
-      return false;
-    } else if (init->isIN_ctor()) {
-      printLoc(std::cout, declarator->decl->loc);
-      std::cout << "auto decl has ctor initializer: "
-                << declarator->var->name << std::endl;
-      return false;
+      // skip those where we can't handle the initializer
+      if (declarator->init) {
+        Initializer *init = declarator->init;
+        if (init->isIN_compound()) {
+          printLoc(std::cout, declarator->decl->loc);
+          std::cout << "auto decl has compound initializer: "
+                    << declarator->var->name << std::endl;
+          return false;
+        } else if (init->isIN_ctor()) {
+          printLoc(std::cout, declarator->decl->loc);
+          std::cout << "auto decl has ctor initializer: "
+                    << declarator->var->name << std::endl;
+          return false;
+        }
+      }
+
+      // we should transform this one
+      if (declarator0) {
+        // we can't handle this case yet
+        printLoc(std::cout, declaration->decllist->first()->decl->loc);
+        std::cout << "declaration having multiple declarators "
+          "which need heapifying" << std::endl;
+        return true;
+      } else {
+        declarator0 = declarator;
+      }
     }
   }
 
+  // if nothing to do, leave
+  if (!declarator0) return true;
+
+  // accumulate the new initializer statements to put at the end of
+  // this Declaration
+  stringBuilder newInitStmts;
+
   // xform this Declarator
-  xformDeclarator(declarator);
-  // record that we processed this var so we know to xfor uses of it
-  xformedVars.add(declarator->var);
-  // push the var onto the var stack in the top scope on scope stack
-  scopeStack.top()->s_decl_vars.push(declarator->var);
+  {
+    Variable *var = declarator0->var;
+    char *oldInit_c_str = xformDeclarator(declarator0);
+    if (oldInit_c_str) {
+      newInitStmts << " *" << var->name << "=" << oldInit_c_str << ";";
+      free(oldInit_c_str);
+    }
+    // record that we processed this var so we know to xfor uses of it
+    xformedVars.add(var);
+    // push the var onto the var stack in the top scope on scope stack
+    scopeStack.top()->s_decl_vars.push(var);
+  }
+
+  // Insert the new initializers at the end of the S_decl.
+  //
+  // NOTE: one must in general be careful when turing one statement
+  // (here an S_Decl) into multiple statements as the single statement
+  // could be the statement argument to an 'if', 'else', 'while',
+  // 'for', 'do'.  In the particular case of this analysis, it can't
+  // happen because you can't stack allocate a var and take it's
+  // address in one statement and you can't take it's address later
+  // because the scope would have closed.  FIX: Maybe you could stack
+  // allocate it and then in the initializer somehow take its address
+  // and store it on the heap?
+  if (newInitStmts.length()) {
+    CPPSourceLoc s_decl_ploc_end(obj->endloc);
+    patcher.insertBefore(s_decl_ploc_end, newInitStmts.c_str());
+  }
 
   return true;
 }
 
-bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
+// Note: caller is responsible for freeing the return value; note: we
+// optimize the empty string by just returning NULL
+char *HeapifyStackAllocAddrTakenVars_ASTVisitor::
 xformDeclarator(Declarator *obj) {
   xassert(obj->context == DC_S_DECL);
+
   Variable_O *var = asVariable_O(obj->var);
   xassert(pass(var));
   xassert(var->getScopeKind() == SK_FUNCTION);
@@ -662,7 +694,7 @@ xformDeclarator(Declarator *obj) {
     printLoc(std::cout, obj->decl->loc);
     std::cout << "FAIL: auto decl does not have exact start position: "
               << var->name << std::endl;
-    return true;
+    return NULL;
   }
 
   // find the end of the Declarator
@@ -672,10 +704,11 @@ xformDeclarator(Declarator *obj) {
     printLoc(std::cout, obj->endloc);
     std::cout << "FAIL: auto decl does not have exact end position: "
               << var->name << std::endl;
-    return true;
+    return NULL;
   }
 
-  // make the new initializer
+  // fix the initializer
+  char *oldInit_c_str = NULL;
   stringBuilder newInit;
   // FIX: not sure how this simplistic approach to names is going to
   // hold up in C++; if you don't want to use var->name you can use
@@ -684,50 +717,32 @@ xformDeclarator(Declarator *obj) {
   newInit << "xmalloc(sizeof *" << var->name << ")";
   if (obj->init) {
     xassert(obj->init->isIN_expr());
-    // copy the initializer so we can paste it later
+    // copy the old initializer
     CPPSourceLoc init_ploc(obj->init->loc);
     if (!init_ploc.hasExactPosition()) {
       printLoc(std::cout, obj->endloc);
       std::cout << "FAIL: auto decl init does not have exact start position: "
                 << var->name << std::endl;
-      return true;
+      return NULL;
     }
-    // FIX: we should be using the obj->init->endloc IDeclarator, but
-    // only D_name-s have one; FIX: this trick prevents us being able
-    // to handle multiple Declarators in one Declaration.
-//     PairLoc initPairLoc(init_ploc, init_ploc_end);
     PairLoc init_PairLoc(init_ploc, decltor_ploc_end);
     UnboxedPairLoc init_UnboxedPairLoc(init_PairLoc);
-    std::string initStr = patcher.getRange(init_UnboxedPairLoc);
-
-    // replace the initializer
+    oldInit_c_str = strdup(patcher.getRange(init_UnboxedPairLoc).c_str());
+    // replace the old initializer with the new one
     patcher.printPatch(newInit.c_str(), init_UnboxedPairLoc);
-
-    // make the new init statement
-    stringBuilder newInitStmt;
-    newInitStmt << "; *" << var->name << "=" << initStr.c_str();
-
-    // add the new init statement at the end of the Declarator; FIX:
-    // move this to after the whole Declaration
-    //
-    // NOTE: one must in general be careful when turing one statement
-    // (here an S_Decl) into multiple statements as the single
-    // statement could be the statement argument to an 'if', 'else',
-    // 'while', 'for', 'do'.  In the particular case of this analysis,
-    // it can't happen because you can't stack allocate a var and take
-    // it's address in one statement and you can't take it's address
-    // later because the scope would have closed.  FIX: Maybe you
-    // could stack allocate it and then in the initializer somehow
-    // take its address and store it on the heap?
-    patcher.insertBefore(decltor_ploc_end, newInitStmt.c_str());
   } else {
-    // add an initializer
+    // add the new initializer
     stringBuilder newInit2;
     newInit2 << "=" << newInit;
     patcher.insertBefore(decltor_ploc_end, newInit2.c_str());
+    // attempt to do it with printPatch; doesn't work
+//     // yes, replace the empty range
+//     PairLoc decltor_end_PairLoc(decltor_ploc_end, decltor_ploc_end);
+//     UnboxedPairLoc decltor_end_UnboxedPairLoc(decltor_end_PairLoc);
+//     patcher.printPatch(newInit2.c_str(), decltor_end_UnboxedPairLoc);
   }
 
-  // fix the declarator; note: this doesn't work due to the inability
+  // fix the D_name; note: the below doesn't work due to the inability
   // of Patcher to deal with multiple insertions at the same location
 //   patcher.insertBefore(dname_ploc, "(*");
 //   patcher.insertBefore(dname_ploc_end, ")");
@@ -735,7 +750,7 @@ xformDeclarator(Declarator *obj) {
   newInnerIDecl << "(*" << var->name << ")";
   patcher.printPatch(newInnerIDecl.c_str(), dname_UnboxedPairLoc);
 
-  return true;
+  return oldInit_c_str;
 }
 
 bool HeapifyStackAllocAddrTakenVars_ASTVisitor::

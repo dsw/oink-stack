@@ -48,6 +48,14 @@ void f(int x1,
   int q1, q2, q3;               // function/auto: multiple stack
   &q2;                          // and addr taken: yes
 
+  int qx1, qx2=2, qx3;          // function/auto: multiple stack
+  &qx2;                         // and addr taken: yes
+
+  int s1, s2, s3, s4=4, s5, s6=6, s7; // function/auto: multiple stack
+  &s2;                                // and addr taken: yes
+  &s4;
+//   &s6;
+
   int r[2][3][4][5];            // function/auto: stack
   // note: this is deliberately partial
   &r[1][2][3];                  // and addr taken: yes

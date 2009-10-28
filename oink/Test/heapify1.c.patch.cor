@@ -2,8 +2,8 @@
 ---- START ---- Test/heapify1.c
 Test/heapify1.c:18: param decl needs heapifying x2
 Test/heapify1.c:22: param use x2
-Test/heapify1.c:48: declaration having multiple declarators some of which need heapifying
-Test/heapify1.c:70: auto decl has compound initializer: foo5
+Test/heapify1.c:54: declaration having multiple declarators which need heapifying
+Test/heapify1.c:78: auto decl has compound initializer: foo5
 ---- STOP ----
 
 --- Test/heapify1.c
@@ -38,44 +38,54 @@ Test/heapify1.c:70: auto decl has compound initializer: foo5
 -  &(foo3.q);                    // and addr taken: yes
 +  struct Foo (*foo3)=xmalloc(sizeof *foo3);              // function/auto: stack
 +  &((*foo3).q);                    // and addr taken: yes
-@@ -51,1 +51,1 @@
+@@ -48,2 +48,2 @@
+-  int q1, q2, q3;               // function/auto: multiple stack
+-  &q2;                          // and addr taken: yes
++  int q1, (*q2)=xmalloc(sizeof *q2), q3;               // function/auto: multiple stack
++  &(*q2);                          // and addr taken: yes
+@@ -51,2 +51,2 @@
+-  int qx1, qx2=2, qx3;          // function/auto: multiple stack
+-  &qx2;                         // and addr taken: yes
++  int qx1, (*qx2)=xmalloc(sizeof *qx2), qx3; *qx2=2;          // function/auto: multiple stack
++  &(*qx2);                         // and addr taken: yes
+@@ -59,1 +59,1 @@
 -  int r[2][3][4][5];            // function/auto: stack
 +  int (*r)[2][3][4][5]=xmalloc(sizeof *r);            // function/auto: stack
-@@ -53,1 +53,1 @@
+@@ -61,1 +61,1 @@
 -  &r[1][2][3];                  // and addr taken: yes
 +  &(*r)[1][2][3];                  // and addr taken: yes
-@@ -55,2 +55,2 @@
+@@ -63,2 +63,2 @@
 -  struct Foo foo4[3];           // function/auto: stack
 -  &(foo4[2].q);                 // and addr taken: yes
 +  struct Foo (*foo4)[3]=xmalloc(sizeof *foo4);           // function/auto: stack
 +  &((*foo4)[2].q);                 // and addr taken: yes
-@@ -58,2 +58,2 @@
+@@ -66,2 +66,2 @@
 -  struct Bar bar1;              // function/auto: stack
 -  &(bar1.q2[3]);                // and addr taken: yes
 +  struct Bar (*bar1)=xmalloc(sizeof *bar1);              // function/auto: stack
 +  &((*bar1).q2[3]);                // and addr taken: yes
-@@ -64,2 +64,2 @@
+@@ -72,2 +72,2 @@
 -  struct Gronk gronk1;          // function/auto: stack
 -  &(gronk1.f.q);                // and addr taken: yes
 +  struct Gronk (*gronk1)=xmalloc(sizeof *gronk1);          // function/auto: stack
 +  &((*gronk1).f.q);                // and addr taken: yes
-@@ -68,1 +68,1 @@
+@@ -76,1 +76,1 @@
 -  gronk1.f.q;                   // and addr taken: NO
 +  (*gronk1).f.q;                   // and addr taken: NO
-@@ -71,1 +71,1 @@
+@@ -79,1 +79,1 @@
 -  &foo5.q;                      // and addr taken: yes
-+  &foo5.q;{free(gronk1);free(bar1);free(foo4);free(r);free(foo3);free(foo1);free(y5);free(y4);free(y3);free(y2);};                      // and addr taken: yes
-@@ -84,2 +84,2 @@
++  &foo5.q;{free(gronk1);free(bar1);free(foo4);free(r);free(qx2);free(q2);free(foo3);free(foo1);free(y5);free(y4);free(y3);free(y2);};                      // and addr taken: yes
+@@ -92,2 +92,2 @@
 -  int z[10];                    // addr taken
 -  &z[3];
 +  int (*z)[10]=xmalloc(sizeof *z);                    // addr taken
 +  &(*z)[3];
-@@ -87,2 +87,2 @@
+@@ -95,2 +95,2 @@
 -  int z2[10];                   // addr taken
 -  &(*(z2+3));
 +  int (*z2)[10]=xmalloc(sizeof *z2);                   // addr taken
 +  &(*((*z2)+3));
-@@ -90,2 +90,2 @@
+@@ -98,2 +98,2 @@
 -  int z3[10];
 -  z3;                           // addr taken
 +  int (*z3)[10]=xmalloc(sizeof *z3);

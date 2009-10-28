@@ -1131,6 +1131,7 @@ file ./alloctool
 #set args -fa-heapify-stack-alloc-addr-taken Test/heapify2.c
 # set args -fa-print-stack-alloc-addr-taken Test/stack_alloc_parse_qual.cc
 # set args -fa-heapify-stack-alloc-addr-taken Test/heapify1.c
+# set args -fa-heapify-stack-alloc-addr-taken Test/heapify1.c
 set args -fa-heapify-stack-alloc-addr-taken Test/heapify1.c
 
 break main
