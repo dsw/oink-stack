@@ -66,8 +66,6 @@ Test/*.filter-good.cc
 Test/tmp_*
 Test/*.out.ctl
 
-# FIX: these have to be a bug somewhere; I can't find it right now
-
 # temporary state that has to be global across runs
 .serialno
 
