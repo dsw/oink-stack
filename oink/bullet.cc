@@ -33,6 +33,13 @@ using std::ostream;
 
 // Emit stage ****
 
+/// createTempAlloca - This creates a alloca and inserts it into the entry
+/// block.
+llvm::AllocaInst *CodeGenASTVisitor::createTempAlloca(const llvm::Type *ty, const char *name)
+{
+  return new llvm::AllocaInst(ty, 0, name, allocaInsertPt);
+}
+
 // make an LLVM module
 llvm::Module *makeModule() {
   printf("%s:%d make module\n", __FILE__, __LINE__);
@@ -129,7 +136,8 @@ void Bullet::printASTHistogram_stage() {
 // CodeGenASTVisitor ****
 
 CodeGenASTVisitor::CodeGenASTVisitor()
-  : loweredVisitor(this)
+  : context(llvm::getGlobalContext())
+  , loweredVisitor(this)
   , num_TranslationUnit(0)
   , num_TopForm(0)
   , num_Function(0)
@@ -165,7 +173,7 @@ CodeGenASTVisitor::CodeGenASTVisitor()
   , num_AttributeSpecifier(0)
   , num_Attribute(0)
 {
-  mod = new llvm::Module("test", llvm::getGlobalContext());
+  mod = new llvm::Module("test", context);
 }
 
 void CodeGenASTVisitor::printHistogram(ostream &out) {
@@ -228,11 +236,23 @@ bool CodeGenASTVisitor::visitFunction(Function *obj) {
   
   std::vector<const llvm::Type*> paramTypes;
   llvm::FunctionType* funcType =
-    llvm::FunctionType::get(llvm::IntegerType::get(llvm::getGlobalContext(), 32), paramTypes, /*isVarArg*/false);
+    llvm::FunctionType::get(llvm::IntegerType::get(context, 32), paramTypes, /*isVarArg*/false);
   llvm::Constant *c = mod->getOrInsertFunction
     (obj->nameAndParams->var->name,  // function name
      funcType);
   currentFunction = llvm::cast<llvm::Function>(c);
+
+  entryBlock = llvm::BasicBlock::Create(context, "entry", currentFunction);
+  prevBlock = entryBlock;
+
+  // Create a marker to make it easy to insert allocas into the entryblock
+  // later.  Don't create this with the builder, because we don't want it
+  // folded.
+  llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::getInt32Ty(context));
+  allocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::getInt32Ty(context), "",
+					 entryBlock);
+
+
   ++num_Function;
   return true;
 }
@@ -254,7 +274,102 @@ bool CodeGenASTVisitor::visitDeclaration(Declaration *obj) {
   return true;
 }
 
+const llvm::Type* CodeGenASTVisitor::makeTypeSpecifier(Type *t)
+{
+  const llvm::Type* type = NULL;
+
+  switch (t->getTag())
+  {
+  case Type::T_ATOMIC: {
+    CVAtomicType *cvat = t->asCVAtomicType();
+    AtomicType *at = cvat->atomic;
+    switch (at->getTag()) {
+    case AtomicType::T_SIMPLE: {
+      SimpleType *st = at->asSimpleType();
+      SimpleTypeId id = st->type;
+      switch (id) {
+      case ST_CHAR: {
+	type = llvm::IntegerType::get(context, 8);
+	break;
+      }
+      case ST_UNSIGNED_CHAR: {
+	type = llvm::IntegerType::get(context, 8);
+	break;
+      }
+      case ST_SIGNED_CHAR: {
+	type = llvm::IntegerType::get(context, 8);
+	break;
+      }
+      case ST_INT: {
+	type = llvm::IntegerType::get(context, 32);
+	break;
+      }
+      case ST_UNSIGNED_INT: {
+	type = llvm::IntegerType::get(context, 32);
+	break;
+      }
+      case ST_LONG_INT: {
+	type = llvm::IntegerType::get(context, 32);
+	break;
+      }
+      case ST_UNSIGNED_LONG_INT: {
+	type = llvm::IntegerType::get(context, 32);
+	break;
+      }
+      case ST_LONG_LONG: {             // GNU/C99 extension
+	type = llvm::IntegerType::get(context, 64);
+	break;
+      }
+      case ST_UNSIGNED_LONG_LONG: {     // GNU/C99 extension
+	type = llvm::IntegerType::get(context, 64);
+	break;
+      }
+      case ST_SHORT_INT: {
+	type = llvm::IntegerType::get(context, 16);
+	break;
+      }
+      case ST_UNSIGNED_SHORT_INT: {
+	type = llvm::IntegerType::get(context, 16);
+	break;
+      }
+      case ST_WCHAR_T: {
+	type = llvm::IntegerType::get(context, 16);
+	break;
+      }
+      case ST_BOOL: {
+	type = llvm::IntegerType::get(context, 8);
+	break;
+      }
+      default: {
+	assert(0);
+      }
+      }
+      break;
+    }
+    default: {
+      assert(0);
+    }
+    }
+    break;
+  }
+  default: {
+    assert(0);
+  }
+  }
+  return type;
+}
+
 void CodeGenASTVisitor::postvisitDeclaration(Declaration *obj) {
+  FAKELIST_FOREACH_NC(Declarator, obj->decllist, iter) {
+    Variable* var = iter->var;
+    const llvm::Type* type = makeTypeSpecifier(var->type);
+
+    if (var->flags & (DF_DEFINITION|DF_TEMPORARY)) {
+      // A local variable.
+      llvm::AllocaInst* lv = createTempAlloca(type, var->name);
+      variables[var] = lv;
+    }  
+  }
 }
 
 bool CodeGenASTVisitor::visitASTTypeId(ASTTypeId *obj) {
@@ -349,7 +464,9 @@ bool CodeGenASTVisitor::visitStatement(Statement *obj) {
   obj->debugPrint(std::cout, 0);
   if (obj->kind() == Statement::S_COMPOUND) {
     assert (currentBlock == NULL); // Nested blocks unimplemented
-    currentBlock = llvm::BasicBlock::Create(llvm::getGlobalContext(), locToStr(obj->loc).c_str(), currentFunction);
+    currentBlock = llvm::BasicBlock::Create(context, locToStr(obj->loc).c_str(), currentFunction);
+    llvm::IRBuilder<> builder(prevBlock);
+    builder.CreateBr(currentBlock);
   }
   else if (obj->kind() == Statement::S_RETURN) {
     // No action needed in preorder visit
@@ -364,6 +481,7 @@ bool CodeGenASTVisitor::visitStatement(Statement *obj) {
 void CodeGenASTVisitor::postvisitStatement(Statement *obj) {
   if (obj->kind() == Statement::S_COMPOUND) {
     assert (currentBlock != NULL);
+    prevBlock = currentBlock;
     currentBlock = NULL;
   }
   else if (obj->kind() == Statement::S_RETURN) {
@@ -402,8 +520,25 @@ void CodeGenASTVisitor::postvisitExpression(Expression *obj) {
   obj->debugPrint(std::cout, 0);
   if (obj->kind() == Expression::E_INTLIT) {
     E_intLit* intLit = static_cast<E_intLit *>(obj);
+    valueMap[obj] = llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), intLit->i);
+  }
+  else if (obj->kind() == Expression::E_VARIABLE) {
+    E_variable* variableExpr = static_cast<E_variable *>(obj);
     llvm::IRBuilder<> builder(currentBlock);
-    valueMap[obj] = llvm::ConstantInt::get(llvm::Type::getInt32Ty(llvm::getGlobalContext()), intLit->i);
+    lvalueMap[obj] = variables[variableExpr->var];
+    valueMap[obj] = builder.CreateLoad(variables[variableExpr->var], variableExpr->var->name);
+  }
+  else if (obj->kind() == Expression::E_ASSIGN) {
+    E_assign* assignExpr = static_cast<E_assign *>(obj);
+    llvm::IRBuilder<> builder(currentBlock);
+    switch (assignExpr->op) {
+    case BIN_ASSIGN: 
+      valueMap[obj] = builder.CreateStore(valueMap[assignExpr->src], lvalueMap[assignExpr->target]);
+      break;
+    default:
+      assert(0);
+      break;
+    }
   }
   else if (obj->kind() == Expression::E_BINARY) {
     E_binary* binaryExpr = static_cast<E_binary *>(obj);

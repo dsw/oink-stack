@@ -17,6 +17,15 @@
 #define __STDC_CONSTANT_MACROS
 
 #include <llvm/Module.h>
+#include <llvm/Module.h>
+#include <llvm/Function.h>
+#include <llvm/PassManager.h>
+#include <llvm/CallingConv.h>
+#include <llvm/Analysis/Verifier.h>
+#include <llvm/Assembly/PrintModulePass.h>
+#include <llvm/Support/IRBuilder.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Pass.h>
 
 class Bullet : public virtual Oink {
   // tor ****
@@ -30,9 +39,17 @@ class Bullet : public virtual Oink {
 };
 
 class CodeGenASTVisitor : public ASTVisitor {
+  // The LLVM context
+  llvm::LLVMContext& context;
   llvm::Function* currentFunction;
+  llvm::BasicBlock* entryBlock;
   llvm::BasicBlock *currentBlock;
+  llvm::BasicBlock *prevBlock;
   std::map<Expression*, llvm::Value*> valueMap;
+  std::map<Expression*, llvm::Value*> lvalueMap;
+  // The alloca instruction insertion point
+  llvm::Instruction* allocaInsertPt;
+  std::map<Variable*, llvm::Value*> variables;
 
   public:
   llvm::Module *mod;
@@ -76,6 +93,8 @@ class CodeGenASTVisitor : public ASTVisitor {
   CodeGenASTVisitor();
   virtual ~CodeGenASTVisitor() {}
 
+  llvm::AllocaInst *createTempAlloca(const llvm::Type *ty, const char *name);
+  const llvm::Type* makeTypeSpecifier(Type *t);
   void printHistogram(std::ostream &out);
 
   virtual bool visitTranslationUnit(TranslationUnit *obj);
