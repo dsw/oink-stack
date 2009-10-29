@@ -858,9 +858,7 @@ bool VerifyCrossModuleParams_ASTVisitor::visitFunction(Function *obj) {
     if (module != lookedUpModule) continue;
 
     // make code to verify the status of the parameter
-    statusChecks << "xassert(status("
-                 << paramVar->name
-                 << ")==ObjIntegBitOn_PLR);";
+    statusChecks << "verify(" << paramVar->name << ");";
   }
 
   // insert the status checks at the top of the function body
