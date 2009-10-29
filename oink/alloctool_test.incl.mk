@@ -9,6 +9,7 @@ endif
 .PHONY: alloctool-check
 alloctool-check: alloctool-check-basic
 alloctool-check: alloctool-check-heapify
+alloctool-check: alloctool-check-verify
 
 .PHONY: alloctool-check-basic
 alloctool-check-basic:
@@ -41,3 +42,16 @@ alloctool-check-heapify:
            Test/heapify2.c \
            > Test/heapify2.c.patch.out
 	diff Test/heapify2.c.patch.cor Test/heapify2.c.patch.out
+
+# check -fa-verify-cross-module-params
+.PHONY: alloctool-check-verify
+alloctool-check-verify: Test/verify1_foo.i Test/verify1_bar.i
+	./alloctool -fa-verify-cross-module-params $^ \
+	  -o-mod-spec bar:Test/verify1_bar.mod \
+	  -o-mod-spec foo:Test/verify1_foo.mod \
+	  -o-mod-default default \
+          > Test/verify1.c.patch.out
+	diff Test/verify1.c.patch.cor Test/verify1.c.patch.out
+
+Test/verify1_foo.i Test/verify1_bar.i: Test/verify1_%.i: Test/verify1_%.c
+	gcc -Wall -E -o $@ $<

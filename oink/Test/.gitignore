@@ -15,3 +15,6 @@ mod_gronk_baz_method.lattice
 mod_gronk_baz_access_class.lattice
 mod_gronk_baz_method2.lattice
 mod_waga_stack_access.lattice
+verify1_bar
+verify1_foo.i
+verify1_bar.i

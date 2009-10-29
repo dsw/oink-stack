@@ -18,6 +18,9 @@ class AllocToolCmd : public virtual OinkCmd {
   // heapify every declaration (1) allocating a var on the stack where
   // (2) the var also has its address taken
   bool heapify_stack_alloc_addr_taken;
+  // insert calls to verify the status of parameters that are pointers
+  // to a class/struct/union type that is defined in this module
+  bool verify_cross_module_params;
 
   // string to use to call free()
   char *free_func;

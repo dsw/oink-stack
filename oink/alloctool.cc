@@ -488,15 +488,14 @@ visitFunction(Function *obj) {
   }
 
   // warn about any params
-  FAKELIST_FOREACH_NC(ASTTypeId,
-                      obj->nameAndParams->decl->asD_func()->params, iter) {
-    Declarator *paramDeclarator = iter->decl;
-    xassert(paramDeclarator->var->getScopeKind() == SK_PARAMETER);
-    if (pass(paramDeclarator->var)) {
+  SFOREACH_OBJLIST_NC(Variable, obj->funcType->params, iter) {
+    Variable *paramVar = iter.data();
+    xassert(paramVar->getScopeKind() == SK_PARAMETER);
+    if (pass(paramVar)) {
       // we can't transform these so we just tell the user about them
-      printLoc(std::cout, paramDeclarator->decl->loc);
+      printLoc(std::cout, paramVar->loc);
       std::cout << "param decl needs heapifying " <<
-        paramDeclarator->var->name << std::endl;
+        paramVar->name << std::endl;
     }
   }
 
@@ -803,6 +802,76 @@ subVisitE_variable(E_variable *evar) {
   return true;
 }
 
+// **** VerifyCrossModuleParams_ASTVisitor
+
+class VerifyCrossModuleParams_ASTVisitor : private ASTVisitor {
+public:
+  LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
+  StringRefMap<char const> *classFQName2Module;
+  Patcher &patcher;
+
+  VerifyCrossModuleParams_ASTVisitor
+  (StringRefMap<char const> *classFQName2Module0, Patcher &patcher0)
+    : loweredVisitor(this)
+    , classFQName2Module(classFQName2Module0)
+    , patcher(patcher0)
+  {}
+  virtual ~VerifyCrossModuleParams_ASTVisitor() {}
+
+  virtual bool visitFunction(Function *);
+};
+
+bool VerifyCrossModuleParams_ASTVisitor::visitFunction(Function *obj) {
+  // get the module for this function
+  SourceLoc loc = obj->nameAndParams->decl->loc;
+  StringRef module = moduleForLoc(loc);
+  if (moduleForLoc(loc) == defaultModule) {
+    printf("skipping function in default module: %s\n",
+           obj->nameAndParams->var->name);
+    return false;
+  }
+
+  // look for the parameters that need to be verified and generate
+  // code to verify them
+  stringBuilder statusChecks;
+  SFOREACH_OBJLIST_NC(Variable, obj->funcType->params, iter) {
+    Variable_O *paramVar = asVariable_O(iter.data());
+    xassert(paramVar->getScopeKind() == SK_PARAMETER);
+
+    // is the parameter a pointer to a class/struct/union and that
+    // class defined in a module that is not the same as the module of
+    // this function?
+    Type *paramTypeRval = paramVar->type->asRval();
+    xassert(!paramTypeRval->isArrayType());
+    if (!paramTypeRval->isPointerType()) continue;
+    Type *paramAtType = paramTypeRval->asPointerType()->atType;
+    if (!paramAtType->isCVAtomicType()) continue;
+    CVAtomicType *paramAtCVat = paramAtType->asCVAtomicType();
+    if (!paramAtCVat->atomic->isCompoundType()) continue;
+    CompoundType *paramCpd = paramAtCVat->atomic->asCompoundType();
+    Variable_O *typedefVar = asVariable_O(paramCpd->typedefVar);
+    StringRef lookedUpModule =
+      classFQName2Module->get
+      (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()));
+    // FIX: should this be a user assert?
+    xassert(lookedUpModule);
+    if (module != lookedUpModule) continue;
+
+    // make code to verify the status of the parameter
+    statusChecks << "xassert(status("
+                 << paramVar->name
+                 << ")==ObjIntegBitOn_PLR);";
+  }
+
+  // insert the status checks at the top of the function body
+  if (statusChecks.length()) {
+    CPPSourceLoc body_ploc(obj->body->loc);
+    patcher.insertBefore(body_ploc, statusChecks.c_str(), 1);
+  }
+
+  return true;
+}
+
 // **** AllocTool
 
 // print the locations of declarators and uses of stack allocated
@@ -879,5 +948,20 @@ void AllocTool::heapifyStackAllocAddrTaken_stage() {
     // NOTE: the HeapifyStackAllocAddrTakenVars_ASTVisitor will be
     // dtored after this so anything we print above will be delimited
     // from the patch by printStop()
+  }
+}
+
+void AllocTool::verifyCrossModuleParams_stage() {
+  printStage("verify cross module params");
+  foreachSourceFile {
+    File *file = files.data();
+    maybeSetInputLangFromSuffix(file);
+    TranslationUnit *unit = file2unit.get(file);
+    // NOTE: this emits the diff in its dtor which happens after
+    // printStop() below
+    Patcher patcher(std::cout /*ostream for the diff*/,
+                    true /*recursive*/);
+    VerifyCrossModuleParams_ASTVisitor env(classFQName2Module, patcher);
+    unit->traverse(env.loweredVisitor);
   }
 }

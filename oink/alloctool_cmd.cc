@@ -11,6 +11,7 @@ AllocToolCmd::AllocToolCmd()
   : print_stack_alloc(false)
   , print_stack_alloc_addr_taken(false)
   , heapify_stack_alloc_addr_taken(false)
+  , verify_cross_module_params(false)
   , free_func("free")
   , xmalloc_func("xmalloc")
 {}
@@ -39,6 +40,8 @@ void AllocToolCmd::readOneArg(int &argc, char **&argv) {
               "-fa-", "print-stack-alloc-addr-taken");
   HANDLE_FLAG(heapify_stack_alloc_addr_taken,
               "-fa-", "heapify-stack-alloc-addr-taken");
+  HANDLE_FLAG(verify_cross_module_params,
+              "-fa-", "verify-cross-module-params");
 }
 
 void AllocToolCmd::dump() {
@@ -53,6 +56,8 @@ void AllocToolCmd::dump() {
          boolToStr(print_stack_alloc_addr_taken));
   printf("fa-heapify-stack-alloc-addr-taken: %s\n",
          boolToStr(heapify_stack_alloc_addr_taken));
+  printf("fa-verify-cross-module-params: %s\n",
+         boolToStr(verify_cross_module_params));
   printf("a-free-func '%s'\n", free_func);
   printf("a-xmalloc-func '%s'\n", xmalloc_func);
 }
@@ -77,6 +82,9 @@ void AllocToolCmd::printHelp() {
      "  -fa-heapify-stack-alloc-addr-taken : heapify every declaration\n"
      "    (1) allocating a var on the stack where\n"
      "    (2) the var also has its address taken\n"
+     "  -fa-verify-cross-module-params :\n"
+     "    insert calls to verify the status of parameters that are pointers\n"
+     "    to a class/struct/union type that is defined in this module\n"
      "");
 }
 
@@ -92,13 +100,15 @@ void AllocToolCmd::initializeFromFlags() {
 
   if (print_stack_alloc +
       print_stack_alloc_addr_taken +
-      heapify_stack_alloc_addr_taken > 2) {
+      heapify_stack_alloc_addr_taken +
+      verify_cross_module_params > 1) {
     throw UserError
       (USER_ERROR_ExitCode,
        "Use at most one of:\n"
-       "\t-fo-print-stack-alloc\n"
-       "\t-fo-print-stack-alloc-addr-taken\n"
-       "\t-fo-heapify-stack-alloc-addr-taken\n"
+       "\t-fa-print-stack-alloc\n"
+       "\t-fa-print-stack-alloc-addr-taken\n"
+       "\t-fa-heapify-stack-alloc-addr-taken\n"
+       "\t-fa-verify-cross-module-params\n"
        );
   }
 

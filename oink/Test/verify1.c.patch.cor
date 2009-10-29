@@ -1,0 +1,18 @@
+loading module bar from mod file Test/verify1_bar.mod
+	adding to modules map: Test/verify1_bar.c -> bar
+loading module foo from mod file Test/verify1_foo.mod
+	adding to modules map: Test/verify1_foo.c -> foo
+	adding to modules map: Test/verify1_foo.h -> foo
+setting default module to default
+warning: the -fo-merge-E_variable-and-var-values flag is incompatible with doing module analyses, so turning it off.
+skipping function in default module: _OSSwapInt16
+skipping function in default module: _OSSwapInt32
+skipping function in default module: _OSSwapInt64
+--- Test/verify1_foo.c
++++ Test/verify1_foo.c
+@@ -9,1 +9,1 @@
+-int get_x(struct Foo *foo) {
++int get_x(struct Foo *foo) {xassert(status(foo)==ObjIntegBitOn_PLR);
+@@ -13,1 +13,1 @@
+-void set_x(struct Foo *foo, int x) {
++void set_x(struct Foo *foo, int x) {xassert(status(foo)==ObjIntegBitOn_PLR);

@@ -28,8 +28,11 @@ int main(int argc, char **argv) {
     m.typecheck_stage();
     m.elaborate_stage();
     m.markRealVars_stage();
+
+    if (moduleList.isNotEmpty()) m.build_classFQName2Module();
     m.filter_stage();
     m.prettyPrint_stage();
+
     // alloctool-specific features go here
     if (alloctoolCmd->print_stack_alloc) {
       m.printStackAlloc_stage();
@@ -39,6 +42,9 @@ int main(int argc, char **argv) {
     }
     if (alloctoolCmd->heapify_stack_alloc_addr_taken) {
       m.heapifyStackAllocAddrTaken_stage();
+    }
+    if (alloctoolCmd->verify_cross_module_params) {
+      m.verifyCrossModuleParams_stage();
     }
   } catch (xBase &e) {
     std::cerr << e << std::endl;
