@@ -469,6 +469,34 @@ llvm::BasicBlock* CodeGenASTVisitor::genStatement(llvm::BasicBlock* currentBlock
     }
     return ifAfterBlock;
   }
+  case Statement::S_WHILE: {
+    S_while* s_while = static_cast<S_while*>(obj);
+
+    llvm::BasicBlock* whileCondBlock =
+      llvm::BasicBlock::Create(context, "whilecond", currentFunction); // TODO: better name
+    llvm::BasicBlock* bodyEnterBlock =
+      llvm::BasicBlock::Create(context, "whilebody", currentFunction); // TODO: better name
+    llvm::BasicBlock* whileAfterBlock =
+      llvm::BasicBlock::Create(context, "whileafter", currentFunction); // TODO: better name
+
+    {
+      llvm::IRBuilder<> builder(currentBlock);
+      builder.CreateBr(whileCondBlock);
+    }
+    {
+      llvm::IRBuilder<> builder(whileCondBlock);
+      llvm::Value* condValue = condToValue(whileCondBlock, s_while->cond);
+      builder.CreateCondBr(condValue, bodyEnterBlock, whileAfterBlock);
+    }
+
+    llvm::BasicBlock* bodyExitBlock = genStatement(bodyEnterBlock, s_while->body);
+    if (bodyExitBlock != NULL) {
+      llvm::IRBuilder<> builder(bodyExitBlock);
+      builder.CreateBr(whileCondBlock);
+    }
+
+    return whileAfterBlock;
+  }
   case Statement::S_SKIP: {
     return currentBlock;
   }
