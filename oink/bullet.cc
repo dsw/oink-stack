@@ -430,10 +430,67 @@ llvm::BasicBlock* CodeGenASTVisitor::genStatement(llvm::BasicBlock* currentBlock
     }
     return currentBlock;
   }
+  case Statement::S_IF: {
+    S_if* s_if = static_cast<S_if*>(obj);
+
+    llvm::BasicBlock* thenEnterBlock =
+      llvm::BasicBlock::Create(context, "thenenter", currentFunction); // TODO: better name
+    llvm::BasicBlock* thenExitBlock = genStatement(thenEnterBlock, s_if->thenBranch);
+
+    bool noElseClause = s_if->elseBranch->kind() == Statement::S_COMPOUND &&
+      static_cast<S_compound*>(s_if->elseBranch)->stmts.count() == 1 &&
+      static_cast<S_compound*>(s_if->elseBranch)->stmts.first()->kind() == Statement::S_SKIP;
+    llvm::BasicBlock* elseEnterBlock = NULL;
+    llvm::BasicBlock* elseExitBlock = NULL;
+    llvm::BasicBlock* ifAfterBlock = NULL;
+    if (noElseClause) {
+      elseEnterBlock = ifAfterBlock = llvm::BasicBlock::Create(context, "ifafter", currentFunction); // TODO: better name
+    } else {
+      elseEnterBlock = llvm::BasicBlock::Create(context, "elseenter", currentFunction); // TODO: better name
+      elseExitBlock = genStatement(elseEnterBlock, s_if->elseBranch);
+      if (thenExitBlock != NULL || elseExitBlock != NULL) {
+	ifAfterBlock = llvm::BasicBlock::Create(context, "ifafter", currentFunction); // TODO: better name
+      }
+    }
+    if (ifAfterBlock != NULL) {
+      if (thenExitBlock != NULL) {
+	llvm::IRBuilder<> builder(thenExitBlock);
+	builder.CreateBr(ifAfterBlock);
+      }
+      if (elseExitBlock != NULL) {
+	llvm::IRBuilder<> builder(elseExitBlock);
+	builder.CreateBr(ifAfterBlock);
+      }
+    }
+    {
+      llvm::IRBuilder<> builder(currentBlock);
+      llvm::Value* condValue = condToValue(currentBlock, s_if->cond);
+      builder.CreateCondBr(condValue, thenEnterBlock, elseEnterBlock);
+    }
+    return ifAfterBlock;
+  }
+  case Statement::S_SKIP: {
+    return currentBlock;
+  }
   default: {
   assert(0);
   return NULL;
   }
+  }
+}
+
+llvm::Value* CodeGenASTVisitor::condToValue(llvm::BasicBlock* currentBlock, Condition *obj) {
+  switch (obj->kind()) {
+  case Condition::CN_EXPR: {
+    CN_expr* cn_expr = static_cast<CN_expr*>(obj);
+    llvm::Value* valueAsInt = fullExpressionToValue(currentBlock, cn_expr->expr);
+    llvm::IRBuilder<> builder(currentBlock);
+    return builder.CreateICmp(llvm::CmpInst::ICMP_NE, valueAsInt,
+			      llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), 0), "convertToBool");
+  }
+  default:
+    assert(0);
+    return NULL;
   }
 }
 

@@ -141,6 +141,7 @@ class CodeGenASTVisitor : public ASTVisitor {
   llvm::Value* expressionToValue(llvm::BasicBlock* currentBlock, Expression *obj);
   llvm::Value* expressionToLvalue(llvm::BasicBlock* currentBlock, Expression *obj);
   llvm::Value* fullExpressionToValue(llvm::BasicBlock* currentBlock, FullExpression *obj);
+  llvm::Value* condToValue(llvm::BasicBlock* currentBlock, Condition *obj);
   virtual bool visitArgExpression(ArgExpression *obj);
   virtual void postvisitArgExpression(ArgExpression *obj);
   virtual bool visitArgExpressionListOpt(ArgExpressionListOpt *obj);
