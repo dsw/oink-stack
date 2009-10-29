@@ -58,7 +58,7 @@ const size_t LINK_ERROR_MAX_SYMBOLS_REPORTED = 5;
 
 // visit all of the class/struct/union definitions and map each to a
 // module
-class Qual_ModuleClassDef_Visitor : private ASTVisitor {
+class ModuleClassDef_Visitor : private ASTVisitor {
   public:
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
 
@@ -68,7 +68,7 @@ class Qual_ModuleClassDef_Visitor : private ASTVisitor {
   SObjList<Variable_O> &classVars;
 
   public:
-  Qual_ModuleClassDef_Visitor
+  ModuleClassDef_Visitor
   (StringRefMap<char const> &classFQName2Module0,
    SObjList<Variable_O> &classVars0)
     : loweredVisitor(this)
@@ -85,7 +85,7 @@ class Qual_ModuleClassDef_Visitor : private ASTVisitor {
   virtual void subPostVisitTS_classSpec(TS_classSpec *);
 };
 
-void Qual_ModuleClassDef_Visitor::print_class2mod(std::ostream &out) {
+void ModuleClassDef_Visitor::print_class2mod(std::ostream &out) {
   out << "---- START class to module map" << std::endl;
   SFOREACH_OBJLIST(Variable_O, classVars, iter) {
     Variable_O const *typedefVar = iter.data();
@@ -97,7 +97,7 @@ void Qual_ModuleClassDef_Visitor::print_class2mod(std::ostream &out) {
   out << "---- END class to module map" << std::endl;
 }
 
-void Qual_ModuleClassDef_Visitor::postvisitTypeSpecifier(TypeSpecifier *obj) {
+void ModuleClassDef_Visitor::postvisitTypeSpecifier(TypeSpecifier *obj) {
   switch(obj->kind()) {         // roll our own virtual dispatch
   default: break;               // expression kinds for which we do nothing
   case TypeSpecifier::TS_CLASSSPEC:
@@ -106,9 +106,9 @@ void Qual_ModuleClassDef_Visitor::postvisitTypeSpecifier(TypeSpecifier *obj) {
   }
 }
 
-void Qual_ModuleClassDef_Visitor::subPostVisitTS_classSpec(TS_classSpec *obj) {
+void ModuleClassDef_Visitor::subPostVisitTS_classSpec(TS_classSpec *obj) {
 //   std::cout << std::endl;
-//   std::cout << "Qual_ModuleClassDef_Visitor::visitTS_classSpec" << std::endl;
+//   std::cout << "ModuleClassDef_Visitor::visitTS_classSpec" << std::endl;
 
   StringRef module = moduleForLoc(obj->loc);
   Variable_O * const typedefVar = asVariable_O(obj->ctype->typedefVar);
@@ -160,7 +160,7 @@ void Oink::build_classFQName2Module() {
   classFQName2Module = new StringRefMap<char const>();
   xassert(!classVars);
   classVars = new SObjList<Variable_O>();
-  Qual_ModuleClassDef_Visitor classDefEnv(*classFQName2Module, *classVars);
+  ModuleClassDef_Visitor classDefEnv(*classFQName2Module, *classVars);
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
