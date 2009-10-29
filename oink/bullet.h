@@ -44,18 +44,14 @@ class Bullet : public virtual Oink {
 class CodeGenASTVisitor : public ASTVisitor {
   // The LLVM context
   llvm::LLVMContext& context;
-  llvm::Function* currentFunction;
-  llvm::BasicBlock* entryBlock;
-  llvm::BasicBlock *currentBlock;
-  llvm::BasicBlock *prevBlock;
-  std::map<Expression*, llvm::Value*> valueMap; // Do not use directly, use getValueFor()
+  std::map<Expression*, llvm::Value*> valueMap;
   std::map<Expression*, llvm::Value*> lvalueMap;
   std::map<Expression*, std::string> names;
+  llvm::Function* currentFunction;
   // The alloca instruction insertion point
   llvm::Instruction* allocaInsertPt;
   std::map<Variable*, llvm::Value*> variables;
 
-  llvm::Value* getValueFor(Expression* expr);
   llvm::Value* getLvalueFor(Expression* expr) {
     return lvalueMap[expr];
   }
@@ -111,7 +107,6 @@ class CodeGenASTVisitor : public ASTVisitor {
   virtual bool visitTopForm(TopForm *obj);
   virtual void postvisitTopForm(TopForm *obj);
   virtual bool visitFunction(Function *obj);
-  virtual void postvisitFunction(Function *obj);
   virtual bool visitMemberInit(MemberInit *obj);
   virtual void postvisitMemberInit(MemberInit *obj);
   virtual bool visitDeclaration(Declaration *obj);
@@ -138,16 +133,14 @@ class CodeGenASTVisitor : public ASTVisitor {
   virtual void postvisitExceptionSpec(ExceptionSpec *obj);
   virtual bool visitOperatorName(OperatorName *obj);
   virtual void postvisitOperatorName(OperatorName *obj);
-  virtual bool visitStatement(Statement *obj);
-  virtual void postvisitStatement(Statement *obj);
+  llvm::BasicBlock* genStatement(llvm::BasicBlock* currentBlock, Statement *obj);
   virtual bool visitCondition(Condition *obj);
   virtual void postvisitCondition(Condition *obj);
   virtual bool visitHandler(Handler *obj);
   virtual void postvisitHandler(Handler *obj);
-  virtual bool visitExpression(Expression *obj);
-  virtual void postvisitExpression(Expression *obj);
-  virtual bool visitFullExpression(FullExpression *obj);
-  virtual void postvisitFullExpression(FullExpression *obj);
+  llvm::Value* expressionToValue(llvm::BasicBlock* currentBlock, Expression *obj);
+  llvm::Value* expressionToLvalue(llvm::BasicBlock* currentBlock, Expression *obj);
+  llvm::Value* fullExpressionToValue(llvm::BasicBlock* currentBlock, FullExpression *obj);
   virtual bool visitArgExpression(ArgExpression *obj);
   virtual void postvisitArgExpression(ArgExpression *obj);
   virtual bool visitArgExpressionListOpt(ArgExpressionListOpt *obj);

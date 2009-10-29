@@ -11,10 +11,10 @@ $(error This makefile should be included in Test.incl.mk, not used stand-alone)
 endif
 
 .PHONY: bullet-check
-bullet-check: hello_1 hello_2 hello_variables
+bullet-check: hello_1 hello_2 hello_variables hello_if
 
 .SECONDEXPANSION:
-hello_1 hello_2 hello_variables: ./bullet bullet_test.incl.mk Test/bullet/$$@.c
+hello_1 hello_2 hello_variables hello_if: ./bullet bullet_test.incl.mk Test/bullet/$$@.c
 	rm -f $@.ll $@.bc $@.opt.ll $@.opt.bc 
 	./bullet Test/bullet/$@.c
 	mv out.ll $@.ll
