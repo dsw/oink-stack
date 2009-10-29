@@ -10,10 +10,32 @@ ifndef TEST_MAKEFILE
 $(error This makefile should be included in Test.incl.mk, not used stand-alone)
 endif
 
-BULLET_TESTS=hello_1 hello_2 hello_variables hello_if hello_if_else hello_if_else_2
+BULLET_TESTS=\
+bullet_test_binop \
+bullet_test_if \
+bullet_test_if_else_2 \
+bullet_test_if_else \
+bullet_test_trivial \
+bullet_test_variables \
+
 
 .PHONY: bullet-check
 bullet-check: $(BULLET_TESTS)
+
+BULLET_CLEAN =
+BULLET_CLEAN += $(foreach bullet_test,$(BULLET_TESTS),$(bullet_test).ll)
+BULLET_CLEAN += $(foreach bullet_test,$(BULLET_TESTS),$(bullet_test).bc)
+BULLET_CLEAN += $(foreach bullet_test,$(BULLET_TESTS),$(bullet_test).s)
+BULLET_CLEAN += $(foreach bullet_test,$(BULLET_TESTS),$(bullet_test))
+BULLET_CLEAN += $(foreach bullet_test,$(BULLET_TESTS),$(bullet_test).opt.ll)
+BULLET_CLEAN += $(foreach bullet_test,$(BULLET_TESTS),$(bullet_test).opt.bc)
+BULLET_CLEAN += $(foreach bullet_test,$(BULLET_TESTS),$(bullet_test).opt.s)
+BULLET_CLEAN += $(foreach bullet_test,$(BULLET_TESTS),$(bullet_test).opt)
+
+TOCLEAN += $(BULLET_CLEAN)
+
+clean-bullet-check:
+	rm -f $(BULLET_CLEAN)
 
 .SECONDEXPANSION:
 $(BULLET_TESTS): ./bullet bullet_test.incl.mk Test/bullet/$$@.c
