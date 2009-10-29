@@ -45,6 +45,7 @@ $(BULLET_TESTS): ./bullet bullet_test.incl.mk Test/bullet/$$@.c
 	rm -f $@.ll $@.bc $@.opt.ll $@.opt.bc 
 	./bullet Test/bullet/$@.c
 	mv out.ll $@.ll
+	cat $@.ll
 	$(LLVMBIN)/llvm-as $@.ll -f -o $@.bc
 	$(LLVMBIN)/llc $@.bc -f -o $@.s
 	$(ASSEMBLER) $@.s -o $@.o

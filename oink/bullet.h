@@ -60,47 +60,17 @@ class CodeGenASTVisitor : public ASTVisitor {
   llvm::Module *mod;
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
 
-  int num_TranslationUnit;
-  int num_TopForm;
-  int num_Function;
-  int num_MemberInit;
-  int num_Declaration;
-  int num_ASTTypeId;
-  int num_PQName;
-  int num_TypeSpecifier;
-  int num_BaseClassSpec;
-  int num_Enumerator;
-  int num_MemberList;
-  int num_Member;
-  int num_Declarator;
-  int num_IDeclarator;
-  int num_ExceptionSpec;
-  int num_OperatorName;
-  int num_Statement;
-  int num_Condition;
-  int num_Handler;
-  int num_Expression;
-  int num_FullExpression;
-  int num_ArgExpression;
-  int num_ArgExpressionListOpt;
-  int num_Initializer;
-  int num_TemplateDeclaration;
-  int num_TemplateParameter;
-  int num_TemplateArgument;
-  int num_NamespaceDecl;
-  int num_FullExpressionAnnot;
-  int num_ASTTypeof;
-  int num_Designator;
-  int num_AttributeSpecifierList;
-  int num_AttributeSpecifier;
-  int num_Attribute;
-
   CodeGenASTVisitor();
   virtual ~CodeGenASTVisitor() {}
 
   llvm::AllocaInst *createTempAlloca(const llvm::Type *ty, const char *name);
   const llvm::Type* makeTypeSpecifier(Type *t);
-  void printHistogram(std::ostream &out);
+
+  llvm::BasicBlock* genStatement(llvm::BasicBlock* currentBlock, Statement *obj);
+  llvm::Value* expressionToValue(llvm::BasicBlock* currentBlock, Expression *obj);
+  llvm::Value* expressionToLvalue(llvm::BasicBlock* currentBlock, Expression *obj);
+  llvm::Value* fullExpressionToValue(llvm::BasicBlock* currentBlock, FullExpression *obj);
+  llvm::Value* condToValue(llvm::BasicBlock* currentBlock, Condition *obj);
 
   virtual bool visitTranslationUnit(TranslationUnit *obj);
   virtual void postvisitTranslationUnit(TranslationUnit *obj);
@@ -133,15 +103,10 @@ class CodeGenASTVisitor : public ASTVisitor {
   virtual void postvisitExceptionSpec(ExceptionSpec *obj);
   virtual bool visitOperatorName(OperatorName *obj);
   virtual void postvisitOperatorName(OperatorName *obj);
-  llvm::BasicBlock* genStatement(llvm::BasicBlock* currentBlock, Statement *obj);
   virtual bool visitCondition(Condition *obj);
   virtual void postvisitCondition(Condition *obj);
   virtual bool visitHandler(Handler *obj);
   virtual void postvisitHandler(Handler *obj);
-  llvm::Value* expressionToValue(llvm::BasicBlock* currentBlock, Expression *obj);
-  llvm::Value* expressionToLvalue(llvm::BasicBlock* currentBlock, Expression *obj);
-  llvm::Value* fullExpressionToValue(llvm::BasicBlock* currentBlock, FullExpression *obj);
-  llvm::Value* condToValue(llvm::BasicBlock* currentBlock, Condition *obj);
   virtual bool visitArgExpression(ArgExpression *obj);
   virtual void postvisitArgExpression(ArgExpression *obj);
   virtual bool visitArgExpressionListOpt(ArgExpressionListOpt *obj);
