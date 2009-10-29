@@ -31,10 +31,6 @@ void Bullet::emit_stage() {
       printStop();
   }
 
-  // verify the module
-  printf("%s:%d verify\n", __FILE__, __LINE__);
-  verifyModule(*mod, llvm::PrintMessageAction);
-
   // render the module
   printf("%s:%d render\n", __FILE__, __LINE__);
   llvm::PassManager PM;
@@ -43,6 +39,10 @@ void Bullet::emit_stage() {
   llvm::ModulePass *pmp = createPrintModulePass(&out);
   PM.add(pmp);
   PM.run(*mod);
+
+  // verify the module
+  printf("%s:%d verify\n", __FILE__, __LINE__);
+  verifyModule(*mod, llvm::PrintMessageAction);
 
   delete mod;
 }
@@ -391,6 +391,28 @@ llvm::BasicBlock* CodeGenASTVisitor::genStatement(llvm::BasicBlock* currentBlock
 
     return whileAfterBlock;
   }
+  case Statement::S_DOWHILE: {
+    S_doWhile* s_doWhile = static_cast<S_doWhile*>(obj);
+
+    llvm::BasicBlock* bodyEnterBlock =
+      llvm::BasicBlock::Create(context, "dowhilebody", currentFunction); // TODO: better name
+
+    {
+      llvm::IRBuilder<> builder(currentBlock);
+      builder.CreateBr(bodyEnterBlock);
+    }
+    llvm::BasicBlock* bodyExitBlock = genStatement(bodyEnterBlock, s_doWhile->body);
+    if (bodyExitBlock != NULL) {
+      llvm::Value* condValue = intToBoolValue(bodyExitBlock, fullExpressionToValue(bodyExitBlock, s_doWhile->expr));
+      llvm::IRBuilder<> builder(bodyExitBlock);
+      llvm::BasicBlock* doWhileAfterBlock =
+	llvm::BasicBlock::Create(context, "dowhileafter", currentFunction); // TODO: better name
+      builder.CreateCondBr(condValue, bodyEnterBlock, doWhileAfterBlock);
+      return doWhileAfterBlock;
+    } else {
+      return NULL;
+    }
+  }
   case Statement::S_SKIP: {
     return currentBlock;
   }
@@ -401,14 +423,17 @@ llvm::BasicBlock* CodeGenASTVisitor::genStatement(llvm::BasicBlock* currentBlock
   }
 }
 
+llvm::Value* CodeGenASTVisitor::intToBoolValue(llvm::BasicBlock* currentBlock, llvm::Value *intValue) {
+  llvm::IRBuilder<> builder(currentBlock);
+  return builder.CreateICmp(llvm::CmpInst::ICMP_NE, intValue,
+			    llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), 0), "convertToBool");
+}
+
 llvm::Value* CodeGenASTVisitor::condToValue(llvm::BasicBlock* currentBlock, Condition *obj) {
   switch (obj->kind()) {
   case Condition::CN_EXPR: {
     CN_expr* cn_expr = static_cast<CN_expr*>(obj);
-    llvm::Value* valueAsInt = fullExpressionToValue(currentBlock, cn_expr->expr);
-    llvm::IRBuilder<> builder(currentBlock);
-    return builder.CreateICmp(llvm::CmpInst::ICMP_NE, valueAsInt,
-			      llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), 0), "convertToBool");
+    return intToBoolValue(currentBlock, fullExpressionToValue(currentBlock, cn_expr->expr));
   }
   default:
     assert(0);

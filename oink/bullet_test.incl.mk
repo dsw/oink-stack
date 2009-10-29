@@ -20,6 +20,9 @@ bullet_test_variables \
 bullet_test_while \
 bullet_test_while_2 \
 bullet_test_while_3 \
+bullet_test_do_while \
+bullet_test_do_while_2 \
+bullet_test_do_while_3 \
 
 
 .PHONY: bullet-check

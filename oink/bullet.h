@@ -70,6 +70,7 @@ class CodeGenASTVisitor : public ASTVisitor {
   llvm::Value* expressionToValue(llvm::BasicBlock* currentBlock, Expression *obj);
   llvm::Value* expressionToLvalue(llvm::BasicBlock* currentBlock, Expression *obj);
   llvm::Value* fullExpressionToValue(llvm::BasicBlock* currentBlock, FullExpression *obj);
+  llvm::Value* intToBoolValue(llvm::BasicBlock* currentBlock, llvm::Value *intValue);
   llvm::Value* condToValue(llvm::BasicBlock* currentBlock, Condition *obj);
 
   virtual bool visitTranslationUnit(TranslationUnit *obj);
