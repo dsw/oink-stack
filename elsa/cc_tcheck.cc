@@ -1935,7 +1935,7 @@ CompoundType *checkClasskeyAndName(
       // override any mismatching prior decl
       if (definition && !templateArgs) {
         TRACE("env", "changing " << ct->keywordAndName() <<
-                     " to a " << toString(keyword) << endl);
+                     " to a " << toString(keyword) << std::endl);
         ct->keyword = (CompoundType::Keyword)keyword;
       }
     }

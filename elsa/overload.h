@@ -30,7 +30,7 @@ std::ostream &overloadTrace();
   class OverloadIndTrace {
   public:
     OverloadIndTrace(char const *msg) {
-      overloadTrace() << msg << endl;
+      overloadTrace() << msg << std::endl;
       overloadNesting++;
     }
     ~OverloadIndTrace() {
@@ -45,7 +45,7 @@ std::ostream &overloadTrace();
 
   // just print a message at the current indentation
   #define OVERLOADTRACE(msg) \
-    overloadTrace() << msg << endl
+    overloadTrace() << msg << std::endl
 
 #else
   #define OVERLOADINDTRACE(msg) ((void)0)
