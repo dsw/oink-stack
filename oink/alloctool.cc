@@ -715,7 +715,9 @@ xformDeclarator(Declarator *obj) {
   // hold up in C++; if you don't want to use var->name you can use
   // this:
   //   StringRef name = dname->name->getName();
-  newInit << alloctoolCmd->xmalloc_func << "(sizeof *" << var->name << ")";
+  newInit << "(typeof(" << var->name << "))"
+          << alloctoolCmd->xmalloc_func
+          << "(sizeof *" << var->name << ")";
   if (obj->init) {
     xassert(obj->init->isIN_expr());
     // copy the old initializer
