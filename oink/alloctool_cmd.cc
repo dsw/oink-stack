@@ -14,6 +14,7 @@ AllocToolCmd::AllocToolCmd()
   , verify_cross_module_params(false)
   , free_func("free")
   , xmalloc_func("xmalloc")
+  , verify_func("verify")
 {}
 
 void AllocToolCmd::readOneArg(int &argc, char **&argv) {
@@ -31,6 +32,11 @@ void AllocToolCmd::readOneArg(int &argc, char **&argv) {
   else if (streq(arg, "-a-xmalloc-func")) {
     shift(argc, argv);
     xmalloc_func = strdup(shift(argc, argv)); // NOTE: use strdup!
+    return;
+  }
+  else if (streq(arg, "-a-verify-func")) {
+    shift(argc, argv);
+    verify_func = strdup(shift(argc, argv)); // NOTE: use strdup!
     return;
   }
   // please prefix the names of boolean flags with '-fa-'
@@ -60,6 +66,7 @@ void AllocToolCmd::dump() {
          boolToStr(verify_cross_module_params));
   printf("a-free-func '%s'\n", free_func);
   printf("a-xmalloc-func '%s'\n", xmalloc_func);
+  printf("a-verify-func '%s'\n", verify_func);
 }
 
 void AllocToolCmd::printHelp() {
@@ -68,8 +75,9 @@ void AllocToolCmd::printHelp() {
     (
      "\n"
      "alloctool flags that take an argument:\n"
-     "  -a-free-func <value>     : set the name of the free function\n"
-     "  -a-xmalloc-func <value>  : set the name of the xmalloc function\n"
+     "  -a-free-func <value>    : set the name of the free function\n"
+     "  -a-xmalloc-func <value> : set the name of the xmalloc function\n"
+     "  -a-verify-func <value>  : set the name of the verify function\n"
      "\n"
      "alloctool boolean flags;\n"
      "    preceed by '-fa-' for positive sense,\n"

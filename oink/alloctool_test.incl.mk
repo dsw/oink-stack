@@ -47,10 +47,11 @@ alloctool-check-heapify:
 .PHONY: alloctool-check-verify
 alloctool-check-verify: Test/verify1_foo.i Test/verify1_bar.i
 	./alloctool -fa-verify-cross-module-params $^ \
+	  -a-verify-func "verify2" \
 	  -o-mod-spec bar:Test/verify1_bar.mod \
 	  -o-mod-spec foo:Test/verify1_foo.mod \
 	  -o-mod-default default \
-          > Test/verify1.c.patch.out
+	  > Test/verify1.c.patch.out
 	diff Test/verify1.c.patch.cor Test/verify1.c.patch.out
 
 Test/verify1_foo.i Test/verify1_bar.i: Test/verify1_%.i: Test/verify1_%.c

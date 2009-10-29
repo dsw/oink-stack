@@ -12,7 +12,7 @@ skipping function in default module: _OSSwapInt64
 +++ Test/verify1_foo.c
 @@ -9,1 +9,1 @@
 -int get_x(struct Foo *foo) {
-+int get_x(struct Foo *foo) {verify(foo);
++int get_x(struct Foo *foo) {verify2(foo);
 @@ -13,1 +13,1 @@
 -void set_x(struct Foo *foo, int x) {
-+void set_x(struct Foo *foo, int x) {verify(foo);
++void set_x(struct Foo *foo, int x) {verify2(foo);

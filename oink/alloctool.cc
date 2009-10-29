@@ -858,7 +858,7 @@ bool VerifyCrossModuleParams_ASTVisitor::visitFunction(Function *obj) {
     if (module != lookedUpModule) continue;
 
     // make code to verify the status of the parameter
-    statusChecks << "verify(" << paramVar->name << ");";
+    statusChecks << alloctoolCmd->verify_func << "(" << paramVar->name << ");";
   }
 
   // insert the status checks at the top of the function body

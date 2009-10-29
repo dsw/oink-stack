@@ -26,6 +26,8 @@ class AllocToolCmd : public virtual OinkCmd {
   char *free_func;
   // string to use to call xmalloc()
   char *xmalloc_func;
+  // string to use to call verify()
+  char *verify_func;
 
   AllocToolCmd();
 
