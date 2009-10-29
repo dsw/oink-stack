@@ -93,6 +93,8 @@ extern SObjList<char> moduleList;
 extern StringSObjDict<char const> file2module;
 // the default module
 extern StringRef defaultModule;
+// FIX: it is rather inelegant to have the above variables as globals
+// rather than members of Oink
 
 // StringRefs of names in func_filter file; this is global because it
 // makes writing a callback function in Oink convenient
