@@ -41,7 +41,7 @@ exe: $(FRONTEND_EXE)
 ifeq ($(USE_LLVM),1)
   exe: $(FRONTEND_LLVM_EXE)
 else
-  $(warning Not building since they depend on llvm: $(FRONTEND_LLVM_EXE))
+#  $(warning Not building since they depend on llvm: $(FRONTEND_LLVM_EXE))
 endif
 
 # FIX: if you turn this back on, consider FRONTEND_LLVM_EXE
