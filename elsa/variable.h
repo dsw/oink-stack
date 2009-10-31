@@ -170,6 +170,9 @@ public:
   virtual void setFlagsTo(DeclFlags f);
 
   // some convenient interpretations of 'flags'
+  //
+  // dsw: Warning: DF_ADDRTAKEN does not seem to be attached by anyone
+  // and therefore this method cannot be relied upon.
   bool hasAddrTaken() const { return hasFlag(DF_ADDRTAKEN); }
   bool isGlobal() const { return hasFlag(DF_GLOBAL); }
 
