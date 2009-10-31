@@ -14,7 +14,6 @@
 #include "oink.h"
 #include "oink_control.h"
 #include "astlist.h"
-// #include "Lib/union_find_map.h"
 
 // NOTE: The containers that contain <char const> actually contain
 // StringRef-s, but I can't say that the way those templates are
@@ -99,5 +98,17 @@ extern StringRef defaultModule;
 // StringRefs of names in func_filter file; this is global because it
 // makes writing a callback function in Oink convenient
 extern PtrSet<char const> *funcFilterNames;
+
+// pretty-print an AST node
+template<class T>
+char *prettyPrintASTNode(T *obj) {
+  stringBuilder sb;
+  StringBuilderOutStream out0(sb);
+  CodeOutStream codeOut(out0);
+  PrintEnv env(typePrinterOink, &codeOut);
+  obj->print(env);
+  codeOut.finish();
+  return strdup(sb.c_str());
+}
 
 #endif // BASIC_GLOBALS_H

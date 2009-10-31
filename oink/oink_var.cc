@@ -1,7 +1,8 @@
 // see License.txt for copyright and terms of use
 
 #include "oink_var.h"           // this module
-#include "cc_type.h"            // SPECIAL: oink_type.h is INCLUDED into cc_type.h
+#include "oink.h"
+#include "cc_type.h" // SPECIAL: oink_type.h is INCLUDED into cc_type.h
 #include "oink_global.h"        // tunitToVars
 #include "oink_util.h"
 

@@ -1,7 +1,7 @@
 // see License.txt for copyright and terms of use
 
 #include "oink.h"               // this module
-#include "oink_global.h"
+#include "oink_global.h"        // FIX: I think this is circular
 
 #include "trace.h"              // tracingSys, traceAddSys
 #include "parssppt.h"           // ParseTreeAndTokens, treeMain
@@ -46,6 +46,9 @@
 // FIX: dsw: g++ can't find this on my machine
 // #include <endian.h>             // BYTE_ORDER
 
+// FIX: this is a duplicate declaration from oink_global.h
+extern ValueTypePrinter typePrinterOink;
+
 // currently, we only support one format version at a time, but at least this
 // detects format changes before it burns us later.
 //
@@ -53,6 +56,28 @@
 static std::string const SERIALIZATION_FORMAT = "v17";
 
 const size_t LINK_ERROR_MAX_SYMBOLS_REPORTED = 5;
+
+// **** utilities
+
+void printLoc(std::ostream &out, SourceLoc loc) {
+  out << sourceLocManager->getFile(loc) << ":" <<
+    sourceLocManager->getLine(loc) << ": ";
+}
+
+void printStart(char const *name) {
+  if (oinkCmd->print_startstop) {
+    std::cout << std::endl;
+    std::cout << "---- START ---- " << name << std::endl;
+  }
+}
+
+void printStop() {
+  if (oinkCmd->print_startstop) {
+    std::cout << "---- STOP ----" << std::endl;
+    std::cout << std::endl;
+  }
+}
+
 
 // **** class to module map
 
@@ -169,6 +194,122 @@ void Oink::build_classFQName2Module() {
   }
   if (oinkCmd->module_print_class2mod) {
     classDefEnv.print_class2mod();
+  }
+}
+
+// **** find attributes
+
+void printAttributeSpecifierList(AttributeSpecifierList *alist) {
+  // Note: this traversal initially copied verbaitm from
+  // D_attribute::tcheck()
+  for (AttributeSpecifierList *l = alist; l; l = l->next) {
+    for (AttributeSpecifier *s = l->spec; s; s = s->next) {
+      if (s->attr->isAT_empty()) {
+//         AT_empty *atE = s->attr->asAT_empty();
+        // nothing to do; this is just here to be complete
+      } else if (s->attr->isAT_word()) {
+        AT_word *atW = s->attr->asAT_word();
+        std::cout << atW->w;
+      } else if (s->attr->isAT_func()) {
+        AT_func *atF = s->attr->asAT_func();
+        std::cout << atF->f << "(";
+        bool first = true;
+        FAKELIST_FOREACH_NC(ArgExpression, atF->args, argExp) {
+          if (first) first = false;
+          else std::cout << ", ";
+          std::cout << prettyPrintASTNode(argExp->expr);
+        }
+        std::cout << ")";
+      }
+    }
+  }
+}
+
+void printAttribute(D_attribute *dattr) {
+  std::cout << "__attribute__((";
+  printAttributeSpecifierList(dattr->alist);
+  std::cout << "))";
+}
+
+// Find and print out all of the declarators that have GNU Attribute
+// Specifier Lists; print the var and the attr list.
+class PrintAttributes_ASTVisitor : private ASTVisitor {
+  public:
+  LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
+  SObjSet<D_attribute*> &dattrSeen;
+
+  PrintAttributes_ASTVisitor(SObjSet<D_attribute*> &dattrSeen0)
+    : loweredVisitor(this)
+    , dattrSeen(dattrSeen0)
+  {}
+
+  virtual bool visitDeclarator(Declarator *);
+};
+
+bool PrintAttributes_ASTVisitor::visitDeclarator(Declarator *obj) {
+  IDeclarator *idecl = obj->decl;
+  if (idecl->isD_grouping()) {
+    // there is no "isD_attribute()"
+    if (D_attribute *dattr = dynamic_cast<D_attribute*>(idecl)) {
+      printLoc(std::cout, dattr->loc);
+      std::cout << obj->var->name << " ";
+      printAttribute(dattr);
+      std::cout << std::endl;
+      dattrSeen.add(dattr);
+    }
+  }
+  return true;
+}
+
+class FindUnseenAttributes_ASTVisitor : private ASTVisitor {
+  public:
+  LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
+  SObjSet<D_attribute*> &dattrSeen;
+  bool foundOne;
+
+  FindUnseenAttributes_ASTVisitor(SObjSet<D_attribute*> &dattrSeen0)
+    : loweredVisitor(this)
+    , dattrSeen(dattrSeen0)
+    , foundOne(false)
+  {}
+
+  virtual bool visitIDeclarator(IDeclarator *);
+};
+
+bool FindUnseenAttributes_ASTVisitor::visitIDeclarator(IDeclarator *obj) {
+  if (obj->isD_grouping()) {
+    // there is no "isD_attribute()"
+    if (D_attribute *dattr = dynamic_cast<D_attribute*>(obj)) {
+      if (!dattrSeen.contains(dattr)) {
+        printLoc(std::cout, dattr->loc);
+        printAttribute(dattr);
+      }
+    }
+  }
+  return true;
+}
+
+void Oink::printFuncAttrs_stage() {
+  printStage("find attributes");
+  foreachSourceFile {
+    File *file = files.data();
+    maybeSetInputLangFromSuffix(file);
+    TranslationUnit *unit = file2unit.get(file);
+    SObjSet<D_attribute*> dattrSeen;
+
+    // print out all of the functions having attributes
+    PrintAttributes_ASTVisitor vis(dattrSeen);
+    printStart(file->name.c_str());
+    unit->traverse(vis.loweredVisitor);
+    printStop();
+
+    // print out any we missed; there shouldn't be any
+    FindUnseenAttributes_ASTVisitor findVis(dattrSeen);
+    unit->traverse(findVis.loweredVisitor);
+    if (findVis.foundOne) {
+      throw UserError(INTERNALERROR_ExitCode,
+                      "Found some attributes not on functions.");
+    }
   }
 }
 
@@ -535,20 +676,6 @@ void Oink::printSizes()
 void Oink::printProcStats()
 {
   cat_proc_status(std::cout);
-}
-
-void printStart(char const *name) {
-  if (oinkCmd->print_startstop) {
-    std::cout << std::endl;
-    std::cout << "---- START ---- " << name << std::endl;
-  }
-}
-
-void printStop() {
-  if (oinkCmd->print_startstop) {
-    std::cout << "---- STOP ----" << std::endl;
-    std::cout << std::endl;
-  }
 }
 
 bool Oink::isSource(File const *file) {
@@ -2333,16 +2460,6 @@ SObjList<Variable_O> *Oink::deserialize_abstrValues_stream
     expectOneXmlTag(manager, XTOK_List_externVars);
 
   return externVars;
-}
-
-char *prettyPrintASTNode(Expression *obj) {
-  stringBuilder sb;
-  StringBuilderOutStream out0(sb);
-  CodeOutStream codeOut(out0);
-  PrintEnv env(typePrinterOink, &codeOut);
-  obj->print(env);
-  codeOut.finish();
-  return strdup(sb.c_str());
 }
 
 StringRef moduleForLoc(SourceLoc loc) {

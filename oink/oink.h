@@ -237,6 +237,9 @@ class Oink {
   // class to module map
   void build_classFQName2Module();
 
+  // find the attributes and print them out
+  void printFuncAttrs_stage();
+
   // function granularity CFG
   void compute_funcGran(); // compute function granularity CFG
   void printVariableName_funcGran(std::ostream &out, Variable *var);
@@ -300,11 +303,14 @@ class Oink {
     (XmlReaderManager &manager, std::istream& in, const char* fname);
 };
 
+// print a location in the way that emacs likes compiler error
+// locations to prefix messages: "file:line: message"
+void printLoc(std::ostream &out, SourceLoc loc);
+
+// delimit output between these with start/stop lines that
+// elsa/chop_out will chop out as separate files for you
 void printStart(char const *name);
 void printStop();
-
-// pretty-print an AST node
-char *prettyPrintASTNode(Expression *obj);
 
 // map a loc to its module
 StringRef moduleForLoc(SourceLoc loc);

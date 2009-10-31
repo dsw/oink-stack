@@ -23,11 +23,6 @@
 
 // **** utilities
 
-static void printLoc(std::ostream &out, SourceLoc loc) {
-  out << sourceLocManager->getFile(loc) << ":" <<
-    sourceLocManager->getLine(loc) << ": ";
-}
-
 // Decides if this variable allocated on the stack.  Note that if it
 // is in a class/struct/union we say no as it's container decides it.
 //

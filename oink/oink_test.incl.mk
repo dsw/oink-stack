@@ -16,6 +16,7 @@ oink-check: oink-check-parse-gcc
 oink-check: oink-check-parse-kandr
 oink-check: oink-check-link
 oink-check: oink-check-digraph-component
+oink-check: oink-check-print-func-attrs
 oink-check: oink-check-func-gran
 
 # This is almost completely redundant with check-pretty
@@ -493,6 +494,10 @@ FUNC_GRAN_TEST += Test/func_gran5.cc
 # gap
 FUNC_GRAN_TEST += Test/func_gran8.cc
 FUNC_GRAN_TEST += Test/func_gran9.cc
+
+.PHONY: oink-check-print-func-attrs
+oink-check-print-func-attrs:
+	./oink -fo-print-func-attrs Test/func_attrs1.i | grep 'Test/func_attrs1.i:1: f __attribute__((__noreturn__))'
 
 # just test it runs without failing and doesn't change
 TEST_TOCLEAN += $(addsuffix .fgcfg,$(FUNC_GRAN_TEST))

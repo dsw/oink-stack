@@ -123,6 +123,7 @@ OinkCmd::OinkCmd()
   , exit_after_elaborate (false)
 
   , module_print_class2mod(false)
+  , print_func_attrs     (false)
   , func_gran            (false)
   , func_gran_dot        (false)
   , func_gran_rev_mod_pub(false)
@@ -271,6 +272,7 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
   HANDLE_FLAG(exit_after_elaborate, "-fo-", "exit-after-elaborate");
 
   HANDLE_FLAG(module_print_class2mod, "-fo-", "module-print-class2mod");
+  HANDLE_FLAG(print_func_attrs, "-fo-", "print-func-attrs");
   HANDLE_FLAG(func_gran, "-fo-", "func-gran");
   HANDLE_FLAG(func_gran_dot, "-fo-", "func-gran-dot");
   HANDLE_FLAG(func_gran_rev_mod_pub, "-fo-", "func-gran-rev-mod-pub");
@@ -387,6 +389,7 @@ void OinkCmd::dump() { // for -fo-verbose
   printf("fo-exit-after-elaborate: %s\n", boolToStr(exit_after_elaborate));
 
   printf("fo-module-print-class2mod: %s\n", boolToStr(module_print_class2mod));
+  printf("fo-print-func-attrs: %s\n", boolToStr(print_func_attrs));
   printf("fo-func-gran: %s\n", boolToStr(func_gran));
   printf("fo-func-gran-dot: %s\n", boolToStr(func_gran_dot));
   printf("fo-func-gran-rev-mod-pub: %s\n", boolToStr(func_gran_rev_mod_pub));
@@ -450,6 +453,7 @@ void OinkCmd::printHelp() {
      "\n"
      "  -fo-module-print-class2mod : print the map from fully-qualified\n"
      "                               classnames to their module names\n"
+     "  -fo-print-func-attrs     : print any function attributes\n"
      "  -fo-func-gran            : compute and print function granularity CFG only\n"
      "                             (use -o-srz to write to file)\n"
      "  -fo-func-gran-dot        : when combined with -fo-func-gran,\n"
