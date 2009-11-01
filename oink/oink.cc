@@ -197,7 +197,59 @@ void Oink::build_classFQName2Module() {
   }
 }
 
-// **** find attributes
+// **** AllocSites_ASTVisitor
+
+bool AllocSites_ASTVisitor::visitExpression(Expression *obj) {
+  switch(obj->kind()) {         // roll our own virtual dispatch
+  default: break;               // expression kinds for which we do nothing
+  case Expression::E_FUNCALL:
+    E_funCall *efun = obj->asE_funCall();
+    if (isAllocator0(efun, efun->loc)) seenAllocators.add(efun);
+    break;
+  case Expression::E_KEYWORDCAST:
+    E_keywordCast *ekwcast = obj->asE_keywordCast();
+    subVisitCast(ekwcast->abstrValue, ekwcast->expr);
+    break;
+  case Expression::E_CAST:
+    E_cast *ecast = obj->asE_cast();
+    subVisitCast(ecast->abstrValue, ecast->expr);
+    break;
+  case Expression::E_NEW:
+    USER_ASSERT(obj->abstrValue->isPointerValue(), obj->abstrValue->loc,
+                "new expression is not of pointer type");
+    subVisitE_new0(obj->abstrValue);
+    break;
+  }
+  return true;
+}
+
+void AllocSites_ASTVisitor::subVisitCast(Value *abstrValue, Expression *expr) {
+  expr = expr->skipGroups();
+  if (!expr->isE_funCall()) return;
+  E_funCall *efun = expr->asE_funCall();
+  if (isAllocator0(efun, abstrValue->loc)) {
+    USER_ASSERT(abstrValue->isPointerValue(), abstrValue->loc,
+                "cast from allocator is not of pointer type");
+    castedAllocators.add(efun);
+    subVisitCast0(abstrValue, expr);
+  }
+}
+
+bool AllocSites_ASTVisitor::checkAllcSeenImpliesCast() {
+  bool ret = true;
+  for(SObjSetIter<E_funCall*> seenIter(seenAllocators);
+      !seenIter.isDone(); seenIter.adv()) {
+    E_funCall *call0 = seenIter.data();
+    if (!castedAllocators.contains(call0)) {
+      ret = false;
+      userReportWarning
+        (call0->loc, "allocator that was not inside a cast expression");
+    }
+  }
+  return ret;
+}
+
+// **** find/print attributes visitors
 
 void printAttributeSpecifierList(AttributeSpecifierList *alist) {
   // Note: this traversal initially copied verbaitm from
@@ -2519,13 +2571,4 @@ bool isHeapSizeQuery(StringRef funcName) {
     || streq(funcName, "malloc_size")
     || streq(funcName, "malloc_good_size")
     ;
-}
-
-bool isAllocator(E_funCall *obj, SourceLoc loc) {
-  StringRef funcName = funCallName_ifSimpleE_variable(obj);
-  if (!funcName) return false;
-  if (isStackAllocator(funcName)) {
-    userReportWarning(loc, "We can't handle stack allocation.");
-  }
-  return isHeapNewAllocator(funcName) || isHeapReAllocator(funcName);
 }

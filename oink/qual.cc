@@ -435,88 +435,45 @@ void MarkVarsStackness_VisitRealVars::visitVariableIdem(Variable *var0) {
   }
 }
 
+// **** MarkAllocStackness_ASTVisitor
 
 // visit all of the allocation points
-class MarkAllocStackness_Visitor : private ASTVisitor {
+class MarkAllocStackness_ASTVisitor : public AllocSites_ASTVisitor {
   public:
-  LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
-
   MarkStackness_ValueVisitor &stack_markStackness;
   MarkStackness_ValueVisitor &nonstack_markStackness;
 
-  // allocators that we saw
-  SObjSet<E_funCall*> seenAllocators;
-  // allocators that were inside a cast expression
-  SObjSet<E_funCall*> castedAllocators;
-
   public:
-  MarkAllocStackness_Visitor
+  MarkAllocStackness_ASTVisitor
     (MarkStackness_ValueVisitor &stack_markStackness0,
-     MarkStackness_ValueVisitor &nonstack_markStackness0);
+     MarkStackness_ValueVisitor &nonstack_markStackness0)
+      : stack_markStackness(stack_markStackness0)
+      , nonstack_markStackness(nonstack_markStackness0)
+  {}
 
-  SourceLoc getLoc() {return loweredVisitor.getLoc();}
-
-  virtual void postvisitExpression(Expression *);
-
-  virtual bool subVisitE_funCall(E_funCall *);
-  virtual bool subVisitE_cast(E_cast *);
-  virtual bool subVisitE_new(E_new *);
+  virtual bool isAllocator0(E_funCall *, SourceLoc);
+  virtual void subVisitCast0(Value *, Expression *);
+  virtual void subVisitE_new0(Value *);
 };
 
-MarkAllocStackness_Visitor::MarkAllocStackness_Visitor
-  (MarkStackness_ValueVisitor &stack_markStackness0,
-   MarkStackness_ValueVisitor &nonstack_markStackness0)
-  : loweredVisitor(this)
-  , stack_markStackness(stack_markStackness0)
-  , nonstack_markStackness(nonstack_markStackness0)
-{}
-
-void MarkAllocStackness_Visitor::postvisitExpression(Expression *obj) {
-  switch(obj->kind()) {         // roll our own virtual dispatch
-  default: break;               // expression kinds for which we do nothing
-  case Expression::E_FUNCALL: subVisitE_funCall(obj->asE_funCall()); break;
-  case Expression::E_CAST:    subVisitE_cast(obj->asE_cast());       break;
-  case Expression::E_NEW:     subVisitE_new(obj->asE_new());         break;
+bool MarkAllocStackness_ASTVisitor::isAllocator0(E_funCall *efun, SourceLoc loc) {
+  StringRef funcName = funCallName_ifSimpleE_variable(efun);
+  if (!funcName) return false;
+  if (isStackAllocator(funcName)) {
+    // FIX: should this be a real error or just a warning?
+    userReportWarning
+      (loc, "MarkAllocStackness_ASTVisitor: We can't handle stack allocation.");
   }
+  return isHeapNewAllocator(funcName) || isHeapReAllocator(funcName);
 }
 
-bool MarkAllocStackness_Visitor::subVisitE_funCall(E_funCall *obj) {
-  if (isAllocator(obj, getLoc())) {
-    // record the allocator so we can look for missed allocators later
-    seenAllocators.add(obj);
-  }
-  return true;
+void MarkAllocStackness_ASTVisitor::subVisitCast0
+(Value *abstrValue, Expression *expr) {
+  abstrValue->asPointerValue()->atValue->traverse(nonstack_markStackness);
 }
 
-bool MarkAllocStackness_Visitor::subVisitE_cast(E_cast *obj) {
-  // see if it is a cast from an allocator
-  Expression *expr0 = obj->expr->skipGroups();
-  if (expr0->isE_funCall() && isAllocator(expr0->asE_funCall(), getLoc())) {
-    // Attach the non-stack-ness to the cast expresion pointer; thanks
-    // to Matt Harren for help on this.
-    USER_ASSERT(obj->abstrValue->isPointerValue(), obj->abstrValue->loc,
-                "cast from allocator (malloc-like function) "
-                "is not of pointer type");
-    if (obj->abstrValue->isPointerValue()) {
-      obj->abstrValue->asPointerValue()->atValue->
-        traverse(nonstack_markStackness);
-    }
-    // check off the allocator so we can look for missed allocators later
-    castedAllocators.add(expr0->asE_funCall());
-  }
-  return true;
-}
-
-bool MarkAllocStackness_Visitor::subVisitE_new(E_new *obj) {
-  // Attach the non-stack-ness to the expresion; thanks to Matt Harren
-  // for help on this.
-  USER_ASSERT(obj->abstrValue->isPointerValue(), obj->abstrValue->loc,
-              "new expression is not of pointer type");
-  if (obj->abstrValue->isPointerValue()) {
-    obj->abstrValue->asPointerValue()->atValue->
-      traverse(nonstack_markStackness);
-  }
-  return true;
+void MarkAllocStackness_ASTVisitor::subVisitE_new0(Value *abstrValue) {
+  abstrValue->asPointerValue()->atValue->traverse(nonstack_markStackness);
 }
 
 
@@ -757,11 +714,8 @@ static void colorWithModule_otherAccess
 
 // Qual_ModuleAlloc_Visitor ****************
 
-// visit all of the allocation points
-class Qual_ModuleAlloc_Visitor : private ASTVisitor {
+class Qual_ModuleAlloc_Visitor : public AllocSites_ASTVisitor {
   public:
-  LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
-
   // map defined classes to their modules
   StringRefMap<char const> &classFQName2Module;
   // list of class typedef variables
@@ -770,23 +724,16 @@ class Qual_ModuleAlloc_Visitor : private ASTVisitor {
   bool color_alloc;          // ref-level coloring of allocated memory
   bool color_otherControl;   // value-level coloring of other-control memory
 
-  // allocators that we saw
-  SObjSet<E_funCall*> seenAllocators;
-  // allocators that were inside a cast expression
-  SObjSet<E_funCall*> castedAllocators;
-
   public:
   Qual_ModuleAlloc_Visitor(StringRefMap<char const> &classFQName2Module0,
                            SObjList<Variable_O> &classVars0,
-                           bool color_alloc0, bool color_otherControl0)
-    : loweredVisitor(this)
-    , classFQName2Module(classFQName2Module0)
+                           bool color_alloc0,
+                           bool color_otherControl0)
+    : classFQName2Module(classFQName2Module0)
     , classVars(classVars0)
     , color_alloc(color_alloc0)
     , color_otherControl(color_otherControl0)
   {}
-
-  SourceLoc getLoc() {return loweredVisitor.getLoc();}
 
   void colorWithModule_alloc
   (Value *value, StringRef module, SourceLoc loc,
@@ -800,11 +747,10 @@ class Qual_ModuleAlloc_Visitor : private ASTVisitor {
   void colorClassMembers();
 
   virtual bool visitDeclarator(Declarator *);
-  virtual void postvisitExpression(Expression *);
 
-  virtual void subPostVisitE_funCall(E_funCall *);
-  virtual void subPostVisitE_cast(E_cast *);
-  virtual void subPostVisitE_new(E_new *);
+  virtual bool isAllocator0(E_funCall *, SourceLoc);
+  virtual void subVisitCast0(Value *, Expression *);
+  virtual void subVisitE_new0(Value *);
 };
 
 void Qual_ModuleAlloc_Visitor::colorWithModule_alloc
@@ -812,9 +758,7 @@ void Qual_ModuleAlloc_Visitor::colorWithModule_alloc
    char const *name, char const *astNode)
 {
   xassert(value);
-  if (!module) {
-    module = moduleForLoc(loc);
-  }
+  if (!module) module = moduleForLoc(loc);
 
   // if the type is a compound type, check the module of the compound
   // type is the same as the current module
@@ -871,9 +815,7 @@ void Qual_ModuleAlloc_Visitor::colorWithModule_otherControl
    char const *name, char const *astNode)
 {
   xassert(value);
-  if (!module) {
-    module = moduleForLoc(loc);
-  }
+  if (!module) module = moduleForLoc(loc);
 
   // tell the user what we are doing
   if (oinkCmd->report_colorings) {
@@ -946,7 +888,7 @@ void Qual_ModuleAlloc_Visitor::colorClassMembers() {
 }
 
 bool Qual_ModuleAlloc_Visitor::visitDeclarator(Declarator *obj) {
-  // we handle E_new in a separate pass
+  // we handle E_new separately
   if (obj->context == DC_E_NEW) return true;
 
   Value *varValue = asVariable_O(obj->var)->abstrValue()->asRval();
@@ -963,63 +905,48 @@ bool Qual_ModuleAlloc_Visitor::visitDeclarator(Declarator *obj) {
   return true;
 }
 
-void Qual_ModuleAlloc_Visitor::postvisitExpression(Expression *obj) {
-  switch(obj->kind()) {         // roll our own virtual dispatch
-  default: break;               // expression kinds for which we do nothing
-  case Expression::E_FUNCALL:
-    subPostVisitE_funCall(obj->asE_funCall());
-    break;
-  case Expression::E_CAST:
-    subPostVisitE_cast(obj->asE_cast());
-    break;
-  case Expression::E_NEW:
-    subPostVisitE_new(obj->asE_new());
-    break;
+bool Qual_ModuleAlloc_Visitor::isAllocator0(E_funCall *efun, SourceLoc loc) {
+  StringRef funcName = funCallName_ifSimpleE_variable(efun);
+  if (!funcName) return false;
+  if (isStackAllocator(funcName)) {
+    // FIX: should this be a real error or just a warning?
+    userReportWarning
+      (loc, "Qual_ModuleAlloc_Visitor: we can't handle stack allocation.");
   }
+  return isHeapNewAllocator(funcName) || isHeapReAllocator(funcName);
 }
 
-void Qual_ModuleAlloc_Visitor::subPostVisitE_funCall(E_funCall *obj) {
-  if (isAllocator(obj, getLoc())) {
-    // record the allocator so we can look for missed allocators later
-    seenAllocators.add(obj);
+void Qual_ModuleAlloc_Visitor::subVisitCast0
+  (Value *abstrValue, Expression *expr)
+{
+  if (color_alloc) {
+    // This is subtle: attach the color to the 1) ref value of the
+    // 2) thing pointed to by 3) the cast expresion; thanks to Matt
+    // Harren for help on this.
+    Value *castValue = abstrValue
+      ->getAtValue()  // color the value pointed-to, not the pointer
+      ->asRval();
+    colorWithModule_alloc(castValue, NULL, castValue->loc,
+                          funCallName_ifSimpleE_variable
+                          (expr->asE_funCall()),
+                          "E_cast-allocator");
   }
-}
-
-void Qual_ModuleAlloc_Visitor::subPostVisitE_cast(E_cast *obj) {
-  // see if it is a cast from an allocator
-  Expression *expr0 = obj->expr->skipGroups();
-  if (expr0->isE_funCall() && isAllocator(expr0->asE_funCall(), getLoc())) {
-    if (color_alloc) {
-      // This is subtle: attach the color to the 1) ref value of the
-      // 2) thing pointed to by 3) the cast expresion; thanks to Matt
-      // Harren for help on this.
-      Value *castValue = obj->abstrValue
-        ->getAtValue()  // color the value pointed-to, not the pointer
-        ->asRval();
-      colorWithModule_alloc(castValue, NULL, castValue->loc,
-                            funCallName_ifSimpleE_variable
-                            (expr0->asE_funCall()),
-                            "E_cast-allocator");
+  if (color_otherControl) {
+    // This is subtle: attach the color to the 1) pointer value of
+    // the 2) the cast expresion; thanks to Matt for help on this.
+    Value *castValue = abstrValue->asRval();
+    if (castValue->isPointerValue()) {
+      colorWithModule_otherControl(castValue, NULL, castValue->loc,
+                                   funCallName_ifSimpleE_variable
+                                   (expr->asE_funCall()),
+                                   "E_cast-allocator");
     }
-    if (color_otherControl) {
-      // This is subtle: attach the color to the 1) pointer value of
-      // the 2) the cast expresion; thanks to Matt for help on this.
-      Value *castValue = obj->abstrValue->asRval();
-      if (castValue->isPointerValue()) {
-        colorWithModule_otherControl(castValue, NULL, castValue->loc,
-                                     funCallName_ifSimpleE_variable
-                                     (expr0->asE_funCall()),
-                                     "E_cast-allocator");
-      }
-    }
-    // check off the allocator so we can look for missed allocators later
-    castedAllocators.add(expr0->asE_funCall());
   }
 }
 
-void Qual_ModuleAlloc_Visitor::subPostVisitE_new(E_new *obj) {
+void Qual_ModuleAlloc_Visitor::subVisitE_new0(Value *abstrValue) {
   // attach the color to the expression ref value
-  Value *value0 = obj->abstrValue->asRval();
+  Value *value0 = abstrValue->asRval();
 
   // Note: new is not malloc.  Malloc is just an allocator and so the
   // memory allocated should get colored with the module of the source
@@ -1057,7 +984,7 @@ void Qual_ModuleAlloc_Visitor::subPostVisitE_new(E_new *obj) {
     // This is subtle: attach the color to the 1) ref value of the 2)
     // thing pointed to by 3) the new expresion; thanks to Matt for
     // help on this.
-    Value *newValue = obj->abstrValue
+    Value *newValue = abstrValue
       ->getAtValue()    // color the value pointed-to, not the pointer
       ->asRval();
     colorWithModule_alloc(newValue, module, newValue->loc, NULL, "E_new");
@@ -1914,10 +1841,8 @@ void Qual::moduleAlloc_stage() {
         !seenIter.isDone(); seenIter.adv()) {
       E_funCall *call0 = seenIter.data();
       if (!env.castedAllocators.contains(call0)) {
-        // this is just luck that I have this
-        SourceLoc loc = call0->abstrValue->loc;
         userReportWarning
-          (loc, "(access) allocator that was not inside a cast expression");
+          (call0->loc, "allocator that was not inside a cast expression");
       }
     }
   }
@@ -2169,7 +2094,8 @@ void Qual::qualCompile_qualVisitation() {
     attachOneLiteralToQvar(SL_UNKNOWN, qconst, thrownQv);
   }
 
-  // visit variables and mark their stackness
+  // visit variables and mark their stackness; FIX: why isn't this its
+  // own pass?
   if (qualCmd->stackness) {
     printStage("     stackness");
     StacknessMarker stackSM(true /*on stack*/);
@@ -2192,8 +2118,8 @@ void Qual::qualCompile_qualVisitation() {
       File *file = files.data();
       maybeSetInputLangFromSuffix(file);
       TranslationUnit *unit = file2unit.get(file);
-      MarkAllocStackness_Visitor env(stack_markStackness,
-                                     nonstack_markStackness);
+      MarkAllocStackness_ASTVisitor env(stack_markStackness,
+                                        nonstack_markStackness);
       unit->traverse(env.loweredVisitor);
       // check that we didn't hit any allocators that were not down
       // inside a cast

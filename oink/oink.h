@@ -33,6 +33,34 @@ class ArchiveSrzFormat;         // archive_srz_format.h
 class Oink;
 class FuncGranGraph;
 
+// visit all of the allocation sites
+class AllocSites_ASTVisitor : private ASTVisitor {
+  public:
+  LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
+
+  // allocators that we saw
+  SObjSet<E_funCall*> seenAllocators;
+  // allocators that were inside a cast expression
+  SObjSet<E_funCall*> castedAllocators;
+
+  public:
+  AllocSites_ASTVisitor()
+    : loweredVisitor(this)
+  {}
+
+  // visitation
+  virtual bool visitExpression(Expression *);
+  void subVisitCast(Value *, Expression *);
+
+  // client functions
+  virtual bool isAllocator0(E_funCall *, SourceLoc) = 0;
+  virtual void subVisitCast0(Value *, Expression *) = 0;
+  virtual void subVisitE_new0(Value *) = 0;
+
+  // check that if we saw an allocator then we saw it inside a cast
+  bool checkAllcSeenImpliesCast();
+};
+
 class Linker {
 public:
   // global map from the fully qualified extern names to the extern
@@ -329,9 +357,6 @@ bool isHeapReAllocator(StringRef funcName);
 bool isHeapDeAllocator(StringRef funcName);
 // does this function query heap object size?
 bool isHeapSizeQuery(StringRef funcName);
-
-// is this a function call to a heap new- or re- allocator?
-bool isAllocator(E_funCall *obj, SourceLoc loc);
 
 #define foreachFile \
   for(ASTListIterNC<File> files(oinkCmd->inputFilesFlat); !files.isDone(); files.adv())
