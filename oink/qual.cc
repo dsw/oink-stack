@@ -43,18 +43,40 @@ static StringRef funCallName(E_funCall *obj) {
 }
 
 // is this a function call to an allocator; FIX: we should actually be
-// checking the gcc __attribute__(()) for this instead
+// checking the gcc __attribute__(()) for this instead; FIX: no such
+// __attribute__(()) on BSD
 static bool isAllocator(E_funCall *obj, SourceLoc loc) {
   StringRef funcName = funCallName(obj);
   if (!funcName) return false;
+
+  // allocate on the stack
   if (streq(funcName, "alloca")) {
     userReportWarning(loc, "We can't handle alloca");
   }
+
   return
-    streq(funcName, "malloc")  ||
-    streq(funcName, "realloc") ||
-    streq(funcName, "calloc")  ||
-    streq(funcName, "strdup");
+    false                       // orthogonality
+
+    // allocate
+    || streq(funcName, "malloc")
+    || streq(funcName, "calloc")
+    || streq(funcName, "valloc") // seems to also be BSD-specific
+
+    // change the size
+    || streq(funcName, "realloc")
+    || streq(funcName, "reallocf") // BSD-specific
+
+    // unallocate
+//      void
+//      free(void *ptr);
+
+    // get the size allocated
+//      size_t
+//      malloc_size(void *ptr);
+//      size_t
+//      malloc_good_size(size_t size);
+
+    ;
 }
 
 bool valueMatchesQSpec(Value *v, QSpec *qspec) {
