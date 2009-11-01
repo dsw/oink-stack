@@ -315,6 +315,24 @@ void printStop();
 // map a loc to its module
 StringRef moduleForLoc(SourceLoc loc);
 
+// return the function call name if it turns out to be a simple
+// E_variable; otherwise return NULL
+StringRef funCallName_ifSimpleE_variable(E_funCall *);
+
+// does this function allocate on the stack?
+bool isStackAllocator(StringRef funcName);
+// does this function allocate new memory on the heap?
+bool isHeapNewAllocator(StringRef funcName);
+// does this function re-allocate memory on the heap?
+bool isHeapReAllocator(StringRef funcName);
+// does this function de-allocate memory on the heap?
+bool isHeapDeAllocator(StringRef funcName);
+// does this function query heap object size?
+bool isHeapSizeQuery(StringRef funcName);
+
+// is this a function call to a heap new- or re- allocator?
+bool isAllocator(E_funCall *obj, SourceLoc loc);
+
 #define foreachFile \
   for(ASTListIterNC<File> files(oinkCmd->inputFilesFlat); !files.isDone(); files.adv())
 

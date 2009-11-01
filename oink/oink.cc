@@ -2478,3 +2478,54 @@ StringRef moduleForLoc(SourceLoc loc) {
   }
   return module;
 }
+
+StringRef funCallName_ifSimpleE_variable(E_funCall *obj) {
+  Expression *func0 = obj->func->skipGroups();
+  if (!func0->isE_variable()) return NULL;
+  return func0->asE_variable()->name->getName();
+}
+
+// **** allocation query utility
+
+// FIX: we should actually be checking the gcc __attribute__(()) for
+// this instead of just looking at the function name; update: no such
+// __attribute__(()) on BSD for allocators
+
+bool isStackAllocator(StringRef funcName) {
+  return streq(funcName, "alloca");
+}
+
+bool isHeapNewAllocator(StringRef funcName) {
+  return false
+    || streq(funcName, "malloc")
+    || streq(funcName, "calloc")
+    || streq(funcName, "valloc") // seems to be BSD-specific
+    ;
+}
+
+bool isHeapReAllocator(StringRef funcName) {
+  return false
+    || streq(funcName, "realloc")
+    || streq(funcName, "reallocf") // BSD-specific
+    ;
+}
+
+bool isHeapDeAllocator(StringRef funcName) {
+  return streq(funcName, "free");
+}
+
+bool isHeapSizeQuery(StringRef funcName) {
+  return false
+    || streq(funcName, "malloc_size")
+    || streq(funcName, "malloc_good_size")
+    ;
+}
+
+bool isAllocator(E_funCall *obj, SourceLoc loc) {
+  StringRef funcName = funCallName_ifSimpleE_variable(obj);
+  if (!funcName) return false;
+  if (isStackAllocator(funcName)) {
+    userReportWarning(loc, "We can't handle stack allocation.");
+  }
+  return isHeapNewAllocator(funcName) || isHeapReAllocator(funcName);
+}

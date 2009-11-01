@@ -34,50 +34,7 @@
 static std::string const QUAL_BOF_MAGIC = "<QUAL>";
 static std::string const QUAL_EOF_MAGIC = "</QUAL>";
 
-// static utilities ****
-
-static StringRef funCallName(E_funCall *obj) {
-  Expression *func0 = obj->func->skipGroups();
-  if (!func0->isE_variable()) return NULL;
-  return func0->asE_variable()->name->getName();
-}
-
-// is this a function call to an allocator; FIX: we should actually be
-// checking the gcc __attribute__(()) for this instead; FIX: no such
-// __attribute__(()) on BSD
-static bool isAllocator(E_funCall *obj, SourceLoc loc) {
-  StringRef funcName = funCallName(obj);
-  if (!funcName) return false;
-
-  // allocate on the stack
-  if (streq(funcName, "alloca")) {
-    userReportWarning(loc, "We can't handle alloca");
-  }
-
-  return
-    false                       // orthogonality
-
-    // allocate
-    || streq(funcName, "malloc")
-    || streq(funcName, "calloc")
-    || streq(funcName, "valloc") // seems to also be BSD-specific
-
-    // change the size
-    || streq(funcName, "realloc")
-    || streq(funcName, "reallocf") // BSD-specific
-
-    // unallocate
-//      void
-//      free(void *ptr);
-
-    // get the size allocated
-//      size_t
-//      malloc_size(void *ptr);
-//      size_t
-//      malloc_good_size(size_t size);
-
-    ;
-}
+// utilities ****
 
 bool valueMatchesQSpec(Value *v, QSpec *qspec) {
   xassert(qspec->depth >= 0);
@@ -1040,7 +997,8 @@ void Qual_ModuleAlloc_Visitor::subPostVisitE_cast(E_cast *obj) {
         ->getAtValue()  // color the value pointed-to, not the pointer
         ->asRval();
       colorWithModule_alloc(castValue, NULL, castValue->loc,
-                            funCallName(expr0->asE_funCall()),
+                            funCallName_ifSimpleE_variable
+                            (expr0->asE_funCall()),
                             "E_cast-allocator");
     }
     if (color_otherControl) {
@@ -1049,7 +1007,8 @@ void Qual_ModuleAlloc_Visitor::subPostVisitE_cast(E_cast *obj) {
       Value *castValue = obj->abstrValue->asRval();
       if (castValue->isPointerValue()) {
         colorWithModule_otherControl(castValue, NULL, castValue->loc,
-                                     funCallName(expr0->asE_funCall()),
+                                     funCallName_ifSimpleE_variable
+                                     (expr0->asE_funCall()),
                                      "E_cast-allocator");
       }
     }
