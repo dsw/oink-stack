@@ -356,10 +356,10 @@ bool VarDeclAndUse_ASTVisitor::visitDeclarator(Declarator *obj) {
   Variable_O *var = asVariable_O(obj->var);
   if (pass(var)) {
     if (var->getScopeKind() == SK_PARAMETER) {
-      printLoc(std::cout, obj->decl->loc);
+      printLoc(obj->decl->loc);
       std::cout << "param decl " << var->name << std::endl;
     } else if (var->getScopeKind() == SK_FUNCTION) {
-      printLoc(std::cout, obj->decl->loc);
+      printLoc(obj->decl->loc);
       std::cout << "auto decl " << var->name << std::endl;
     } else xfailure("non-param non-auto var can't be stack allocated");
   }
@@ -379,10 +379,10 @@ bool VarDeclAndUse_ASTVisitor::subVisitE_variable(E_variable *evar) {
   Variable_O *var = asVariable_O(evar->var);
   if (pass(var)) {
     if (var->getScopeKind() == SK_PARAMETER) {
-      printLoc(std::cout, evar->loc);
+      printLoc(evar->loc);
       std::cout << "param use " << var->name << std::endl;
     } else if (var->getScopeKind() == SK_FUNCTION) {
-      printLoc(std::cout, evar->loc);
+      printLoc(evar->loc);
       std::cout << "auto use " << var->name << std::endl;
     } else xfailure("non-param non-auto var can't be stack allocated");
   }
@@ -488,7 +488,7 @@ visitFunction(Function *obj) {
     xassert(paramVar->getScopeKind() == SK_PARAMETER);
     if (pass(paramVar)) {
       // we can't transform these so we just tell the user about them
-      printLoc(std::cout, paramVar->loc);
+      printLoc(paramVar->loc);
       std::cout << "param decl needs heapifying " <<
         paramVar->name << std::endl;
     }
@@ -513,19 +513,19 @@ visitStatement(Statement *obj) {
   } else if (obj->isS_goto()) {
     // we don't know if we have to free here or not; FIX: we might be
     // able to refine this
-    printLoc(std::cout, obj->loc);
+    printLoc(obj->loc);
     std::cout << "goto may require some variables to be free()-ed"
               << std::endl;
   } else if (obj->isS_break()) {
     // we don't know if we have to free here or not; FIX: we might be
     // able to refine this
-    printLoc(std::cout, obj->loc);
+    printLoc(obj->loc);
     std::cout << "break may require some variables to be free()-ed"
               << std::endl;
   } else if (obj->isS_continue()) {
     // we don't know if we have to free here or not; FIX: we might be
     // able to refine this
-    printLoc(std::cout, obj->loc);
+    printLoc(obj->loc);
     std::cout << "continue may require some variables to be free()-ed"
               << std::endl;
   }
@@ -599,12 +599,12 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
       if (declarator->init) {
         Initializer *init = declarator->init;
         if (init->isIN_compound()) {
-          printLoc(std::cout, declarator->decl->loc);
+          printLoc(declarator->decl->loc);
           std::cout << "auto decl has compound initializer: "
                     << declarator->var->name << std::endl;
           return false;
         } else if (init->isIN_ctor()) {
-          printLoc(std::cout, declarator->decl->loc);
+          printLoc(declarator->decl->loc);
           std::cout << "auto decl has ctor initializer: "
                     << declarator->var->name << std::endl;
           return false;
@@ -614,7 +614,7 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
       // we should transform this one
       if (declarator0) {
         // we can't handle this case yet
-        printLoc(std::cout, declaration->decllist->first()->decl->loc);
+        printLoc(declaration->decllist->first()->decl->loc);
         std::cout << "declaration having multiple declarators "
           "which need heapifying" << std::endl;
         return true;
@@ -686,7 +686,7 @@ xformDeclarator(Declarator *obj) {
   UnboxedPairLoc dname_UnboxedPairLoc(dname_PairLoc);
   if (!dname_PairLoc.hasExactPosition()) {
     // if the location is not exact, we can't insert anything
-    printLoc(std::cout, obj->decl->loc);
+    printLoc(obj->decl->loc);
     std::cout << "FAIL: auto decl does not have exact start position: "
               << var->name << std::endl;
     return NULL;
@@ -696,7 +696,7 @@ xformDeclarator(Declarator *obj) {
   CPPSourceLoc decltor_ploc_end(obj->endloc);
   // if the location is not exact, we can't insert anything
   if (!decltor_ploc_end.hasExactPosition()) {
-    printLoc(std::cout, obj->endloc);
+    printLoc(obj->endloc);
     std::cout << "FAIL: auto decl does not have exact end position: "
               << var->name << std::endl;
     return NULL;
@@ -717,7 +717,7 @@ xformDeclarator(Declarator *obj) {
     // copy the old initializer
     CPPSourceLoc init_ploc(obj->init->loc);
     if (!init_ploc.hasExactPosition()) {
-      printLoc(std::cout, obj->endloc);
+      printLoc(obj->endloc);
       std::cout << "FAIL: auto decl init does not have exact start position: "
                 << var->name << std::endl;
       return NULL;
@@ -761,7 +761,7 @@ visitExpression(Expression *obj) {
       if (streq("longjmp", name) || streq("siglongjmp", name)) {
         // we don't know if we have to free here or not; FIX: we might
         // be able to refine this
-        printLoc(std::cout, obj->loc);
+        printLoc(obj->loc);
         std::cout << name << " may require some variables to be free()-ed"
                   << std::endl;
       }
@@ -779,7 +779,7 @@ subVisitE_variable(E_variable *evar) {
   // FIX: get rid of this
   if (pass(var)) {
     if (var->getScopeKind() == SK_PARAMETER) {
-      printLoc(std::cout, evar->loc);
+      printLoc(evar->loc);
       std::cout << "param use " << var->name << std::endl;
     }
   }

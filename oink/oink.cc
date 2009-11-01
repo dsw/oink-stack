@@ -59,7 +59,7 @@ const size_t LINK_ERROR_MAX_SYMBOLS_REPORTED = 5;
 
 // **** utilities
 
-void printLoc(std::ostream &out, SourceLoc loc) {
+void printLoc(SourceLoc loc, std::ostream &out) {
   out << sourceLocManager->getFile(loc) << ":" <<
     sourceLocManager->getLine(loc) << ": ";
 }
@@ -303,7 +303,7 @@ bool PrintAttributes_ASTVisitor::visitDeclarator(Declarator *obj) {
   if (idecl->isD_grouping()) {
     // there is no "isD_attribute()"
     if (D_attribute *dattr = dynamic_cast<D_attribute*>(idecl)) {
-      printLoc(std::cout, dattr->loc);
+      printLoc(dattr->loc);
       std::cout << obj->var->name << " ";
       printAttribute(dattr);
       std::cout << std::endl;
@@ -333,7 +333,7 @@ bool FindUnseenAttributes_ASTVisitor::visitIDeclarator(IDeclarator *obj) {
     // there is no "isD_attribute()"
     if (D_attribute *dattr = dynamic_cast<D_attribute*>(obj)) {
       if (!dattrSeen.contains(dattr)) {
-        printLoc(std::cout, dattr->loc);
+        printLoc(dattr->loc);
         printAttribute(dattr);
       }
     }

@@ -333,7 +333,7 @@ class Oink {
 
 // print a location in the way that emacs likes compiler error
 // locations to prefix messages: "file:line: message"
-void printLoc(std::ostream &out, SourceLoc loc);
+void printLoc(SourceLoc loc, std::ostream &out = std::cout);
 
 // delimit output between these with start/stop lines that
 // elsa/chop_out will chop out as separate files for you
