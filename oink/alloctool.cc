@@ -799,13 +799,13 @@ visitExpression(Expression *obj) {
     return subVisitE_variable(obj->asE_variable());
   } else if (obj->isE_funCall()) {
     E_funCall *efun = obj->asE_funCall();
-    if (efun->func->isE_variable()) {
-      StringRef name = efun->func->asE_variable()->var->name;
-      if (streq("longjmp", name) || streq("siglongjmp", name)) {
+    StringRef funcName = funCallName_ifSimpleE_variable(efun);
+    if (funcName) {
+      if (streq("longjmp", funcName) || streq("siglongjmp", funcName)) {
         // we don't know if we have to free here or not; FIX: we might
         // be able to refine this
         printLoc(obj->loc);
-        std::cout << name << " may require some variables to be free()-ed"
+        std::cout << funcName << " may require some variables to be free()-ed"
                   << std::endl;
       }
     }
