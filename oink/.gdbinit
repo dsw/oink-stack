@@ -1139,5 +1139,6 @@ set args -fa-localize-heap-alloc Test/verify1_foo.i Test/verify1_bar.i -o-mod-sp
 
 break main
 break breaker
+break malloc_error_break
 
 run

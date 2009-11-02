@@ -2530,14 +2530,19 @@ StringRef moduleForLoc(SourceLoc loc) {
   return module;
 }
 
-StringRef moduleForType(StringRefMap<char const> *classFQName2Module,
-                        Type *type)
-{
+Variable *typedefVarForType(Type *type) {
   if (!type->isCVAtomicType()) return NULL;
   CVAtomicType *cvat = type->asCVAtomicType();
   if (!cvat->atomic->isCompoundType()) return NULL;
   CompoundType *cpd = cvat->atomic->asCompoundType();
   Variable_O *typedefVar = asVariable_O(cpd->typedefVar);
+  return typedefVar;
+}
+
+StringRef moduleForType(StringRefMap<char const> *classFQName2Module,
+                        Type *type)
+{
+  Variable *typedefVar = typedefVarForType(type);
   StringRef lookedUpModule = classFQName2Module->get
     (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()));
   // FIX: should this be a user assert?
@@ -2558,12 +2563,13 @@ StringRef funCallName_ifSimpleE_variable(E_funCall *obj) {
 // __attribute__(()) on BSD for allocators
 
 bool isStackAllocator(StringRef funcName) {
-  return streq(funcName, "alloca");
+  return streq(funcName, "alloca"); // NOTE: can return NULL
 }
 
 bool isHeapNewAllocator(StringRef funcName) {
   return false
     || streq(funcName, "malloc")
+    || streq(funcName, "xmalloc") // malloc that exits rather than return NULL
     || streq(funcName, "calloc")
     || streq(funcName, "valloc") // seems to be BSD-specific
     ;
@@ -2581,6 +2587,7 @@ bool isHeapDeAllocator(StringRef funcName) {
 }
 
 bool isHeapSizeQuery(StringRef funcName) {
+  // these seem to be BSD-specific
   return false
     || streq(funcName, "malloc_size")
     || streq(funcName, "malloc_good_size")

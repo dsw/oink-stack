@@ -6,7 +6,9 @@
 #include "oink.gr.gen.h"        // CCParse_Oink
 #include "strutil.h"            // quoted
 #include "oink_util.h"
+#include "mangle.h"             // mangle (type name mangler)
 #include "Pork/patcher.h"       // Patcher
+#include <ctype.h>              // isalnum
 
 // FIX: this analysis is incomplete
 
@@ -57,11 +59,76 @@ static bool dynSize(Type *type, SourceLoc loc) {
   return ret;
 }
 
-// mangle type into a legal C/C++ identifier and put it into
-// mangledName
-static void mangleTypeToIdentifier(Type *type, stringBuilder &mangledName) {
-  // FIX: implement
-  mangledName << "MANGLEDNAME";
+// extract an alpha-num subsequence from a string that might remind a
+// human of the original (thing of the unix utility "strings"); NOTE:
+// looses information
+static void get_strings(StringRef const str, stringBuilder &out) {
+  int lastAlnum = true;         // don't start with underscores
+  for (char const *cp = str; *cp; ++cp) {
+    bool const isAlnum = isalnum(*cp);
+    if (isAlnum) {
+      // lazily append underscores so we don't end with underscores
+      if (!lastAlnum) out << "_";
+      out << (char) *cp;
+    }
+    // use a bool so as to deliberately loose information as to the
+    // number of non-alnum-s in a row their were
+    lastAlnum = isAlnum;
+  }
+}
+
+// some supposedly prime numbers just over one billion; from
+// http://publicliterature.org/tools/prime_number_generator/
+
+// multiplier for hashing
+#ifndef STR_HASHMULT
+#  define STR_HASHMULT 1050506927U
+#endif
+
+// adder for hashing
+#ifndef STR_HASHADD
+#  define STR_HASHADD 1070708851U
+#endif
+
+static unsigned int hash_str(StringRef x) {
+  // FIX: hash whole words at a time
+  unsigned int hashvalue = STR_HASHADD;
+  while(unsigned char const c = *x) {
+    hashvalue += c;
+    hashvalue *= STR_HASHMULT;
+    // FIX: do a low-high byte swap here; FIX: why am I doing the add
+    // last?
+    hashvalue += STR_HASHADD;
+    ++x;
+  }
+  return hashvalue;
+}
+
+static void appendHexStr(unsigned int i, stringBuilder &ret) {
+  char *hex = NULL;
+  int printRes = asprintf(&hex, "%08x", i);
+  if (printRes < 0) {
+    // out of memory
+    fputs("out of memory\n", stderr);
+    exit(INTERNALERROR_ExitCode);
+  }
+  ret << hex;
+  free(hex);
+}
+
+// mangle 'type' into (1) a legal C/C++ identifier that (2) preserves
+// information; put the result into 'ret'
+static void mangleTypeToIdentifier(Type *type, stringBuilder &ret) {
+  // get the Elsa-mangled name of the type
+  StringRef mangledTypeName = globalStrTable(mangle(type));
+
+  // get something human-readable out of the thing
+  get_strings(mangledTypeName, ret);
+  ret << "_";
+
+  // append a hash of the mangledTypeName
+  unsigned int mangledHashed = hash_str(mangledTypeName);
+  appendHexStr(mangledHashed, ret);
 }
 
 // Decides if this variable allocated on the stack.  Note that if it
@@ -950,46 +1017,51 @@ bool LocalizeHeapAlloc_ASTVisitor::isAllocator0
 void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
   (Expression *cast, Expression *expr)
 {
+  // is this a cast of a call to a heap allocator?
   if (!expr->isE_funCall()) return;
-
   E_funCall *efun = expr->asE_funCall();
   StringRef funcName = funCallName_ifSimpleE_variable(efun);
   if (!funcName) return;
   if (!isHeapNewAllocator(funcName)) return;
 
-  // warn that we can't transform this heap new allocator
-  if (!streq(funcName, "malloc")) {
+  // is this one that we can transform?
+  if (!streq(funcName, "malloc") && !streq(funcName, "xmalloc")) {
     printLoc(expr->loc);
     std::cout << "localization of heap new allocator other than 'malloc'"
       " not implemented" << std::endl;
     return;
   }
 
-  // transform malloc
+  // **** it's (x)malloc
+
+  // get the type that we are allocating
   Type *castAtType = cast->type->asRval()->asPointerType()->atType;
 
-  // check argument is sizeof this type
+  // check there is one argument and it is "sizeof(castAtType)"
   FakeList<ArgExpression> *args = efun->args;
   USER_ASSERT(args->count()==1, efun->loc,
-              "Malloc does not have exactly 1 argument.");
+              "(x)malloc does not have exactly 1 argument.");
   Expression *arg = args->first()->expr;
   if (arg->isE_sizeof()) {
     USER_ASSERT(arg->asE_sizeof()->expr->type->equals(castAtType), arg->loc,
-                "Malloc argument is not sizeof-expr the cast at-type.");
+                "(x)malloc argument is not sizeof-expr the cast at-type.");
   } else if (arg->isE_sizeofType()) {
     USER_ASSERT(arg->asE_sizeofType()->atype->getType()->equals(castAtType),
                 arg->loc,
-                "Malloc argument is not sizeof-type of the cast at-type.");
+                "(x)malloc argument is not sizeof-type of the cast at-type.");
   } else {
     userFatalError
       (arg->loc, "Malloc argument is not sizeof-expr nor sizeof-type.");
   }
 
-  StringRef allocatorModule = moduleForLoc(efun->loc);
+  // does the allocated type have static or dynamic size?
+  bool castAtType_dynSize = dynSize(castAtType, cast->loc);
 
-  // is this a named type having a definition somewhere?
-  StringRef castAtTypeModule = moduleForType(classFQName2Module, castAtType);
-  if (castAtTypeModule) {
+  // get the module this code is in
+  StringRef allocatorModule = moduleForLoc(efun->loc);
+  if (StringRef castAtTypeModule=
+      moduleForType(classFQName2Module, castAtType))
+  {
     USER_ASSERT(streq(allocatorModule, castAtTypeModule), efun->loc,
                 "Allocated type defined in different module than "
                 "call to allocator.");
@@ -1000,15 +1072,11 @@ void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
     // found already if it were being allocated in the wrong module
   }
 
-  // does the allocated type have static or dynamic size?
-  bool castAtType_dynSize = dynSize(castAtType, cast->loc);
-
-  stringBuilder mangledName;
-  mangleTypeToIdentifier(castAtType, mangledName);
-
-  // mangle the new name: old_name + mangled_type_name + module_name
+  // new alloc: old_name + mangled_type_name + module_name + (args)
   stringBuilder newAlloc;
-  newAlloc << funcName << "_" << mangledName << "_MOD_" << allocatorModule;
+  newAlloc << funcName << "_";
+  mangleTypeToIdentifier(castAtType, newAlloc);
+  newAlloc << "_" << allocatorModule;
   newAlloc << "(";
   if (castAtType_dynSize) {
     // if type has a dynamic size then keep the size argument

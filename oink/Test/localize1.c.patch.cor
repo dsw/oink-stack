@@ -9,4 +9,4 @@ warning: the -fo-merge-E_variable-and-var-values flag is incompatible with doing
 +++ Test/verify1_foo.c
 @@ -6,1 +6,1 @@
 -  return (struct Foo*) malloc(sizeof(struct Foo));
-+  return malloc_MANGLEDNAME_MOD_foo();
++  return malloc_struct_Foo_a7198b88_foo();

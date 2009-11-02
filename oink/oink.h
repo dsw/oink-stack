@@ -343,8 +343,11 @@ void printStop();
 
 // map a loc to its module
 StringRef moduleForLoc(SourceLoc);
+// Map a non-anonymous type to the typedefVar of its definition;
+// otherwise return NULL.
+Variable *typedefVarForType(Type *type);
 // Map a non-anonymous type to the module in which it was defined;
-// otherwise rturn NULL.  NOTE: the code that builds
+// otherwise return NULL.  NOTE: the code that builds
 // classFQName2Module guarantees that this is well-defined: that is,
 // that there is exactly one such module for a non-anonymous class.
 StringRef moduleForType(StringRefMap<char const> *classFQName2Module,
