@@ -128,6 +128,7 @@ static void mangleTypeToIdentifier(Type *type, stringBuilder &ret) {
 
   // append a hash of the mangledTypeName
   unsigned int mangledHashed = hash_str(mangledTypeName);
+  // FIX: replace this with proquints
   appendHexStr(mangledHashed, ret);
 }
 
