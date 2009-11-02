@@ -21,6 +21,10 @@ class AllocToolCmd : public virtual OinkCmd {
   // insert calls to verify the status of parameters that are pointers
   // to a class/struct/union type that is defined in this module
   bool verify_cross_module_params;
+  // localize calls to heap allocation calls: change calls to
+  // malloc/free etc. so that they call class-local and module-local
+  // malloc
+  bool localize_heap_alloc;
 
   // string to use to call free()
   char *free_func;

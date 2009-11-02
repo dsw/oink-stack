@@ -208,30 +208,30 @@ bool AllocSites_ASTVisitor::visitExpression(Expression *obj) {
     break;
   case Expression::E_KEYWORDCAST:
     E_keywordCast *ekwcast = obj->asE_keywordCast();
-    subVisitCast(ekwcast->abstrValue, ekwcast->expr);
+    subVisitCast(ekwcast, ekwcast->expr);
     break;
   case Expression::E_CAST:
     E_cast *ecast = obj->asE_cast();
-    subVisitCast(ecast->abstrValue, ecast->expr);
+    subVisitCast(ecast, ecast->expr);
     break;
   case Expression::E_NEW:
-    USER_ASSERT(obj->abstrValue->isPointerValue(), obj->abstrValue->loc,
+    USER_ASSERT(obj->type->isPointerType(), obj->loc,
                 "new expression is not of pointer type");
-    subVisitE_new0(obj->abstrValue);
+    subVisitE_new0(obj->asE_new());
     break;
   }
   return true;
 }
 
-void AllocSites_ASTVisitor::subVisitCast(Value *abstrValue, Expression *expr) {
+void AllocSites_ASTVisitor::subVisitCast(Expression *cast, Expression *expr) {
   expr = expr->skipGroups();
   if (!expr->isE_funCall()) return;
   E_funCall *efun = expr->asE_funCall();
-  if (isAllocator0(efun, abstrValue->loc)) {
-    USER_ASSERT(abstrValue->isPointerValue(), abstrValue->loc,
+  if (isAllocator0(efun, cast->loc)) {
+    USER_ASSERT(cast->type->isPointerType(), cast->loc,
                 "cast from allocator is not of pointer type");
     castedAllocators.add(efun);
-    subVisitCast0(abstrValue, expr);
+    subVisitCast0(cast, expr);
   }
 }
 

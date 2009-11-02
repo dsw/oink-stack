@@ -26,6 +26,7 @@ class AllocTool : public virtual Oink {
   void printStackAllocAddrTaken_stage();
   void heapifyStackAllocAddrTaken_stage();
   void verifyCrossModuleParams_stage();
+  void localizeHeapAlloc_stage();
 };
 
 #endif // ALLOCTOOL_H

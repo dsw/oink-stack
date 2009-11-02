@@ -51,12 +51,12 @@ class AllocSites_ASTVisitor : private ASTVisitor {
 
   // visitation
   virtual bool visitExpression(Expression *);
-  void subVisitCast(Value *, Expression *);
+  void subVisitCast(Expression *cast, Expression *expr);
 
   // client functions
   virtual bool isAllocator0(E_funCall *, SourceLoc) = 0;
-  virtual void subVisitCast0(Value *, Expression *) = 0;
-  virtual void subVisitE_new0(Value *) = 0;
+  virtual void subVisitCast0(Expression *cast, Expression *expr) = 0;
+  virtual void subVisitE_new0(E_new *) = 0;
 
   // check that if we saw an allocator then we saw it inside a cast
   bool checkAlloc_seenImpliesCasted();

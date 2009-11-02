@@ -452,8 +452,8 @@ class MarkAllocStackness_ASTVisitor : public AllocSites_ASTVisitor {
   {}
 
   virtual bool isAllocator0(E_funCall *, SourceLoc);
-  virtual void subVisitCast0(Value *, Expression *);
-  virtual void subVisitE_new0(Value *);
+  virtual void subVisitCast0(Expression *cast, Expression *expr);
+  virtual void subVisitE_new0(E_new *);
 };
 
 bool MarkAllocStackness_ASTVisitor::isAllocator0(E_funCall *efun, SourceLoc loc) {
@@ -468,12 +468,12 @@ bool MarkAllocStackness_ASTVisitor::isAllocator0(E_funCall *efun, SourceLoc loc)
 }
 
 void MarkAllocStackness_ASTVisitor::subVisitCast0
-(Value *abstrValue, Expression *expr) {
-  abstrValue->asPointerValue()->atValue->traverse(nonstack_markStackness);
+(Expression *cast, Expression *expr) {
+  cast->abstrValue->asPointerValue()->atValue->traverse(nonstack_markStackness);
 }
 
-void MarkAllocStackness_ASTVisitor::subVisitE_new0(Value *abstrValue) {
-  abstrValue->asPointerValue()->atValue->traverse(nonstack_markStackness);
+void MarkAllocStackness_ASTVisitor::subVisitE_new0(E_new *obj) {
+  obj->abstrValue->asPointerValue()->atValue->traverse(nonstack_markStackness);
 }
 
 
@@ -749,8 +749,8 @@ class Qual_ModuleAlloc_Visitor : public AllocSites_ASTVisitor {
   virtual bool visitDeclarator(Declarator *);
 
   virtual bool isAllocator0(E_funCall *, SourceLoc);
-  virtual void subVisitCast0(Value *, Expression *);
-  virtual void subVisitE_new0(Value *);
+  virtual void subVisitCast0(Expression *cast, Expression *expr);
+  virtual void subVisitE_new0(E_new *);
 };
 
 void Qual_ModuleAlloc_Visitor::colorWithModule_alloc
@@ -917,13 +917,13 @@ bool Qual_ModuleAlloc_Visitor::isAllocator0(E_funCall *efun, SourceLoc loc) {
 }
 
 void Qual_ModuleAlloc_Visitor::subVisitCast0
-  (Value *abstrValue, Expression *expr)
+  (Expression *cast, Expression *expr)
 {
   if (color_alloc) {
     // This is subtle: attach the color to the 1) ref value of the
     // 2) thing pointed to by 3) the cast expresion; thanks to Matt
     // Harren for help on this.
-    Value *castValue = abstrValue
+    Value *castValue = cast->abstrValue
       ->getAtValue()  // color the value pointed-to, not the pointer
       ->asRval();
     colorWithModule_alloc(castValue, NULL, castValue->loc,
@@ -934,7 +934,7 @@ void Qual_ModuleAlloc_Visitor::subVisitCast0
   if (color_otherControl) {
     // This is subtle: attach the color to the 1) pointer value of
     // the 2) the cast expresion; thanks to Matt for help on this.
-    Value *castValue = abstrValue->asRval();
+    Value *castValue = cast->abstrValue->asRval();
     if (castValue->isPointerValue()) {
       colorWithModule_otherControl(castValue, NULL, castValue->loc,
                                    funCallName_ifSimpleE_variable
@@ -944,9 +944,9 @@ void Qual_ModuleAlloc_Visitor::subVisitCast0
   }
 }
 
-void Qual_ModuleAlloc_Visitor::subVisitE_new0(Value *abstrValue) {
+void Qual_ModuleAlloc_Visitor::subVisitE_new0(E_new *obj) {
   // attach the color to the expression ref value
-  Value *value0 = abstrValue->asRval();
+  Value *value0 = obj->abstrValue->asRval();
 
   // Note: new is not malloc.  Malloc is just an allocator and so the
   // memory allocated should get colored with the module of the source
@@ -984,7 +984,7 @@ void Qual_ModuleAlloc_Visitor::subVisitE_new0(Value *abstrValue) {
     // This is subtle: attach the color to the 1) ref value of the 2)
     // thing pointed to by 3) the new expresion; thanks to Matt for
     // help on this.
-    Value *newValue = abstrValue
+    Value *newValue = obj->abstrValue
       ->getAtValue()    // color the value pointed-to, not the pointer
       ->asRval();
     colorWithModule_alloc(newValue, module, newValue->loc, NULL, "E_new");

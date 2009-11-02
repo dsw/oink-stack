@@ -426,6 +426,8 @@ bool PrintStackAllocAddrTakenVars_ASTVisitor::pass(Variable *var) {
 
 // **** HeapifyStackAllocAddrTakenVars_ASTVisitor
 
+// FIX: we should handle alloca()
+
 // the scope created by an S_compound
 class S_compound_Scope {
 public:
@@ -865,6 +867,95 @@ bool VerifyCrossModuleParams_ASTVisitor::visitFunction(Function *obj) {
   return true;
 }
 
+// **** LocalizeHeapAlloc_ASTVisitor
+
+class LocalizeHeapAlloc_ASTVisitor : public AllocSites_ASTVisitor {
+public:
+  StringRefMap<char const> *classFQName2Module;
+  Patcher &patcher;
+
+  LocalizeHeapAlloc_ASTVisitor
+  (StringRefMap<char const> *classFQName2Module0, Patcher &patcher0)
+    : classFQName2Module(classFQName2Module0)
+    , patcher(patcher0)
+  {}
+
+  virtual bool visitExpression(Expression *);
+
+  virtual bool isAllocator0(E_funCall *, SourceLoc);
+  virtual void subVisitCast0(Expression *cast, Expression *expr);
+  virtual void subVisitE_new0(E_new *);
+};
+
+void LocalizeHeapAlloc_ASTVisitor::subVisitE_new0(E_new *) {
+  // there is nothing to do here; FIX: we just have to imlement
+  // operator new() for this class
+}
+
+bool LocalizeHeapAlloc_ASTVisitor::isAllocator0
+  (E_funCall *efun, SourceLoc loc)
+{
+  StringRef funcName = funCallName_ifSimpleE_variable(efun);
+  if (!funcName) return false;
+  if (isStackAllocator(funcName)) {
+    printLoc(loc);
+    std::cout << "stack allocator cannot be localized" << std::endl;
+    // if you have to cast the return value of alloca() then we could
+    // return true here, but we don't care because we can't do
+    // anything to alloca() anyway so we don't care if we happen to
+    // miss a call to it
+  } else if (isHeapReAllocator(funcName)) {
+    printLoc(loc);
+    std::cout << "localization of heap re-allocator not implemented"
+              << std::endl;
+    return true;
+  } else if (isHeapNewAllocator(funcName)) {
+    return true;
+  }
+  return false;
+}
+
+void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
+  (Expression *cast, Expression *expr)
+{
+  if (expr->isE_funCall()) {
+    E_funCall *efun = expr->asE_funCall();
+    StringRef funcName = funCallName_ifSimpleE_variable(efun);
+    if (!funcName) return;
+    if (isHeapNewAllocator(funcName)) {
+      if (!streq(funcName, "malloc")) {
+        printLoc(expr->loc);
+        std::cout << "localization of heap new allocator other than 'malloc'"
+          " not implemented" << std::endl;
+        return;
+      }
+      // FIX: handle malloc
+    }
+  }
+}
+
+bool LocalizeHeapAlloc_ASTVisitor::visitExpression(Expression *obj) {
+  bool ret = AllocSites_ASTVisitor::visitExpression(obj);
+  if (obj->isE_funCall()) {
+    E_funCall *efun = obj->asE_funCall();
+    StringRef funcName = funCallName_ifSimpleE_variable(efun);
+    if (!funcName) return false;
+    if (isHeapDeAllocator(funcName)) {
+      if (!streq(funcName, "free")) {
+        printLoc(obj->loc);
+        std::cout << "localization of heap de-allocator not implemented"
+                  << std::endl;
+      }
+      // FIX: handle free
+    } else if (isHeapSizeQuery(funcName)) {
+      printLoc(obj->loc);
+      std::cout << "localization of heap size query not implemented"
+                << std::endl;
+    }
+  }
+  return ret;
+}
+
 // **** AllocTool
 
 // print the locations of declarators and uses of stack allocated
@@ -955,6 +1046,21 @@ void AllocTool::verifyCrossModuleParams_stage() {
     Patcher patcher(std::cout /*ostream for the diff*/,
                     true /*recursive*/);
     VerifyCrossModuleParams_ASTVisitor env(classFQName2Module, patcher);
+    unit->traverse(env.loweredVisitor);
+  }
+}
+
+void AllocTool::localizeHeapAlloc_stage() {
+  printStage("localize heap alloc");
+  foreachSourceFile {
+    File *file = files.data();
+    maybeSetInputLangFromSuffix(file);
+    TranslationUnit *unit = file2unit.get(file);
+    // NOTE: this emits the diff in its dtor which happens after
+    // printStop() below
+    Patcher patcher(std::cout /*ostream for the diff*/,
+                    true /*recursive*/);
+    LocalizeHeapAlloc_ASTVisitor env(classFQName2Module, patcher);
     unit->traverse(env.loweredVisitor);
   }
 }

@@ -1,0 +1,7 @@
+loading module bar from mod file Test/verify1_bar.mod
+	adding to modules map: Test/verify1_bar.c -> bar
+loading module foo from mod file Test/verify1_foo.mod
+	adding to modules map: Test/verify1_foo.c -> foo
+	adding to modules map: Test/verify1_foo.h -> foo
+setting default module to default
+warning: the -fo-merge-E_variable-and-var-values flag is incompatible with doing module analyses, so turning it off.

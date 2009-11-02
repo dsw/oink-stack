@@ -46,6 +46,9 @@ int main(int argc, char **argv) {
     if (alloctoolCmd->verify_cross_module_params) {
       m.verifyCrossModuleParams_stage();
     }
+    if (alloctoolCmd->localize_heap_alloc) {
+      m.localizeHeapAlloc_stage();
+    }
   } catch (xBase &e) {
     std::cerr << e << std::endl;
     code = INTERNALERROR_ExitCode;

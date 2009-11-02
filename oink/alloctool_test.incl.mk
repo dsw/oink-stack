@@ -10,9 +10,11 @@ endif
 alloctool-check: alloctool-check-basic
 alloctool-check: alloctool-check-heapify
 alloctool-check: alloctool-check-verify
+alloctool-check: alloctool-check-localize
 
 .PHONY: alloctool-check-basic
 alloctool-check-basic:
+	@echo; echo $@
 # check that it can parse C/C++ that has qualifiers in it
 	./alloctool -fa-print-stack-alloc-addr-taken \
            Test/stack_alloc_parse_qual.cc \
@@ -32,6 +34,7 @@ alloctool-check-basic:
 # check -fa-heapify-stack-alloc-addr-taken
 .PHONY: alloctool-check-heapify
 alloctool-check-heapify:
+	@echo; echo $@
 # check handles declarators
 	./alloctool -fa-heapify-stack-alloc-addr-taken Test/heapify1.c \
            > Test/heapify1.c.patch.out
@@ -46,6 +49,7 @@ alloctool-check-heapify:
 # check -fa-verify-cross-module-params
 .PHONY: alloctool-check-verify
 alloctool-check-verify: Test/verify1_foo.i Test/verify1_bar.i
+	@echo; echo $@
 	./alloctool -fa-verify-cross-module-params $^ \
 	  -a-verify-func "verify2" \
 	  -o-mod-spec bar:Test/verify1_bar.mod \
@@ -53,6 +57,19 @@ alloctool-check-verify: Test/verify1_foo.i Test/verify1_bar.i
 	  -o-mod-default default \
 	  > Test/verify1.c.patch.out
 	diff Test/verify1.c.patch.cor Test/verify1.c.patch.out
+
+# check -fa-localize-heap-alloc
+.PHONY: alloctool-check-localize
+alloctool-check-localize: Test/verify1_foo.i Test/verify1_bar.i
+	@echo; echo $@
+	./alloctool -fa-localize-heap-alloc $^ \
+	  -o-mod-spec bar:Test/verify1_bar.mod \
+	  -o-mod-spec foo:Test/verify1_foo.mod \
+	  -o-mod-default default \
+	  > Test/localize1.c.patch.out
+	diff Test/localize1.c.patch.cor Test/localize1.c.patch.out
+
+# **** preprocessing
 
 Test/verify1_foo.i Test/verify1_bar.i: Test/verify1_%.i: Test/verify1_%.c
 	gcc -Wall -E -o $@ $<
