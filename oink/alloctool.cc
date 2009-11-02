@@ -682,7 +682,7 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
       newInitStmts << " *" << var->name << "=" << oldInit_c_str << ";";
       free(oldInit_c_str);
     }
-    // record that we processed this var so we know to xfor uses of it
+    // record that we processed this var so we know to xform its uses
     xformedVars.add(var);
     // push the var onto the var stack in the top scope on scope stack
     scopeStack.top()->s_decl_vars.push(var);
