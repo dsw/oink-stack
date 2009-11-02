@@ -38,6 +38,7 @@ class AllocSites_ASTVisitor : private ASTVisitor {
   public:
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
 
+  private:
   // allocators that we saw
   SObjSet<E_funCall*> seenAllocators;
   // allocators that were inside a cast expression
@@ -58,7 +59,7 @@ class AllocSites_ASTVisitor : private ASTVisitor {
   virtual void subVisitE_new0(Value *) = 0;
 
   // check that if we saw an allocator then we saw it inside a cast
-  bool checkAllcSeenImpliesCast();
+  bool checkAlloc_seenImpliesCasted();
 };
 
 class Linker {

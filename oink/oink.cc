@@ -235,7 +235,7 @@ void AllocSites_ASTVisitor::subVisitCast(Value *abstrValue, Expression *expr) {
   }
 }
 
-bool AllocSites_ASTVisitor::checkAllcSeenImpliesCast() {
+bool AllocSites_ASTVisitor::checkAlloc_seenImpliesCasted() {
   bool ret = true;
   for(SObjSetIter<E_funCall*> seenIter(seenAllocators);
       !seenIter.isDone(); seenIter.adv()) {

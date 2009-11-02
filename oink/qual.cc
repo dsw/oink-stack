@@ -1835,16 +1835,7 @@ void Qual::moduleAlloc_stage() {
                                  );
     env.colorClassMembers();
     unit->traverse(env.loweredVisitor);
-    // check that we didn't hit any allocators that were not down
-    // inside a cast
-    for(SObjSetIter<E_funCall*> seenIter(env.seenAllocators);
-        !seenIter.isDone(); seenIter.adv()) {
-      E_funCall *call0 = seenIter.data();
-      if (!env.castedAllocators.contains(call0)) {
-        userReportWarning
-          (call0->loc, "allocator that was not inside a cast expression");
-      }
-    }
+    env.checkAlloc_seenImpliesCasted();
   }
 }
 
@@ -1862,18 +1853,7 @@ void Qual::moduleOtherControl_stage() {
                                  );
     env.colorClassMembers();
     unit->traverse(env.loweredVisitor);
-    // check that we didn't hit any allocators that were not down inside
-    // a cast
-    for(SObjSetIter<E_funCall*> seenIter(env.seenAllocators);
-        !seenIter.isDone(); seenIter.adv()) {
-      E_funCall *call0 = seenIter.data();
-      if (!env.castedAllocators.contains(call0)) {
-        // this is just luck that I have this
-        SourceLoc loc = call0->abstrValue->loc;
-        userReportWarning(loc, "(trust) allocator that was not inside "
-                          "a cast expression");
-      }
-    }
+    env.checkAlloc_seenImpliesCasted();
   }
 }
 
@@ -2121,18 +2101,7 @@ void Qual::qualCompile_qualVisitation() {
       MarkAllocStackness_ASTVisitor env(stack_markStackness,
                                         nonstack_markStackness);
       unit->traverse(env.loweredVisitor);
-      // check that we didn't hit any allocators that were not down
-      // inside a cast
-      for(SObjSetIter<E_funCall*> iter2(env.seenAllocators);
-          !iter2.isDone(); iter2.adv()) {
-        E_funCall *call0 = iter2.data();
-        if (!env.castedAllocators.contains(call0)) {
-          // this is just luck that I have this
-          SourceLoc loc = call0->abstrValue->loc;
-          userReportWarning(loc, "(stackness) allocator that was not "
-                            "inside a cast expression");
-        }
-      }
+      env.checkAlloc_seenImpliesCasted();
     }
   }
 
