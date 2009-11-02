@@ -342,7 +342,13 @@ void printStart(char const *name);
 void printStop();
 
 // map a loc to its module
-StringRef moduleForLoc(SourceLoc loc);
+StringRef moduleForLoc(SourceLoc);
+// Map a non-anonymous type to the module in which it was defined;
+// otherwise rturn NULL.  NOTE: the code that builds
+// classFQName2Module guarantees that this is well-defined: that is,
+// that there is exactly one such module for a non-anonymous class.
+StringRef moduleForType(StringRefMap<char const> *classFQName2Module,
+                        Type *type);
 
 // return the function call name if it turns out to be a simple
 // E_variable; otherwise return NULL

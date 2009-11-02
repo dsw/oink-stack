@@ -23,6 +23,47 @@
 
 // **** utilities
 
+static std::string getRange(Patcher &patcher, SourceLoc begin, SourceLoc end) {
+  CPPSourceLoc ploc(begin);
+  CPPSourceLoc ploc_end(end);
+  PairLoc pairLoc(ploc, ploc_end);
+  UnboxedPairLoc unboxedPairLoc(pairLoc);
+  return patcher.getRange(unboxedPairLoc);
+}
+
+static void printPatch
+  (Patcher &patcher, char const *str, SourceLoc begin, SourceLoc end)
+{
+  CPPSourceLoc ploc(begin);
+  CPPSourceLoc ploc_end(end);
+  PairLoc pairLoc(ploc, ploc_end);
+  UnboxedPairLoc unboxedPairLoc(pairLoc);
+  patcher.printPatch(str, unboxedPairLoc);
+}
+
+static bool dynSize(Type *type, SourceLoc loc) {
+  bool ret = false;
+  try {
+    type->reprSize();
+  } catch (XReprSize &e) {
+    HANDLER();
+    if (e.isDynamic) {
+      ret = true;
+    } else {
+      // FIX: what to do here?
+      userFatalError(loc, "Type that has neither static nor dynamic size ??");
+    }
+  }
+  return ret;
+}
+
+// mangle type into a legal C/C++ identifier and put it into
+// mangledName
+static void mangleTypeToIdentifier(Type *type, stringBuilder &mangledName) {
+  // FIX: implement
+  mangledName << "MANGLEDNAME";
+}
+
 // Decides if this variable allocated on the stack.  Note that if it
 // is in a class/struct/union we say no as it's container decides it.
 //
@@ -842,16 +883,7 @@ bool VerifyCrossModuleParams_ASTVisitor::visitFunction(Function *obj) {
     xassert(!paramTypeRval->isArrayType());
     if (!paramTypeRval->isPointerType()) continue;
     Type *paramAtType = paramTypeRval->asPointerType()->atType;
-    if (!paramAtType->isCVAtomicType()) continue;
-    CVAtomicType *paramAtCVat = paramAtType->asCVAtomicType();
-    if (!paramAtCVat->atomic->isCompoundType()) continue;
-    CompoundType *paramCpd = paramAtCVat->atomic->asCompoundType();
-    Variable_O *typedefVar = asVariable_O(paramCpd->typedefVar);
-    StringRef lookedUpModule =
-      classFQName2Module->get
-      (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()));
-    // FIX: should this be a user assert?
-    xassert(lookedUpModule);
+    StringRef lookedUpModule = moduleForType(classFQName2Module, paramAtType);
     if (module != lookedUpModule) continue;
 
     // make code to verify the status of the parameter
@@ -918,20 +950,83 @@ bool LocalizeHeapAlloc_ASTVisitor::isAllocator0
 void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
   (Expression *cast, Expression *expr)
 {
-  if (expr->isE_funCall()) {
-    E_funCall *efun = expr->asE_funCall();
-    StringRef funcName = funCallName_ifSimpleE_variable(efun);
-    if (!funcName) return;
-    if (isHeapNewAllocator(funcName)) {
-      if (!streq(funcName, "malloc")) {
-        printLoc(expr->loc);
-        std::cout << "localization of heap new allocator other than 'malloc'"
-          " not implemented" << std::endl;
-        return;
-      }
-      // FIX: handle malloc
-    }
+  if (!expr->isE_funCall()) return;
+
+  E_funCall *efun = expr->asE_funCall();
+  StringRef funcName = funCallName_ifSimpleE_variable(efun);
+  if (!funcName) return;
+  if (!isHeapNewAllocator(funcName)) return;
+
+  // warn that we can't transform this heap new allocator
+  if (!streq(funcName, "malloc")) {
+    printLoc(expr->loc);
+    std::cout << "localization of heap new allocator other than 'malloc'"
+      " not implemented" << std::endl;
+    return;
   }
+
+  // transform malloc
+  Type *castAtType = cast->type->asRval()->asPointerType()->atType;
+
+  // check argument is sizeof this type
+  FakeList<ArgExpression> *args = efun->args;
+  USER_ASSERT(args->count()==1, efun->loc,
+              "Malloc does not have exactly 1 argument.");
+  Expression *arg = args->first()->expr;
+  if (arg->isE_sizeof()) {
+    USER_ASSERT(arg->asE_sizeof()->expr->type->equals(castAtType), arg->loc,
+                "Malloc argument is not sizeof-expr the cast at-type.");
+  } else if (arg->isE_sizeofType()) {
+    USER_ASSERT(arg->asE_sizeofType()->atype->getType()->equals(castAtType),
+                arg->loc,
+                "Malloc argument is not sizeof-type of the cast at-type.");
+  } else {
+    userFatalError
+      (arg->loc, "Malloc argument is not sizeof-expr nor sizeof-type.");
+  }
+
+  StringRef allocatorModule = moduleForLoc(efun->loc);
+
+  // is this a named type having a definition somewhere?
+  StringRef castAtTypeModule = moduleForType(classFQName2Module, castAtType);
+  if (castAtTypeModule) {
+    USER_ASSERT(streq(allocatorModule, castAtTypeModule), efun->loc,
+                "Allocated type defined in different module than "
+                "call to allocator.");
+  } else {
+    // anonymous type: we can't tell if it is allocated in the right
+    // module; NOTE: we are trusting that the right module is the
+    // module of this file; that is, that another analysis would have
+    // found already if it were being allocated in the wrong module
+  }
+
+  // does the allocated type have static or dynamic size?
+  bool castAtType_dynSize = dynSize(castAtType, cast->loc);
+
+  stringBuilder mangledName;
+  mangleTypeToIdentifier(castAtType, mangledName);
+
+  // mangle the new name: old_name + mangled_type_name + module_name
+  stringBuilder newAlloc;
+  newAlloc << funcName << "_" << mangledName << "_MOD_" << allocatorModule;
+  newAlloc << "(";
+  if (castAtType_dynSize) {
+    // if type has a dynamic size then keep the size argument
+    newAlloc << getRange(patcher, arg->loc, arg->endloc).c_str();
+  }
+  newAlloc << ")";
+
+  // replace the entire cast expression with a call to the mangled
+  // malloc; yes, we get rid of the cast as that helps us ensure type
+  // safety
+  printPatch(patcher, newAlloc.c_str(), cast->loc, cast->endloc);
+
+  // record that we mangled this type; for each file emit a
+  // corresponding configuration file listing for each class:
+  //  - the string naming the class in C,
+  //  - the mangled name in C,
+  //  - whether the class has a fixed size or not,
+  //  - the header file containing the definition of that class,
 }
 
 bool LocalizeHeapAlloc_ASTVisitor::visitExpression(Expression *obj) {

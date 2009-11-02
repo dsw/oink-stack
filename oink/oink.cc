@@ -137,8 +137,7 @@ void ModuleClassDef_Visitor::subPostVisitTS_classSpec(TS_classSpec *obj) {
 
   StringRef module = moduleForLoc(obj->loc);
   Variable_O * const typedefVar = asVariable_O(obj->ctype->typedefVar);
-  StringRef lookedUpModule =
-    classFQName2Module.get
+  StringRef lookedUpModule = classFQName2Module.get
     (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()));
   if (lookedUpModule) {
     // if already in the map, check they agree
@@ -2529,6 +2528,21 @@ StringRef moduleForLoc(SourceLoc loc) {
     module = defaultModule;
   }
   return module;
+}
+
+StringRef moduleForType(StringRefMap<char const> *classFQName2Module,
+                        Type *type)
+{
+  if (!type->isCVAtomicType()) return NULL;
+  CVAtomicType *cvat = type->asCVAtomicType();
+  if (!cvat->atomic->isCompoundType()) return NULL;
+  CompoundType *cpd = cvat->atomic->asCompoundType();
+  Variable_O *typedefVar = asVariable_O(cpd->typedefVar);
+  StringRef lookedUpModule = classFQName2Module->get
+    (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()));
+  // FIX: should this be a user assert?
+  xassert(lookedUpModule);
+  return lookedUpModule;
 }
 
 StringRef funCallName_ifSimpleE_variable(E_funCall *obj) {
