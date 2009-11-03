@@ -5,7 +5,7 @@ loading module foo from mod file Test/verify1_foo.mod
 	adding to modules map: Test/verify1_foo.h -> foo
 setting default module to default
 warning: the -fo-merge-E_variable-and-var-values flag is incompatible with doing module analyses, so turning it off.
-localize: (struct Foo), struct_Foo_a7198b88, size:fix, (class header filename here)
+localize: c-type-name:(struct Foo), alnum-name:struct_Foo_a7198b88, size:fix, header-file:(class header filename here)
 --- Test/verify1_foo.c
 +++ Test/verify1_foo.c
 @@ -6,1 +6,1 @@

@@ -1092,13 +1092,13 @@ void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
     << "localize: "
     // the C name of the class; despite the name, this is a good
     // string rep of the type,
-    << "(" << mangledTypeName << "), "
+    << "c-type-name:(" << mangledTypeName << "), "
     // the alnum mangled name,
-    << alnumMangledTypeName << ", "
+    << "alnum-name:" << alnumMangledTypeName << ", "
     // whether the class has a fixed size or not,
     << (castAtType_dynSize ? "size:dyn" : "size:fix") << ", "
     // the header file containing the definition of that class
-    << "(class header filename here)"
+    << "header-file:(class header filename here)"
     << std::endl;
 }
 
