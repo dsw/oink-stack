@@ -52,17 +52,10 @@ struct GenStatementInfo {
 class CodeGenASTVisitor : public ASTVisitor {
   // The LLVM context
   llvm::LLVMContext& context;
-  std::map<Expression*, llvm::Value*> valueMap;
-  std::map<Expression*, llvm::Value*> lvalueMap;
-  std::map<Expression*, std::string> names;
   llvm::Function* currentFunction;
   // The alloca instruction insertion point
   llvm::Instruction* allocaInsertPt;
   std::map<Variable*, llvm::Value*> variables;
-
-  llvm::Value* getLvalueFor(Expression* expr) {
-    return lvalueMap[expr];
-  }
 
   public:
   llvm::Module *mod;
