@@ -89,6 +89,7 @@ bool CodeGenASTVisitor::visitFunction(Function *obj) {
     (obj->nameAndParams->var->name,  // function name
      funcType);
   currentFunction = llvm::cast<llvm::Function>(c);
+  variables[obj->nameAndParams->var] = currentFunction;
 
   llvm::BasicBlock* entryBlock = llvm::BasicBlock::Create(context, "entry", currentFunction);
 
@@ -103,7 +104,14 @@ bool CodeGenASTVisitor::visitFunction(Function *obj) {
     llvm::BasicBlock::Create(context, locToStr(obj->body->loc).c_str(), currentFunction);
   llvm::IRBuilder<> builder(entryBlock);
   builder.CreateBr(bodyEnterBlock);
-  genStatement(bodyEnterBlock, obj->body);
+  GenStatementInfo genStatementInfo;
+  llvm::BasicBlock* bodyExitBlock = genStatement(bodyEnterBlock, obj->body, genStatementInfo);
+  if (bodyExitBlock != NULL) {
+    // Control possibly reaches end of function, insert return at end
+    llvm::IRBuilder<> builder(bodyExitBlock);
+    llvm::Value *Undef = llvm::UndefValue::get(currentFunction->getReturnType());
+    builder.CreateRet(Undef);
+  }
 
   return true;
 }
@@ -284,7 +292,7 @@ bool CodeGenASTVisitor::visitOperatorName(OperatorName *obj) {
 void CodeGenASTVisitor::postvisitOperatorName(OperatorName *obj) {
 }
 
-llvm::BasicBlock* CodeGenASTVisitor::genStatement(llvm::BasicBlock* currentBlock, Statement *obj) {
+llvm::BasicBlock* CodeGenASTVisitor::genStatement(llvm::BasicBlock* currentBlock, Statement *obj, GenStatementInfo info) {
   assert (currentBlock != NULL);
 
   switch (obj->kind()) {
@@ -294,7 +302,7 @@ llvm::BasicBlock* CodeGenASTVisitor::genStatement(llvm::BasicBlock* currentBlock
       if (currentBlock == NULL) {
 	currentBlock = llvm::BasicBlock::Create(context, locToStr(iter.data()->loc).c_str(), currentFunction);
       }
-      currentBlock = genStatement(currentBlock, iter.data());
+      currentBlock = genStatement(currentBlock, iter.data(), info);
     }
     return currentBlock;
   }
@@ -329,7 +337,7 @@ llvm::BasicBlock* CodeGenASTVisitor::genStatement(llvm::BasicBlock* currentBlock
 
     llvm::BasicBlock* thenEnterBlock =
       llvm::BasicBlock::Create(context, "thenenter", currentFunction); // TODO: better name
-    llvm::BasicBlock* thenExitBlock = genStatement(thenEnterBlock, s_if->thenBranch);
+    llvm::BasicBlock* thenExitBlock = genStatement(thenEnterBlock, s_if->thenBranch, info);
 
     bool noElseClause = s_if->elseBranch->kind() == Statement::S_COMPOUND &&
       static_cast<S_compound*>(s_if->elseBranch)->stmts.count() == 1 &&
@@ -341,7 +349,7 @@ llvm::BasicBlock* CodeGenASTVisitor::genStatement(llvm::BasicBlock* currentBlock
       elseEnterBlock = ifAfterBlock = llvm::BasicBlock::Create(context, "ifafter", currentFunction); // TODO: better name
     } else {
       elseEnterBlock = llvm::BasicBlock::Create(context, "elseenter", currentFunction); // TODO: better name
-      elseExitBlock = genStatement(elseEnterBlock, s_if->elseBranch);
+      elseExitBlock = genStatement(elseEnterBlock, s_if->elseBranch, info);
       if (thenExitBlock != NULL || elseExitBlock != NULL) {
 	ifAfterBlock = llvm::BasicBlock::Create(context, "ifafter", currentFunction); // TODO: better name
       }
@@ -383,7 +391,10 @@ llvm::BasicBlock* CodeGenASTVisitor::genStatement(llvm::BasicBlock* currentBlock
       builder.CreateCondBr(condValue, bodyEnterBlock, whileAfterBlock);
     }
 
-    llvm::BasicBlock* bodyExitBlock = genStatement(bodyEnterBlock, s_while->body);
+    GenStatementInfo whileBodyInfo;
+    whileBodyInfo.breakTarget = whileAfterBlock;
+    whileBodyInfo.continueTarget = whileCondBlock;
+    llvm::BasicBlock* bodyExitBlock = genStatement(bodyEnterBlock, s_while->body, whileBodyInfo);
     if (bodyExitBlock != NULL) {
       llvm::IRBuilder<> builder(bodyExitBlock);
       builder.CreateBr(whileCondBlock);
@@ -396,22 +407,76 @@ llvm::BasicBlock* CodeGenASTVisitor::genStatement(llvm::BasicBlock* currentBlock
 
     llvm::BasicBlock* bodyEnterBlock =
       llvm::BasicBlock::Create(context, "dowhilebody", currentFunction); // TODO: better name
+    llvm::BasicBlock* doWhileCondBlock =
+      llvm::BasicBlock::Create(context, "dowhilecond", currentFunction); // TODO: better name
+    llvm::BasicBlock* doWhileAfterBlock =
+      llvm::BasicBlock::Create(context, "dowhileafter", currentFunction); // TODO: better name
 
     {
       llvm::IRBuilder<> builder(currentBlock);
       builder.CreateBr(bodyEnterBlock);
     }
-    llvm::BasicBlock* bodyExitBlock = genStatement(bodyEnterBlock, s_doWhile->body);
+    GenStatementInfo doWhileBodyInfo;
+    doWhileBodyInfo.breakTarget = doWhileAfterBlock;
+    doWhileBodyInfo.continueTarget = doWhileCondBlock;
+    llvm::BasicBlock* bodyExitBlock = genStatement(bodyEnterBlock, s_doWhile->body, doWhileBodyInfo);
     if (bodyExitBlock != NULL) {
-      llvm::Value* condValue = intToBoolValue(bodyExitBlock, fullExpressionToValue(bodyExitBlock, s_doWhile->expr));
       llvm::IRBuilder<> builder(bodyExitBlock);
-      llvm::BasicBlock* doWhileAfterBlock =
-	llvm::BasicBlock::Create(context, "dowhileafter", currentFunction); // TODO: better name
-      builder.CreateCondBr(condValue, bodyEnterBlock, doWhileAfterBlock);
-      return doWhileAfterBlock;
-    } else {
-      return NULL;
+      builder.CreateBr(doWhileCondBlock);
     }
+    {
+      llvm::Value* condValue = intToBoolValue(doWhileCondBlock, fullExpressionToValue(doWhileCondBlock, s_doWhile->expr));
+      llvm::IRBuilder<> builder(doWhileCondBlock);
+      builder.CreateCondBr(condValue, bodyEnterBlock, doWhileAfterBlock);
+    }
+    return doWhileAfterBlock;
+  }
+  case Statement::S_FOR: {
+    S_for* s_for = static_cast<S_for*>(obj);
+    currentBlock = genStatement(currentBlock, s_for->init, info);
+
+    llvm::BasicBlock* forCondBlock =
+      llvm::BasicBlock::Create(context, "forcond", currentFunction); // TODO: better name
+    llvm::BasicBlock* forUpdateBlock =
+      llvm::BasicBlock::Create(context, "forupdate", currentFunction); // TODO: better name
+    llvm::BasicBlock* bodyEnterBlock =
+      llvm::BasicBlock::Create(context, "forbody", currentFunction); // TODO: better name
+    llvm::BasicBlock* forAfterBlock =
+      llvm::BasicBlock::Create(context, "forafter", currentFunction); // TODO: better name
+
+    {
+      llvm::IRBuilder<> builder(currentBlock);
+      builder.CreateBr(bodyEnterBlock);
+    }
+    {
+      llvm::Value* condValue = condToValue(forCondBlock, s_for->cond);
+      llvm::IRBuilder<> builder(forCondBlock);
+      builder.CreateCondBr(condValue, bodyEnterBlock, forAfterBlock);
+    }
+    {
+      fullExpressionToValue(forUpdateBlock, s_for->after); // discard return
+      llvm::IRBuilder<> builder(forUpdateBlock);
+      builder.CreateBr(forCondBlock);
+    }
+    GenStatementInfo forBodyInfo;
+    forBodyInfo.breakTarget = forAfterBlock;
+    forBodyInfo.continueTarget = forUpdateBlock;
+    llvm::BasicBlock* bodyExitBlock = genStatement(bodyEnterBlock, s_for->body, forBodyInfo);
+    if (bodyExitBlock != NULL) {
+      llvm::IRBuilder<> builder(bodyExitBlock);
+      builder.CreateBr(forUpdateBlock);
+    }
+    return forAfterBlock;
+  }
+  case Statement::S_BREAK: {
+    llvm::IRBuilder<> builder(currentBlock);
+    builder.CreateBr(info.breakTarget);
+    return NULL;
+  }
+  case Statement::S_CONTINUE: {
+    llvm::IRBuilder<> builder(currentBlock);
+    builder.CreateBr(info.continueTarget);
+    return NULL;
   }
   case Statement::S_SKIP: {
     return currentBlock;
@@ -539,6 +604,11 @@ llvm::Value* CodeGenASTVisitor::expressionToValue(llvm::BasicBlock* currentBlock
       return NULL;
     }
     }
+  }
+  case Expression::E_FUNCALL: {
+    E_funCall* funCallExpr = static_cast<E_funCall *>(obj);
+    llvm::IRBuilder<> builder(currentBlock);
+    return builder.CreateCall(expressionToLvalue(currentBlock, funCallExpr->func));
   }
   default: {
     assert(0);

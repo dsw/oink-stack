@@ -41,6 +41,14 @@ class Bullet : public virtual Oink {
   void printASTHistogram_stage();
 };
 
+struct GenStatementInfo {
+  GenStatementInfo() {
+    breakTarget = continueTarget = NULL;
+  }
+  llvm::BasicBlock* breakTarget;
+  llvm::BasicBlock* continueTarget;
+};
+
 class CodeGenASTVisitor : public ASTVisitor {
   // The LLVM context
   llvm::LLVMContext& context;
@@ -66,7 +74,7 @@ class CodeGenASTVisitor : public ASTVisitor {
   llvm::AllocaInst *createTempAlloca(const llvm::Type *ty, const char *name);
   const llvm::Type* makeTypeSpecifier(Type *t);
 
-  llvm::BasicBlock* genStatement(llvm::BasicBlock* currentBlock, Statement *obj);
+  llvm::BasicBlock* genStatement(llvm::BasicBlock* currentBlock, Statement *obj, GenStatementInfo info);
   llvm::Value* expressionToValue(llvm::BasicBlock* currentBlock, Expression *obj);
   llvm::Value* expressionToLvalue(llvm::BasicBlock* currentBlock, Expression *obj);
   llvm::Value* fullExpressionToValue(llvm::BasicBlock* currentBlock, FullExpression *obj);

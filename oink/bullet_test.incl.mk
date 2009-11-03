@@ -11,11 +11,11 @@ $(error This makefile should be included in Test.incl.mk, not used stand-alone)
 endif
 
 BULLET_TESTS=\
+bullet_test_trivial \
 bullet_test_binop \
 bullet_test_if \
 bullet_test_if_else_2 \
 bullet_test_if_else \
-bullet_test_trivial \
 bullet_test_variables \
 bullet_test_while \
 bullet_test_while_2 \
@@ -23,7 +23,11 @@ bullet_test_while_3 \
 bullet_test_do_while \
 bullet_test_do_while_2 \
 bullet_test_do_while_3 \
-
+bullet_test_do_while_4 \
+bullet_test_break \
+bullet_test_continue \
+bullet_test_for \
+bullet_test_func_call \
 
 .PHONY: bullet-check
 bullet-check: $(BULLET_TESTS)
