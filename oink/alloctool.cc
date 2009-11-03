@@ -116,22 +116,6 @@ static void appendHexStr(unsigned int i, stringBuilder &ret) {
   free(hex);
 }
 
-// mangle 'type' into (1) a legal C/C++ identifier that (2) preserves
-// information; put the result into 'ret'
-static void mangleTypeToIdentifier(Type *type, stringBuilder &ret) {
-  // get the Elsa-mangled name of the type
-  StringRef mangledTypeName = globalStrTable(mangle(type));
-
-  // get something human-readable out of the thing
-  get_strings(mangledTypeName, ret);
-  ret << "_";
-
-  // append a hash of the mangledTypeName
-  unsigned int mangledHashed = hash_str(mangledTypeName);
-  // FIX: replace this with proquints
-  appendHexStr(mangledHashed, ret);
-}
-
 // Decides if this variable allocated on the stack.  Note that if it
 // is in a class/struct/union we say no as it's container decides it.
 //
@@ -1073,10 +1057,22 @@ void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
     // found already if it were being allocated in the wrong module
   }
 
+  // get the Elsa-mangled name of the type
+  StringRef mangledTypeName = globalStrTable(mangle(castAtType));
+
+  // unique alphanum identifier for this class
+  stringBuilder alnumMangledTypeName;
+  // alphanum substrs of the mangledTypeName to preserve readability
+  get_strings(mangledTypeName, alnumMangledTypeName);
+  // hash of the mangledTypeName to preserve information; FIX: replace
+  // hex with proquints
+  alnumMangledTypeName << "_";
+  appendHexStr(hash_str(mangledTypeName), alnumMangledTypeName);
+
   // new alloc: old_name + mangled_type_name + module_name + (args)
   stringBuilder newAlloc;
-  newAlloc << funcName << "_";
-  mangleTypeToIdentifier(castAtType, newAlloc);
+  newAlloc << funcName;
+  newAlloc << "_" << alnumMangledTypeName;
   newAlloc << "_" << allocatorModule;
   newAlloc << "(";
   if (castAtType_dynSize) {
@@ -1092,10 +1088,18 @@ void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
 
   // record that we mangled this type; for each file emit a
   // corresponding configuration file listing for each class:
-  //  - the string naming the class in C,
-  //  - the mangled name in C,
-  //  - whether the class has a fixed size or not,
-  //  - the header file containing the definition of that class,
+  std::cout
+    << "localize: "
+    // the C name of the class; despite the name, this is a good
+    // string rep of the type,
+    << "(" << mangledTypeName << "), "
+    // the alnum mangled name,
+    << alnumMangledTypeName << ", "
+    // whether the class has a fixed size or not,
+    << (castAtType_dynSize ? "size:dyn" : "size:fix") << ", "
+    // the header file containing the definition of that class
+    << "(class header filename here)"
+    << std::endl;
 }
 
 bool LocalizeHeapAlloc_ASTVisitor::visitExpression(Expression *obj) {

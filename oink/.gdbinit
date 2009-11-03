@@ -1142,3 +1142,5 @@ break breaker
 break malloc_error_break
 
 run
+
+# run this from emacs using "gdb -f"
