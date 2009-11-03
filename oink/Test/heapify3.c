@@ -1,6 +1,13 @@
+#include <stdio.h>
+
+void f(int a[]) {
+}
+
 int main() {
-//   int x[3][2];
-//   &(x[1][2]);
-//   int x;
-//   if (1) ++x;
+  // from Derrick
+  int a[] = { 0, 1, 2 };
+  char str[] = "Hello world!";
+  printf(str);
+  f(a);
+  return 0;
 }

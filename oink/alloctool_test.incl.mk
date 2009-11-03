@@ -46,6 +46,14 @@ alloctool-check-heapify:
            > Test/heapify2.c.patch.out
 	diff Test/heapify2.c.patch.cor Test/heapify2.c.patch.out
 
+.PHONY: alloctool-check-heapify3
+alloctool-check-heapify3: Test/heapify3.i
+# check handles Derrick's concerns
+	./alloctool -fa-heapify-stack-alloc-addr-taken $^
+# 	./alloctool -fa-heapify-stack-alloc-addr-taken $^ \
+#            > Test/heapify3.c.patch.out
+# 	diff Test/heapify3.c.patch.cor Test/heapify3.c.patch.out
+
 # check -fa-verify-cross-module-params
 .PHONY: alloctool-check-verify
 alloctool-check-verify: Test/verify1_foo.i Test/verify1_bar.i
@@ -71,5 +79,12 @@ alloctool-check-localize: Test/verify1_foo.i Test/verify1_bar.i
 
 # **** preprocessing
 
-Test/verify1_foo.i Test/verify1_bar.i: Test/verify1_%.i: Test/verify1_%.c
+TO_CPP :=
+TO_CPP += Test/verify1_foo.c
+TO_CPP += Test/verify1_bar.c
+TO_CPP += Test/heapify3.c
+
+TO_CPP_I := $(TO_CPP:.c=.i)
+
+$(TO_CPP_I): Test/%.i: Test/%.c
 	gcc -Wall -E -o $@ $<
