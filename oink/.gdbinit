@@ -1135,7 +1135,8 @@ file ./alloctool
 # set args -fa-heapify-stack-alloc-addr-taken Test/heapify1.c
 
 #set args -fa-verify-cross-module-params Test/verify1_foo.i Test/verify1_bar.i -o-mod-spec bar:Test/verify1_bar.mod -o-mod-spec foo:Test/verify1_foo.mod -o-mod-default default 
-set args -fa-localize-heap-alloc Test/verify1_foo.i Test/verify1_bar.i -o-mod-spec bar:Test/verify1_bar.mod -o-mod-spec foo:Test/verify1_foo.mod -o-mod-default default 
+# set args -fa-localize-heap-alloc Test/verify1_foo.i Test/verify1_bar.i -o-mod-spec bar:Test/verify1_bar.mod -o-mod-spec foo:Test/verify1_foo.mod -o-mod-default default 
+set args -fa-heapify-stack-alloc-addr-taken Test/heapify1.c
 
 break main
 break breaker

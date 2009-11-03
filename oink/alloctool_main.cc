@@ -33,13 +33,15 @@ int main(int argc, char **argv) {
     m.filter_stage();
     m.prettyPrint_stage();
 
-    // alloctool-specific features go here
+    // testing
     if (alloctoolCmd->print_stack_alloc) {
       m.printStackAlloc_stage();
     }
     if (alloctoolCmd->print_stack_alloc_addr_taken) {
       m.printStackAllocAddrTaken_stage();
     }
+
+    // transforms
     if (alloctoolCmd->heapify_stack_alloc_addr_taken) {
       m.heapifyStackAllocAddrTaken_stage();
     }

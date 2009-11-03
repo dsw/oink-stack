@@ -571,6 +571,17 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::pass(Variable *var) {
 
 bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
 visitFunction(Function *obj) {
+  // get the module for this function
+  SourceLoc loc = obj->nameAndParams->decl->loc;
+  StringRef module = moduleForLoc(loc);
+
+  // do not transform default modules
+  if (module == defaultModule) {
+    printf("skipping function in default module: %s\n",
+           obj->nameAndParams->var->name);
+    return false;
+  }
+
   if (obj == root) {
     // if this is the start of the traversal, we have visited this
     // S_compound before: skip this node and keep going down the tree
@@ -915,7 +926,9 @@ bool VerifyCrossModuleParams_ASTVisitor::visitFunction(Function *obj) {
   // get the module for this function
   SourceLoc loc = obj->nameAndParams->decl->loc;
   StringRef module = moduleForLoc(loc);
-  if (moduleForLoc(loc) == defaultModule) {
+
+  // do not transform default modules
+  if (module == defaultModule) {
     printf("skipping function in default module: %s\n",
            obj->nameAndParams->var->name);
     return false;
@@ -964,7 +977,10 @@ public:
     , patcher(patcher0)
   {}
 
+  // from superclass:
   virtual bool visitExpression(Expression *);
+
+  virtual bool visitFunction(Function *obj);
 
   virtual bool isAllocator0(E_funCall *, SourceLoc);
   virtual void subVisitCast0(Expression *cast, Expression *expr);
@@ -974,6 +990,21 @@ public:
 void LocalizeHeapAlloc_ASTVisitor::subVisitE_new0(E_new *) {
   // there is nothing to do here; FIX: we just have to imlement
   // operator new() for this class
+}
+
+bool LocalizeHeapAlloc_ASTVisitor::visitFunction(Function *obj) {
+  // get the module for this function
+  SourceLoc loc = obj->nameAndParams->decl->loc;
+  StringRef module = moduleForLoc(loc);
+
+  // do not transform default modules
+  if (module == defaultModule) {
+    printf("skipping function in default module: %s\n",
+           obj->nameAndParams->var->name);
+    return false;
+  }
+
+  return true;
 }
 
 bool LocalizeHeapAlloc_ASTVisitor::isAllocator0

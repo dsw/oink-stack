@@ -1,3 +1,6 @@
+adding to modules map: Test/heapify1.c -> foo
+setting default module to default
+warning: the -fo-merge-E_variable-and-var-values flag is incompatible with doing module analyses, so turning it off.
 
 ---- START ---- Test/heapify1.c
 Test/heapify1.c:18: param decl needs heapifying x2

@@ -36,21 +36,24 @@ alloctool-check-basic:
 alloctool-check-heapify:
 	@echo; echo $@
 # check handles declarators
-	./alloctool -fa-heapify-stack-alloc-addr-taken Test/heapify1.c \
+	./alloctool -fa-heapify-stack-alloc-addr-taken \
+           Test/heapify1.c \
+           -o-mod-spec foo@Test/heapify1.c -o-mod-default default \
            > Test/heapify1.c.patch.out
 	diff Test/heapify1.c.patch.cor Test/heapify1.c.patch.out
 # check handles return
 	./alloctool -fa-heapify-stack-alloc-addr-taken \
            -a-free-func free2 -a-xmalloc-func xmalloc2 \
            Test/heapify2.c \
+           -o-mod-spec foo@Test/heapify2.c -o-mod-default default \
            > Test/heapify2.c.patch.out
 	diff Test/heapify2.c.patch.cor Test/heapify2.c.patch.out
 
 .PHONY: alloctool-check-heapify3
 alloctool-check-heapify3: Test/heapify3.i
 # check handles Derrick's concerns
-	./alloctool -fa-heapify-stack-alloc-addr-taken $^
-# 	./alloctool -fa-heapify-stack-alloc-addr-taken $^ \
+	./alloctool -fa-heapify-stack-alloc-addr-taken $< \
+           -o-mod-spec foo@$(<:.i=.c) -o-mod-default default
 #            > Test/heapify3.c.patch.out
 # 	diff Test/heapify3.c.patch.cor Test/heapify3.c.patch.out
 

@@ -110,9 +110,9 @@ class OinkCmd {
   virtual void printHelp();
   virtual void initializeFromFlags();
 
-  // map the filenames listed in 'modFile' to 'module' into
-  // file2module
-  virtual void loadModule(StringRef modFile, StringRef module);
+  // build the file2module map
+  void regModuleImmediate(char const *filename, StringRef module);
+  void regModuleFromModfile(StringRef modFile, StringRef module);
 };
 
 char const *boolToStr(bool b);

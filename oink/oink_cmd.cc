@@ -207,43 +207,59 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
     traceAddSys(shift(argc, argv));
     return;
   }
+
   if (streq(arg, "-o-lang")) {
     shift(argc, argv);
     char const *langName = shift(argc, argv, "Missing argument to -o-lang");
     lang = string2Lang(langName);
     return;
   }
+
   if (streq(arg, "-o-program-files")) {
     shift(argc, argv);
     inputFiles.append(new ProgramFile(globalStrTable(shift(argc, argv))));
     return;
   }
+
   if (streq(arg, "-o-control")) {
     shift(argc, argv);
     control = shift(argc, argv);
     return;
   }
+
   if (streq(arg, "-o-func-filter")) {
     shift(argc, argv);
     func_filter = shift(argc, argv);
     return;
   }
+
   if (streq(arg, "-o-mod-spec")) {
     shift(argc, argv);
     char const *arg0 = shift(argc, argv, "Missing argument to -o-mod-spec");
+
     // parse mod spec; it is of the form "module:modfile.mod"
     char const *colonPos = strstr(arg0, ":");
-    if (!colonPos) {
-      throw UserError(USER_ERROR_ExitCode,
-                      stringc << "Illegal mod spec: " << arg0);
+    if (colonPos) {
+      StringRef module = globalStrTable(strndup0(arg0, colonPos-arg0));
+      StringRef modFile = colonPos+1;
+      regModuleFromModfile(modFile, module);
+      return;
     }
-    StringRef module = globalStrTable(strndup0(arg0, colonPos-arg0));
-    // not guaranteed to be new so use appendUnique()
-    moduleList.appendUnique(const_cast<char*>(module));
-    StringRef modFile = colonPos+1;
-    loadModule(modFile, module);
+
+    // it is of the form "module@filename"
+    char const *atPos = strstr(arg0, "@");
+    if (atPos) {
+      StringRef module = globalStrTable(strndup0(arg0, atPos-arg0));
+      StringRef filename = atPos+1;
+      regModuleImmediate(filename, module);
+      return;
+    }
+
+    throw UserError(USER_ERROR_ExitCode,
+                    stringc << "Illegal mod spec: " << arg0);
     return;
   }
+
   if (streq(arg, "-o-mod-default")) {
     shift(argc, argv);
     char *arg0 = shift(argc, argv, "Missing argument to -o-mod-default");
@@ -264,6 +280,7 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
     help = true;
     return;
   }
+
   HANDLE_FLAG(help, "-fo-", "help");
   HANDLE_FLAG(verbose, "-fo-", "verbose");
   HANDLE_FLAG(print_stages, "-fo-", "print-stages");
@@ -272,12 +289,16 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
   HANDLE_FLAG(exit_after_elaborate, "-fo-", "exit-after-elaborate");
 
   HANDLE_FLAG(module_print_class2mod, "-fo-", "module-print-class2mod");
+
   HANDLE_FLAG(print_func_attrs, "-fo-", "print-func-attrs");
+
   HANDLE_FLAG(func_gran, "-fo-", "func-gran");
   HANDLE_FLAG(func_gran_dot, "-fo-", "func-gran-dot");
   HANDLE_FLAG(func_gran_rev_mod_pub, "-fo-", "func-gran-rev-mod-pub");
   HANDLE_FLAG(all_pass_filter, "-fo-", "all-pass-filter");
+
   HANDLE_FLAG(print_startstop, "-fo-", "print-startstop");
+
   HANDLE_FLAG(print_ast, "-fo-", "print-ast");
   HANDLE_FLAG(print_typed_ast, "-fo-", "print-typed-ast");
   HANDLE_FLAG(print_elaborated_ast, "-fo-", "print-elaborated-ast");
@@ -290,7 +311,7 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
 
   HANDLE_FLAG(trace_link, "-fo-", "trace-link");
   HANDLE_FLAG(report_link_errors, "-fo-", "report-link-errors");
-  // HANDLE_FLAG(report_link_errors, "-fo-", "report-unsatisfied-symbols"); // old name
+// HANDLE_FLAG(report_link_errors, "-fo-", "report-unsatisfied-symbols"); // old name
   HANDLE_FLAG(report_unused_controls, "-fo-", "report-unused-controls");
   HANDLE_FLAG(report_colorings, "-fo-", "report-colorings");
   HANDLE_FLAG(print_controls_and_exit, "-fo-", "print-controls-and-exit");
@@ -302,7 +323,8 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
   HANDLE_FLAG(check_AST_integrity, "-fo-", "check-AST-integrity");
   HANDLE_FLAG(exclude_extra_star_amp, "-fo-", "exclude-extra-star-amp");
 
-  HANDLE_FLAG(merge_E_variable_and_var_values, "-fo-", "merge-E_variable-and-var-values");
+  HANDLE_FLAG(merge_E_variable_and_var_values,
+              "-fo-", "merge-E_variable-and-var-values");
 
   HANDLE_FLAG(instance_sensitive, "-fo-", "instance-sensitive");
   HANDLE_FLAG(array_index_flows, "-fo-", "array-index-flows");
@@ -310,7 +332,8 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
   if (streq(arg, "-o-srz")) {
     shift(argc, argv);
     if (!srz.empty()) {
-      throw UserError(USER_ERROR_ExitCode, "can specify at most one serialization output file");
+      throw UserError(USER_ERROR_ExitCode,
+                      "can specify at most one serialization output file");
     }
     srz = strdup(shift(argc, argv));
     return;
@@ -436,7 +459,10 @@ void OinkCmd::printHelp() {
      "  -o-program-files FILE    : add *contents* of FILE to list of input files\n"
      "  -o-control FILE          : give a file for controlling the behavior of oink\n"
      "  -o-func-filter FILE      : give a file listing Variables to be filtered out\n"
-     "  -o-mod-spec MOD:FILE     : give a module and a file containing filenames\n"
+     "  -o-mod-spec MOD@IMM_FILE : give a module and an immediate filename\n"
+     "                             to be associated with that module\n"
+     "  -o-mod-spec MOD:MOD_FILE : give a module and a module file "
+     "                             containing filenames\n"
      "                             to be associated with that module\n"
      "  -o-mod-default MOD       : give a module to be used when"
      "                             no mod-spec applies\n"
@@ -532,7 +558,8 @@ void OinkCmd::initializeFromFlags() {
     sourceLocManager->useOriginalOffset = false;
   }
 
-  variablesLinkerVisibleEvenIfNonStaticDataMember = !oinkCmd->instance_sensitive;
+  variablesLinkerVisibleEvenIfNonStaticDataMember =
+    !oinkCmd->instance_sensitive;
 
   // FIX: Can't do this since the lang can change to C++ depending on
   // the suffix; there are assertions elsewhere.
@@ -560,7 +587,23 @@ void OinkCmd::initializeFromFlags() {
   }
 }
 
-void OinkCmd::loadModule(StringRef modFile, StringRef module) {
+void OinkCmd::regModuleImmediate(char const *filename, StringRef module) {
+  filename = globalStrTable(filename);
+  std::cout << "adding to modules map: " << filename
+            << " -> " << module
+            << std::endl;
+  if (file2module.isMapped(filename)) {
+    throw UserError
+      (USER_ERROR_ExitCode, stringc
+       << "Filename mapped more than once in filename to module map: "
+       << filename);
+  }
+  file2module.add(filename, module);
+  // not guaranteed to be new so use appendUnique()
+  moduleList.appendUnique(const_cast<char*>(module));
+}
+
+void OinkCmd::regModuleFromModfile(StringRef modFile, StringRef module) {
   std::cout << "loading module " << module
             << " from mod file " << modFile
             << std::endl;
@@ -585,16 +628,7 @@ void OinkCmd::loadModule(StringRef modFile, StringRef module) {
     if (line.empty()) continue;
 
     // add the file named by the line to the module map
-    std::cout << "\tadding to modules map: " << line
-              << " -> " << module
-              << std::endl;
-    char const * const filename = globalStrTable(line.c_str());
-    if (file2module.isMapped(filename)) {
-      throw UserError
-        (USER_ERROR_ExitCode, stringc
-         << "Filename mapped more than once in filename to module map: "
-         << filename);
-    }
-    file2module.add(filename, module);
+    std::cout << "\t";
+    regModuleImmediate(line.c_str(), module);
   }
 }
