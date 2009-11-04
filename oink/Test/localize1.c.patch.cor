@@ -8,7 +8,7 @@ warning: the -fo-merge-E_variable-and-var-values flag is incompatible with doing
 skipping function in default module: _OSSwapInt16
 skipping function in default module: _OSSwapInt32
 skipping function in default module: _OSSwapInt64
-localize: c-type-name:(struct Foo), alnum-name:struct_Foo_a7198b88, size:fix, header-file:(class header filename here)
+localize: alnum-name:struct_Foo_a7198b88, size:sta, c-type-name:struct Foo
 --- Test/verify1_foo.c
 +++ Test/verify1_foo.c
 @@ -6,1 +6,1 @@

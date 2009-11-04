@@ -1139,15 +1139,13 @@ void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
   // corresponding configuration file listing for each class:
   std::cout
     << "localize: "
-    // the C name of the class; despite the name, this is a good
-    // string rep of the type,
-    << "c-type-name:(" << mangledTypeName << "), "
     // the alnum mangled name,
     << "alnum-name:" << alnumMangledTypeName << ", "
-    // whether the class has a fixed size or not,
-    << (castAtType_dynSize ? "size:dyn" : "size:fix") << ", "
-    // the header file containing the definition of that class
-    << "header-file:(class header filename here)"
+    // whether the class has a dynamic size or not,
+    << (castAtType_dynSize ? "size:dyn" : "size:sta") << ", "
+    // the C name of the class; despite the name, this is a good
+    // string rep of the type,
+    << "c-type-name:" << mangledTypeName
     << std::endl;
 }
 
