@@ -5796,7 +5796,7 @@ static void ErrorReporter_collect_errors(struct ErrorReporter *reporter, region 
 static void ErrorReporter_print_errors(struct ErrorReporter *reporter)
 {
   qual_error_descriptor_list_scanner qedls;
-  qual_error_descriptor qed;
+  qual_error_descriptor qed = NULL;
   int i;
 
 #if DELAY_SET_NAMES
