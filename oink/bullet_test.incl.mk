@@ -28,6 +28,7 @@ bullet_test_break \
 bullet_test_continue \
 bullet_test_for \
 bullet_test_func_call \
+bullet_test_func_call_2 \
 
 .PHONY: bullet-check
 bullet-check: $(BULLET_TESTS)

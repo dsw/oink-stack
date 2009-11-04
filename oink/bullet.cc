@@ -79,12 +79,28 @@ bool CodeGenASTVisitor::visitTopForm(TopForm *obj) {
 void CodeGenASTVisitor::postvisitTopForm(TopForm *obj) {
 }
 
+void CodeGenASTVisitor::moveArgsToStack(
+    llvm::BasicBlock* entryBlock, FunctionType *type, llvm::Function* func) {
+  llvm::Function::arg_iterator llvmArgIter = func->arg_begin();
+  llvm::IRBuilder<> builder(entryBlock);
+  SFOREACH_OBJLIST_NC(Variable, type->params, argIter) {
+    Variable* argVar = argIter.data();
+    llvm::Value* argValue = llvmArgIter++;
+    llvm::AllocaInst* lv = createTempAlloca(argValue->getType(), argVar->name);
+    variables[argVar] = lv;
+    builder.CreateStore(argValue, lv);
+  }
+}
+
 bool CodeGenASTVisitor::visitFunction(Function *obj) {
   obj->debugPrint(std::cout, 0);
   
   std::vector<const llvm::Type*> paramTypes;
+  SFOREACH_OBJLIST(Variable, obj->funcType->params, argIter) {
+    paramTypes.push_back(makeTypeSpecifier(argIter.data()->type));
+  }
   llvm::FunctionType* funcType =
-    llvm::FunctionType::get(llvm::IntegerType::get(context, 32), paramTypes, /*isVarArg*/false);
+    llvm::FunctionType::get(makeTypeSpecifier(obj->funcType->retType), paramTypes, /*isVarArg*/false);
   llvm::Constant *c = mod->getOrInsertFunction
     (obj->nameAndParams->var->name,  // function name
      funcType);
@@ -99,6 +115,8 @@ bool CodeGenASTVisitor::visitFunction(Function *obj) {
   llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::getInt32Ty(context));
   allocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::getInt32Ty(context), "",
 					 entryBlock);
+
+  moveArgsToStack(entryBlock, obj->funcType, currentFunction);
 
   llvm::BasicBlock* bodyEnterBlock =
     llvm::BasicBlock::Create(context, locToStr(obj->body->loc).c_str(), currentFunction);
@@ -142,55 +160,55 @@ const llvm::Type* CodeGenASTVisitor::makeTypeSpecifier(Type *t)
       SimpleTypeId id = st->type;
       switch (id) {
       case ST_CHAR: {
-	type = llvm::IntegerType::get(context, 8);
+	type = llvm::Type::getInt8Ty(context);
 	break;
       }
       case ST_UNSIGNED_CHAR: {
-	type = llvm::IntegerType::get(context, 8);
+	type = llvm::Type::getInt8Ty(context);
 	break;
       }
       case ST_SIGNED_CHAR: {
-	type = llvm::IntegerType::get(context, 8);
+	type = llvm::Type::getInt8Ty(context);
 	break;
       }
       case ST_INT: {
-	type = llvm::IntegerType::get(context, 32);
+	type = llvm::Type::getInt32Ty(context);
 	break;
       }
       case ST_UNSIGNED_INT: {
-	type = llvm::IntegerType::get(context, 32);
+	type = llvm::Type::getInt32Ty(context);
 	break;
       }
       case ST_LONG_INT: {
-	type = llvm::IntegerType::get(context, 32);
+	type = llvm::Type::getInt32Ty(context);
 	break;
       }
       case ST_UNSIGNED_LONG_INT: {
-	type = llvm::IntegerType::get(context, 32);
+	type = llvm::Type::getInt32Ty(context);
 	break;
       }
       case ST_LONG_LONG: {             // GNU/C99 extension
-	type = llvm::IntegerType::get(context, 64);
+	type = llvm::Type::getInt64Ty(context);
 	break;
       }
       case ST_UNSIGNED_LONG_LONG: {     // GNU/C99 extension
-	type = llvm::IntegerType::get(context, 64);
+	type = llvm::Type::getInt64Ty(context);
 	break;
       }
       case ST_SHORT_INT: {
-	type = llvm::IntegerType::get(context, 16);
+	type = llvm::Type::getInt16Ty(context);
 	break;
       }
       case ST_UNSIGNED_SHORT_INT: {
-	type = llvm::IntegerType::get(context, 16);
+	type = llvm::Type::getInt16Ty(context);
 	break;
       }
       case ST_WCHAR_T: {
-	type = llvm::IntegerType::get(context, 16);
+	type = llvm::Type::getInt16Ty(context);
 	break;
       }
       case ST_BOOL: {
-	type = llvm::IntegerType::get(context, 8);
+	type = llvm::Type::getInt8Ty(context);
 	break;
       }
       default: {
@@ -607,8 +625,12 @@ llvm::Value* CodeGenASTVisitor::expressionToValue(llvm::BasicBlock* currentBlock
   }
   case Expression::E_FUNCALL: {
     E_funCall* funCallExpr = static_cast<E_funCall *>(obj);
+    std::vector<llvm::Value *> args;
+    FAKELIST_FOREACH_NC(ArgExpression, funCallExpr->args, iter) {
+      args.push_back(expressionToValue(currentBlock, iter->expr));
+    }
     llvm::IRBuilder<> builder(currentBlock);
-    return builder.CreateCall(expressionToLvalue(currentBlock, funCallExpr->func));
+    return builder.CreateCall(expressionToLvalue(currentBlock, funCallExpr->func), args.begin(), args.end());
   }
   default: {
     assert(0);
