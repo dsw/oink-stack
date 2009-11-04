@@ -259,10 +259,6 @@ C_AND_CC_FLAGS += @CFLAGS_EXTRA@
 
 C_AND_CC_FLAGS += -Wcast-align
 
-# Need this for LLVM 2.6 headers
-C_AND_CC_FLAGS += -fpermissive
-
-
 # sm: I removed this flag because (1) it is only useful for
 # performance tuning, and (2) it produces mountains of useless
 # reports on gcc-2.95.3
@@ -274,7 +270,7 @@ C_AND_CC_FLAGS += -Wno-char-subscripts
 # -Wredundant-decls
 # -Wconversion
 
-C_AND_CC_FLAGS += -Wall
+C_AND_CC_FLAGS += -Wall -Werror
 #C_AND_CC_FLAGS += -g
 #C_AND_CC_FLAGS += -pg
 #C_AND_CC_FLAGS += -O2 -DNDEBUG

@@ -13,7 +13,7 @@ $| = 1;
 sub get_sm_config_version {
   $main::CC = getEnvOrDefault("CC", "gcc");
   $main::CXX = getEnvOrDefault("CXX", "g++");
-  @main::CCFLAGS = ("-g", "-Wall", "-Wno-deprecated", "-D__UNIX__");
+  @main::CCFLAGS = ("-g", "-Wall", "-Werror", "-Wno-deprecated", "-D__UNIX__");
   $main::CC_SYSINC_PATH = "";
   $main::debug = 0;
   $main::target = 0;

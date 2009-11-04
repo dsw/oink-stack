@@ -990,7 +990,7 @@ Type *E_binary::itcheck_complex_arith(Env &env)
 // invokes the type checker, which (due to disambiguation) may need to
 // change it to a different value, which in turn must be propagated to
 // the caller
-static void compile_time_compute_int_expr(Env &env, Expression *&e, int &x, char *error_msg) {
+static void compile_time_compute_int_expr(Env &env, Expression *&e, int &x, const char *error_msg) {
   e->tcheck(env, e);
   if (!e->constEval(env, x)) env.error(error_msg);
 }

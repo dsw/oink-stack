@@ -1884,7 +1884,7 @@ void GLR::rwlProcessWorklist()
     // record location of left edge; initially is location of
     // the lookahead token
     SOURCELOC( SourceLoc leftEdge = tokenLoc; )
-    SOURCELOC( SourceLoc rightEdge = SL_UNKNOWN; )
+    SOURCELOC( /*SourceLoc rightEdge = SL_UNKNOWN;*/ /*unused*/ )
 
     // build description of rhs for tracing
     ACTION(

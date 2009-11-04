@@ -1938,7 +1938,7 @@ CompoundType *checkClasskeyAndName(
       // override any mismatching prior decl
       if (definition && !templateArgs) {
         TRACE("env", "changing " << ct->keywordAndName() <<
-                     " to a " << toString(keyword) << endl);
+                     " to a " << toString(keyword) << std::endl);
         ct->keyword = (CompoundType::Keyword)keyword;
       }
     }
@@ -3614,7 +3614,7 @@ void Declarator::mid_tcheck(Env &env, Tcheck &dt)
     // quarl: had to add guard for friend declarations; I do think this should
     // be moved below
     if (env.scope()->isGlobalScope() ||
-        env.scope()->isClassScope() && (dt.dflags | DF_FRIEND))
+        (env.scope()->isClassScope() && (dt.dflags | DF_FRIEND)))
     {
       dt.dflags |= DF_EXTERN_C;
     }
@@ -7769,7 +7769,7 @@ Type *resolveOverloadedBinaryOperator(
   if (env.inUninstTemplate()) {
     // 14.6.2.2 para 1
     if (e1->type->containsGeneralizedDependent() ||
-        e2 && e2->type->containsGeneralizedDependent()) {
+        (e2 && e2->type->containsGeneralizedDependent())) {
       return env.dependentType();
     }
   }
@@ -7781,8 +7781,8 @@ Type *resolveOverloadedBinaryOperator(
   // check for operator overloading
   if (e1->type->asRval()->isCompoundType() ||
       e1->type->asRval()->isEnumType() ||
-      e2 && e2->type->asRval()->isCompoundType() ||
-      e2 && e2->type->asRval()->isEnumType()) {
+      (e2 && e2->type->asRval()->isCompoundType()) ||
+      (e2 && e2->type->asRval()->isEnumType())) {
     OVERLOADINDTRACE("found overloadable binary " << toString(op) <<
                      " near " << env.locStr());
     StringRef opName = env.operatorName[op];

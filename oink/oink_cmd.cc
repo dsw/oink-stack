@@ -47,7 +47,7 @@ InputLang getLangFromSuffix(char const *suff) {
   }
 }
 
-char *InputLang_toString(InputLang l) {
+const char *InputLang_toString(InputLang l) {
   switch(l) {
   default: xfailure("illegal InputLang");
   case KandR_C_InputLang:        return "KandR_C";

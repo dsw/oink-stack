@@ -39,7 +39,7 @@ char **buildPrefixUppercaseMap(char const *prefix, char const * const *src,
 
     // uppercase
     for (int j=0; j<len; j++) {
-      ret[i][j] = toupper(ret[i][j]);
+      ret[i][j] = (char)toupper(ret[i][j]);
     }
   }
 
@@ -447,7 +447,7 @@ bool isInequality(BinaryOp op)
 
 bool isOverloadable(BinaryOp op)
 {
-  return BIN_EQUAL <= op && op <= BIN_BRACKETS ||
+  return (BIN_EQUAL <= op && op <= BIN_BRACKETS) ||
          op == BIN_ARROW_STAR;
 }
 

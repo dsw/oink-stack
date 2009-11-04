@@ -44,11 +44,12 @@ CXX := @CXX@
 
 # flags for the C and C++ compilers (and preprocessor)
 # "-Ic" is needed for binaries that use $(support-set)
-CCFLAGS := @CCFLAGS@ -I$(SMBASE) -I$(AST) -Ic
+# -fno-strict-aliasing is needed due to use of type-punned pointers.
+CCFLAGS := @CCFLAGS@ -I$(SMBASE) -I$(AST) -Ic -fno-strict-aliasing
 
 # flags for the linker
 libraries := $(LIBAST) $(LIBSMBASE)
-LDFLAGS := -g -Wall $(libraries)
+LDFLAGS := -g -Wall -Werror $(libraries)
 
 
 # some other tools

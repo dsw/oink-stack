@@ -16,7 +16,10 @@
 #define __STDC_LIMIT_MACROS
 #define __STDC_CONSTANT_MACROS
 
-#include <llvm/Module.h>
+// Squelch LLVM warnings
+#pragma GCC diagnostic ignored "-Wconversion"
+#define INT64_C(C)  ((int64_t) C ## LL)
+#define UINT64_C(C) ((uint64_t) C ## ULL)
 #include <llvm/Module.h>
 #include <llvm/Function.h>
 #include <llvm/PassManager.h>
@@ -26,6 +29,7 @@
 #include <llvm/Support/IRBuilder.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Pass.h>
+//#include <llvm/Target/TargetData.h>
 
 class Bullet : public virtual Oink {
   // tor ****
@@ -38,77 +42,47 @@ class Bullet : public virtual Oink {
   void printASTHistogram_stage();
 };
 
+struct GenStatementInfo {
+  GenStatementInfo() {
+    breakTarget = continueTarget = NULL;
+  }
+  llvm::BasicBlock* breakTarget;
+  llvm::BasicBlock* continueTarget;
+};
+
 class CodeGenASTVisitor : public ASTVisitor {
   // The LLVM context
   llvm::LLVMContext& context;
+  // LLVM information about the target
+  //llvm::TargetData TD;
   llvm::Function* currentFunction;
-  llvm::BasicBlock* entryBlock;
-  llvm::BasicBlock *currentBlock;
-  llvm::BasicBlock *prevBlock;
-  std::map<Expression*, llvm::Value*> valueMap; // Do not use directly, use getValueFor()
-  std::map<Expression*, llvm::Value*> lvalueMap;
-  std::map<Expression*, std::string> names;
   // The alloca instruction insertion point
   llvm::Instruction* allocaInsertPt;
   std::map<Variable*, llvm::Value*> variables;
-
-  llvm::Value* getValueFor(Expression* expr);
-  llvm::Value* getLvalueFor(Expression* expr) {
-    return lvalueMap[expr];
-  }
 
   public:
   llvm::Module *mod;
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
 
-  int num_TranslationUnit;
-  int num_TopForm;
-  int num_Function;
-  int num_MemberInit;
-  int num_Declaration;
-  int num_ASTTypeId;
-  int num_PQName;
-  int num_TypeSpecifier;
-  int num_BaseClassSpec;
-  int num_Enumerator;
-  int num_MemberList;
-  int num_Member;
-  int num_Declarator;
-  int num_IDeclarator;
-  int num_ExceptionSpec;
-  int num_OperatorName;
-  int num_Statement;
-  int num_Condition;
-  int num_Handler;
-  int num_Expression;
-  int num_FullExpression;
-  int num_ArgExpression;
-  int num_ArgExpressionListOpt;
-  int num_Initializer;
-  int num_TemplateDeclaration;
-  int num_TemplateParameter;
-  int num_TemplateArgument;
-  int num_NamespaceDecl;
-  int num_FullExpressionAnnot;
-  int num_ASTTypeof;
-  int num_Designator;
-  int num_AttributeSpecifierList;
-  int num_AttributeSpecifier;
-  int num_Attribute;
-
   CodeGenASTVisitor();
   virtual ~CodeGenASTVisitor() {}
 
   llvm::AllocaInst *createTempAlloca(const llvm::Type *ty, const char *name);
-  const llvm::Type* makeTypeSpecifier(Type *t);
-  void printHistogram(std::ostream &out);
+  const llvm::Type* typeToLlvmType(Type *t);
+
+  llvm::BasicBlock* genStatement(llvm::BasicBlock* currentBlock, Statement *obj, GenStatementInfo info);
+  llvm::Value* expressionToValue(llvm::BasicBlock* currentBlock, Expression *obj);
+  llvm::Value* expressionToLvalue(llvm::BasicBlock* currentBlock, Expression *obj);
+  llvm::Value* fullExpressionToValue(llvm::BasicBlock* currentBlock, FullExpression *obj);
+  llvm::Value* intToBoolValue(llvm::BasicBlock* currentBlock, llvm::Value *intValue);
+  llvm::Value* condToValue(llvm::BasicBlock* currentBlock, Condition *obj);
+  void moveArgsToStack(llvm::BasicBlock* entryBlock, FunctionType *type, llvm::Function* func);
 
   virtual bool visitTranslationUnit(TranslationUnit *obj);
   virtual void postvisitTranslationUnit(TranslationUnit *obj);
   virtual bool visitTopForm(TopForm *obj);
   virtual void postvisitTopForm(TopForm *obj);
   virtual bool visitFunction(Function *obj);
-  virtual void postvisitFunction(Function *obj);
   virtual bool visitMemberInit(MemberInit *obj);
   virtual void postvisitMemberInit(MemberInit *obj);
   virtual bool visitDeclaration(Declaration *obj);
@@ -135,16 +109,10 @@ class CodeGenASTVisitor : public ASTVisitor {
   virtual void postvisitExceptionSpec(ExceptionSpec *obj);
   virtual bool visitOperatorName(OperatorName *obj);
   virtual void postvisitOperatorName(OperatorName *obj);
-  virtual bool visitStatement(Statement *obj);
-  virtual void postvisitStatement(Statement *obj);
   virtual bool visitCondition(Condition *obj);
   virtual void postvisitCondition(Condition *obj);
   virtual bool visitHandler(Handler *obj);
   virtual void postvisitHandler(Handler *obj);
-  virtual bool visitExpression(Expression *obj);
-  virtual void postvisitExpression(Expression *obj);
-  virtual bool visitFullExpression(FullExpression *obj);
-  virtual void postvisitFullExpression(FullExpression *obj);
   virtual bool visitArgExpression(ArgExpression *obj);
   virtual void postvisitArgExpression(ArgExpression *obj);
   virtual bool visitArgExpressionListOpt(ArgExpressionListOpt *obj);

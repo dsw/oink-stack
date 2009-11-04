@@ -16,7 +16,7 @@ REGIONFLAGS = -Ddeletes= -Dtraditional= -Dsameregion= -Dparentptr=
 CFLAGS :=
 CFLAGS += $(REGIONFLAGS)
 
-CFLAGS += -Wall
+CFLAGS += -Wall -Werror
 
 # turn on debugging symbols
 CFLAGS += -g
@@ -33,6 +33,7 @@ CFLAGS += -fno-strict-aliasing
 #CFLAGS += -O0
 ## Note: -O3 compiles incorrectly!
 #CFLAGS += -O3
+CFLAGS += -DYY_NO_INPUT
 
 OBJ :=
 

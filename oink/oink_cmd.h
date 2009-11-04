@@ -31,7 +31,7 @@ enum InputLang {
 
 InputLang string2Lang(char const *langName);
 InputLang getLangFromSuffix(char const *suff);
-char *InputLang_toString(InputLang l);
+const char *InputLang_toString(InputLang l);
 void setLangState_fromInputLang(CCLang &lang, InputLang tgtLang);
 
 class OinkCmd {

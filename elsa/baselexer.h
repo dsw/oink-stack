@@ -46,6 +46,7 @@ protected:  // funcs
   // adds a string with only the specified # of chars; writes (but
   // then restores) a null terminator if necessary, so 'str' isn't const
   StringRef addString(char *str, int len);
+  StringRef addStringConst(const char *str);
 
   // updLoc(), then for every newline found in
   // [yytext,yytext+yyleng-1], increment 'curLine'

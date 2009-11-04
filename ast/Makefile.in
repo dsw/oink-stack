@@ -25,7 +25,7 @@ CXX := @CXX@
 CCFLAGS := @CCFLAGS@ -I$(SMBASE)
 
 # flags for the linker
-LDFLAGS := -g -Wall $(LIBSMBASE)
+LDFLAGS := -g -Wall -Werror $(LIBSMBASE)
 
 
 # some other tools

@@ -14,7 +14,7 @@ DEP    := $(SMBASE_DIR)/depend.pl
 CFLAGS :=
 CFLAGS += -DNMEMDEBUG -DSIZEOF_VOIDP=4
 
-CFLAGS += -Wall
+CFLAGS += -Wall -Werror
 
 # turn on debugging symbols
 CFLAGS += -g

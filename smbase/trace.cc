@@ -172,7 +172,7 @@ void traceAddFromEnvVar()
 }
 
 
-void printTracers(std::ostream &out, char *delim)
+void printTracers(std::ostream &out, const char *delim)
 {
   bool first = true;
   FOREACH_OBJLIST(string, tracers, iter) {

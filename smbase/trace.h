@@ -48,7 +48,7 @@ void trstr(char const *sysName, char const *traceString);
   #define DO_TRACE 0
 #endif
 #if DO_TRACE != 0
-  #define TRACE(tag, exp) trace(tag) << exp << endl /* user ; */
+  #define TRACE(tag, exp) trace(tag) << exp << std::endl /* user ; */
 #else
   #define TRACE(tag, exp) ((void)0)
 #endif
@@ -82,6 +82,6 @@ extern bool ignoreTraceEnvVar;    // initially false
 
 
 // render the tracers as a string for examination
-void printTracers(std::ostream &out, char *delim = ", ");
+void printTracers(std::ostream &out, const char *delim = ", ");
 
 #endif // TRACE_H

@@ -184,8 +184,8 @@ public:
     //    See Declarator::mid_tcheck() for why this checks for DF_INLINE|DF_MEMBER.
     //    Note that these are not exclusive; a variable can have both static
     //    linkage (by being inline) and be a static member.
-    return ((hasFlag(DF_STATIC) &&
-             (hasFlag(DF_GLOBAL) || inGlobalOrNamespaceScope()) ||
+    return (((hasFlag(DF_STATIC) &&
+	      (hasFlag(DF_GLOBAL) || inGlobalOrNamespaceScope())) ||
              hasAllFlags(DF_INLINE | DF_MEMBER)) /*&&
                                                    !hasFlag(DF_GNU_EXTERN_INLINE)*/);
   }

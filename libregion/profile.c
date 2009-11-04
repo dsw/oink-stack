@@ -443,7 +443,9 @@ static char *prettify(void *p)
 
   /*printf("To child: %p\n", p);*/
   size = snprintf(buf, BUFSIZE, "%p\n", p);
-  write(child_in[1], buf, size);
+  if (write(child_in[1], buf, size) == -1) {
+    pfail("Unable to write to child process");
+  }
   size = read(child_out[0], buf, BUFSIZE - 1);
   if (!size)
     pfail("Unable to read from child process");

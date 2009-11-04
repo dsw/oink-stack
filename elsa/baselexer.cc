@@ -120,6 +120,11 @@ StringRef BaseLexer::addString(char *str, int len)
   }
 }
 
+StringRef BaseLexer::addStringConst(const char *str)
+{
+  return strtable.add(str);
+}
+
 
 void BaseLexer::whitespace()
 {

@@ -74,7 +74,7 @@ void test_alloc2()
   static const int COUNT = 10*1024*1024;
 
   for (int i = 0; i < COUNT; ++i) {
-    char x = (char) (unsigned char) i % 256;
+    char x = (char) ((unsigned char) i % 256);
     char *c = alloc.alloc<char>();
     *c = x;
   }
@@ -82,7 +82,7 @@ void test_alloc2()
   int i = 0;
   for (IterableBlockAllocator::Iter iter(alloc); !iter.isDone(); iter.adv())
   {
-    char x = (char) (unsigned char) i % 256;
+    char x = (char) ((unsigned char) i % 256);
     char *c = iter.data<char>();
     xassert(*c == x);
     ++i;
