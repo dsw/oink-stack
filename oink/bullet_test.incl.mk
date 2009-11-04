@@ -2,13 +2,13 @@
 
 # Included makefile for testing bullet.
 
-LLVMBIN=../../llvm/Release/bin
-ASSEMBLER=as
-CC=gcc
-
 ifndef TEST_MAKEFILE
 $(error This makefile should be included in Test.incl.mk, not used stand-alone)
 endif
+
+LLVMBIN=$(LLVM_DIR)/Release/bin
+ASSEMBLER=as
+CC=gcc
 
 BULLET_TESTS=\
 bullet_test_trivial \

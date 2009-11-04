@@ -69,7 +69,7 @@ my $EHD_DIR     = "../elkhound";
 my $ELSA_DIR    = "../elsa";
 my $LIBQUAL_DIR = "../libqual";
 my $LIBREGION_DIR = "../libregion";
-my $LLVM_DIR    = "../../llvm";
+my $LLVM_DIR    = "../llvm";
 
 my $TMP_DIR = ".";
 if (-d '/dev/shm' && -w '/dev/shm') {
