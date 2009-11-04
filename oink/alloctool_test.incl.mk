@@ -9,6 +9,7 @@ endif
 .PHONY: alloctool-check
 alloctool-check: alloctool-check-basic
 alloctool-check: alloctool-check-heapify
+alloctool-check: alloctool-check-heapify3
 alloctool-check: alloctool-check-verify
 alloctool-check: alloctool-check-localize
 
@@ -51,11 +52,12 @@ alloctool-check-heapify:
 
 .PHONY: alloctool-check-heapify3
 alloctool-check-heapify3: Test/heapify3.i
+	@echo; echo $@
 # check handles Derrick's concerns
 	./alloctool -fa-heapify-stack-alloc-addr-taken $< \
-           -o-mod-spec foo@$(<:.i=.c) -o-mod-default default
-#            > Test/heapify3.c.patch.out
-# 	diff Test/heapify3.c.patch.cor Test/heapify3.c.patch.out
+           -o-mod-spec foo@$(<:.i=.c) -o-mod-default default \
+            > Test/heapify3.c.patch.out
+	diff Test/heapify3.c.patch.cor Test/heapify3.c.patch.out
 
 # check -fa-verify-cross-module-params
 .PHONY: alloctool-check-verify

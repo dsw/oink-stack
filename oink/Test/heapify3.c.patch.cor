@@ -1,0 +1,11 @@
+adding to modules map: Test/heapify3.c -> foo
+setting default module to default
+warning: the -fo-merge-E_variable-and-var-values flag is incompatible with doing module analyses, so turning it off.
+
+---- START ---- Test/heapify3.i
+skipping function in default module: __sputc
+Test/heapify3.c:8: auto decl has compound initializer: a
+Test/heapify3.c:14: auto decl of an array: str
+Test/heapify3.c:19: auto decl has compound initializer: a2
+---- STOP ----
+

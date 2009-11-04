@@ -715,6 +715,24 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
                     << declarator->var->name << std::endl;
           return false;
         }
+        // punt on stack allocated arrays in general
+        if (declarator->var->type->isArrayType()) {
+          // FIX: Derrick pointed out initializing a heapified array
+          // from a string literal:
+          //
+          //  * use strcpy() on the initializer
+          //
+          //  * copy the string literal to all the sizeof expressions
+          //
+          //  * including the new initializer
+          //
+          // Note that sizeof str literal gives the size you want for
+          //  malloc: strlen() + 1.
+          printLoc(declarator->decl->loc);
+          std::cout << "auto decl of an array: "
+                    << declarator->var->name << std::endl;
+          return false;
+        }
       }
 
       // we should transform this one
