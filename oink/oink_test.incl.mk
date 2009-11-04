@@ -523,8 +523,8 @@ oink-check-func-gran: oink-check-func-gran-rev-mod-pub1
 .PHONY: oink-check-func-gran-rev-mod-pub1
 TEST_TOCLEAN += Test/func-gran-rev-mod-pub1.out
 oink-check-func-gran-rev-mod-pub1:
-	./oink -o-mod-spec bar:Test/bar3.mod \
-          -o-mod-spec hello:Test/hello3.mod \
+	./oink -o-mod-spec bar@Test/bar3.mod \
+          -o-mod-spec hello@Test/hello3.mod \
 	  -fo-func-gran -fo-func-gran-rev-mod-pub -o-mod-default default \
 	  Test/lib_bar3.i Test/hello3.i | \
           $(ELSA_DIR)/chop_out '---- START ---- fg-CFG-rev-mod-pub' \

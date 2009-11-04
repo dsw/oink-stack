@@ -39,14 +39,14 @@ alloctool-check-heapify:
 # check handles declarators
 	./alloctool -fa-heapify-stack-alloc-addr-taken \
            Test/heapify1.c \
-           -o-mod-spec foo@Test/heapify1.c -o-mod-default default \
+           -o-mod-spec foo:Test/heapify1.c -o-mod-default default \
            > Test/heapify1.c.patch.out
 	diff Test/heapify1.c.patch.cor Test/heapify1.c.patch.out
 # check handles return
 	./alloctool -fa-heapify-stack-alloc-addr-taken \
            -a-free-func free2 -a-xmalloc-func xmalloc2 \
            Test/heapify2.c \
-           -o-mod-spec foo@Test/heapify2.c -o-mod-default default \
+           -o-mod-spec foo:Test/heapify2.c -o-mod-default default \
            > Test/heapify2.c.patch.out
 	diff Test/heapify2.c.patch.cor Test/heapify2.c.patch.out
 
@@ -55,7 +55,7 @@ alloctool-check-heapify3: Test/heapify3.i
 	@echo; echo $@
 # check handles Derrick's concerns
 	./alloctool -fa-heapify-stack-alloc-addr-taken $< \
-           -o-mod-spec foo@$(<:.i=.c) -o-mod-default default \
+           -o-mod-spec foo:$(<:.i=.c) -o-mod-default default \
             > Test/heapify3.c.patch.out
 	diff Test/heapify3.c.patch.cor Test/heapify3.c.patch.out
 
@@ -65,8 +65,8 @@ alloctool-check-verify: Test/verify1_foo.i Test/verify1_bar.i
 	@echo; echo $@
 	./alloctool -fa-verify-cross-module-params $^ \
 	  -a-verify-func "verify2" \
-	  -o-mod-spec bar:Test/verify1_bar.mod \
-	  -o-mod-spec foo:Test/verify1_foo.mod \
+	  -o-mod-spec bar@Test/verify1_bar.mod \
+	  -o-mod-spec foo@Test/verify1_foo.mod \
 	  -o-mod-default default \
 	  > Test/verify1.c.patch.out
 	diff Test/verify1.c.patch.cor Test/verify1.c.patch.out
@@ -76,8 +76,8 @@ alloctool-check-verify: Test/verify1_foo.i Test/verify1_bar.i
 alloctool-check-localize: Test/verify1_foo.i Test/verify1_bar.i
 	@echo; echo $@
 	./alloctool -fa-localize-heap-alloc $^ \
-	  -o-mod-spec bar:Test/verify1_bar.mod \
-	  -o-mod-spec foo:Test/verify1_foo.mod \
+	  -o-mod-spec bar@Test/verify1_bar.mod \
+	  -o-mod-spec foo@Test/verify1_foo.mod \
 	  -o-mod-default default \
 	  > Test/localize1.c.patch.out
 	diff Test/localize1.c.patch.cor Test/localize1.c.patch.out

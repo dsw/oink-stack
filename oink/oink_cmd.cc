@@ -238,19 +238,19 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
     char const *arg0 = shift(argc, argv, "Missing argument to -o-mod-spec");
 
     // parse mod spec; it is of the form "module:modfile.mod"
-    char const *colonPos = strstr(arg0, ":");
-    if (colonPos) {
-      StringRef module = globalStrTable(strndup0(arg0, colonPos-arg0));
-      StringRef modFile = colonPos+1;
+    char const *atPos = strstr(arg0, "@");
+    if (atPos) {
+      StringRef module = globalStrTable(strndup0(arg0, atPos-arg0));
+      StringRef modFile = atPos+1;
       regModuleFromModfile(modFile, module);
       return;
     }
 
     // it is of the form "module@filename"
-    char const *atPos = strstr(arg0, "@");
-    if (atPos) {
-      StringRef module = globalStrTable(strndup0(arg0, atPos-arg0));
-      StringRef filename = atPos+1;
+    char const *colonPos = strstr(arg0, ":");
+    if (colonPos) {
+      StringRef module = globalStrTable(strndup0(arg0, colonPos-arg0));
+      StringRef filename = colonPos+1;
       regModuleImmediate(filename, module);
       return;
     }
@@ -459,9 +459,9 @@ void OinkCmd::printHelp() {
      "  -o-program-files FILE    : add *contents* of FILE to list of input files\n"
      "  -o-control FILE          : give a file for controlling the behavior of oink\n"
      "  -o-func-filter FILE      : give a file listing Variables to be filtered out\n"
-     "  -o-mod-spec MOD@IMM_FILE : give a module and an immediate filename\n"
+     "  -o-mod-spec MOD:IMM_FILE : give a module and an immediate filename\n"
      "                             to be associated with that module\n"
-     "  -o-mod-spec MOD:MOD_FILE : give a module and a module file "
+     "  -o-mod-spec MOD@MOD_FILE : give a module and a module file "
      "                             containing filenames\n"
      "                             to be associated with that module\n"
      "  -o-mod-default MOD       : give a module to be used when"

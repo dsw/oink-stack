@@ -15,14 +15,14 @@ qual-module-check-misc:
 # illegal mod spec
 	./qual -o-mod-spec Test/mod_foo_dupl.mod; test $$? -eq 1
 # duplicate module assignment for a file
-	./qual -o-mod-spec foo:Test/mod_foo_dupl.mod; test $$? -eq 1
+	./qual -o-mod-spec foo@Test/mod_foo_dupl.mod; test $$? -eq 1
 # check the verbose output of module_make_lattice
 	./module_make_lattice --mod waga --mod zeeip 2>&1 | \
 	  grep 'module_make_lattice modules: waga, zeeip'
 # test that printing the class to module map works
-	./oink -o-mod-spec gronk:Test/mod_gronk.mod -fo-module-print-class2mod Test/mod_gronk.ii | $(ELSA_DIR)/chop_out '---- START class to module map' '---- END class to module map' | grep 'D:Gronk gronk'
+	./oink -o-mod-spec gronk@Test/mod_gronk.mod -fo-module-print-class2mod Test/mod_gronk.ii | $(ELSA_DIR)/chop_out '---- START class to module map' '---- END class to module map' | grep 'D:Gronk gronk'
 # test that multiple modules per class results in an error
-	./oink -o-mod-spec gronk:Test/mod_gronk.mod -o-mod-spec gronk2:Test/mod_gronk_other.mod -fo-module-print-class2mod Test/mod_gronk.ii Test/mod_gronk_other.cc 2>&1 | grep 'class D:Gronk maps to two modules gronk2 and gronk'
+	./oink -o-mod-spec gronk@Test/mod_gronk.mod -o-mod-spec gronk2@Test/mod_gronk_other.mod -fo-module-print-class2mod Test/mod_gronk.ii Test/mod_gronk_other.cc 2>&1 | grep 'class D:Gronk maps to two modules gronk2 and gronk'
 	$(ANNOUNCE_TEST_PASS)
 
 # do a polymorphic analysis
@@ -61,8 +61,8 @@ qual-module-check-write-filter:
 	  > Test/mod_foo_hello_write_good.lattice
 	./qual -fq-module-write $(QUALCC_FLAGS) \
 	  -q-config Test/mod_foo_hello_write_good.lattice \
-	  -o-mod-spec hello:Test/mod_write_hello_good.mod \
-	  -o-mod-spec foo:Test/mod_foo.mod \
+	  -o-mod-spec hello@Test/mod_write_hello_good.mod \
+	  -o-mod-spec foo@Test/mod_foo.mod \
 	  Test/mod_write_hello.filter-good.c Test/mod_lib_foo.c
 	@echo "$@: bad"
 	./test_filter -bad < Test/mod_write_hello.c \
@@ -72,8 +72,8 @@ qual-module-check-write-filter:
 	  > Test/mod_foo_hello_write_bad.lattice
 	./qual -fq-module-write $(QUALCC_FLAGS) \
 	  -q-config Test/mod_foo_hello_write_bad.lattice \
-	  -o-mod-spec hello:Test/mod_write_hello_bad.mod \
-	  -o-mod-spec foo:Test/mod_foo.mod \
+	  -o-mod-spec hello@Test/mod_write_hello_bad.mod \
+	  -o-mod-spec foo@Test/mod_foo.mod \
 	  Test/mod_write_hello.filter-bad.c Test/mod_lib_foo.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)
 
@@ -90,8 +90,8 @@ qual-module-check-write-stack-filter:
 	  > Test/mod_foo_hello_write_stack_good.lattice
 	./qual -fq-module-write $(QUALCC_FLAGS) \
 	  -q-config Test/mod_foo_hello_write_stack_good.lattice \
-	  -o-mod-spec hello:Test/mod_write_hello_stack_good.mod \
-	  -o-mod-spec foo:Test/mod_foo.mod \
+	  -o-mod-spec hello@Test/mod_write_hello_stack_good.mod \
+	  -o-mod-spec foo@Test/mod_foo.mod \
 	  Test/mod_write_hello_stack.filter-good.c Test/mod_lib_foo.c
 	@echo "$@: bad"
 	./test_filter -bad < Test/mod_write_hello_stack.c \
@@ -101,8 +101,8 @@ qual-module-check-write-stack-filter:
 	  > Test/mod_foo_hello_write_stack_bad.lattice
 	./qual -fq-module-write $(QUALCC_FLAGS) \
 	  -q-config Test/mod_foo_hello_write_stack_bad.lattice \
-	  -o-mod-spec hello:Test/mod_write_hello_stack_bad.mod \
-	  -o-mod-spec foo:Test/mod_foo.mod \
+	  -o-mod-spec hello@Test/mod_write_hello_stack_bad.mod \
+	  -o-mod-spec foo@Test/mod_foo.mod \
 	  Test/mod_write_hello_stack.filter-bad.c Test/mod_lib_foo.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)
 
@@ -119,8 +119,8 @@ qual-module-check-access-filter:
 	  > Test/mod_foo_hello_access_good.lattice
 	./qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config Test/mod_foo_hello_access_good.lattice \
-	  -o-mod-spec hello:Test/mod_access_hello_good.mod \
-	  -o-mod-spec foo:Test/mod_foo.mod \
+	  -o-mod-spec hello@Test/mod_access_hello_good.mod \
+	  -o-mod-spec foo@Test/mod_foo.mod \
 	  Test/mod_access_hello.filter-good.c Test/mod_lib_foo.c
 	@echo "$@: bad"
 	./test_filter -bad < Test/mod_access_hello.c \
@@ -130,8 +130,8 @@ qual-module-check-access-filter:
 	  > Test/mod_foo_hello_access_bad.lattice
 	./qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config Test/mod_foo_hello_access_bad.lattice \
-	  -o-mod-spec hello:Test/mod_access_hello_bad.mod \
-	  -o-mod-spec foo:Test/mod_foo.mod \
+	  -o-mod-spec hello@Test/mod_access_hello_bad.mod \
+	  -o-mod-spec foo@Test/mod_foo.mod \
 	  Test/mod_access_hello.filter-bad.c Test/mod_lib_foo.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)
 
@@ -144,8 +144,8 @@ qual-module-check-access-lib_foo_simple1:
 	  > Test/lib_foo_simple1.lattice
 	./qual -q-config Test/lib_foo_simple1.lattice -fq-module-access \
 	  $(QUALCC_FLAGS) \
-	  -o-mod-spec hello:Test/lib_foo_simple1_hello.mod \
-	  -o-mod-spec foo:Test/lib_foo_simple1_foo.mod \
+	  -o-mod-spec hello@Test/lib_foo_simple1_hello.mod \
+	  -o-mod-spec foo@Test/lib_foo_simple1_foo.mod \
 	  -o-mod-default default \
 	  Test/lib_foo_simple1.i 2>&1 | \
           grep -e 'lib_foo.c:19 WARNING (1 of 1): z treated as $$hello_alloc and $$hello_otherAccess'
@@ -164,8 +164,8 @@ qual-module-check-trust-filter:
 	  > Test/mod_bar_hello_trust_good.lattice
 	./qual -fq-module-trust $(QUALCC_FLAGS) \
 	  -q-config Test/mod_bar_hello_trust_good.lattice \
-	  -o-mod-spec hello:Test/mod_trust_hello_good.mod \
-	  -o-mod-spec bar:Test/mod_bar.mod \
+	  -o-mod-spec hello@Test/mod_trust_hello_good.mod \
+	  -o-mod-spec bar@Test/mod_bar.mod \
 	  Test/mod_trust_hello.filter-good.c Test/mod_trust_bar.c
 	@echo "$@: bad"
 	./test_filter -bad < Test/mod_trust_hello.c \
@@ -175,8 +175,8 @@ qual-module-check-trust-filter:
 	  > Test/mod_bar_hello_trust_bad.lattice
 	./qual -fq-module-trust $(QUALCC_FLAGS) \
 	  -q-config Test/mod_bar_hello_trust_bad.lattice \
-	  -o-mod-spec hello:Test/mod_trust_hello_bad.mod \
-	  -o-mod-spec bar:Test/mod_bar.mod \
+	  -o-mod-spec hello@Test/mod_trust_hello_bad.mod \
+	  -o-mod-spec bar@Test/mod_bar.mod \
 	  Test/mod_trust_hello.filter-bad.c Test/mod_trust_bar.c; test $$? -eq 32
 	$(ANNOUNCE_TEST_PASS)
 
@@ -189,7 +189,7 @@ qual-module-check-stack-access:
 	  > Test/mod_waga_stack_access.lattice
 	./qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config Test/mod_waga_stack_access.lattice \
-	  -o-mod-spec waga:Test/mod_waga.mod \
+	  -o-mod-spec waga@Test/mod_waga.mod \
 	  -o-mod-default default \
 	  Test/hello_stack_access.c Test/waga_stack_access.c 2>&1 | \
           grep -e 'Test/hello_stack_access.c:4 WARNING (1 of 1): z treated as $$default_alloc and $$default_otherAccess'
@@ -204,8 +204,8 @@ qual-module-check-access-array:
 	  > Test/mod_gronk_baz_array.lattice
 	./qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config Test/mod_gronk_baz_array.lattice \
-	  -o-mod-spec gronk:Test/mod_gronk.mod \
-	  -o-mod-spec baz:Test/mod_baz.mod \
+	  -o-mod-spec gronk@Test/mod_gronk.mod \
+	  -o-mod-spec baz@Test/mod_baz.mod \
 	  Test/mod_gronk_baz_array.ii 2>&1 | \
           grep -e 'qual: Test/mod_baz.cc:5: class D:Gronk2 allocated in module baz but defined in module gronk'
 	$(ANNOUNCE_TEST_PASS)
@@ -219,8 +219,8 @@ qual-module-check-stack-alloc-class:
 	  > Test/mod_gronk_baz.lattice
 	./qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config Test/mod_gronk_baz.lattice \
-	  -o-mod-spec gronk:Test/mod_gronk.mod \
-	  -o-mod-spec baz:Test/mod_baz.mod \
+	  -o-mod-spec gronk@Test/mod_gronk.mod \
+	  -o-mod-spec baz@Test/mod_baz.mod \
 	  Test/mod_gronk_baz.ii 2>&1 | \
           grep -e 'qual: Test/mod_baz.cc:4: class D:Gronk allocated in module baz but defined in module gronk'
 	$(ANNOUNCE_TEST_PASS)
@@ -234,8 +234,8 @@ qual-module-check-access-class:
 	  > Test/mod_gronk_baz_access_class.lattice
 	./qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config Test/mod_gronk_baz_access_class.lattice \
-	  -o-mod-spec gronk:Test/mod_gronk.mod \
-	  -o-mod-spec baz:Test/mod_baz.mod \
+	  -o-mod-spec gronk@Test/mod_gronk.mod \
+	  -o-mod-spec baz@Test/mod_baz.mod \
 	  -o-mod-default default \
 	  Test/mod_gronk_baz_access_class.ii 2>&1 | \
           grep -e 'Test/mod_baz.cc:4 WARNING (1 of 1):  (new struct Gronk1  ()) treated as $$gronk_alloc and $$gronk_otherAccess'
@@ -250,8 +250,8 @@ qual-module-check-access-class-member:
 	  > Test/mod_gronk_baz2.lattice
 	./qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config Test/mod_gronk_baz2.lattice \
-	  -o-mod-spec gronk:Test/mod_gronk.mod \
-	  -o-mod-spec baz:Test/mod_baz.mod \
+	  -o-mod-spec gronk@Test/mod_gronk.mod \
+	  -o-mod-spec baz@Test/mod_baz.mod \
 	  Test/mod_gronk_baz2.ii 2>&1 | \
           grep -e 'Test/mod_baz.cc:5 WARNING (1 of 1): q treated as $$gronk_alloc and $$gronk_otherAccess'
 	$(ANNOUNCE_TEST_PASS)
@@ -265,8 +265,8 @@ qual-module-check-new-across-mod:
 	  > Test/mod_gronk_baz_new.lattice
 	./qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config Test/mod_gronk_baz_new.lattice \
-	  -o-mod-spec gronk:Test/mod_gronk.mod \
-	  -o-mod-spec baz:Test/mod_baz.mod \
+	  -o-mod-spec gronk@Test/mod_gronk.mod \
+	  -o-mod-spec baz@Test/mod_baz.mod \
 	  -o-mod-default default \
 	  Test/mod_gronk_baz_new.ii 2>&1 | \
           grep -e 'qual: Test/mod_baz.cc:6: class D:Gronk2 allocated in module baz but defined in module gronk'
@@ -281,8 +281,8 @@ qual-module-check-method:
 	  > Test/mod_gronk_baz_method.lattice
 	./qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config Test/mod_gronk_baz_method.lattice \
-	  -o-mod-spec gronk:Test/mod_gronk.mod \
-	  -o-mod-spec baz:Test/mod_baz.mod \
+	  -o-mod-spec gronk@Test/mod_gronk.mod \
+	  -o-mod-spec baz@Test/mod_baz.mod \
 	  -o-mod-default default \
 	  Test/mod_gronk_baz_method.ii 2>&1
 	$(ANNOUNCE_TEST_PASS)
@@ -296,8 +296,8 @@ qual-module-check-method2:
 	  > Test/mod_gronk_baz_method2.lattice
 	./qual -fq-module-access $(QUALCC_FLAGS) \
 	  -q-config Test/mod_gronk_baz_method2.lattice \
-	  -o-mod-spec gronk:Test/mod_gronk.mod \
-	  -o-mod-spec baz:Test/mod_baz.mod \
+	  -o-mod-spec gronk@Test/mod_gronk.mod \
+	  -o-mod-spec baz@Test/mod_baz.mod \
 	  -o-mod-default default \
 	  Test/mod_gronk_baz_method2.ii 2>&1 | \
           grep -e 'Test/mod_baz.cc:4 WARNING (1 of 1):  (new struct Gronk1  ()) treated as $$gronk_alloc and $$gronk_otherAccess'

@@ -31,7 +31,7 @@ MODS += bar
 
 # For now for simplicity we assume that each module is in a file
 # called module.mod; however this need not be the case in general.
-MOD_SPECS := $(foreach MOD,$(MODS),$(MOD):$(MOD).mod)
+MOD_SPECS := $(foreach MOD,$(MODS),$(MOD)@$(MOD).mod)
 
 hello2.exe: lib_bar.o
 
