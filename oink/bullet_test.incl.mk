@@ -29,6 +29,7 @@ bullet_test_continue \
 bullet_test_for \
 bullet_test_func_call \
 bullet_test_func_call_2 \
+bullet_test_fibonacci_recursive \
 
 .PHONY: bullet-check
 bullet-check: $(BULLET_TESTS)
