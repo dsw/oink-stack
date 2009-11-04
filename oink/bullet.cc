@@ -97,10 +97,10 @@ bool CodeGenASTVisitor::visitFunction(Function *obj) {
   
   std::vector<const llvm::Type*> paramTypes;
   SFOREACH_OBJLIST(Variable, obj->funcType->params, argIter) {
-    paramTypes.push_back(makeTypeSpecifier(argIter.data()->type));
+    paramTypes.push_back(typeToLlvmType(argIter.data()->type));
   }
   llvm::FunctionType* funcType =
-    llvm::FunctionType::get(makeTypeSpecifier(obj->funcType->retType), paramTypes, /*isVarArg*/false);
+    llvm::FunctionType::get(typeToLlvmType(obj->funcType->retType), paramTypes, /*isVarArg*/false);
   llvm::Constant *c = mod->getOrInsertFunction
     (obj->nameAndParams->var->name,  // function name
      funcType);
@@ -145,10 +145,8 @@ bool CodeGenASTVisitor::visitDeclaration(Declaration *obj) {
   return true;
 }
 
-const llvm::Type* CodeGenASTVisitor::makeTypeSpecifier(Type *t)
+const llvm::Type* CodeGenASTVisitor::typeToLlvmType(Type *t)
 {
-  const llvm::Type* type = NULL;
-
   switch (t->getTag())
   {
   case Type::T_ATOMIC: {
@@ -160,56 +158,43 @@ const llvm::Type* CodeGenASTVisitor::makeTypeSpecifier(Type *t)
       SimpleTypeId id = st->type;
       switch (id) {
       case ST_CHAR: {
-	type = llvm::Type::getInt8Ty(context);
-	break;
+	return llvm::Type::getInt8Ty(context);
       }
       case ST_UNSIGNED_CHAR: {
-	type = llvm::Type::getInt8Ty(context);
-	break;
+	return llvm::Type::getInt8Ty(context);
       }
       case ST_SIGNED_CHAR: {
-	type = llvm::Type::getInt8Ty(context);
-	break;
+	return llvm::Type::getInt8Ty(context);
       }
       case ST_INT: {
-	type = llvm::Type::getInt32Ty(context);
-	break;
+	return llvm::Type::getInt32Ty(context);
       }
       case ST_UNSIGNED_INT: {
-	type = llvm::Type::getInt32Ty(context);
-	break;
+	return llvm::Type::getInt32Ty(context);
       }
       case ST_LONG_INT: {
-	type = llvm::Type::getInt32Ty(context);
-	break;
+	return llvm::Type::getInt32Ty(context);
       }
       case ST_UNSIGNED_LONG_INT: {
-	type = llvm::Type::getInt32Ty(context);
-	break;
+	return llvm::Type::getInt32Ty(context);
       }
       case ST_LONG_LONG: {             // GNU/C99 extension
-	type = llvm::Type::getInt64Ty(context);
-	break;
+	return llvm::Type::getInt64Ty(context);
       }
       case ST_UNSIGNED_LONG_LONG: {     // GNU/C99 extension
-	type = llvm::Type::getInt64Ty(context);
-	break;
+	return llvm::Type::getInt64Ty(context);
       }
       case ST_SHORT_INT: {
-	type = llvm::Type::getInt16Ty(context);
-	break;
+	return llvm::Type::getInt16Ty(context);
       }
       case ST_UNSIGNED_SHORT_INT: {
-	type = llvm::Type::getInt16Ty(context);
-	break;
+	return llvm::Type::getInt16Ty(context);
       }
       case ST_WCHAR_T: {
-	type = llvm::Type::getInt16Ty(context);
-	break;
+	return llvm::Type::getInt16Ty(context);
       }
       case ST_BOOL: {
-	type = llvm::Type::getInt8Ty(context);
-	break;
+	return llvm::Type::getInt8Ty(context);
       }
       default: {
 	assert(0);
@@ -223,11 +208,15 @@ const llvm::Type* CodeGenASTVisitor::makeTypeSpecifier(Type *t)
     }
     break;
   }
+  case Type::T_ARRAY: {
+    ArrayType *at = t->asArrayType();
+    return llvm::ArrayType::get(typeToLlvmType(at->eltType), at->size);
+  }
   default: {
     assert(0);
   }
   }
-  return type;
+  assert(0);
 }
 
 void CodeGenASTVisitor::postvisitDeclaration(Declaration *obj) {
@@ -340,7 +329,7 @@ llvm::BasicBlock* CodeGenASTVisitor::genStatement(llvm::BasicBlock* currentBlock
     S_decl * s_decl = static_cast<S_decl *>(obj);
     FAKELIST_FOREACH_NC(Declarator, s_decl->decl->decllist, iter) {
       Variable* var = iter->var;
-      const llvm::Type* type = makeTypeSpecifier(var->type);
+      const llvm::Type* type = typeToLlvmType(var->type);
 
       if (var->flags & (DF_DEFINITION|DF_TEMPORARY)) {
 	// A local variable.
@@ -555,6 +544,10 @@ llvm::Value* CodeGenASTVisitor::expressionToLvalue(llvm::BasicBlock* currentBloc
     E_variable* variableExpr = static_cast<E_variable *>(obj);
     return variables[variableExpr->var];
   }
+  case Expression::E_DEREF: {
+    E_deref* derefExpr = static_cast<E_deref *>(obj);
+    return expressionToValue(currentBlock, derefExpr->ptr);
+  }
   default: {
     assert(0);
     return NULL;
@@ -573,6 +566,10 @@ llvm::Value* CodeGenASTVisitor::expressionToValue(llvm::BasicBlock* currentBlock
     llvm::IRBuilder<> builder(currentBlock);
     return builder.CreateLoad(variables[variableExpr->var], variableExpr->var->name);
   }
+  case Expression::E_DEREF: {
+    llvm::IRBuilder<> builder(currentBlock);
+    return builder.CreateLoad(expressionToLvalue(currentBlock, obj));
+  }
   case Expression::E_ASSIGN: {
     E_assign* assignExpr = static_cast<E_assign *>(obj);
     llvm::IRBuilder<> builder(currentBlock);
@@ -581,6 +578,12 @@ llvm::Value* CodeGenASTVisitor::expressionToValue(llvm::BasicBlock* currentBlock
       llvm::Value* src = expressionToValue(currentBlock, assignExpr->src);
       llvm::Value* target = expressionToLvalue(currentBlock, assignExpr->target);
       return builder.CreateStore(src, target);
+    }
+    case BIN_PLUS: {
+      llvm::Value* src = expressionToValue(currentBlock, assignExpr->src);
+      llvm::Value* targetLvalue = expressionToLvalue(currentBlock, assignExpr->target);
+      llvm::Value* targetValue = builder.CreateLoad(targetLvalue);
+      return builder.CreateStore(builder.CreateBinOp(llvm::Instruction::Add, targetValue, src, "expr"), targetLvalue);
     }
     default: {
       assert(0);
@@ -595,6 +598,20 @@ llvm::Value* CodeGenASTVisitor::expressionToValue(llvm::BasicBlock* currentBlock
     llvm::BinaryOperator::BinaryOps op;
     llvm::CmpInst::Predicate pred;
 
+    if (binaryExpr->e1->type->isReferenceType() &&
+	binaryExpr->e1->type->getAtType()->isArrayType() &&
+	(binaryExpr->op == BIN_PLUS || binaryExpr->op == BIN_MINUS)) {
+      llvm::Value* value1 = expressionToLvalue(currentBlock, binaryExpr->e1);
+      llvm::Value* value2 = expressionToValue(currentBlock, binaryExpr->e2);
+      std::vector<llvm::Value*> indexes;
+      indexes.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), 0));
+      indexes.push_back(binaryExpr->op == BIN_MINUS ? builder.CreateNeg(value2) : value2);
+      return builder.CreateGEP(value1, indexes.begin(), indexes.end());
+    }
+
+    llvm::Value* value1 = expressionToValue(currentBlock, binaryExpr->e1);
+    llvm::Value* value2 = expressionToValue(currentBlock, binaryExpr->e2);
+
     switch (binaryExpr->op) {
     case BIN_EQUAL:     pred = llvm::CmpInst::ICMP_EQ;  exprType = LlvmExpressionType::ICmpExpr; break;
     case BIN_NOTEQUAL:  pred = llvm::CmpInst::ICMP_NE;  exprType = LlvmExpressionType::ICmpExpr; break;
@@ -607,8 +624,6 @@ llvm::Value* CodeGenASTVisitor::expressionToValue(llvm::BasicBlock* currentBlock
     case BIN_MULT:  op = llvm::Instruction::Mul; exprType = LlvmExpressionType::BinOpExpr; break;
     default: assert(0); break;
     }
-    llvm::Value* value1 = expressionToValue(currentBlock, binaryExpr->e1);
-    llvm::Value* value2 = expressionToValue(currentBlock, binaryExpr->e2);
     switch (exprType) {
     case LlvmExpressionType::ICmpExpr: {
       llvm::Value* resultAsBool = builder.CreateICmp(pred, value1, value2, "expr"/*locToStr(obj->loc).c_str()*/);

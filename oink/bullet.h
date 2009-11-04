@@ -29,6 +29,7 @@
 #include <llvm/Support/IRBuilder.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Pass.h>
+//#include <llvm/Target/TargetData.h>
 
 class Bullet : public virtual Oink {
   // tor ****
@@ -52,6 +53,8 @@ struct GenStatementInfo {
 class CodeGenASTVisitor : public ASTVisitor {
   // The LLVM context
   llvm::LLVMContext& context;
+  // LLVM information about the target
+  //llvm::TargetData TD;
   llvm::Function* currentFunction;
   // The alloca instruction insertion point
   llvm::Instruction* allocaInsertPt;
@@ -65,7 +68,7 @@ class CodeGenASTVisitor : public ASTVisitor {
   virtual ~CodeGenASTVisitor() {}
 
   llvm::AllocaInst *createTempAlloca(const llvm::Type *ty, const char *name);
-  const llvm::Type* makeTypeSpecifier(Type *t);
+  const llvm::Type* typeToLlvmType(Type *t);
 
   llvm::BasicBlock* genStatement(llvm::BasicBlock* currentBlock, Statement *obj, GenStatementInfo info);
   llvm::Value* expressionToValue(llvm::BasicBlock* currentBlock, Expression *obj);

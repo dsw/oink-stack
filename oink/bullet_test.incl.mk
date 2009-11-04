@@ -30,6 +30,7 @@ bullet_test_for \
 bullet_test_func_call \
 bullet_test_func_call_2 \
 bullet_test_fibonacci_recursive \
+bullet_test_array \
 
 .PHONY: bullet-check
 bullet-check: $(BULLET_TESTS)
