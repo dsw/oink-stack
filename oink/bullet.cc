@@ -217,6 +217,7 @@ const llvm::Type* CodeGenASTVisitor::typeToLlvmType(Type *t)
   }
   }
   assert(0);
+  return NULL;
 }
 
 void CodeGenASTVisitor::postvisitDeclaration(Declaration *obj) {
