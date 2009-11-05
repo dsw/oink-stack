@@ -1021,12 +1021,15 @@ public:
 
   // from superclass:
   virtual bool visitExpression(Expression *);
-
-  virtual bool visitFunction(Function *obj);
-
   virtual bool isAllocator0(E_funCall *, SourceLoc);
   virtual void subVisitCast0(Expression *cast, Expression *expr);
   virtual void subVisitE_new0(E_new *);
+
+  virtual bool visitFunction(Function *obj);
+
+  void localize_heapExpr(SourceLoc loc, SourceLoc endloc,
+                         StringRef funcName, StringRef argStr,
+                         Type *heapObjType, bool heapObjType_dynSize);
 };
 
 void LocalizeHeapAlloc_ASTVisitor::subVisitE_new0(E_new *) {
@@ -1093,20 +1096,20 @@ void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
   // **** it's (x)malloc
 
   // get the type that we are allocating
-  Type *castAtType = cast->type->asRval()->asPointerType()->atType->asRval();
+  Type *heapObjType = cast->type->asRval()->asPointerType()->atType->asRval();
 
-  // check there is one argument and it is "sizeof(castAtType)"
+  // check there is one argument and it is "sizeof(heapObjType)"
   FakeList<ArgExpression> *args = efun->args;
   USER_ASSERT(args->count()==1, efun->loc,
               "(x)malloc does not have exactly 1 argument.");
   Expression *arg = args->first()->expr;
   if (arg->isE_sizeof()) {
-    USER_ASSERT(arg->asE_sizeof()->expr->type->asRval()->equals(castAtType),
+    USER_ASSERT(arg->asE_sizeof()->expr->type->asRval()->equals(heapObjType),
                 arg->loc,
                 "(x)malloc argument is not sizeof-expr the cast at-type.");
   } else if (arg->isE_sizeofType()) {
     USER_ASSERT(arg->asE_sizeofType()->atype->getType()->asRval()->
-                equals(castAtType),
+                equals(heapObjType),
                 arg->loc,
                 "(x)malloc argument is not sizeof-type of the cast at-type.");
   } else {
@@ -1115,65 +1118,21 @@ void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
   }
 
   // does the allocated type have static or dynamic size?
-  bool castAtType_dynSize = dynSize(castAtType, cast->loc);
+  bool heapObjType_dynSize = dynSize(heapObjType, cast->loc);
 
-  // get the module this code is in
-  StringRef allocatorModule = moduleForLoc(efun->loc);
-  if (StringRef castAtTypeModule =
-      moduleForType(classFQName2Module, castAtType))
-  {
-    USER_ASSERT(streq(allocatorModule, castAtTypeModule), efun->loc,
-                "Allocated type defined in different module than "
-                "call to allocator.");
-  } else {
-    // anonymous type: we can't tell if it is allocated in the right
-    // module; NOTE: we are trusting that the right module is the
-    // module of this file; that is, that another analysis would have
-    // found already if it were being allocated in the wrong module
+  // if type has a dynamic size then keep the size argument
+  StringRef argStr = "";
+  if (heapObjType_dynSize) {
+    // FIX: this is kind of an abuse of globalStrTable
+    argStr = globalStrTable(getRange(patcher, arg->loc, arg->endloc).c_str());
   }
-
-  // get the Elsa-mangled name of the type
-  StringRef mangledTypeName = globalStrTable(mangle(castAtType));
-
-  // unique alphanum identifier for this class
-  stringBuilder alnumMangledTypeName;
-  // alphanum substrs of the mangledTypeName to preserve readability
-  get_strings(mangledTypeName, alnumMangledTypeName);
-  // hash of the mangledTypeName to preserve information; FIX: replace
-  // hex with proquints
-  alnumMangledTypeName << "__";
-//   appendHexStr(hash_str(mangledTypeName), alnumMangledTypeName);
-  appendProquintStr(hash_str(mangledTypeName), alnumMangledTypeName);
-
-  // new alloc: old_name + mangled_type_name + module_name + (args)
-  stringBuilder newAlloc;
-  newAlloc << funcName;
-  newAlloc << "__" << alnumMangledTypeName;
-  newAlloc << "__" << allocatorModule;
-  newAlloc << "(";
-  if (castAtType_dynSize) {
-    // if type has a dynamic size then keep the size argument
-    newAlloc << getRange(patcher, arg->loc, arg->endloc).c_str();
-  }
-  newAlloc << ")";
 
   // replace the entire cast expression with a call to the mangled
-  // malloc; yes, we get rid of the cast as that helps us ensure type
-  // safety
-  printPatch(patcher, newAlloc.c_str(), cast->loc, cast->endloc);
-
-  // record that we mangled this type; for each file emit a
-  // corresponding configuration file listing for each class:
-  std::cout
-    << "localize: "
-    // the alnum mangled name,
-    << "alnum-name:" << alnumMangledTypeName << ", "
-    // whether the class has a dynamic size or not,
-    << (castAtType_dynSize ? "size:dyn" : "size:sta") << ", "
-    // the C name of the class; despite the name, this is a good
-    // string rep of the type,
-    << "c-type-name:" << mangledTypeName
-    << std::endl;
+  // malloc; yes, we get rid of the cast as well as that helps us
+  // ensure type safety at static time
+  localize_heapExpr(cast->loc, cast->endloc,
+                    funcName, argStr,
+                    heapObjType, heapObjType_dynSize);
 }
 
 bool LocalizeHeapAlloc_ASTVisitor::visitExpression(Expression *obj) {
@@ -1196,6 +1155,62 @@ bool LocalizeHeapAlloc_ASTVisitor::visitExpression(Expression *obj) {
     }
   }
   return ret;
+}
+
+// localize expressions that do heap operationss
+void LocalizeHeapAlloc_ASTVisitor::
+localize_heapExpr(SourceLoc loc, SourceLoc endloc,
+                  StringRef funcName, StringRef argStr,
+                  Type *heapObjType, bool heapObjType_dynSize)
+{
+  // get the module this code is in
+  StringRef allocatorModule = moduleForLoc(loc);
+  StringRef heapObjTypeModule = moduleForType(classFQName2Module, heapObjType);
+  if (heapObjTypeModule) {
+    USER_ASSERT(streq(allocatorModule, heapObjTypeModule), loc,
+                "Allocated type defined in different module than "
+                "call to allocator.");
+  } else {
+    // anonymous type: we can't tell if it is allocated in the right
+    // module; NOTE: we are trusting that the right module is the
+    // module of this file; that is, that another analysis would have
+    // found already if it were being allocated in the wrong module
+  }
+
+  // get the Elsa-mangled name of the type
+  StringRef mangledTypeName = globalStrTable(mangle(heapObjType));
+
+  // unique alphanum identifier for this class
+  stringBuilder alnumMangledTypeName;
+  // alphanum substrs of the mangledTypeName to preserve readability
+  get_strings(mangledTypeName, alnumMangledTypeName);
+  // hash of the mangledTypeName to preserve information
+  alnumMangledTypeName << "__";
+  appendProquintStr(hash_str(mangledTypeName), alnumMangledTypeName);
+//   appendHexStr(hash_str(mangledTypeName), alnumMangledTypeName);
+
+  // new alloc: old_name + mangled_type_name + module_name + (args)
+  stringBuilder newHeapExpr;
+  newHeapExpr << funcName;
+  newHeapExpr << "__" << alnumMangledTypeName;
+  newHeapExpr << "__" << allocatorModule;
+  newHeapExpr << "(" << argStr << ")";
+
+  // replace the expression with a call to the new heap expression
+  printPatch(patcher, newHeapExpr.c_str(), loc, endloc);
+
+  // record that we mangled this type; for each file emit a
+  // corresponding configuration file listing for each class:
+  std::cout
+    << "localize: "
+    // the alnum mangled name,
+    << "alnum-name:" << alnumMangledTypeName << ", "
+    // whether the class has a dynamic size or not,
+    << (heapObjType_dynSize ? "size:dyn" : "size:sta") << ", "
+    // the C name of the class; despite the name, this is a good
+    // pretty-printed string representation of the type,
+    << "c-type-name:" << mangledTypeName
+    << std::endl;
 }
 
 // **** AllocTool
