@@ -1117,7 +1117,7 @@ void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
 
   // get the module this code is in
   StringRef allocatorModule = moduleForLoc(efun->loc);
-  if (StringRef castAtTypeModule=
+  if (StringRef castAtTypeModule =
       moduleForType(classFQName2Module, castAtType))
   {
     USER_ASSERT(streq(allocatorModule, castAtTypeModule), efun->loc,
