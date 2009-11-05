@@ -1093,7 +1093,7 @@ void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
   // **** it's (x)malloc
 
   // get the type that we are allocating
-  Type *castAtType = cast->type->asRval()->asPointerType()->atType;
+  Type *castAtType = cast->type->asRval()->asPointerType()->atType->asRval();
 
   // check there is one argument and it is "sizeof(castAtType)"
   FakeList<ArgExpression> *args = efun->args;
@@ -1101,10 +1101,12 @@ void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
               "(x)malloc does not have exactly 1 argument.");
   Expression *arg = args->first()->expr;
   if (arg->isE_sizeof()) {
-    USER_ASSERT(arg->asE_sizeof()->expr->type->equals(castAtType), arg->loc,
+    USER_ASSERT(arg->asE_sizeof()->expr->type->asRval()->equals(castAtType),
+                arg->loc,
                 "(x)malloc argument is not sizeof-expr the cast at-type.");
   } else if (arg->isE_sizeofType()) {
-    USER_ASSERT(arg->asE_sizeofType()->atype->getType()->equals(castAtType),
+    USER_ASSERT(arg->asE_sizeofType()->atype->getType()->asRval()->
+                equals(castAtType),
                 arg->loc,
                 "(x)malloc argument is not sizeof-type of the cast at-type.");
   } else {
