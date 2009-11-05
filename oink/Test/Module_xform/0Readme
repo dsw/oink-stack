@@ -1,1 +1,12 @@
-This is an example of doing module transformation.
+This directory demonstrates module transformation.
+
+To build and test the code as usual, type:
+
+  make clean all check
+
+To localize the code and see the differences, type:
+
+  make all-xlize diff-xlize
+
+Other transformations such as heapify and verify are not yet
+implemented here.

@@ -2,6 +2,9 @@
 
 all:
 
+OINK := ../..
+LOCAL_MALLOC := $(OINK)/local_malloc
+
 EXE :=
 EXE += gronk.exe
 
@@ -45,33 +48,49 @@ $(addprefix test/,$(EXE)): test/%:
 
 # **** transforming
 
-OINK := ../..
+all-xlize:
 
+# the whole xform below is intended to work on one module at a time
 ifndef MODULE
-MODULE := gronk
+MODULE := gronkmod
 endif
 
+CLIENT_FILES :=
+# FIX: read this from $(MODULE).mod
+CLIENT_FILES += gronk.c
+
+.PHONY: all-xlize
+all-xlize: $(CLIENT_FILES:.c=.xlize.c)
+
+.PHONY: diff-xlize
+diff-xlize: $(CLIENT_FILES:.c=/diff)
+
+.PHONY: clean-xlize
+clean-xlize:
+	rm -f *.xlize_log *.xlize_spec *.xlize_patched.c *.xlize.c
+
+# * localize client code
+
+$(CLIENT_FILES:.c=/diff): %/diff: %.xlize_patched.c
+	diff -u $*.c $*.xlize_patched.c
+
 # .xlize.c: inserted includes of instantiated local_malloc.h
-gronk.xlize.c: %.xlize.c: %.xlize_spec %.xlize_patched.c
+$(CLIENT_FILES:.c=.xlize.c): %.xlize.c: %.xlize_spec %.xlize_patched.c
 	$(OINK)/xlize.py $*.xlize_spec < $*.xlize_patched.c > $@
 
 # .xlize_spec: canonical list of class-module pairs to transform
-gronk.xlize_spec: %.xlize_spec: %.xlize_log
+$(CLIENT_FILES:.c=.xlize_spec): %.xlize_spec: %.xlize_log
 	egrep '^localize:' < $< | sort | uniq > $@
 
 # .xlize_patched.c: localizations of call sites to malloc
-gronk.xlize_patched.c: %.xlize_patched.c: %.xlize_log %.c
+$(CLIENT_FILES:.c=.xlize_patched.c): %.xlize_patched.c: %.xlize_log %.c
 # I get 'missing header' warnings from patch, but it seems to work
 	patch -p1 -o $@ $*.c $*.xlize_log
 
 # .xlize_log: the (1) patch and (2) log of localized classes
-gronk.xlize_log: %.xlize_log: %.i
+$(CLIENT_FILES:.c=.xlize_log): %.xlize_log: %.i
 	$(OINK)/alloctool -fa-localize-heap-alloc $< \
 	  -o-mod-spec $(MODULE):$*.c \
 	  -o-mod-spec $(MODULE):$*.h \
 	  -o-mod-default default \
 	  > $@
-
-.PHONY: clean-xlize
-clean-xlize:
-	rm -f *.xlize_log *.xlize_spec *.xlize_patched.c *.xlize.c
