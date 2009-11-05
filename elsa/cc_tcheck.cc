@@ -162,7 +162,7 @@ public:
     : env(e), existingErrors()
   {
     suppressErrors = suppressErrorsArg || 
-      env.inUninstTemplate() && !env.doReportTemplateErrors;
+      (env.inUninstTemplate() && !env.doReportTemplateErrors);
     if (suppressErrors) {
       existingErrors.takeMessages(env.errors);
     }
