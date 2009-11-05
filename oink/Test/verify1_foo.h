@@ -6,6 +6,8 @@ struct Foo {
 };
 
 struct Foo *new_Foo();
+void free_Foo(struct Foo *foo);
+
 int get_x(struct Foo *foo);
 void set_x(struct Foo *foo, int x);
 

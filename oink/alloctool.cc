@@ -1093,7 +1093,7 @@ void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
     return;
   }
 
-  // **** it's (x)malloc
+  // **** it's a call to (x)malloc()
 
   // get the type that we are allocating
   Type *heapObjType = cast->type->asRval()->asPointerType()->atType->asRval();
@@ -1147,7 +1147,36 @@ bool LocalizeHeapAlloc_ASTVisitor::visitExpression(Expression *obj) {
         std::cout << "localization of heap de-allocator not implemented"
                   << std::endl;
       }
-      // FIX: handle free
+
+      // **** it's a call to free()
+
+      // check there is one argument
+      FakeList<ArgExpression> *args = efun->args;
+      USER_ASSERT(args->count()==1, efun->loc,
+                  "free does not have exactly 1 argument.");
+      Expression *arg = args->first()->expr;
+
+      // check it is of pointer type
+      Type *argType = arg->type->asRval();
+      USER_ASSERT(argType->isPointerType(), efun->loc,
+                  "free of expression not of pointer type.");
+
+      // get the type of the object being freed
+      Type *heapObjType = argType->asPointerType()->atType->asRval();
+
+      // does the allocated type have static or dynamic size?
+      bool heapObjType_dynSize = dynSize(heapObjType, efun->loc);
+
+      // get the string representing the argument
+      // FIX: this is kind of an abuse of globalStrTable
+      StringRef argStr =
+        globalStrTable(getRange(patcher, arg->loc, arg->endloc).c_str());
+
+      // replace the entire free() call
+      localize_heapExpr(obj->loc, obj->endloc,
+                        funcName, argStr,
+                        heapObjType, heapObjType_dynSize);
+
     } else if (isHeapSizeQuery(funcName)) {
       printLoc(obj->loc);
       std::cout << "localization of heap size query not implemented"

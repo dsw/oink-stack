@@ -7,5 +7,6 @@ int main() {
   set_x(foo, 1);
   int x = get_x(foo);
   assert(x == 1);
+  free_Foo(foo);
   return 0;
 }

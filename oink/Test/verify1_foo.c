@@ -6,6 +6,10 @@ struct Foo *new_Foo() {
   return (struct Foo*) malloc(sizeof(struct Foo));
 }
 
+void free_Foo(struct Foo *foo) {
+  free(foo);
+}
+
 int get_x(struct Foo *foo) {
   return foo->x;
 }

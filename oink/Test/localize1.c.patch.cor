@@ -9,8 +9,12 @@ skipping function in default module: _OSSwapInt16
 skipping function in default module: _OSSwapInt32
 skipping function in default module: _OSSwapInt64
 localize: alnum-name:struct_Foo__pisin_movam, size:sta, c-type-name:struct Foo
+localize: alnum-name:struct_Foo__pisin_movam, size:sta, c-type-name:struct Foo
 --- Test/verify1_foo.c
 +++ Test/verify1_foo.c
 @@ -6,1 +6,1 @@
 -  return (struct Foo*) malloc(sizeof(struct Foo));
 +  return malloc__struct_Foo__pisin_movam__foo();
+@@ -10,1 +10,1 @@
+-  free(foo);
++  free__struct_Foo__pisin_movam__foo(foo);
