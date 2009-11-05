@@ -74,4 +74,4 @@ gronk.xlize_log: %.xlize_log: %.i
 
 .PHONY: clean-xlize
 clean-xlize:
-	rm -f *.xlize_log *.xlize_patched.c *.xlize.c
+	rm -f *.xlize_log *.xlize_spec *.xlize_patched.c *.xlize.c
