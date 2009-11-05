@@ -8,9 +8,9 @@ warning: the -fo-merge-E_variable-and-var-values flag is incompatible with doing
 skipping function in default module: _OSSwapInt16
 skipping function in default module: _OSSwapInt32
 skipping function in default module: _OSSwapInt64
-localize: alnum-name:struct_Foo_a7198b88, size:sta, c-type-name:struct Foo
+localize: alnum-name:struct_Foo__pisin_movam, size:sta, c-type-name:struct Foo
 --- Test/verify1_foo.c
 +++ Test/verify1_foo.c
 @@ -6,1 +6,1 @@
 -  return (struct Foo*) malloc(sizeof(struct Foo));
-+  return malloc_struct_Foo_a7198b88_foo();
++  return malloc__struct_Foo__pisin_movam__foo();

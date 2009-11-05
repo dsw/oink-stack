@@ -7,6 +7,7 @@ ifndef TOP_LEVEL_MAKEFILE
 $(error This makefile should be included in the top-level Makefile, not used stand-alone)
 endif
 
+CC := gcc
 CXX := g++
 
 USE_ZIPIOS := @USE_ZIPIOS@
@@ -516,6 +517,10 @@ Pork/%.o: Pork/%.cc
 # 	$(CXX) -c -o $@ $(CCFLAGS) $<
 	$(MAKE) -C Pork $*.o
 
+# build proquint library
+proquint.o: proquint.c
+	$(CC) -c -o $@ $(C_AND_CC_FLAGS) $<
+
 # built from the LibCpdInit tree
 CPDINIT_O :=
 CPDINIT_O += cpdinit.o
@@ -778,6 +783,7 @@ bullet: $(BASIC_LIBS)
 alloctool: alloctool_main.o
 alloctool: $(ALLOCTOOL_LOCAL_CC_O)
 alloctool: Pork/patcher.o
+alloctool: proquint.o
 alloctool: $(DATAFLOW_LOCAL_CC_O)
 # alloctool: $(OINK_LOCAL_CC_O)
 alloctool: $(QUAL_LOCAL_CC_O)

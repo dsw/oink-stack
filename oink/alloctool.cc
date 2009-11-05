@@ -7,7 +7,14 @@
 #include "strutil.h"            // quoted
 #include "oink_util.h"
 #include "mangle.h"             // mangle (type name mangler)
+
 #include "Pork/patcher.h"       // Patcher
+
+extern "C" {
+#  include "proquint.h"           // proquint converters
+}
+
+#include <string.h>             // memset
 #include <ctype.h>              // isalnum
 
 // FIX: this analysis is incomplete
@@ -104,16 +111,33 @@ static unsigned int hash_str(StringRef x) {
   return hashvalue;
 }
 
-static void appendHexStr(unsigned int i, stringBuilder &ret) {
-  char *hex = NULL;
-  int printRes = asprintf(&hex, "%08x", i);
-  if (printRes < 0) {
-    // out of memory
-    fputs("out of memory\n", stderr);
-    exit(INTERNALERROR_ExitCode);
-  }
-  ret << hex;
-  free(hex);
+// static void appendHexStr(unsigned int n, stringBuilder &ret) {
+//   char *hex = NULL;
+//   int printRes = asprintf(&hex, "%08x", n);
+//   if (printRes < 0) {
+//     // out of memory
+//     fputs("out of memory\n", stderr);
+//     exit(INTERNALERROR_ExitCode);
+//   }
+//   ret << hex;
+//   free(hex);
+// }
+
+static void appendProquintStr(unsigned int n, stringBuilder &ret) {
+  // Length of a 32-bit quint word, without trailing NUL: two quints
+  // plus a separator.
+  int const QUINT_LEN = 5*2 + 1;
+  // Double length plus another separator in case we switch to
+  // 64-bits.
+  int const DOUBLE_QUINT_LEN = 2*QUINT_LEN + 1;
+  char quint[DOUBLE_QUINT_LEN+1];
+  // FIX: there has to be a faster way
+//   for(int i=0; i<DOUBLE_QUINT_LEN+1; ++i) quint[i] = '\0';
+  memset( (void*) quint,
+          0x0,
+          DOUBLE_QUINT_LEN+1 );
+  uint2quint(quint, n, '_');
+  ret << quint;
 }
 
 // Decides if this variable allocated on the stack.  Note that if it
@@ -1115,14 +1139,15 @@ void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
   get_strings(mangledTypeName, alnumMangledTypeName);
   // hash of the mangledTypeName to preserve information; FIX: replace
   // hex with proquints
-  alnumMangledTypeName << "_";
-  appendHexStr(hash_str(mangledTypeName), alnumMangledTypeName);
+  alnumMangledTypeName << "__";
+//   appendHexStr(hash_str(mangledTypeName), alnumMangledTypeName);
+  appendProquintStr(hash_str(mangledTypeName), alnumMangledTypeName);
 
   // new alloc: old_name + mangled_type_name + module_name + (args)
   stringBuilder newAlloc;
   newAlloc << funcName;
-  newAlloc << "_" << alnumMangledTypeName;
-  newAlloc << "_" << allocatorModule;
+  newAlloc << "__" << alnumMangledTypeName;
+  newAlloc << "__" << allocatorModule;
   newAlloc << "(";
   if (castAtType_dynSize) {
     // if type has a dynamic size then keep the size argument
