@@ -1,4 +1,12 @@
 Hide*
+
 *.i
 *.o
 *.exe
+
+*.xlize.c
+*.xlize_log
+*.xlize_patched.c
+*.xlize_spec
+
+*.pyc
