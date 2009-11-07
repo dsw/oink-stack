@@ -9,4 +9,11 @@ Hide*
 *.xlize_patched.c
 *.xlize_spec
 
-*.pyc
+*.xlize_xf_spec
+*.xlize_exe
+*.xlize_cl_spec
+*.xlize_ml_spec
+
+local_malloc_clsdef_*.h
+local_malloc_*.c
+local_malloc_*.h

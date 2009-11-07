@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
-# transform a .c file inserting includes of instantiated
-# local_malloc.h
+# insert includes of instantiated local_malloc.h to patched src
 
 import sys
 import re

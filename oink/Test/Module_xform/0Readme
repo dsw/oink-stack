@@ -1,12 +1,18 @@
-This directory demonstrates module transformation.
+This directory demonstrates module transformation.  Other xforms such
+as heapify and verify are not yet exercised.
 
-To build and test the code as usual, type:
+To build and test the code as usual:
 
   make clean all check
 
-To localize the code and see the differences, type:
+To localize the code and see the differences:
 
-  make all-xlize diff-xlize
+  make all xlize xlize-diff
 
-Other transformations such as heapify and verify are not yet
-implemented here.
+To localize the code, build it and run it:
+
+  make all xlize xlize-all xlize-test
+
+To clean:
+
+  make clean xlize-clean
