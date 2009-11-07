@@ -71,3 +71,6 @@ Test/*.out.ctl
 
 # directories to hide temp files in
 Hide*
+
+# compiled Python
+*.pyc
