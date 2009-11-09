@@ -54,6 +54,7 @@ int main(int argc, char **argv) {
         m.print_funcGran();
         return code;            // perhaps this should be done differently
       }
+
       m.filter_stage();
       m.registerVars_stage();
       m.value_stage();
@@ -95,7 +96,7 @@ int main(int argc, char **argv) {
     // cleanup_qualAnnotMap();
     return code;
 
-  } catch (std::bad_alloc & e) {
+  } catch (std::bad_alloc &e) {
     explain_bad_alloc();
   }
 }
