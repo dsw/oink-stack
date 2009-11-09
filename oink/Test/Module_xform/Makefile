@@ -21,6 +21,7 @@ EXE += gronk.exe
 # FIX: read this from $(MODULE).mod
 CLFLS :=
 CLFLS += gronk.c
+CLFLS += gronk_b.c
 
 gronk.exe: $(CLFLS:.c=.o)
 gronk.xlz_exe: $(CLFLS:.c=.xlz.o)
