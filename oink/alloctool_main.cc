@@ -5,29 +5,46 @@
 #include "alloctool.h"
 #include "alloctool_cmd.h"
 #include "alloctool_global.h"
-#include "qual.gr.gen.h"        // CCParse_Qual
+
+#include "qual_value_print.h"    // QualCTypePrinter
+#include "qual_value_children.h" // ValueFactory_Q
+#include "qual_ast_aux.h"        // ASTPrinter_Q
+#include "qual.gr.gen.h"         // CCParse_Qual
 // #include "oink.gr.gen.h"        // CCParse_Oink
+
 #include "trace.h"
 #include "oink_util.h"
 
 int main(int argc, char **argv) {
+  set_argv0(argv[0]);
   traceAddFromEnvVar();
-  tFac = new TypeFactory_O;
-  vFac = new ValueFactory;
-  astPrinter = new ASTPrinter_O;
+  tFac = new TypeFactory_Q;
+  vFac = new ValueFactory_Q;
+  astPrinter = new ASTPrinter_Q;
+  QualCTypePrinter typePrinterCQ(/*printTransQual*/false);
   oinkCmd = alloctoolCmd = new AllocToolCmd;
   ExitCode code = NORMAL_ExitCode;
+  Value::allow_annotation = true;
+  CCParse_Qual ccParse(globalStrTable, globalLang);
   AllocTool m;
-  m.typePrinter = &typePrinterOink;
+  m.parseUserActions = &ccParse;
+  m.parseEnv = &ccParse;
+  m.typePrinter = &typePrinterCQ;
   try {
     m.init_stage(argc, argv);
-    CCParse_Qual ccParse(globalStrTable, globalLang);
-    m.parseUserActions = &ccParse;
-    m.parseEnv = &ccParse;
+
+    if (oinkCmd->print_sizes) { m.printSizes(); return 0; }
+
     m.parse_stage();
     m.typecheck_stage();
     m.elaborate_stage();
     m.markRealVars_stage();
+
+    if (oinkCmd->func_gran) {
+      m.compute_funcGran();
+      m.print_funcGran();
+      return code;            // perhaps this should be done differently
+    }
 
     if (moduleList.isNotEmpty()) m.build_classFQName2Module();
     m.filter_stage();
@@ -56,6 +73,7 @@ int main(int argc, char **argv) {
     code = INTERNALERROR_ExitCode;
     if (UserError *ue = dynamic_cast<UserError*>(&e)) code = ue->exitCode;
   }
+
   delete alloctoolCmd;
   return code;
 }
