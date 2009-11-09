@@ -82,6 +82,11 @@ sub translate_modes_to_flags {
         push @SERIAL_NO, '-useSerialNumbers';
         push @ELSA_OINK_CONF, '-no-dash-O2';
 	$AUTOMAKE_CFLAGS .= '-g';
+    } elsif ($mode eq 'devel') {
+        push @SERIAL_NO, '-useSerialNumbers';
+        push @ELSA_OINK_CONF, '-no-dash-O2';
+        push @ELSA_OINK_CONF, '-devel';
+	$AUTOMAKE_CFLAGS .= '-g';
     } elsif ($mode eq 'profile') {
         push @ELSA_OINK_CONF, '-prof';
         push @ELSA_OINK_CONF, '-no-dash-g';

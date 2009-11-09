@@ -3,7 +3,7 @@ all:
 
 # Built stopwatch as a demo of Pork's rewriting capabilities.
 
-OINK_STACK := $(HOME)/Notes/oink-stack
+OINK_STACK := ../..
 
 # **** configure
 

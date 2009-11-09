@@ -201,23 +201,27 @@ void Oink::build_classFQName2Module() {
 bool AllocSites_ASTVisitor::visitExpression(Expression *obj) {
   switch(obj->kind()) {         // roll our own virtual dispatch
   default: break;               // expression kinds for which we do nothing
-  case Expression::E_FUNCALL:
+  case Expression::E_FUNCALL: {
     E_funCall *efun = obj->asE_funCall();
     if (isAllocator0(efun, efun->loc)) seenAllocators.add(efun);
     break;
-  case Expression::E_KEYWORDCAST:
+  }
+  case Expression::E_KEYWORDCAST: {
     E_keywordCast *ekwcast = obj->asE_keywordCast();
     subVisitCast(ekwcast, ekwcast->expr);
     break;
-  case Expression::E_CAST:
+  }
+  case Expression::E_CAST: {
     E_cast *ecast = obj->asE_cast();
     subVisitCast(ecast, ecast->expr);
     break;
-  case Expression::E_NEW:
+  }
+  case Expression::E_NEW: {
     USER_ASSERT(obj->type->isPointerType(), obj->loc,
                 "new expression is not of pointer type");
     subVisitE_new0(obj->asE_new());
     break;
+  }
   }
   return true;
 }
