@@ -7,12 +7,12 @@ To build and test the code as usual:
 
 To localize the code and see the differences:
 
-  make all xlize xlize-diff
+  make all xlz xlz-diff
 
 To localize the code, build it and run it:
 
-  make all xlize xlize-all xlize-test
+  make all xlz xlz-all xlz-test
 
 To clean:
 
-  make clean xlize-clean
+  make clean xlz-clean

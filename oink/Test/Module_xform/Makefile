@@ -10,10 +10,10 @@ EXE :=
 EXE += gronk.exe
 
 # FIX: read this from $(MODULE).mod
-CLIENT_FILES :=
-CLIENT_FILES += gronk.c
+CLFLS :=
+CLFLS += gronk.c
 
-gronk.exe: $(CLIENT_FILES:.c=.o)
+gronk.exe: $(CLFLS:.c=.o)
 
 # the whole xform below is intended to work on one module at a time
 ifndef MODULE
@@ -33,11 +33,11 @@ CC_FLAGS :=
 CC_FLAGS += -Wall
 
 .PRECIOUS: %.i
-$(CLIENT_FILES:.c=.i): %.i: %.c
+$(CLFLS:.c=.i): %.i: %.c
 	gcc -E $(CC_FLAGS) -o $@ $<
 
 .PRECIOUS: %.o
-$(CLIENT_FILES:.c=.o): %.o: %.i
+$(CLFLS:.c=.o): %.o: %.i
 	gcc -c $(CC_FLAGS) -o $@ $<
 
 $(EXE): %.exe:
@@ -60,68 +60,83 @@ $(addprefix test/,$(EXE)): test/%:
 
 # **** transforming
 
-gronk.xlize_exe: $(CLIENT_FILES:.c=.xlize.o)
+gronk.xlz_exe: $(CLFLS:.c=.xlz.o)
 
-XLIZE_CLEAN =
+XLZ_CLEAN =
 
-.PHONY: xlize
-xlize: xlize-files xlize-local-malloc 
+.PHONY: xlz
+xlz: xlz-client-files xlz-local-malloc
 
-.PHONY: xlize-test
-xlize-test:
+.PHONY: xlz-test
+xlz-test:
 	@echo; echo "**** $@"
-	./$(EXE:.exe=.xlize_exe)
+	./$(EXE:.exe=.xlz_exe)
 
-.PHONY: xlize-all
-xlize-all: $(EXE:.exe=.xlize_exe)
+.PHONY: xlz-all
+xlz-all: $(EXE:.exe=.xlz_exe)
 
 # FIX: generate the local malloc instantiations and then use makefile
 # include to get them here as dependencies
 
-# link the xlize-ed client files and instantiated local malloc
-XLIZE_CLEAN += $(EXE:.exe=.xlize_exe)
+# link the xlz-ed client files and instantiated local malloc
+XLZ_CLEAN += $(EXE:.exe=.xlz_exe)
 # move this below when implemented there
-XLIZE_CLEAN += local_malloc_%.o
-$(EXE:.exe=.xlize_exe): %.xlize_exe:
+XLZ_CLEAN += local_malloc_%.o
+$(EXE:.exe=.xlz_exe): %.xlz_exe:
 	@echo; echo "**** $@"
 	gcc $(CC_FLAGS) -o $@ $^ local_malloc_*.c
 
 # # build the localized malloc .o files
 # local_malloc_%.o: local_malloc_%.c
-# XLIZE_CLEAN += local_malloc_%.o
+# XLZ_CLEAN += local_malloc_%.o
 # 	gcc -c $(CC_FLAGS) -o $@ $<
 
-# build xlize-ed client .o files
-XLIZE_CLEAN += $(CLIENT_FILES:.c=.xlize.o)
-$(CLIENT_FILES:.c=.xlize.o): %.xlize.o: %.c
+# build xlz-ed client .o files
+XLZ_CLEAN += $(CLFLS:.c=.xlz.o)
+$(CLFLS:.c=.xlz.o): %.xlz.o: %.c
 	@echo; echo "**** $@"
 	gcc -c $(CC_FLAGS) -o $@ $<
 
-.PHONY: xlize-diff
-xlize-diff: $(CLIENT_FILES:=/xlize_diff)
+.PHONY: xlz-diff
+xlz-diff: $(CLFLS:=/xlz_diff)
 
-.PHONY: xlize-clean
-xlize-clean:
+.PHONY: xlz-clean
+xlz-clean:
 	@echo; echo "**** $@"
-	rm -f $(XLIZE_CLEAN)
+	rm -f $(XLZ_CLEAN)
 
-# * instantiate local_malloc_HOMgld.c
+# * instantiate the local malloc template
+
+.PHONY: xlz-local-malloc
+xlz-local-malloc: local_malloc_$(MODULE)_clsids.h
+xlz-local-malloc: xlz-inst-lm
+xlz-local-malloc: xlz-grep-clsdef
 
 # instantiate local malloc: for each line in malloc spec, if the class
 # is statically-sized, then expand local_malloc_HOMgld.c to
-# local_malloc_<alnum_name>.c; for dynamically-size classes print a
+# local_malloc_<alnum_id>.c; for dynamically-size classes print a
 # warning
-XLIZE_CLEAN += local_malloc_*.c local_malloc_*.h
-.PHONY: xlize-local-malloc
-xlize-local-malloc: xlize-class-defn $(MODULE).xlize_ml_spec
+XLZ_CLEAN += local_malloc_*.c local_malloc_*.h
+.PHONY: xlz-inst-lm
+xlz-inst-lm: $(MODULE).xlz_ml_spec
 	@echo; echo "**** $@"
-	$(OINK)/xlize_local_malloc.py \
+	$(OINK)/xlz_inst_lm.py \
+          --module $(MODULE) \
           --local-malloc $(LOCAL_MALLOC) \
-          --ml-spec $(filter-out xlize-class-defn,$^)
+          --ml-spec $<
+
+# make the enum of module class ids for this module
+XLZ_CLEAN += local_malloc_$(MODULE)_clsids.h
+local_malloc_$(MODULE)_clsids.h: $(MODULE).xlz_ml_spec
+	@echo; echo "**** $@"
+	$(OINK)/xlz_inst_clsids.py \
+          --module $(MODULE) \
+          --local-malloc $(LOCAL_MALLOC) \
+          --ml-spec $<
 
 # module local_malloc-s instantiation specification
-XLIZE_CLEAN += $(MODULE).xlize_ml_spec
-$(MODULE).xlize_ml_spec: %.xlize_ml_spec: $(CLIENT_FILES:=.xlize_xf_spec)
+XLZ_CLEAN += $(MODULE).xlz_ml_spec
+$(MODULE).xlz_ml_spec: %.xlz_ml_spec: $(CLFLS:=.xlz_xf_spec)
 	@echo; echo "**** $@"
 	sort $^ | uniq > $@
 
@@ -130,19 +145,19 @@ $(MODULE).xlize_ml_spec: %.xlize_ml_spec: $(CLIENT_FILES:=.xlize_xf_spec)
 # if the class is statically-sized, then grep out the #-lines from
 # that source file and instantiate the clsdef header file; for
 # dynamically-size classes print a warning
-XLIZE_CLEAN += local_malloc_clsdef_*.h
-.PHONY: xlize-class-defn
-xlize-class-defn: $(MODULE).xlize_cl_spec
+XLZ_CLEAN += local_malloc_clsdef_*.h
+.PHONY: xlz-grep-clsdef
+xlz-grep-clsdef: $(MODULE).xlz_which_cls_where
 	@echo; echo "**** $@"
-	$(OINK)/xlize_class_defn.py $<
+	$(OINK)/xlz_grep_clsdef.py $<
 
-# module class definition spec: for each xform spec, insert the source
-# filename into each line after the mangled name; concatenate them;
-# sort that file
-XLIZE_CLEAN += $(MODULE).xlize_cl_spec
-$(MODULE).xlize_cl_spec: %.xlize_cl_spec: $(CLIENT_FILES:=.xlize_xf_spec)
+# make the module class definition spec: foreach xformspec, insert the
+# source filename into each line after the mangled name; concatenate;
+# sort; print
+XLZ_CLEAN += $(MODULE).xlz_which_cls_where
+$(MODULE).xlz_which_cls_where: %.xlz_which_cls_where: $(CLFLS:=.xlz_xf_spec)
 	@echo; echo "**** $@"
-	$(OINK)/xlize_cl_spec.py $^ > $@
+	$(OINK)/xlz_which_cls_where.py $^ > $@
 
 # * localize client code
 
@@ -150,38 +165,38 @@ $(MODULE).xlize_cl_spec: %.xlize_cl_spec: $(CLIENT_FILES:=.xlize_xf_spec)
 # to reconstruct it from these suffixes
 
 # print diff of source and transformed code
-.PHONY: $(CLIENT_FILES:=/xlize_diff)
-$(CLIENT_FILES:=/xlize_diff): %/xlize_diff: %.xlize.c
-	diff -u $* $*.xlize.c
+.PHONY: $(CLFLS:=/xlz_diff)
+$(CLFLS:=/xlz_diff): %/xlz_diff: %.xlz.c
+	diff -u $* $*.xlz.c
 
-# xlize all the client source files
-.PHONY: xlize-files
-xlize-files: $(CLIENT_FILES:=.xlize.c)
+# xlz all the client source files
+.PHONY: xlz-client-files
+xlz-client-files: $(CLFLS:=.xlz.c)
 
-# .xlize.c: insert includes of instantiated local_malloc.h to patched src
-XLIZE_CLEAN += $(CLIENT_FILES:=.xlize.c)
-$(CLIENT_FILES:=.xlize.c): %.xlize.c: %.xlize_xf_spec %.xlize_patched.c
+# .xlz.c: insert includes of instantiated local_malloc.h to patched src
+XLZ_CLEAN += $(CLFLS:=.xlz.c)
+$(CLFLS:=.xlz.c): %.xlz.c: %.xlz_xf_spec %.xlz_patched.c
 	@echo; echo "**** $@"
-	$(OINK)/xlize_incl_malloc.py $*.xlize_xf_spec < $*.xlize_patched.c > $@
+	$(OINK)/xlz_incl_lm.py $*.xlz_xf_spec < $*.xlz_patched.c > $@
 
-# .xlize_xf_spec: canonical list of class-module pairs to transform
-XLIZE_CLEAN += $(CLIENT_FILES:=.xlize_xf_spec)
-$(CLIENT_FILES:=.xlize_xf_spec): %.xlize_xf_spec: %.xlize_log
+# .xlz_xf_spec: canonical list of class-module pairs to transform
+XLZ_CLEAN += $(CLFLS:=.xlz_xf_spec)
+$(CLFLS:=.xlz_xf_spec): %.xlz_xf_spec: %.xlz_log
 	@echo; echo "**** $@"
 	egrep '^localize:' < $< | sort | uniq > $@
 
-# .xlize_patched.c: localizations of call sites to malloc
-XLIZE_CLEAN += $(CLIENT_FILES:=.xlize_patched.c)
-$(CLIENT_FILES:.c=.c.xlize_patched.c): %.c.xlize_patched.c: %.c.xlize_log %.c
+# .xlz_patched.c: localizations of call sites to malloc
+XLZ_CLEAN += $(CLFLS:=.xlz_patched.c)
+$(CLFLS:.c=.c.xlz_patched.c): %.c.xlz_patched.c: %.c.xlz_log %.c
 # I get 'missing header' warnings from patch, but it seems to work
 	@echo; echo "**** $@"
-	patch -p1 -o $@ $*.c $*.c.xlize_log
+	patch -p1 -o $@ $*.c $*.c.xlz_log
 
-# .xlize_log: the (1) patch and (2) log of localized classes
-XLIZE_CLEAN += $(CLIENT_FILES:=.xlize_log)
+# .xlz_log: the (1) patch and (2) log of localized classes
+XLZ_CLEAN += $(CLFLS:=.xlz_log)
 # FIX: this has to be modified if you use an input file suffix other
 # than ".c"
-$(CLIENT_FILES:.c=.c.xlize_log): %.c.xlize_log: %.i
+$(CLFLS:.c=.c.xlz_log): %.c.xlz_log: %.i
 	@echo; echo "**** $@"
 	$(OINK)/alloctool -fa-localize-heap-alloc $< \
 	  -o-mod-spec $(MODULE):$*.c \
