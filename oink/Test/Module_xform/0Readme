@@ -9,10 +9,11 @@ To localize the code and see the differences:
 
   make all xlz xlz-diff
 
-To localize the code, build it and run it:
+To localize, build, and run bothe the original and xformed:
 
-  make all xlz xlz-all xlz-test
+  make xlz-go
+  (or just make)
 
 To clean:
 
-  make clean xlz-clean
+   make xlz-go-clean
