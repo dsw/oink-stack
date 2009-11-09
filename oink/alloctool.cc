@@ -1210,18 +1210,18 @@ localize_heapExpr(SourceLoc loc, SourceLoc endloc,
   StringRef mangledTypeName = globalStrTable(mangle(heapObjType));
 
   // unique alphanum identifier for this class
-  stringBuilder alnumMangledTypeName;
+  stringBuilder alnumClassName;
   // alphanum substrs of the mangledTypeName to preserve readability
-  get_strings(mangledTypeName, alnumMangledTypeName);
+  get_strings(mangledTypeName, alnumClassName);
   // hash of the mangledTypeName to preserve information
-  alnumMangledTypeName << "__";
-  appendProquintStr(hash_str(mangledTypeName), alnumMangledTypeName);
-//   appendHexStr(hash_str(mangledTypeName), alnumMangledTypeName);
+  alnumClassName << "__";
+  appendProquintStr(hash_str(mangledTypeName), alnumClassName);
+//   appendHexStr(hash_str(mangledTypeName), alnumClassName);
 
   // new alloc: old_name + mangled_type_name + module_name + (args)
   stringBuilder newHeapExpr;
   newHeapExpr << funcName;
-  newHeapExpr << "__" << alnumMangledTypeName;
+  newHeapExpr << "__" << alnumClassName;
   newHeapExpr << "__" << allocatorModule;
   newHeapExpr << "(" << argStr << ")";
 
@@ -1232,13 +1232,15 @@ localize_heapExpr(SourceLoc loc, SourceLoc endloc,
   // corresponding configuration file listing for each class:
   std::cout
     << "localize: "
-    // the alnum mangled name,
-    << "alnum-name:" << alnumMangledTypeName << ", "
+    // the modue name
+    << "module:" << allocatorModule << ", "
+    // the alnum class name,
+    << "alnum-class:" << alnumClassName << ", "
     // whether the class has a dynamic size or not,
     << (heapObjType_dynSize ? "size:dyn" : "size:sta") << ", "
     // the C name of the class; despite the name, this is a good
     // pretty-printed string representation of the type,
-    << "c-type-name:" << mangledTypeName
+    << "c-type:" << mangledTypeName
     << std::endl;
 }
 
