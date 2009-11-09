@@ -13,7 +13,8 @@ CPPFLAGS = -I$(TOPLEVEL)/include -I../include -DGLIBCFS_IGNORE_INCOMPLETE
 
 COMPILER_CC = gcc-3.4
 COMPILER_CPPFLAGS = -DCOMPILE_GCC -DELIDE_QUALIFIERS
-COMPILER_CFLAGS = -W -Wall -Wno-return-type -Wno-unused-parameter # -Werror
+# do not turn on -Werror by default as it makes the code too unportable
+COMPILER_CFLAGS = -W -Wall -Wno-return-type -Wno-unused-parameter
 COMPILER_CXXFLAGS = $(COMPILER_CFLAGS) -Wno-deprecated
 
 QUAL_CPP = $(TOPLEVEL)/cpp-extra cpp-3.4

@@ -30,7 +30,9 @@ check:; @echo "The checks are done by a different makefile in a different reposi
 
 CCFLAGS :=
 CCFLAGS += -g -Wall
-CCFLAGS += -Werror
+# don't turn this on by default as it makes the code too unportable
+# CFLAGS += -Werror
+
 CCFLAGS += -D__LINUX__ -D__UNIX__
 CCFLAGS += -Wcast-align
 # cc1plus: warning: command line option "-Wmissing-prototypes" is valid for C/ObjC but not for C++

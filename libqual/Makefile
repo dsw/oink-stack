@@ -16,7 +16,9 @@ REGIONFLAGS = -Ddeletes= -Dtraditional= -Dsameregion= -Dparentptr=
 CFLAGS :=
 CFLAGS += $(REGIONFLAGS)
 
-CFLAGS += -Wall -Werror
+CFLAGS += -Wall
+# don't turn this on by default as it makes the code too unportable
+# CFLAGS += -Werror
 
 # turn on debugging symbols
 CFLAGS += -g

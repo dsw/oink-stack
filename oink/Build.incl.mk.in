@@ -255,7 +255,6 @@ oink.gr.gen.stamp qual.gr.gen.stamp:
 
 C_AND_CC_FLAGS :=
 # C_AND_CC_FLAGS += -D__LINUX__ -D__UNIX__
-# C_AND_CC_FLAGS += -Werror
 C_AND_CC_FLAGS += @CFLAGS_EXTRA@
 
 C_AND_CC_FLAGS += -Wcast-align
@@ -271,7 +270,10 @@ C_AND_CC_FLAGS += -Wno-char-subscripts
 # -Wredundant-decls
 # -Wconversion
 
-C_AND_CC_FLAGS += -Wall -Werror
+C_AND_CC_FLAGS += -Wall
+# don't turn this on by default as it makes the code too unportable
+# C_AND_CC_FLAGS += -Werror
+
 #C_AND_CC_FLAGS += -g
 #C_AND_CC_FLAGS += -pg
 #C_AND_CC_FLAGS += -O2 -DNDEBUG

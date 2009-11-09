@@ -102,14 +102,16 @@ ifeq (@TRACE_HEAP@,1)
 endif
 
 $(MALLOC_MODULE).o: $(MALLOC_MODULE).c
-	$(CC) -Wall -Werror -c -g $(MALLOC_CCFLAGS) $(MALLOC_MODULE).c
+# don't turn -Werror on by default as it makes the code too unportable
+	$(CC) -Wall -c -g $(MALLOC_CCFLAGS) $(MALLOC_MODULE).c
 
 
 # --------------------- main target ---------------------
 
 # mysig needs some flags to *not* be set ....
 mysig.o: mysig.cc mysig.h
-	$(CXX) -Wall -Werror -c -g mysig.cc
+# don't turn Werror on by default as it makes the code too unportable
+	$(CXX) -Wall -c -g mysig.cc
 
 # library itself
 OBJS := \
