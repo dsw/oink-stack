@@ -10,7 +10,10 @@
 #include "strtable.h"
 #include "srcloc.h"
 
-// linked list of literals: $tainted
+// linked list of literals, such as $tainted.  FIX: an instance of
+// QLiterals is either a node in a linked list or is the whole list;
+// it isn't clear which.  To clarify this, switch to using a FakeList
+// when it is the whole list.
 class QLiterals {
   public:
   StringRef name;
