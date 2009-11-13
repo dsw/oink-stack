@@ -25,6 +25,8 @@ class AllocToolCmd : public virtual OinkCmd {
   // malloc/free etc. so that they call class-local and module-local
   // malloc
   bool localize_heap_alloc;
+  // jimmy stage
+  bool jimmy;
 
   // string to use to call free()
   const char *free_func;

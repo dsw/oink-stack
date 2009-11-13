@@ -68,6 +68,9 @@ int main(int argc, char **argv) {
     if (alloctoolCmd->localize_heap_alloc) {
       m.localizeHeapAlloc_stage();
     }
+    if (alloctoolCmd->jimmy) {
+      m.jimmy_stage();
+    }
   } catch (xBase &e) {
     std::cerr << e << std::endl;
     code = INTERNALERROR_ExitCode;

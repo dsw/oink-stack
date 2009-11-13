@@ -13,6 +13,7 @@ AllocToolCmd::AllocToolCmd()
   , heapify_stack_alloc_addr_taken(false)
   , verify_cross_module_params(false)
   , localize_heap_alloc(false)
+  , jimmy(false)
   , free_func("free")
   , xmalloc_func("xmalloc")
   , verify_func("verify")
@@ -51,6 +52,8 @@ void AllocToolCmd::readOneArg(int &argc, char **&argv) {
               "-fa-", "verify-cross-module-params");
   HANDLE_FLAG(localize_heap_alloc,
               "-fa-", "localize-heap-alloc");
+  HANDLE_FLAG(jimmy,
+              "-fa-", "jimmy");
 }
 
 void AllocToolCmd::dump() {
@@ -69,6 +72,8 @@ void AllocToolCmd::dump() {
          boolToStr(verify_cross_module_params));
   printf("fa-localize-heap-alloc: %s\n",
          boolToStr(localize_heap_alloc));
+  printf("fa-jimmy: %s\n",
+         boolToStr(jimmy));
   printf("a-free-func '%s'\n", free_func);
   printf("a-xmalloc-func '%s'\n", xmalloc_func);
   printf("a-verify-func '%s'\n", verify_func);
@@ -102,6 +107,8 @@ void AllocToolCmd::printHelp() {
      "    localize calls to heap allocation calls: change calls to\n"
      "    malloc/free etc. so that they call class-local and module-local\n"
      "    malloc\n"
+     "  -fa-jimmy :\n"
+     "    move over rover and let jimmy take over\n"
      "");
 }
 
@@ -119,7 +126,8 @@ void AllocToolCmd::initializeFromFlags() {
       print_stack_alloc_addr_taken +
       heapify_stack_alloc_addr_taken +
       verify_cross_module_params +
-      localize_heap_alloc > 1) {
+      localize_heap_alloc +
+      jimmy > 1) {
     throw UserError
       (USER_ERROR_ExitCode,
        "Use at most one of:\n"
@@ -128,6 +136,7 @@ void AllocToolCmd::initializeFromFlags() {
        "\t-fa-heapify-stack-alloc-addr-taken\n"
        "\t-fa-verify-cross-module-params\n"
        "\t-fa-localize-heap-alloc\n"
+       "\t-fa-jimmy\n"
        );
   }
 
