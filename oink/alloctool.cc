@@ -1,7 +1,7 @@
 // see License.txt for copyright and terms of use
 
 #include "alloctool.h"          // this module
-#include "alloctool_cmd.h"      // AllocToolCmd
+#include "alloctool_cmd.h"      // XformCmd
 #include "alloctool_global.h"
 #include "oink.gr.gen.h"        // CCParse_Oink
 #include "strutil.h"            // quoted
@@ -677,7 +677,7 @@ postvisitStatement(Statement *obj) {
         int numVarsToFree = 0;
         SFOREACH_OBJLIST(Variable, scopeStackTop->s_decl_vars.list, iter) {
           ++numVarsToFree;
-          freeBlock << alloctoolCmd->free_func
+          freeBlock << xformCmd->free_func
                     << "(" << iter.data()->name << ");";
         }
         if (numVarsToFree > 0) {
@@ -707,7 +707,7 @@ subVisitS_return(S_return *obj) {
   newRet << "{";
   SFOREACH_OBJLIST(S_compound_Scope, scopeStack.list, iter) {
     SFOREACH_OBJLIST(Variable, iter.data()->s_decl_vars.list, iter2) {
-      newRet << alloctoolCmd->free_func << "(" << iter2.data()->name << ");";
+      newRet << xformCmd->free_func << "(" << iter2.data()->name << ");";
     }
   }
   newRet << retStr.c_str() << "}";
@@ -858,7 +858,7 @@ xformDeclarator(Declarator *obj) {
   // this:
   //   StringRef name = dname->name->getName();
   newInit << "(typeof(" << var->name << "))"
-          << alloctoolCmd->xmalloc_func
+          << xformCmd->xmalloc_func
           << "(sizeof *" << var->name << ")";
   if (obj->init) {
     xassert(obj->init->isIN_expr());
@@ -994,7 +994,7 @@ bool VerifyCrossModuleParams_ASTVisitor::visitFunction(Function *obj) {
     if (module != lookedUpModule) continue;
 
     // make code to verify the status of the parameter
-    statusChecks << alloctoolCmd->verify_func << "(" << paramVar->name << ");";
+    statusChecks << xformCmd->verify_func << "(" << paramVar->name << ");";
   }
 
   // insert the status checks at the top of the function body
@@ -1417,7 +1417,7 @@ xformDeclarator(Declarator *obj) {
 //   // this:
 //   //   StringRef name = dname->name->getName();
 //   newInit << "(typeof(" << var->name << "))"
-//           << alloctoolCmd->xmalloc_func
+//           << xformCmd->xmalloc_func
 //           << "(sizeof *" << var->name << ")";
 //   if (obj->init) {
 //     xassert(obj->init->isIN_expr());
@@ -1495,11 +1495,11 @@ subVisitE_variable(E_variable *evar) {
   return true;
 }
 
-// **** AllocTool
+// **** Xform
 
 // print the locations of declarators and uses of stack allocated
 // variables
-void AllocTool::printStackAlloc_stage() {
+void Xform::printStackAlloc_stage() {
   printStage("print stack-allocated vars");
   PrintStackAllocVars_ASTVisitor env;
   foreachSourceFile {
@@ -1514,7 +1514,7 @@ void AllocTool::printStackAlloc_stage() {
 
 // print the locations of declarators and uses of stack allocated
 // variables that have had their addr taken
-void AllocTool::printStackAllocAddrTaken_stage() {
+void Xform::printStackAllocAddrTaken_stage() {
   printStage("print stack-allocated addr-taken vars");
   foreachSourceFile {
     File *file = files.data();
@@ -1538,7 +1538,7 @@ void AllocTool::printStackAllocAddrTaken_stage() {
   }
 }
 
-void AllocTool::heapifyStackAllocAddrTaken_stage() {
+void Xform::heapifyStackAllocAddrTaken_stage() {
   printStage("heapify stack-allocated addr-taken vars");
   foreachSourceFile {
     File *file = files.data();
@@ -1574,7 +1574,7 @@ void AllocTool::heapifyStackAllocAddrTaken_stage() {
   }
 }
 
-void AllocTool::verifyCrossModuleParams_stage() {
+void Xform::verifyCrossModuleParams_stage() {
   printStage("verify cross module params");
   foreachSourceFile {
     File *file = files.data();
@@ -1589,7 +1589,7 @@ void AllocTool::verifyCrossModuleParams_stage() {
   }
 }
 
-void AllocTool::localizeHeapAlloc_stage() {
+void Xform::localizeHeapAlloc_stage() {
   printStage("localize heap alloc");
   foreachSourceFile {
     File *file = files.data();
@@ -1604,7 +1604,7 @@ void AllocTool::localizeHeapAlloc_stage() {
   }
 }
 
-void AllocTool::jimmy_stage() {
+void Xform::jimmy_stage() {
   printStage("jimmy");
   foreachSourceFile {
     File *file = files.data();

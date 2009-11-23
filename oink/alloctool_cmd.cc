@@ -7,7 +7,7 @@
 #include <cstring>              // strdup
 #include <cstdlib>              // atoi
 
-AllocToolCmd::AllocToolCmd()
+XformCmd::XformCmd()
   : print_stack_alloc(false)
   , print_stack_alloc_addr_taken(false)
   , heapify_stack_alloc_addr_taken(false)
@@ -19,7 +19,7 @@ AllocToolCmd::AllocToolCmd()
   , verify_func("verify")
 {}
 
-void AllocToolCmd::readOneArg(int &argc, char **&argv) {
+void XformCmd::readOneArg(int &argc, char **&argv) {
   int old_argc = argc;
   OinkCmd::readOneArg(argc, argv);
   if (old_argc != argc) return; // the superclass read one so we don't
@@ -56,7 +56,7 @@ void AllocToolCmd::readOneArg(int &argc, char **&argv) {
               "-fa-", "jimmy");
 }
 
-void AllocToolCmd::dump() {
+void XformCmd::dump() {
   OinkCmd::dump();
   // alloctool arguments
   //
@@ -79,7 +79,7 @@ void AllocToolCmd::dump() {
   printf("a-verify-func '%s'\n", verify_func);
 }
 
-void AllocToolCmd::printHelp() {
+void XformCmd::printHelp() {
   OinkCmd::printHelp();
   printf
     (
@@ -114,7 +114,7 @@ void AllocToolCmd::printHelp() {
 
 // push the state out to other places where it is needed; return value
 // is true unless there is an error
-void AllocToolCmd::initializeFromFlags() {
+void XformCmd::initializeFromFlags() {
   OinkCmd::initializeFromFlags();
 
   if (instance_sensitive) {

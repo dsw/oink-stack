@@ -16,10 +16,10 @@ public:
   virtual ~VarPredicate() {}
 };
 
-class AllocTool : public virtual Oink {
+class Xform : public virtual Oink {
   // tor ****
   public:
-  AllocTool() {}
+  Xform() {}
   
   // methods ****
   void printStackAlloc_stage();

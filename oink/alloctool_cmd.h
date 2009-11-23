@@ -8,7 +8,7 @@
 #include "oink_cmd.h"
 #include "oink_file.h"          // File
 
-class AllocToolCmd : public virtual OinkCmd {
+class XformCmd : public virtual OinkCmd {
   public:
   // print out every declaration allocating a var on the stack
   bool print_stack_alloc;
@@ -35,7 +35,7 @@ class AllocToolCmd : public virtual OinkCmd {
   // string to use to call verify()
   const char *verify_func;
 
-  AllocToolCmd();
+  XformCmd();
 
   void readOneArg(int &argc, char **&argv);
   void dump();

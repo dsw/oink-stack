@@ -22,11 +22,11 @@ int main(int argc, char **argv) {
   vFac = new ValueFactory_Q;
   astPrinter = new ASTPrinter_Q;
   QualCTypePrinter typePrinterCQ(/*printTransQual*/false);
-  oinkCmd = alloctoolCmd = new AllocToolCmd;
+  oinkCmd = xformCmd = new XformCmd;
   ExitCode code = NORMAL_ExitCode;
   Value::allow_annotation = true;
   CCParse_Qual ccParse(globalStrTable, globalLang);
-  AllocTool m;
+  Xform m;
   m.parseUserActions = &ccParse;
   m.parseEnv = &ccParse;
   m.typePrinter = &typePrinterCQ;
@@ -51,24 +51,24 @@ int main(int argc, char **argv) {
     m.prettyPrint_stage();
 
     // testing
-    if (alloctoolCmd->print_stack_alloc) {
+    if (xformCmd->print_stack_alloc) {
       m.printStackAlloc_stage();
     }
-    if (alloctoolCmd->print_stack_alloc_addr_taken) {
+    if (xformCmd->print_stack_alloc_addr_taken) {
       m.printStackAllocAddrTaken_stage();
     }
 
     // transforms
-    if (alloctoolCmd->heapify_stack_alloc_addr_taken) {
+    if (xformCmd->heapify_stack_alloc_addr_taken) {
       m.heapifyStackAllocAddrTaken_stage();
     }
-    if (alloctoolCmd->verify_cross_module_params) {
+    if (xformCmd->verify_cross_module_params) {
       m.verifyCrossModuleParams_stage();
     }
-    if (alloctoolCmd->localize_heap_alloc) {
+    if (xformCmd->localize_heap_alloc) {
       m.localizeHeapAlloc_stage();
     }
-    if (alloctoolCmd->jimmy) {
+    if (xformCmd->jimmy) {
       m.jimmy_stage();
     }
   } catch (xBase &e) {
@@ -77,6 +77,6 @@ int main(int argc, char **argv) {
     if (UserError *ue = dynamic_cast<UserError*>(&e)) code = ue->exitCode;
   }
 
-  delete alloctoolCmd;
+  delete xformCmd;
   return code;
 }

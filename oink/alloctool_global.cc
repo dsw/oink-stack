@@ -6,4 +6,4 @@
 // for convenience.  I didn't want to have to create this globally,
 // but there is no other way to get it into a few places like the ctor
 // of Var_Q;
-AllocToolCmd *alloctoolCmd = NULL;
+XformCmd *xformCmd = NULL;

@@ -8,6 +8,6 @@
 #include "oink_global.h"
 #include "alloctool_cmd.h"
 
-extern AllocToolCmd *alloctoolCmd;
+extern XformCmd *xformCmd;
 
 #endif // ALLOCTOOL_GLOBAL_H
