@@ -1,13 +1,13 @@
 // see License.txt for copyright and terms of use
 
-// All the globals for alloctool in one place.
+// All the globals for xform in one place.
 
-#ifndef ALLOCTOOL_GLOBAL_H
-#define ALLOCTOOL_GLOBAL_H
+#ifndef XFORM_GLOBAL_H
+#define XFORM_GLOBAL_H
 
 #include "oink_global.h"
-#include "alloctool_cmd.h"
+#include "xform_cmd.h"
 
 extern XformCmd *xformCmd;
 
-#endif // ALLOCTOOL_GLOBAL_H
+#endif // XFORM_GLOBAL_H

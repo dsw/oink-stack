@@ -2,8 +2,8 @@
 
 // Process command-line arguments.
 
-#ifndef ALLOCTOOL_CMD_H
-#define ALLOCTOOL_CMD_H
+#ifndef XFORM_CMD_H
+#define XFORM_CMD_H
 
 #include "oink_cmd.h"
 #include "oink_file.h"          // File
@@ -43,4 +43,4 @@ class XformCmd : public virtual OinkCmd {
   void initializeFromFlags();
 };
 
-#endif // ALLOCTOOL_CMD_H
+#endif  // XFORM_CMD_H

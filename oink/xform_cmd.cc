@@ -1,6 +1,6 @@
 // see License.txt for copyright and terms of use
 
-#include "alloctool_cmd.h"      // this module
+#include "xform_cmd.h"          // this module
 #include "oink_cmd_util.h"      // HANDLE_FLAG
 #include "oink_util.h"
 #include "oink_global.h"        // oinkCmd
@@ -58,7 +58,7 @@ void XformCmd::readOneArg(int &argc, char **&argv) {
 
 void XformCmd::dump() {
   OinkCmd::dump();
-  // alloctool arguments
+  // xform arguments
   //
   // the idea here is to make the internal name be the same as the
   // external name with the dashes replaced by underscores
@@ -84,12 +84,12 @@ void XformCmd::printHelp() {
   printf
     (
      "\n"
-     "alloctool flags that take an argument:\n"
+     "xform flags that take an argument:\n"
      "  -a-free-func <value>    : set the name of the free function\n"
      "  -a-xmalloc-func <value> : set the name of the xmalloc function\n"
      "  -a-verify-func <value>  : set the name of the verify function\n"
      "\n"
-     "alloctool boolean flags;\n"
+     "xform boolean flags;\n"
      "    preceed by '-fa-' for positive sense,\n"
      "    by '-fa-no-' for negative sense.\n"
      "  -fa-print-stack-alloc            : print out every declaration\n"
@@ -119,7 +119,7 @@ void XformCmd::initializeFromFlags() {
 
   if (instance_sensitive) {
     throw UserError(USER_ERROR_ExitCode,
-                    "Can't use -fo-instance-sensitive with alloctool.");
+                    "Can't use -fo-instance-sensitive with xform.");
   }
 
   if (print_stack_alloc +

@@ -3,8 +3,8 @@
 // Allocation Tool: this tool allows one to query the way allocation
 // is managed in a C program.
 
-#ifndef ALLOCTOOL_H
-#define ALLOCTOOL_H
+#ifndef XFORM_H
+#define XFORM_H
 
 #include "oink.h"
 #include "cc_ast_aux.h"         // LoweredASTVisitor
@@ -30,4 +30,4 @@ class Xform : public virtual Oink {
   void jimmy_stage();
 };
 
-#endif // ALLOCTOOL_H
+#endif  // XFORM_H

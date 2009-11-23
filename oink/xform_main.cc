@@ -2,9 +2,9 @@
 
 // Just the main() function.
 
-#include "alloctool.h"
-#include "alloctool_cmd.h"
-#include "alloctool_global.h"
+#include "xform.h"
+#include "xform_cmd.h"
+#include "xform_global.h"
 
 #include "qual_value_print.h"    // QualCTypePrinter
 #include "qual_value_children.h" // ValueFactory_Q

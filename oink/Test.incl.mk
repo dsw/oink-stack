@@ -67,7 +67,7 @@ check-small: lib-check
 check-small: oink-check
 check-small: cpdinit-check
 check-small: staticprint-check
-check-small: alloctool-check
+check-small: xform-check
 check-small: dfgprint-check
 check-small: cfgprint-check
 # FIX: turn this on when bullet starts working
@@ -102,7 +102,7 @@ include Lib/LibTest.incl.mk
 include oink_test.incl.mk
 include cpdinit_test.incl.mk
 include staticprint_test.incl.mk
-include alloctool_test.incl.mk
+include xform_test.incl.mk
 include dfgprint_test.incl.mk
 include cfgprint_test.incl.mk
 include bullet_test.incl.mk

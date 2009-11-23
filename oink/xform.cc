@@ -1,8 +1,8 @@
 // see License.txt for copyright and terms of use
 
-#include "alloctool.h"          // this module
-#include "alloctool_cmd.h"      // XformCmd
-#include "alloctool_global.h"
+#include "xform.h"              // this module
+#include "xform_cmd.h"          // XformCmd
+#include "xform_global.h"
 #include "oink.gr.gen.h"        // CCParse_Oink
 #include "strutil.h"            // quoted
 #include "oink_util.h"
@@ -378,8 +378,8 @@ bool AddrTaken_ASTVisitor::visitExpression(Expression *obj) {
 
 void AddrTaken_ASTVisitor::registerUltimateVariable(Expression *expr) {
   // Note that we do not do the right thing in the presence of
-  // -fo-instance-sensitive, which is why alloctool_cmd.cc refuses to
-  // run if you pass that flag.
+  // -fo-instance-sensitive, which is why xform_cmd.cc refuses to run
+  // if you pass that flag.
   expr = expr->skipGroups();
   if (expr->isE_variable()) {
     addrTaken.add(expr->asE_variable()->var);
@@ -1545,7 +1545,7 @@ void Xform::heapifyStackAllocAddrTaken_stage() {
     maybeSetInputLangFromSuffix(file);
     if (globalLang.isCplusplus) {
       throw UserError(USER_ERROR_ExitCode,
-                      "Can't heapify C++ with alloctool yet.");
+                      "Can't heapify C++ with xform yet.");
     }
     printStart(file->name.c_str());
     TranslationUnit *unit = file2unit.get(file);
