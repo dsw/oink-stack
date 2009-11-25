@@ -235,7 +235,7 @@ XLZ_INST_CLEAN += $(CLFLS:=.xlz_log)
 # than ".c"
 $(CLFLS:.c=.c.xlz_log): %.c.xlz_log: %.i
 	@echo; echo "**** $@"
-	$(OINK)/xform -fa-localize-heap-alloc $< \
+	$(OINK)/xform -fx-localize-heap-alloc $< \
 	  -o-mod-spec $(MODULE):$*.c \
 	  -o-mod-spec $(MODULE):$*.h \
 	  -o-mod-default default \
