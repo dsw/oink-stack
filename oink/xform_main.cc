@@ -37,7 +37,8 @@ int main(int argc, char **argv) {
 
     m.parse_stage();
     m.typecheck_stage();
-    m.elaborate_stage();
+    // transformations do not need the elaboration stage
+//     m.elaborate_stage();
     m.markRealVars_stage();
 
     if (oinkCmd->func_gran) {

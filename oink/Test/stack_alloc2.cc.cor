@@ -5,12 +5,8 @@ Test/stack_alloc2.cc:13: param use x2
 Test/stack_alloc2.cc:15: auto decl y2
 Test/stack_alloc2.cc:16: auto use y2
 Test/stack_alloc2.cc:19: auto decl foo1
-Test/stack_alloc2.cc:19: auto use foo1
-Test/stack_alloc2.cc:19: auto use foo1
 Test/stack_alloc2.cc:20: auto use foo1
 Test/stack_alloc2.cc:22: auto decl foo3
-Test/stack_alloc2.cc:22: auto use foo3
-Test/stack_alloc2.cc:22: auto use foo3
 Test/stack_alloc2.cc:23: auto use foo3
 Test/stack_alloc2.cc:36: param decl a2
 Test/stack_alloc2.cc:36: param decl a3
