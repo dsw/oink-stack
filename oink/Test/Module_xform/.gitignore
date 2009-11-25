@@ -6,6 +6,7 @@ Hide*
 
 *.xlz.c
 *.xlz_log
+*.xlz_log.just_patch
 *.xlz_patched.c
 *.xlz_xf_spec
 *.xlz_ml_spec

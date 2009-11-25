@@ -19,13 +19,17 @@ endif
 EXE :=
 EXE += gronk.exe
 
-# FIX: read this from $(MODULE).mod
 CLFLS :=
 CLFLS += gronk.c
 CLFLS += gronk_b.c
+CLFLS += gronk_b_tor.c
+
+MOD_FILES := $(CLFLS) 
+MOD_FILES += gronk.h
+MOD_FILES += gronk_b.h
 
 gronk.exe: $(CLFLS:.c=.o)
-gronk.xlz_exe: $(CLFLS:.c=.xlz.o)
+gronk.xlz_exe: $(CLFLS:.c=.c.xlz.o)
 
 # * util
 
@@ -52,7 +56,7 @@ xlz-go-test: test xlz-test
 
 # * all
 
-.PHONY: all all-splash
+.PHONY: all
 all: all-splash $(EXE)
 
 # * clean
@@ -127,8 +131,8 @@ $(EXE:.exe=.xlz_exe): %.xlz_exe:
 # 	gcc -c $(CC_FLAGS) -o $@ $<
 
 # build xlz-ed client .o files
-XLZ_CLEAN += $(CLFLS:.c=.xlz.o)
-$(CLFLS:.c=.xlz.o): %.xlz.o: %.c
+XLZ_CLEAN += $(CLFLS:.c=.c.xlz.o)
+$(CLFLS:.c=.c.xlz.o): %.c.xlz.o: %.c.xlz.c
 	@echo; echo "**** $@"
 	gcc -c $(CC_FLAGS) -o $@ $<
 
@@ -224,11 +228,17 @@ $(CLFLS:=.xlz_xf_spec): %.xlz_xf_spec: %.xlz_log
 	egrep '^localize:' < $< | sort | uniq > $@
 
 # .xlz_patched.c: localizations of call sites to malloc
-XLZ_INST_CLEAN += $(CLFLS:=.xlz_patched.c)
+XLZ_INST_CLEAN += $(CLFLS:=.xlz_patched.c) $(CLFLS:=.xlz_log.just_patch)
 $(CLFLS:.c=.c.xlz_patched.c): %.c.xlz_patched.c: %.c.xlz_log %.c
 # I get 'missing header' warnings from patch, but it seems to work
 	@echo; echo "**** $@"
-	$(ELSA)/chop_out < $*.c.xlz_log | patch -p1 -o $@ -i - $*.c
+# damn it Larry, learn what orthogonality means already!
+#	$(ELSA)/chop_out < $*.c.xlz_log | patch -p1 -o $@ -i - $*.c
+	$(ELSA)/chop_out < $*.c.xlz_log > $*.c.xlz_log.just_patch
+	if test -s $*.c.xlz_log.just_patch; \
+          then patch -p1 -o $@ -i $*.c.xlz_log.just_patch $*.c; \
+          else cp $*.c $@; \
+        fi
 
 # .xlz_log: the (1) patch and (2) log of localized classes
 XLZ_INST_CLEAN += $(CLFLS:=.xlz_log)
@@ -237,7 +247,6 @@ XLZ_INST_CLEAN += $(CLFLS:=.xlz_log)
 $(CLFLS:.c=.c.xlz_log): %.c.xlz_log: %.i
 	@echo; echo "**** $@"
 	$(OINK)/xform -fx-localize-heap-alloc $< \
-	  -o-mod-spec $(MODULE):$*.c \
-	  -o-mod-spec $(MODULE):$*.h \
+	  $(addprefix -o-mod-spec $(MODULE):, $(MOD_FILES)) \
 	  -o-mod-default default \
 	  > $@

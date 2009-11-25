@@ -9,7 +9,7 @@ from xlz_lib import *
 def write_include_lines(specs, outfile):
     for spec in specs:
         outfile.write \
-            ('#include "local_malloc__%s.h" // inserted by localize\n' % \
+            ('#include "local_malloc_%s.h" // inserted by xlz_incl_lm.py\n' % \
                  spec.get_alnum_id())
 
 def xform_input(specs, infile, outfile):
@@ -20,8 +20,7 @@ def xform_input(specs, infile, outfile):
         if not insertion_done and include_re.match(line):
             insertion_done = True
             write_include_lines(specs, outfile)
-        else:
-            outfile.write(line)
+        outfile.write(line)
 
 def main():
     specs = check_const_module(parse_spec(sys.argv[1]))
