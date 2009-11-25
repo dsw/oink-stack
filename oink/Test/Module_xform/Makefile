@@ -6,6 +6,7 @@ xlz-go:
 
 OINK_STACK := ../../..
 OINK := $(OINK_STACK)/oink
+ELSA := $(OINK_STACK)/elsa
 LOCAL_MALLOC := $(OINK_STACK)/local_malloc
 
 # * module configuration
@@ -227,7 +228,7 @@ XLZ_INST_CLEAN += $(CLFLS:=.xlz_patched.c)
 $(CLFLS:.c=.c.xlz_patched.c): %.c.xlz_patched.c: %.c.xlz_log %.c
 # I get 'missing header' warnings from patch, but it seems to work
 	@echo; echo "**** $@"
-	patch -p1 -o $@ $*.c $*.c.xlz_log
+	$(ELSA)/chop_out < $*.c.xlz_log | patch -p1 -o $@ -i - $*.c
 
 # .xlz_log: the (1) patch and (2) log of localized classes
 XLZ_INST_CLEAN += $(CLFLS:=.xlz_log)
