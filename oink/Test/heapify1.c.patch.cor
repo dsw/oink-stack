@@ -1,14 +1,12 @@
 adding to modules map: Test/heapify1.c -> foo
 setting default module to default
 warning: the -fo-merge-E_variable-and-var-values flag is incompatible with doing module analyses, so turning it off.
-
----- START ---- Test/heapify1.c
 Test/heapify1.c:18: param decl needs heapifying x2
 Test/heapify1.c:22: param use x2
 Test/heapify1.c:54: declaration having multiple declarators which need heapifying
 Test/heapify1.c:78: auto decl has compound initializer: foo5
----- STOP ----
 
+---- START ---- Test/heapify1.c
 --- Test/heapify1.c
 +++ Test/heapify1.c
 @@ -26,2 +26,2 @@
@@ -93,3 +91,5 @@ Test/heapify1.c:78: auto decl has compound initializer: foo5
 -  z3;                           // addr taken
 +  int (*z3)[10]=(typeof(z3))xmalloc(sizeof *z3);
 +  (*z3);{free(z3);free(z2);free(z);};                           // addr taken
+---- STOP ----
+

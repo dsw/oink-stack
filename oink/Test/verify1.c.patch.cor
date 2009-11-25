@@ -8,6 +8,8 @@ warning: the -fo-merge-E_variable-and-var-values flag is incompatible with doing
 skipping function in default module: _OSSwapInt16
 skipping function in default module: _OSSwapInt32
 skipping function in default module: _OSSwapInt64
+
+---- START ---- Test/verify1_foo.i
 --- Test/verify1_foo.c
 +++ Test/verify1_foo.c
 @@ -9,1 +9,1 @@
@@ -19,3 +21,9 @@ skipping function in default module: _OSSwapInt64
 @@ -17,1 +17,1 @@
 -void set_x(struct Foo *foo, int x) {
 +void set_x(struct Foo *foo, int x) {verify2(foo);
+---- STOP ----
+
+
+---- START ---- Test/verify1_bar.i
+---- STOP ----
+

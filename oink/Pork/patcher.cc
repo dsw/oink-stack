@@ -59,7 +59,8 @@ Patcher::Patcher(std::ostream& out, bool recursive)
 }
 
 Patcher::~Patcher() {
-  flush();
+  // dsw: it is a problem having this here; do it manually
+//   flush();
 }
 
 // This method goes through the pains of producing correct patch

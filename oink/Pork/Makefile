@@ -134,5 +134,26 @@ $(OBJS): %.o: %.cc
 # **** clean
 
 .PHONY: clean
-clean:
+clean: clean-test
 	rm -f *.o $(EXE)
+
+# **** test and demo
+
+CLEAN_TEST =
+.PHONY: clean-test
+clean-test:
+	rm -f $(CLEAN_TEST)
+
+CLEAN_TEST += Test/*.i
+Test/%.i: Test/%.c
+	gcc -E -o $@ $<
+
+CLEAN_TEST += Test/*.out
+.PHONY: test
+test: Test/foo.i
+	./stopwatch $< > $(<:=.out)
+	diff $(<:=.out) $(<:=.cor)
+
+.PHONY: demo
+demo: Test/foo.i
+	./stopwatch $<

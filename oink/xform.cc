@@ -1554,8 +1554,9 @@ void Xform::printStackAlloc_stage() {
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
-    printStart(file->name.c_str());
     TranslationUnit *unit = file2unit.get(file);
+
+    printStart(file->name.c_str());
     unit->traverse(env.loweredVisitor);
     printStop();
   }
@@ -1568,7 +1569,6 @@ void Xform::printStackAllocAddrTaken_stage() {
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
-    printStart(file->name.c_str());
     TranslationUnit *unit = file2unit.get(file);
 
     // optimization: while a variable in one translation unit may have
@@ -1581,8 +1581,8 @@ void Xform::printStackAllocAddrTaken_stage() {
     unit->traverse(at_env.loweredVisitor);
 
     PrintStackAllocAddrTakenVars_ASTVisitor env(addrTaken);
+    printStart(file->name.c_str());
     unit->traverse(env.loweredVisitor);
-
     printStop();
   }
 }
@@ -1593,10 +1593,8 @@ void Xform::heapifyStackAllocAddrTaken_stage() {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
     if (globalLang.isCplusplus) {
-      throw UserError(USER_ERROR_ExitCode,
-                      "Can't heapify C++ with xform yet.");
+      throw UserError(USER_ERROR_ExitCode, "Can't heapify C++ with xform yet.");
     }
-    printStart(file->name.c_str());
     TranslationUnit *unit = file2unit.get(file);
 
     // optimization: while a variable in one translation unit may have
@@ -1608,18 +1606,14 @@ void Xform::heapifyStackAllocAddrTaken_stage() {
     AddrTaken_ASTVisitor at_env(addrTaken);
     unit->traverse(at_env.loweredVisitor);
 
-    // NOTE: this emits the diff in its dtor which happens after
-    // printStop() below
-    Patcher patcher(std::cout /*ostream for the diff*/,
-                    true /*recursive*/);
+    Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
     HeapifyStackAllocAddrTakenVars_ASTVisitor env
       (addrTaken, patcher, NULL /*root*/);
     unit->traverse(env.loweredVisitor);
 
+    printStart(file->name.c_str());
+    patcher.flush();
     printStop();
-    // NOTE: the HeapifyStackAllocAddrTakenVars_ASTVisitor will be
-    // dtored after this so anything we print above will be delimited
-    // from the patch by printStop()
   }
 }
 
@@ -1629,12 +1623,14 @@ void Xform::verifyCrossModuleParams_stage() {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
     TranslationUnit *unit = file2unit.get(file);
-    // NOTE: this emits the diff in its dtor which happens after
-    // printStop() below
-    Patcher patcher(std::cout /*ostream for the diff*/,
-                    true /*recursive*/);
+
+    Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
     VerifyCrossModuleParams_ASTVisitor env(classFQName2Module, patcher);
     unit->traverse(env.loweredVisitor);
+
+    printStart(file->name.c_str());
+    patcher.flush();
+    printStop();
   }
 }
 
@@ -1644,12 +1640,14 @@ void Xform::localizeHeapAlloc_stage() {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
     TranslationUnit *unit = file2unit.get(file);
-    // NOTE: this emits the diff in its dtor which happens after
-    // printStop() below
-    Patcher patcher(std::cout /*ostream for the diff*/,
-                    true /*recursive*/);
+
+    Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
     LocalizeHeapAlloc_ASTVisitor env(classFQName2Module, patcher);
     unit->traverse(env.loweredVisitor);
+
+    printStart(file->name.c_str());
+    patcher.flush();
+    printStop();
   }
 }
 
@@ -1659,12 +1657,14 @@ void Xform::introFunCall_stage() {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
     TranslationUnit *unit = file2unit.get(file);
-    // NOTE: this emits the diff in its dtor which happens after
-    // printStop() below
-    Patcher patcher(std::cout /*ostream for the diff*/,
-                    true /*recursive*/);
+
+    Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
     IntroFunCall_ASTVisitor env(patcher);
     unit->traverse(env.loweredVisitor);
+
+    printStart(file->name.c_str());
+    patcher.flush();
+    printStop();
   }
 }
 
@@ -1673,19 +1673,14 @@ void Xform::jimmy_stage() {
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
-    printStart(file->name.c_str());
     TranslationUnit *unit = file2unit.get(file);
 
-    // NOTE: this emits the diff in its dtor which happens after
-    // printStop() below
-    Patcher patcher(std::cout /*ostream for the diff*/,
-                    true /*recursive*/);
+    Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
     Jimmy_ASTVisitor env(patcher);
     unit->traverse(env.loweredVisitor);
 
+    printStart(file->name.c_str());
+    patcher.flush();
     printStop();
-    // NOTE: the HeapifyStackAllocAddrTakenVars_ASTVisitor will be
-    // dtored after this so anything we print above will be delimited
-    // from the patch by printStop()
   }
 }

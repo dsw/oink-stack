@@ -42,8 +42,8 @@ public:
     // skip bodies where I can't get the exact position (?)
     if (!csl.hasExactPosition()) return false;
 
-    // skip functions defined in header files; FIX: don't use .cpp
-    if (!strstr(file, ".cpp")) return false;
+    // skip functions defined in header files
+    if (strstr(file, ".h")) return false;
 
     // skip functions having empty bodies
     if (body->stmts.isEmpty()) return false;
@@ -124,12 +124,13 @@ int main(int argc, char **argv) {
 
   // parse and run the stopwatch visitor across each translation unit
   PigletParser parser;
-  Patcher p;
-  Stopwatch visitor(p);
+  Patcher patcher;
+  Stopwatch visitor(patcher);
   for (int i=curarg; i<argc; ++i) {
     TranslationUnit *unit = parser.getASTNoExc(argv[i]);
     unit->traverse(visitor);
   }
+  patcher.flush();
 
   // return success
   return 0;

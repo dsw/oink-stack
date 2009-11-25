@@ -1,3 +1,6 @@
 This is the port of Mozilla's Pork back into Oink.  Thanks to Taras
 Glek and Mozilla for contributing this.  See Taras's documentation
 here: http://blog.mozilla.com/tglek/pork-rewrite-guide/
+
+Type:
+make clean all test demo

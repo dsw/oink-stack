@@ -10,6 +10,8 @@ skipping function in default module: _OSSwapInt32
 skipping function in default module: _OSSwapInt64
 localize: module:foo, alnum-class:struct_Foo__pisin_movam, size:sta, c-type:struct Foo
 localize: module:foo, alnum-class:struct_Foo__pisin_movam, size:sta, c-type:struct Foo
+
+---- START ---- Test/verify1_foo.i
 --- Test/verify1_foo.c
 +++ Test/verify1_foo.c
 @@ -6,1 +6,1 @@
@@ -18,3 +20,9 @@ localize: module:foo, alnum-class:struct_Foo__pisin_movam, size:sta, c-type:stru
 @@ -10,1 +10,1 @@
 -  free(foo);
 +  free__struct_Foo__pisin_movam__foo(foo);
+---- STOP ----
+
+
+---- START ---- Test/verify1_bar.i
+---- STOP ----
+
