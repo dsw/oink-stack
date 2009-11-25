@@ -69,6 +69,9 @@ int main(int argc, char **argv) {
     if (xformCmd->localize_heap_alloc) {
       m.localizeHeapAlloc_stage();
     }
+    if (xformCmd->intro_fun_call) {
+      m.introFunCall_stage();
+    }
     if (xformCmd->jimmy) {
       m.jimmy_stage();
     }

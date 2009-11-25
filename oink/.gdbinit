@@ -1137,7 +1137,8 @@ file ./xform
 #set args -fa-verify-cross-module-params Test/verify1_foo.i Test/verify1_bar.i -o-mod-spec bar:Test/verify1_bar.mod -o-mod-spec foo:Test/verify1_foo.mod -o-mod-default default 
 # set args -fa-localize-heap-alloc Test/verify1_foo.i Test/verify1_bar.i -o-mod-spec bar:Test/verify1_bar.mod -o-mod-spec foo:Test/verify1_foo.mod -o-mod-default default 
 # set args -fa-heapify-stack-alloc-addr-taken Test/heapify1.c
-set args -fa-localize-heap-alloc Test/Module_xform/gronk.i -o-mod-spec gronk:gronk.c -o-mod-default default 
+# set args -fa-localize-heap-alloc Test/Module_xform/gronk.i -o-mod-spec gronk:gronk.c -o-mod-default default 
+set args -fa-intro-fun-call Test/verify1_foo.i Test/verify1_bar.i -a-intro-fun-call-str 'puts("calling function"); ' -o-mod-spec bar@Test/verify1_bar.mod -o-mod-spec foo@Test/verify1_foo.mod -o-mod-default default
 
 break main
 break breaker

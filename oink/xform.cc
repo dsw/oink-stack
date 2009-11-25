@@ -1244,6 +1244,55 @@ localize_heapExpr(SourceLoc loc, SourceLoc endloc,
     << std::endl;
 }
 
+// **** IntroFunCall_ASTVisitor
+
+// transform calls by inserting introduction code at the call site
+class IntroFunCall_ASTVisitor : private ASTVisitor {
+public:
+  LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
+  Patcher &patcher;
+
+  public:
+  IntroFunCall_ASTVisitor(Patcher &patcher0)
+    : loweredVisitor(this)
+    , patcher(patcher0)
+  {}
+  virtual ~IntroFunCall_ASTVisitor() {}
+
+  virtual void postvisitExpression(Expression *);
+};
+
+void IntroFunCall_ASTVisitor::postvisitExpression(Expression *obj) {
+  if (!obj->isE_funCall()) return;
+
+  // get the current function call string
+  CPPSourceLoc call_ploc(obj->loc);
+  CPPSourceLoc call_ploc_end(obj->endloc);
+  // FIX: it is inefficient to do this every time, but orthogonal
+  stringBuilder newCall_start;
+  newCall_start << "({" << xformCmd->intro_fun_call_str;
+  // note: multiple insertBefore() calls at the same location only
+  // preserve the last one; I think this is safe because two function
+  // calls cannot abut
+  patcher.insertBefore(call_ploc, newCall_start.c_str());
+  patcher.insertBefore(call_ploc_end, ")}");
+
+  // this doesn't work due to bugs and/or missing features in Patcher;
+  // doesn't work when run top-down in visitExpression() either
+//   PairLoc call_PairLoc(call_ploc, call_ploc_end);
+//   UnboxedPairLoc call_UnboxedPairLoc(call_PairLoc);
+//   std::string callStr = patcher.getRange(call_UnboxedPairLoc);
+//
+//   // build the replacement
+//   stringBuilder newCall;
+//   newCall << "({"
+//           << xformCmd->intro_fun_call_str
+//           << callStr.c_str()
+//           << "})";
+//   // replace it
+//   patcher.printPatch(newCall.c_str(), call_UnboxedPairLoc);
+}
+
 // **** Jimmy_ASTVisitor
 
 class Jimmy_ASTVisitor : public OnlyDecltorsOfRealVars_ASTVisitor {
@@ -1600,6 +1649,21 @@ void Xform::localizeHeapAlloc_stage() {
     Patcher patcher(std::cout /*ostream for the diff*/,
                     true /*recursive*/);
     LocalizeHeapAlloc_ASTVisitor env(classFQName2Module, patcher);
+    unit->traverse(env.loweredVisitor);
+  }
+}
+
+void Xform::introFunCall_stage() {
+  printStage("introduce function call");
+  foreachSourceFile {
+    File *file = files.data();
+    maybeSetInputLangFromSuffix(file);
+    TranslationUnit *unit = file2unit.get(file);
+    // NOTE: this emits the diff in its dtor which happens after
+    // printStop() below
+    Patcher patcher(std::cout /*ostream for the diff*/,
+                    true /*recursive*/);
+    IntroFunCall_ASTVisitor env(patcher);
     unit->traverse(env.loweredVisitor);
   }
 }

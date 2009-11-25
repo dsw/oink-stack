@@ -10,13 +10,18 @@
 XformCmd::XformCmd()
   : print_stack_alloc(false)
   , print_stack_alloc_addr_taken(false)
+
   , heapify_stack_alloc_addr_taken(false)
   , verify_cross_module_params(false)
   , localize_heap_alloc(false)
+  , intro_fun_call(false)
+
   , jimmy(false)
+
   , free_func("free")
   , xmalloc_func("xmalloc")
   , verify_func("verify")
+  , intro_fun_call_str(NULL)    // there is no good default
 {}
 
 void XformCmd::readOneArg(int &argc, char **&argv) {
@@ -41,6 +46,11 @@ void XformCmd::readOneArg(int &argc, char **&argv) {
     verify_func = strdup(shift(argc, argv)); // NOTE: use strdup!
     return;
   }
+  else if (streq(arg, "-x-intro-fun-call-str")) {
+    shift(argc, argv);
+    intro_fun_call_str = strdup(shift(argc, argv)); // NOTE: use strdup!
+    return;
+  }
   // please prefix the names of boolean flags with '-fx-'
   HANDLE_FLAG(print_stack_alloc,
               "-fx-", "print-stack-alloc");
@@ -52,6 +62,8 @@ void XformCmd::readOneArg(int &argc, char **&argv) {
               "-fx-", "verify-cross-module-params");
   HANDLE_FLAG(localize_heap_alloc,
               "-fx-", "localize-heap-alloc");
+  HANDLE_FLAG(intro_fun_call,
+              "-fx-", "intro-fun-call");
   HANDLE_FLAG(jimmy,
               "-fx-", "jimmy");
 }
@@ -72,11 +84,14 @@ void XformCmd::dump() {
          boolToStr(verify_cross_module_params));
   printf("fa-localize-heap-alloc: %s\n",
          boolToStr(localize_heap_alloc));
+  printf("fa-intro-fun-call: %s\n",
+         boolToStr(intro_fun_call));
   printf("fa-jimmy: %s\n",
          boolToStr(jimmy));
   printf("a-free-func '%s'\n", free_func);
   printf("a-xmalloc-func '%s'\n", xmalloc_func);
   printf("a-verify-func '%s'\n", verify_func);
+  printf("a-intro-fun-call-str '%s'\n", intro_fun_call_str);
 }
 
 void XformCmd::printHelp() {
@@ -88,6 +103,7 @@ void XformCmd::printHelp() {
      "  -x-free-func <value>    : set the name of the free function\n"
      "  -x-xmalloc-func <value> : set the name of the xmalloc function\n"
      "  -x-verify-func <value>  : set the name of the verify function\n"
+     "  -x-intro-fun-call-str <value> : set the intro fun call string\n"
      "\n"
      "xform boolean flags;\n"
      "    preceed by '-fx-' for positive sense,\n"
@@ -107,6 +123,8 @@ void XformCmd::printHelp() {
      "    localize calls to heap allocation calls: change calls to\n"
      "    malloc/free etc. so that they call class-local and module-local\n"
      "    malloc\n"
+     "  -fx-intro-fun-call :\n"
+     "    introduce function calls at the call site\n"
      "  -fx-jimmy :\n"
      "    move over rover and let jimmy take over\n"
      "");
@@ -127,6 +145,7 @@ void XformCmd::initializeFromFlags() {
       heapify_stack_alloc_addr_taken +
       verify_cross_module_params +
       localize_heap_alloc +
+      intro_fun_call +
       jimmy > 1) {
     throw UserError
       (USER_ERROR_ExitCode,
@@ -136,8 +155,15 @@ void XformCmd::initializeFromFlags() {
        "\t-fx-heapify-stack-alloc-addr-taken\n"
        "\t-fx-verify-cross-module-params\n"
        "\t-fx-localize-heap-alloc\n"
+       "\t-fx-intro-fun-call\n"
        "\t-fx-jimmy\n"
        );
   }
 
+  if (intro_fun_call && !intro_fun_call_str) {
+    throw UserError
+      (USER_ERROR_ExitCode,
+       "If you specify -fx-intro-fun-call then you"
+       " must also set -x-intro-fun-call-str\n");
+  }
 }

@@ -12,6 +12,8 @@ xform-check: xform-check-heapify
 xform-check: xform-check-heapify3
 xform-check: xform-check-verify
 xform-check: xform-check-localize
+xform-check: xform-check-intro-fun-call0
+xform-check: xform-check-intro-fun-call1
 
 .PHONY: xform-check-basic
 xform-check-basic:
@@ -82,6 +84,22 @@ xform-check-localize: Test/verify1_foo.i Test/verify1_bar.i
 	  > Test/localize1.c.patch.out
 	diff Test/localize1.c.patch.cor Test/localize1.c.patch.out
 
+# check -fx-intro-fun-call
+
+.PHONY: xform-check-intro-fun-call0
+xform-check-intro-fun-call0:
+	@echo; echo $@
+	./xform -fx-intro-fun-call $^ \
+          2>&1 | grep "must also set -x-intro-fun-call-str" > /dev/null
+
+.PHONY: xform-check-intro-fun-call1
+xform-check-intro-fun-call1: Test/intro_fun_call1.c
+	@echo; echo $@
+	./xform -fx-intro-fun-call $^ \
+	  -x-intro-fun-call-str 'puts("call\n"); ' \
+	  > Test/intro_fun_call1.c.patch.out
+	diff Test/intro_fun_call1.c.patch.cor Test/intro_fun_call1.c.patch.out
+
 # **** preprocessing
 
 TO_CPP :=
@@ -91,5 +109,9 @@ TO_CPP += Test/heapify3.c
 
 TO_CPP_I := $(TO_CPP:.c=.i)
 
+# WARNING: MACROS WILL FAIL because gcc doesn't tell us about their
+# expansion
+#
+# FIX: this is not supposed to be gcc but mcpp -K
 $(TO_CPP_I): Test/%.i: Test/%.c
 	gcc -Wall -E -o $@ $<

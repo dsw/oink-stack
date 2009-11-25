@@ -17,6 +17,7 @@ class XformCmd : public virtual OinkCmd {
   bool print_stack_alloc_addr_taken;
   // heapify every declaration (1) allocating a var on the stack where
   // (2) the var also has its address taken
+
   bool heapify_stack_alloc_addr_taken;
   // insert calls to verify the status of parameters that are pointers
   // to a class/struct/union type that is defined in this module
@@ -25,6 +26,9 @@ class XformCmd : public virtual OinkCmd {
   // malloc/free etc. so that they call class-local and module-local
   // malloc
   bool localize_heap_alloc;
+  // introduce function calls at the call site
+  bool intro_fun_call;
+
   // jimmy stage
   bool jimmy;
 
@@ -34,6 +38,8 @@ class XformCmd : public virtual OinkCmd {
   const char *xmalloc_func;
   // string to use to call verify()
   const char *verify_func;
+  // the string to introduce function calls with
+  const char *intro_fun_call_str;
 
   XformCmd();
 

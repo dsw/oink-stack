@@ -24,9 +24,12 @@ class Xform : public virtual Oink {
   // methods ****
   void printStackAlloc_stage();
   void printStackAllocAddrTaken_stage();
+
   void heapifyStackAllocAddrTaken_stage();
   void verifyCrossModuleParams_stage();
   void localizeHeapAlloc_stage();
+  void introFunCall_stage();
+
   void jimmy_stage();
 };
 
