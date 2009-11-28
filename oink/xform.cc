@@ -1040,6 +1040,7 @@ class LocalizeHeapAlloc_ASTVisitor : public AllocSites_ASTVisitor {
 public:
   StringRefMap<char const> *classFQName2Module;
   Patcher &patcher;
+  IssuesWarnings warn;
 
   LocalizeHeapAlloc_ASTVisitor
   (StringRefMap<char const> *classFQName2Module0, Patcher &patcher0)
@@ -1087,16 +1088,15 @@ bool LocalizeHeapAlloc_ASTVisitor::isAllocator0
   StringRef funcName = funCallName_ifSimpleE_variable(efun);
   if (!funcName) return false;
   if (isStackAllocator(funcName)) {
-    printLoc(loc);
-    std::cout << "stack allocator cannot be localized" << std::endl;
+    warn.warn(loc,
+              stringc << "stack allocator cannot be localized");
     // if you have to cast the return value of alloca() then we could
     // return true here, but we don't care because we can't do
     // anything to alloca() anyway so we don't care if we happen to
     // miss a call to it
   } else if (isHeapReAllocator(funcName)) {
-    printLoc(loc);
-    std::cout << "localization of heap re-allocator not implemented"
-              << std::endl;
+    warn.warn(loc,
+              stringc << "localization of heap re-allocator not implemented");
     return true;
   } else if (isHeapNewAllocator(funcName)) {
     return true;
@@ -1116,9 +1116,9 @@ void LocalizeHeapAlloc_ASTVisitor::subVisitCast0
 
   // is this one that we can transform?
   if (!streq(funcName, "malloc") && !streq(funcName, "xmalloc")) {
-    printLoc(expr->loc);
-    std::cout << "localization of heap new allocator other than 'malloc'"
-      " not implemented" << std::endl;
+    warn.warn(expr->loc,
+              stringc << "localization of heap new allocator"
+              " other than 'malloc' not implemented");
     return;
   }
 
@@ -1172,9 +1172,9 @@ bool LocalizeHeapAlloc_ASTVisitor::visitExpression(Expression *obj) {
     if (!funcName) return false;
     if (isHeapDeAllocator(funcName)) {
       if (!streq(funcName, "free")) {
-        printLoc(obj->loc);
-        std::cout << "localization of heap de-allocator not implemented"
-                  << std::endl;
+        warn.warn(obj->loc,
+                  stringc << "localization of heap de-allocator"
+                  " not implemented");
       }
 
       // **** it's a call to free()
@@ -1207,9 +1207,8 @@ bool LocalizeHeapAlloc_ASTVisitor::visitExpression(Expression *obj) {
                         heapObjType, heapObjType_dynSize);
 
     } else if (isHeapSizeQuery(funcName)) {
-      printLoc(obj->loc);
-      std::cout << "localization of heap size query not implemented"
-                << std::endl;
+      warn.warn(obj->loc,
+                stringc << "localization of heap size query not implemented");
     }
   }
   return ret;
