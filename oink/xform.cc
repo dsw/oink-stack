@@ -255,6 +255,27 @@ static D_name *find_D_name(IDeclarator *decl) {
   } else xfailure("can't happen");
 }
 
+// **** IssuesWarnings
+
+// issue and record warnings
+class IssuesWarnings {
+private:
+  bool warningIssued;
+
+public:
+  IssuesWarnings() : warningIssued(false) {}
+
+  // print a warning to the user of a situation we can't handle and
+  // record that a warning was issued
+  void warn(SourceLoc, string);
+};
+
+void IssuesWarnings::warn(SourceLoc loc, string msg) {
+  printLoc(loc);
+  std::cout << msg << std::endl;
+  warningIssued = true;
+}
+
 // **** OnlyDecltorsOfRealVars_ASTVisitor
 
 // visit only declarators of real variables
@@ -562,6 +583,7 @@ public:
   Function *root;               // root of the traversal
   SObjSet<Variable*> xformedVars;
   SObjStack<S_compound_Scope> scopeStack;
+  IssuesWarnings warn;
 
   HeapifyStackAllocAddrTakenVars_ASTVisitor
   (SObjSet<Variable*> &addrTaken0, Patcher &patcher0, Function *root0)
@@ -615,9 +637,8 @@ visitFunction(Function *obj) {
     xassert(paramVar->getScopeKind() == SK_PARAMETER);
     if (pass(paramVar)) {
       // we can't transform these so we just tell the user about them
-      printLoc(paramVar->loc);
-      std::cout << "param decl needs heapifying " <<
-        paramVar->name << std::endl;
+      warn.warn(paramVar->loc,
+                stringc << "param decl needs heapifying " << paramVar->name);
     }
   }
 
@@ -640,21 +661,18 @@ visitStatement(Statement *obj) {
   } else if (obj->isS_goto()) {
     // we don't know if we have to free here or not; FIX: we might be
     // able to refine this
-    printLoc(obj->loc);
-    std::cout << "goto may require some variables to be free()-ed"
-              << std::endl;
+    warn.warn(obj->loc,
+              stringc << "goto may require some variables to be free()-ed");
   } else if (obj->isS_break()) {
     // we don't know if we have to free here or not; FIX: we might be
     // able to refine this
-    printLoc(obj->loc);
-    std::cout << "break may require some variables to be free()-ed"
-              << std::endl;
+    warn.warn(obj->loc,
+              stringc << "break may require some variables to be free()-ed");
   } else if (obj->isS_continue()) {
     // we don't know if we have to free here or not; FIX: we might be
     // able to refine this
-    printLoc(obj->loc);
-    std::cout << "continue may require some variables to be free()-ed"
-              << std::endl;
+    warn.warn(obj->loc,
+              stringc << "continue may require some variables to be free()-ed");
   }
   return true;
 }
@@ -726,14 +744,14 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
       if (declarator->init) {
         Initializer *init = declarator->init;
         if (init->isIN_compound()) {
-          printLoc(declarator->decl->loc);
-          std::cout << "auto decl has compound initializer: "
-                    << declarator->var->name << std::endl;
+          warn.warn(declarator->decl->loc, 
+                    stringc << "auto decl has compound initializer: "
+                    << declarator->var->name);
           return false;
         } else if (init->isIN_ctor()) {
-          printLoc(declarator->decl->loc);
-          std::cout << "auto decl has ctor initializer: "
-                    << declarator->var->name << std::endl;
+          warn.warn(declarator->decl->loc,
+                    stringc << "auto decl has ctor initializer: "
+                    << declarator->var->name);
           return false;
         }
         // punt on stack allocated arrays in general
@@ -749,9 +767,9 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
           //
           // Note that sizeof str literal gives the size you want for
           //  malloc: strlen() + 1.
-          printLoc(declarator->decl->loc);
-          std::cout << "auto decl of an array: "
-                    << declarator->var->name << std::endl;
+          warn.warn(declarator->decl->loc,
+                    stringc << "auto decl of an array: "
+                    << declarator->var->name);
           return false;
         }
       }
@@ -759,9 +777,9 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
       // we should transform this one
       if (declarator0) {
         // we can't handle this case yet
-        printLoc(declaration->decllist->first()->decl->loc);
-        std::cout << "declaration having multiple declarators "
-          "which need heapifying" << std::endl;
+        warn.warn(declaration->decllist->first()->decl->loc,
+                  stringc << "declaration having multiple declarators"
+                  " which need heapifying");
         return true;
       } else {
         declarator0 = declarator;
@@ -831,9 +849,9 @@ xformDeclarator(Declarator *obj) {
   UnboxedPairLoc dname_UnboxedPairLoc(dname_PairLoc);
   if (!dname_PairLoc.hasExactPosition()) {
     // if the location is not exact, we can't insert anything
-    printLoc(obj->decl->loc);
-    std::cout << "FAIL: auto decl does not have exact start position: "
-              << var->name << std::endl;
+    warn.warn(obj->decl->loc,
+              stringc << "FAIL: auto decl does not have exact start position: "
+              << var->name);
     return NULL;
   }
 
@@ -841,9 +859,9 @@ xformDeclarator(Declarator *obj) {
   CPPSourceLoc decltor_ploc_end(obj->endloc);
   // if the location is not exact, we can't insert anything
   if (!decltor_ploc_end.hasExactPosition()) {
-    printLoc(obj->endloc);
-    std::cout << "FAIL: auto decl does not have exact end position: "
-              << var->name << std::endl;
+    warn.warn(obj->endloc,
+              stringc << "FAIL: auto decl does not have exact end position: "
+              << var->name);
     return NULL;
   }
 
@@ -862,9 +880,9 @@ xformDeclarator(Declarator *obj) {
     // copy the old initializer
     CPPSourceLoc init_ploc(obj->init->loc);
     if (!init_ploc.hasExactPosition()) {
-      printLoc(obj->endloc);
-      std::cout << "FAIL: auto decl init does not have exact start position: "
-                << var->name << std::endl;
+      warn.warn(obj->endloc,
+                stringc << "FAIL: auto decl init does not have"
+                " exact start position: " << var->name);
       return NULL;
     }
     PairLoc init_PairLoc(init_ploc, decltor_ploc_end);
@@ -906,9 +924,8 @@ visitExpression(Expression *obj) {
       if (streq("longjmp", funcName) || streq("siglongjmp", funcName)) {
         // we don't know if we have to free here or not; FIX: we might
         // be able to refine this
-        printLoc(obj->loc);
-        std::cout << funcName << " may require some variables to be free()-ed"
-                  << std::endl;
+        warn.warn(obj->loc, stringc << funcName
+                  << " may require some variables to be free()-ed");
       }
     }
   }
@@ -924,6 +941,7 @@ subVisitE_variable(E_variable *evar) {
   // FIX: get rid of this
   if (pass(var)) {
     if (var->getScopeKind() == SK_PARAMETER) {
+      // note that this is not a warning
       printLoc(evar->loc);
       std::cout << "param use " << var->name << std::endl;
     }
@@ -1054,6 +1072,7 @@ bool LocalizeHeapAlloc_ASTVisitor::visitFunction(Function *obj) {
 
   // do not transform default modules
   if (module == defaultModule) {
+    // note that this is not a warning
     printf("skipping function in default module: %s\n",
            obj->nameAndParams->var->name);
     return false;
