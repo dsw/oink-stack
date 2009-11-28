@@ -562,9 +562,6 @@ public:
   Function *root;               // root of the traversal
   SObjSet<Variable*> xformedVars;
   SObjStack<S_compound_Scope> scopeStack;
-  
-// #define SFOREACH_OBJLIST(T, list, iter) 
-//   for(SObjListIter< T > iter(list); !iter.isDone(); iter.adv())
 
   HeapifyStackAllocAddrTakenVars_ASTVisitor
   (SObjSet<Variable*> &addrTaken0, Patcher &patcher0, Function *root0)
