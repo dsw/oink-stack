@@ -1327,110 +1327,10 @@ public:
 // all scopes on the scope stack
 bool Jimmy_ASTVisitor::
 subVisitS_return(S_return *obj) {
-//   // get the current return string
-//   CPPSourceLoc ret_ploc(obj->loc);
-//   CPPSourceLoc ret_ploc_end(obj->endloc);
-//   PairLoc ret_PairLoc(ret_ploc, ret_ploc_end);
-//   UnboxedPairLoc ret_UnboxedPairLoc(ret_PairLoc);
-//   std::string retStr = patcher.getRange(ret_UnboxedPairLoc);
-
-//   // build the replacement
-//   stringBuilder newRet;
-//   newRet << "{";
-//   // build stuff here
-//   newRet << retStr.c_str() << "}";
-
-//   // replace it
-//   patcher.printPatch(newRet.c_str(), ret_UnboxedPairLoc);
   return true;
 }
 
 bool Jimmy_ASTVisitor::subVisitS_decl(S_decl *obj) {
-//   Declaration *declaration = obj->decl;
-
-//   // find a Declarator to transform
-//   Declarator *declarator0 = NULL;
-//   FAKELIST_FOREACH_NC(Declarator, declaration->decllist, declarator) {
-//     if (declarator->var) {
-
-//       // skip those where we can't handle the initializer
-//       if (declarator->init) {
-//         Initializer *init = declarator->init;
-//         if (init->isIN_compound()) {
-//           printLoc(declarator->decl->loc);
-//           std::cout << "auto decl has compound initializer: "
-//                     << declarator->var->name << std::endl;
-//           return false;
-//         } else if (init->isIN_ctor()) {
-//           printLoc(declarator->decl->loc);
-//           std::cout << "auto decl has ctor initializer: "
-//                     << declarator->var->name << std::endl;
-//           return false;
-//         }
-//         // punt on stack allocated arrays in general
-//         if (declarator->var->type->isArrayType()) {
-//           // FIX: Derrick pointed out initializing a heapified array
-//           // from a string literal:
-//           //
-//           //  * use strcpy() on the initializer
-//           //
-//           //  * copy the string literal to all the sizeof expressions
-//           //
-//           //  * including the new initializer
-//           //
-//           // Note that sizeof str literal gives the size you want for
-//           //  malloc: strlen() + 1.
-//           printLoc(declarator->decl->loc);
-//           std::cout << "auto decl of an array: "
-//                     << declarator->var->name << std::endl;
-//           return false;
-//         }
-//       }
-
-//       // we should transform this one
-//       if (declarator0) {
-//         // we can't handle this case yet
-//         printLoc(declaration->decllist->first()->decl->loc);
-//         std::cout << "declaration having multiple declarators "
-//           "which need heapifying" << std::endl;
-//         return true;
-//       } else {
-//         declarator0 = declarator;
-//       }
-//     }
-//   }
-
-//   // if nothing to do, leave
-//   if (!declarator0) return true;
-
-//   // accumulate the new initializer statements to put at the end of
-//   // this Declaration
-//   stringBuilder newInitStmts;
-
-//   // xform this Declarator
-//   Variable *var = declarator0->var;
-//   char *oldInit_c_str = xformDeclarator(declarator0);
-//   if (oldInit_c_str) {
-//     newInitStmts << " *" << var->name << "=" << oldInit_c_str << ";";
-//     free(oldInit_c_str);
-//   }
-
-//   // Insert the new initializers at the end of the S_decl.
-//   //
-//   // NOTE: one must in general be careful when turing one statement
-//   // (here an S_Decl) into multiple statements as the single statement
-//   // could be the statement argument to an 'if', 'else', 'while',
-//   // 'for', 'do'.  In the particular case of this analysis, it can't
-//   // happen because you can't stack allocate a var and take it's
-//   // address in one statement and you can't take it's address later
-//   // because the scope would have closed.  FIX: Maybe you could stack
-//   // allocate it and then in the initializer somehow take its address
-//   // and store it on the heap?
-//   if (newInitStmts.length()) {
-//     CPPSourceLoc s_decl_ploc_end(obj->endloc);
-//     patcher.insertBefore(s_decl_ploc_end, newInitStmts.c_str());
-//   }
-
   return true;
 }
 
@@ -1438,122 +1338,16 @@ bool Jimmy_ASTVisitor::subVisitS_decl(S_decl *obj) {
 // optimize the empty string by just returning NULL
 char *Jimmy_ASTVisitor::
 xformDeclarator(Declarator *obj) {
-//   xassert(obj->context == DC_S_DECL);
-
-//   Variable_O *var = asVariable_O(obj->var);
-//   xassert(var->getScopeKind() == SK_FUNCTION);
-//   xassert(var->name);
-
-//   // find the D_name
-//   D_name *dname = find_D_name(obj->decl);
-//   // it shouldn't be possible to take the address of a bitfield and
-//   // that's the only way this can fail
-//   xassert(dname);
-//   CPPSourceLoc dname_ploc(dname->loc);
-//   CPPSourceLoc dname_ploc_end(dname->endloc);
-//   PairLoc dname_PairLoc(dname_ploc, dname_ploc_end);
-//   UnboxedPairLoc dname_UnboxedPairLoc(dname_PairLoc);
-//   if (!dname_PairLoc.hasExactPosition()) {
-//     // if the location is not exact, we can't insert anything
-//     printLoc(obj->decl->loc);
-//     std::cout << "FAIL: auto decl does not have exact start position: "
-//               << var->name << std::endl;
-//     return NULL;
-//   }
-
-//   // find the end of the Declarator
-//   CPPSourceLoc decltor_ploc_end(obj->endloc);
-//   // if the location is not exact, we can't insert anything
-//   if (!decltor_ploc_end.hasExactPosition()) {
-//     printLoc(obj->endloc);
-//     std::cout << "FAIL: auto decl does not have exact end position: "
-//               << var->name << std::endl;
-//     return NULL;
-//   }
-
-//   // fix the initializer
-  char *oldInit_c_str = NULL;
-//   stringBuilder newInit;
-//   // FIX: not sure how this simplistic approach to names is going to
-//   // hold up in C++; if you don't want to use var->name you can use
-//   // this:
-//   //   StringRef name = dname->name->getName();
-//   newInit << "(typeof(" << var->name << "))"
-//           << xformCmd->xmalloc_func
-//           << "(sizeof *" << var->name << ")";
-//   if (obj->init) {
-//     xassert(obj->init->isIN_expr());
-//     // copy the old initializer
-//     CPPSourceLoc init_ploc(obj->init->loc);
-//     if (!init_ploc.hasExactPosition()) {
-//       printLoc(obj->endloc);
-//       std::cout << "FAIL: auto decl init does not have exact start position: "
-//                 << var->name << std::endl;
-//       return NULL;
-//     }
-//     PairLoc init_PairLoc(init_ploc, decltor_ploc_end);
-//     UnboxedPairLoc init_UnboxedPairLoc(init_PairLoc);
-//     oldInit_c_str = strdup(patcher.getRange(init_UnboxedPairLoc).c_str());
-//     // replace the old initializer with the new one
-//     patcher.printPatch(newInit.c_str(), init_UnboxedPairLoc);
-//   } else {
-//     // add the new initializer
-//     stringBuilder newInit2;
-//     newInit2 << "=" << newInit;
-//     patcher.insertBefore(decltor_ploc_end, newInit2.c_str());
-//     // attempt to do it with printPatch; doesn't work
-// //     // yes, replace the empty range
-// //     PairLoc decltor_end_PairLoc(decltor_ploc_end, decltor_ploc_end);
-// //     UnboxedPairLoc decltor_end_UnboxedPairLoc(decltor_end_PairLoc);
-// //     patcher.printPatch(newInit2.c_str(), decltor_end_UnboxedPairLoc);
-//   }
-
-//   // fix the D_name; note: the below doesn't work due to the inability
-//   // of Patcher to deal with multiple insertions at the same location
-// //   patcher.insertBefore(dname_ploc, "(*");
-// //   patcher.insertBefore(dname_ploc_end, ")");
-//   stringBuilder newInnerIDecl;
-//   newInnerIDecl << "(*" << var->name << ")";
-//   patcher.printPatch(newInnerIDecl.c_str(), dname_UnboxedPairLoc);
-
-  return oldInit_c_str;
+  return NULL;
 }
 
 bool Jimmy_ASTVisitor::
 visitExpression(Expression *obj) {
-//   if (obj->isE_variable()) {
-//     return subVisitE_variable(obj->asE_variable());
-//   } else if (obj->isE_funCall()) {
-//     E_funCall *efun = obj->asE_funCall();
-//     StringRef funcName = funCallName_ifSimpleE_variable(efun);
-//     if (funcName) {
-//       if (streq("longjmp", funcName) || streq("siglongjmp", funcName)) {
-//         // we don't know if we have to free here or not; FIX: we might
-//         // be able to refine this
-//         printLoc(obj->loc);
-//         std::cout << funcName << " may require some variables to be free()-ed"
-//                   << std::endl;
-//       }
-//     }
-//   }
   return true;
 }
 
 bool Jimmy_ASTVisitor::
 subVisitE_variable(E_variable *evar) {
-//   // Note: if you compile without locations for expressions this will
-//   // stop working.
-//   Variable_O *var = asVariable_O(evar->var);
-
-//   xassert(var->getScopeKind() == SK_FUNCTION);
-//   CPPSourceLoc evar_ploc(evar->loc);
-//   CPPSourceLoc evar_ploc_end(evar->endloc);
-//   PairLoc evar_PairLoc(evar_ploc, evar_ploc_end);
-//   UnboxedPairLoc evar_UnboxedPairLoc(evar_PairLoc);
-//   stringBuilder newEvar;
-//   newEvar << "(*" << var->name << ")";
-//   patcher.printPatch(newEvar.c_str(), evar_UnboxedPairLoc);
-
   return true;
 }
 
