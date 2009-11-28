@@ -60,18 +60,15 @@ int main(int argc, char **argv) {
     }
 
     // transforms
+    IssuesWarnings warn;
     if (xformCmd->heapify_stack_alloc_addr_taken) {
-      IssuesWarnings warn;
       m.heapifyStackAllocAddrTaken_stage(warn);
-      if (warn.get_warningIssued()) code = INFERENCE_FAILURE_ExitCode;
     }
     if (xformCmd->verify_cross_module_params) {
-      m.verifyCrossModuleParams_stage();
+      m.verifyCrossModuleParams_stage(warn);
     }
     if (xformCmd->localize_heap_alloc) {
-      IssuesWarnings warn;
       m.localizeHeapAlloc_stage(warn);
-      if (warn.get_warningIssued()) code = INFERENCE_FAILURE_ExitCode;
     }
     if (xformCmd->intro_fun_call) {
       m.introFunCall_stage();
@@ -79,6 +76,7 @@ int main(int argc, char **argv) {
     if (xformCmd->jimmy) {
       m.jimmy_stage();
     }
+    if (warn.get_warningIssued()) code = INFERENCE_FAILURE_ExitCode;
   } catch (xBase &e) {
     std::cerr << e << std::endl;
     code = INTERNALERROR_ExitCode;

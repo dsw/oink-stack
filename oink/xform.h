@@ -41,7 +41,7 @@ class Xform : public virtual Oink {
   void printStackAllocAddrTaken_stage();
 
   void heapifyStackAllocAddrTaken_stage(IssuesWarnings &warn);
-  void verifyCrossModuleParams_stage();
+  void verifyCrossModuleParams_stage(IssuesWarnings &warn);
   void localizeHeapAlloc_stage(IssuesWarnings &warn);
   void introFunCall_stage();
 

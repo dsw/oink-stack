@@ -955,12 +955,15 @@ subVisitE_variable(E_variable *evar) {
 class VerifyCrossModuleParams_ASTVisitor : private ASTVisitor {
 public:
   LoweredASTVisitor loweredVisitor; // use this as the argument for traverse()
+  IssuesWarnings &warn;
   StringRefMap<char const> *classFQName2Module;
   Patcher &patcher;
 
   VerifyCrossModuleParams_ASTVisitor
-  (StringRefMap<char const> *classFQName2Module0, Patcher &patcher0)
+  (IssuesWarnings &warn0, StringRefMap<char const> *classFQName2Module0,
+   Patcher &patcher0)
     : loweredVisitor(this)
+    , warn(warn0)
     , classFQName2Module(classFQName2Module0)
     , patcher(patcher0)
   {}
@@ -996,6 +999,14 @@ bool VerifyCrossModuleParams_ASTVisitor::visitFunction(Function *obj) {
     if (!paramTypeRval->isPointerType()) continue;
     Type *paramAtType = paramTypeRval->asPointerType()->atType;
     StringRef lookedUpModule = moduleForType(classFQName2Module, paramAtType);
+    if (!lookedUpModule) {
+      // anonymous type: we can't tell what module this belongs to, so
+      // we don't know if we should verify it or not
+      warn.warn(paramVar->loc,
+                stringc << paramVar->name
+                << "has a type for which we cannot determine the module");
+      continue;
+    }
     if (module != lookedUpModule) continue;
 
     // **** make code to verify the status of the parameter
@@ -1220,6 +1231,8 @@ localize_heapExpr(SourceLoc loc, SourceLoc endloc,
                 "Allocated type defined in different module than "
                 "call to allocator.");
   } else {
+    // FIX: I don't think this is sound.
+    //
     // anonymous type: we can't tell if it is allocated in the right
     // module; NOTE: we are trusting that the right module is the
     // module of this file; that is, that another analysis would have
@@ -1431,7 +1444,7 @@ void Xform::heapifyStackAllocAddrTaken_stage(IssuesWarnings &warn) {
   }
 }
 
-void Xform::verifyCrossModuleParams_stage() {
+void Xform::verifyCrossModuleParams_stage(IssuesWarnings &warn) {
   printStage("verify cross module params");
   foreachSourceFile {
     File *file = files.data();
@@ -1439,7 +1452,7 @@ void Xform::verifyCrossModuleParams_stage() {
     TranslationUnit *unit = file2unit.get(file);
 
     Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
-    VerifyCrossModuleParams_ASTVisitor env(classFQName2Module, patcher);
+    VerifyCrossModuleParams_ASTVisitor env(warn, classFQName2Module, patcher);
     unit->traverse(env.loweredVisitor);
 
     printStart(file->name.c_str());

@@ -2543,10 +2543,11 @@ Variable *typedefVarForType(Type *type) {
   return typedefVar;
 }
 
-StringRef moduleForType(StringRefMap<char const> *classFQName2Module,
-                        Type *type)
+StringRef moduleForType
+  (StringRefMap<char const> *classFQName2Module, Type *type)
 {
   Variable *typedefVar = typedefVarForType(type);
+  if (!typedefVar) return NULL;
   StringRef lookedUpModule = classFQName2Module->get
     (globalStrTable(typedefVar->fullyQualifiedMangledName0().c_str()));
   // FIX: should this be a user assert?
