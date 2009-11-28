@@ -61,13 +61,17 @@ int main(int argc, char **argv) {
 
     // transforms
     if (xformCmd->heapify_stack_alloc_addr_taken) {
-      m.heapifyStackAllocAddrTaken_stage();
+      IssuesWarnings warn;
+      m.heapifyStackAllocAddrTaken_stage(warn);
+      if (warn.get_warningIssued()) code = INFERENCE_FAILURE_ExitCode;
     }
     if (xformCmd->verify_cross_module_params) {
       m.verifyCrossModuleParams_stage();
     }
     if (xformCmd->localize_heap_alloc) {
-      m.localizeHeapAlloc_stage();
+      IssuesWarnings warn;
+      m.localizeHeapAlloc_stage(warn);
+      if (warn.get_warningIssued()) code = INFERENCE_FAILURE_ExitCode;
     }
     if (xformCmd->intro_fun_call) {
       m.introFunCall_stage();

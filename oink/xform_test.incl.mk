@@ -42,14 +42,14 @@ xform-check-heapify:
 	./xform -fx-heapify-stack-alloc-addr-taken \
            Test/heapify1.c \
            -o-mod-spec foo:Test/heapify1.c -o-mod-default default \
-           > Test/heapify1.c.patch.out
+           > Test/heapify1.c.patch.out; test $$? -eq 32
 	diff Test/heapify1.c.patch.cor Test/heapify1.c.patch.out
 # check handles return
 	./xform -fx-heapify-stack-alloc-addr-taken \
            -x-free-func free2 -x-xmalloc-func xmalloc2 \
            Test/heapify2.c \
            -o-mod-spec foo:Test/heapify2.c -o-mod-default default \
-           > Test/heapify2.c.patch.out
+           > Test/heapify2.c.patch.out; test $$? -eq 32
 	diff Test/heapify2.c.patch.cor Test/heapify2.c.patch.out
 
 .PHONY: xform-check-heapify3
@@ -58,7 +58,7 @@ xform-check-heapify3: Test/heapify3.i
 # check handles Derrick's concerns
 	./xform -fx-heapify-stack-alloc-addr-taken $< \
            -o-mod-spec foo:$(<:.i=.c) -o-mod-default default \
-            > Test/heapify3.c.patch.out
+            > Test/heapify3.c.patch.out; test $$? -eq 32
 	diff Test/heapify3.c.patch.cor Test/heapify3.c.patch.out
 
 # check -fx-verify-cross-module-params

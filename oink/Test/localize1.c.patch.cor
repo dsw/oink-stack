@@ -4,7 +4,7 @@ loading module foo from mod file Test/verify1_foo.mod
 	adding to modules map: Test/verify1_foo.c -> foo
 	adding to modules map: Test/verify1_foo.h -> foo
 setting default module to default
-warning: the -fo-merge-E_variable-and-var-values flag is incompatible with doing module analyses, so turning it off.
+note: the -fo-merge-E_variable-and-var-values flag is incompatible with doing module analyses, so turning it off.
 skipping function in default module: _OSSwapInt16
 skipping function in default module: _OSSwapInt32
 skipping function in default module: _OSSwapInt64

@@ -257,22 +257,9 @@ static D_name *find_D_name(IDeclarator *decl) {
 
 // **** IssuesWarnings
 
-// issue and record warnings
-class IssuesWarnings {
-private:
-  bool warningIssued;
-
-public:
-  IssuesWarnings() : warningIssued(false) {}
-
-  // print a warning to the user of a situation we can't handle and
-  // record that a warning was issued
-  void warn(SourceLoc, string);
-};
-
 void IssuesWarnings::warn(SourceLoc loc, string msg) {
   printLoc(loc);
-  std::cout << msg << std::endl;
+  std::cout << "warning: " << msg << std::endl;
   warningIssued = true;
 }
 
@@ -1414,7 +1401,7 @@ void Xform::printStackAllocAddrTaken_stage() {
   }
 }
 
-void Xform::heapifyStackAllocAddrTaken_stage() {
+void Xform::heapifyStackAllocAddrTaken_stage(IssuesWarnings &warn) {
   printStage("heapify stack-allocated addr-taken vars");
   foreachSourceFile {
     File *file = files.data();
@@ -1433,7 +1420,6 @@ void Xform::heapifyStackAllocAddrTaken_stage() {
     AddrTaken_ASTVisitor at_env(addrTaken);
     unit->traverse(at_env.loweredVisitor);
 
-    IssuesWarnings warn;
     Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
     HeapifyStackAllocAddrTakenVars_ASTVisitor env
       (warn, addrTaken, patcher, NULL /*root*/);
@@ -1462,14 +1448,13 @@ void Xform::verifyCrossModuleParams_stage() {
   }
 }
 
-void Xform::localizeHeapAlloc_stage() {
+void Xform::localizeHeapAlloc_stage(IssuesWarnings &warn) {
   printStage("localize heap alloc");
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
     TranslationUnit *unit = file2unit.get(file);
 
-    IssuesWarnings warn;
     Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
     LocalizeHeapAlloc_ASTVisitor env(warn, classFQName2Module, patcher);
     unit->traverse(env.loweredVisitor);

@@ -9,6 +9,21 @@
 #include "oink.h"
 #include "cc_ast_aux.h"         // LoweredASTVisitor
 
+// issue and record warnings
+class IssuesWarnings {
+private:
+  bool warningIssued;
+
+public:
+  IssuesWarnings() : warningIssued(false) {}
+
+  // print a warning to the user of a situation we can't handle and
+  // record that a warning was issued
+  void warn(SourceLoc, string);
+
+  bool get_warningIssued() {return warningIssued;}
+};
+
 // interface for computing a predicate on variables
 class VarPredicate {
 public:
@@ -25,9 +40,9 @@ class Xform : public virtual Oink {
   void printStackAlloc_stage();
   void printStackAllocAddrTaken_stage();
 
-  void heapifyStackAllocAddrTaken_stage();
+  void heapifyStackAllocAddrTaken_stage(IssuesWarnings &warn);
   void verifyCrossModuleParams_stage();
-  void localizeHeapAlloc_stage();
+  void localizeHeapAlloc_stage(IssuesWarnings &warn);
   void introFunCall_stage();
 
   void jimmy_stage();

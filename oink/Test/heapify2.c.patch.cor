@@ -1,10 +1,10 @@
 adding to modules map: Test/heapify2.c -> foo
 setting default module to default
-warning: the -fo-merge-E_variable-and-var-values flag is incompatible with doing module analyses, so turning it off.
-Test/heapify2.c:37: goto may require some variables to be free()-ed
-Test/heapify2.c:39: break may require some variables to be free()-ed
-Test/heapify2.c:40: continue may require some variables to be free()-ed
-Test/heapify2.c:42: longjmp may require some variables to be free()-ed
+note: the -fo-merge-E_variable-and-var-values flag is incompatible with doing module analyses, so turning it off.
+Test/heapify2.c:37: warning: goto may require some variables to be free()-ed
+Test/heapify2.c:39: warning: break may require some variables to be free()-ed
+Test/heapify2.c:40: warning: continue may require some variables to be free()-ed
+Test/heapify2.c:42: warning: longjmp may require some variables to be free()-ed
 
 ---- START ---- Test/heapify2.c
 --- Test/heapify2.c
