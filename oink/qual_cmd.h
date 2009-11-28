@@ -16,7 +16,7 @@ class QSpec {
   int const depth; // the depth of pointed-ness == number of stars in spec string
 
   public:
-  QSpec(char const *original0, char *qual0, int depth0);
+  QSpec(char const *original0, char const *qual0, int depth0);
 
   public:
   char const *toString() const { return original; }

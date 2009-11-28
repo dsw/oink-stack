@@ -9,7 +9,7 @@
 #include <cstdlib>              // atoi
 #include <cstring>              // strdup
 
-QSpec::QSpec(char const *original0, char *qual0, int depth0)
+QSpec::QSpec(char const *original0, char const *qual0, int depth0)
   : original(original0)
   , qual(qual0)
   , depth(depth0)
@@ -30,8 +30,8 @@ static QSpec *parseQSpecString(char const * const specStr) {
     throw UserError(USER_ERROR_ExitCode, "Do not put spaces into a qualifier specifier string.");
   }
   // find the base qual
-  char *qual = NULL;
-  char *star = NULL;
+  char const *qual = NULL;
+  char const *star = NULL;
   char const *specStr0 = specStr;
   star = index(specStr0, '*');
   if (star) {
