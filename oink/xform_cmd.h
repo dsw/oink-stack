@@ -38,6 +38,8 @@ class XformCmd : public virtual OinkCmd {
   const char *xmalloc_func;
   // string to use to call verify()
   const char *verify_func;
+  // string with which to suffix altered parameters
+  const char *verify_param_suffix;
   // the string to introduce function calls with
   const char *intro_fun_call_str;
 

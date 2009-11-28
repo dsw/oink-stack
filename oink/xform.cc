@@ -993,8 +993,21 @@ bool VerifyCrossModuleParams_ASTVisitor::visitFunction(Function *obj) {
     StringRef lookedUpModule = moduleForType(classFQName2Module, paramAtType);
     if (module != lookedUpModule) continue;
 
-    // make code to verify the status of the parameter
-    statusChecks << xformCmd->verify_func << "(" << paramVar->name << ");";
+    // **** make code to verify the status of the parameter
+
+    // make a new name for the parameter; note: if this collides with
+    // another name, the subsequent compile will give us an error
+    stringBuilder newParamName;
+    newParamName << paramVar->name << xformCmd->verify_param_suffix;
+    // rename the parameter in situ
+    CPPSourceLoc paramLoc(paramVar->loc);
+    patcher.insertBefore(paramLoc, xformCmd->verify_param_suffix,
+                         newParamName.length());
+    // add a call to verify to filter the parameter value
+    statusChecks << "typeof(" << newParamName.c_str() << ") "
+                 << paramVar->name << "="
+                 << xformCmd->verify_func
+                 << "(" << newParamName.c_str() << ");";
   }
 
   // insert the status checks at the top of the function body

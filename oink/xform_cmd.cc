@@ -21,6 +21,7 @@ XformCmd::XformCmd()
   , free_func("free")
   , xmalloc_func("xmalloc")
   , verify_func("verify")
+  , verify_param_suffix("0")
   , intro_fun_call_str(NULL)    // there is no good default
 {}
 
@@ -44,6 +45,11 @@ void XformCmd::readOneArg(int &argc, char **&argv) {
   else if (streq(arg, "-x-verify-func")) {
     shift(argc, argv);
     verify_func = strdup(shift(argc, argv)); // NOTE: use strdup!
+    return;
+  }
+  else if (streq(arg, "-x-verify-param-suffix")) {
+    shift(argc, argv);
+    verify_param_suffix = strdup(shift(argc, argv)); // NOTE: use strdup!
     return;
   }
   else if (streq(arg, "-x-intro-fun-call-str")) {
@@ -74,24 +80,25 @@ void XformCmd::dump() {
   //
   // the idea here is to make the internal name be the same as the
   // external name with the dashes replaced by underscores
-  printf("fa-print-stack-alloc: %s\n",
+  printf("fx-print-stack-alloc: %s\n",
          boolToStr(print_stack_alloc));
-  printf("fa-print-stack-alloc-addr-taken: %s\n",
+  printf("fx-print-stack-alloc-addr-taken: %s\n",
          boolToStr(print_stack_alloc_addr_taken));
-  printf("fa-heapify-stack-alloc-addr-taken: %s\n",
+  printf("fx-heapify-stack-alloc-addr-taken: %s\n",
          boolToStr(heapify_stack_alloc_addr_taken));
-  printf("fa-verify-cross-module-params: %s\n",
+  printf("fx-verify-cross-module-params: %s\n",
          boolToStr(verify_cross_module_params));
-  printf("fa-localize-heap-alloc: %s\n",
+  printf("fx-localize-heap-alloc: %s\n",
          boolToStr(localize_heap_alloc));
-  printf("fa-intro-fun-call: %s\n",
+  printf("fx-intro-fun-call: %s\n",
          boolToStr(intro_fun_call));
-  printf("fa-jimmy: %s\n",
+  printf("fx-jimmy: %s\n",
          boolToStr(jimmy));
-  printf("a-free-func '%s'\n", free_func);
-  printf("a-xmalloc-func '%s'\n", xmalloc_func);
-  printf("a-verify-func '%s'\n", verify_func);
-  printf("a-intro-fun-call-str '%s'\n", intro_fun_call_str);
+  printf("x-free-func '%s'\n", free_func);
+  printf("x-xmalloc-func '%s'\n", xmalloc_func);
+  printf("x-verify-func '%s'\n", verify_func);
+  printf("x-verify-param-suffix '%s'\n", verify_param_suffix);
+  printf("x-intro-fun-call-str '%s'\n", intro_fun_call_str);
 }
 
 void XformCmd::printHelp() {
@@ -100,10 +107,11 @@ void XformCmd::printHelp() {
     (
      "\n"
      "xform flags that take an argument:\n"
-     "  -x-free-func <value>    : set the name of the free function\n"
-     "  -x-xmalloc-func <value> : set the name of the xmalloc function\n"
-     "  -x-verify-func <value>  : set the name of the verify function\n"
-     "  -x-intro-fun-call-str <value> : set the intro fun call string\n"
+     "  -x-free-func <value>    : name of the free function\n"
+     "  -x-xmalloc-func <value> : name of the xmalloc function\n"
+     "  -x-verify-func <value>  : name of the verify function\n"
+     "  -x-verify-param-suffix <value>  : new suffix of verified parameters\n"
+     "  -x-intro-fun-call-str <value> : intro fun call string\n"
      "\n"
      "xform boolean flags;\n"
      "    preceed by '-fx-' for positive sense,\n"
