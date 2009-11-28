@@ -578,16 +578,18 @@ public:
 class HeapifyStackAllocAddrTakenVars_ASTVisitor
   : public OnlyDecltorsOfRealVars_ASTVisitor {
 public:
+  IssuesWarnings &warn;
   SObjSet<Variable*> &addrTaken;
   Patcher &patcher;
   Function *root;               // root of the traversal
   SObjSet<Variable*> xformedVars;
   SObjStack<S_compound_Scope> scopeStack;
-  IssuesWarnings warn;
 
   HeapifyStackAllocAddrTakenVars_ASTVisitor
-  (SObjSet<Variable*> &addrTaken0, Patcher &patcher0, Function *root0)
-    : addrTaken(addrTaken0)
+  (IssuesWarnings &warn0, SObjSet<Variable*> &addrTaken0,
+   Patcher &patcher0, Function *root0)
+    : warn(warn0)
+    , addrTaken(addrTaken0)
     , patcher(patcher0)
     , root(root0)
   {}
@@ -644,7 +646,8 @@ visitFunction(Function *obj) {
 
   // re-launch the traversal
   HeapifyStackAllocAddrTakenVars_ASTVisitor newEnv
-    (this->addrTaken, this->patcher, obj /*skip this node the second time*/);
+    (this->warn, this->addrTaken,
+     this->patcher, obj /*skip this node the second time*/);
   obj->traverse(newEnv.loweredVisitor);
   return false;         // IMPORTANT: prune the rest of the visitation
 }
@@ -1038,13 +1041,15 @@ bool VerifyCrossModuleParams_ASTVisitor::visitFunction(Function *obj) {
 
 class LocalizeHeapAlloc_ASTVisitor : public AllocSites_ASTVisitor {
 public:
+  IssuesWarnings &warn;
   StringRefMap<char const> *classFQName2Module;
   Patcher &patcher;
-  IssuesWarnings warn;
 
   LocalizeHeapAlloc_ASTVisitor
-  (StringRefMap<char const> *classFQName2Module0, Patcher &patcher0)
-    : classFQName2Module(classFQName2Module0)
+  (IssuesWarnings &warn0, StringRefMap<char const> *classFQName2Module0,
+   Patcher &patcher0)
+    : warn(warn0)
+    , classFQName2Module(classFQName2Module0)
     , patcher(patcher0)
   {}
 
@@ -1428,9 +1433,10 @@ void Xform::heapifyStackAllocAddrTaken_stage() {
     AddrTaken_ASTVisitor at_env(addrTaken);
     unit->traverse(at_env.loweredVisitor);
 
+    IssuesWarnings warn;
     Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
     HeapifyStackAllocAddrTakenVars_ASTVisitor env
-      (addrTaken, patcher, NULL /*root*/);
+      (warn, addrTaken, patcher, NULL /*root*/);
     unit->traverse(env.loweredVisitor);
 
     printStart(file->name.c_str());
@@ -1463,8 +1469,9 @@ void Xform::localizeHeapAlloc_stage() {
     maybeSetInputLangFromSuffix(file);
     TranslationUnit *unit = file2unit.get(file);
 
+    IssuesWarnings warn;
     Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
-    LocalizeHeapAlloc_ASTVisitor env(classFQName2Module, patcher);
+    LocalizeHeapAlloc_ASTVisitor env(warn, classFQName2Module, patcher);
     unit->traverse(env.loweredVisitor);
 
     printStart(file->name.c_str());
