@@ -11,7 +11,7 @@
 #include "Pork/patcher.h"       // Patcher
 
 extern "C" {
-#  include "proquint.h"           // proquint converters
+#  include "proquint.h"         // proquint converters
 }
 
 #include <string.h>             // memset
