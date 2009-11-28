@@ -8,6 +8,7 @@ endif
 
 .PHONY: xform-check
 xform-check: xform-check-basic
+xform-check: xform-check-reject-cpp
 xform-check: xform-check-heapify
 xform-check: xform-check-heapify3
 xform-check: xform-check-verify
@@ -30,9 +31,19 @@ xform-check-basic:
 	./xform -fx-print-stack-alloc-addr-taken Test/stack_alloc2.cc \
            > Test/stack_alloc2.cc.out
 	diff Test/stack_alloc2.cc.cor Test/stack_alloc2.cc.out
+
+.PHONY: xform-check-reject-cpp
+xform-check-reject-cpp:
 # check -fx-heapify-stack-alloc-addr-taken rejects C++
 	./xform -fx-heapify-stack-alloc-addr-taken Test/stack_alloc2.cc \
-           2>&1 | grep "Can't heapify C++ with xform yet." > /dev/null
+           2>&1 | grep "Can't xform heapify C++ yet." > /dev/null
+	./xform -fx-verify-cross-module-params Test/stack_alloc2.cc \
+           2>&1 | grep "Can't xform verify C++ yet." > /dev/null
+	./xform -fx-localize-heap-alloc Test/stack_alloc2.cc \
+           2>&1 | grep "Can't xform localize C++ yet." > /dev/null
+	./xform -fx-intro-fun-call -x-intro-fun-call-str "foo" \
+           Test/stack_alloc2.cc \
+           2>&1 | grep "Can't xform intro-fun-call C++ yet." > /dev/null
 
 # check -fx-heapify-stack-alloc-addr-taken
 .PHONY: xform-check-heapify

@@ -1420,7 +1420,9 @@ void Xform::heapifyStackAllocAddrTaken_stage(IssuesWarnings &warn) {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
     if (globalLang.isCplusplus) {
-      throw UserError(USER_ERROR_ExitCode, "Can't heapify C++ with xform yet.");
+      // some C++ concerns: objects that should use new instead of
+      // malloc()
+      throw UserError(USER_ERROR_ExitCode, "Can't xform heapify C++ yet.");
     }
     TranslationUnit *unit = file2unit.get(file);
 
@@ -1449,6 +1451,11 @@ void Xform::verifyCrossModuleParams_stage(IssuesWarnings &warn) {
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
+    if (globalLang.isCplusplus) {
+      // some C++ concerns: non-pointer objects that behave like
+      // pointers because of operator overloading
+      throw UserError(USER_ERROR_ExitCode, "Can't xform verify C++ yet.");
+    }
     TranslationUnit *unit = file2unit.get(file);
 
     Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
@@ -1466,6 +1473,10 @@ void Xform::localizeHeapAlloc_stage(IssuesWarnings &warn) {
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
+    if (globalLang.isCplusplus) {
+      // some C++ concerns: new, delete
+      throw UserError(USER_ERROR_ExitCode, "Can't xform localize C++ yet.");
+    }
     TranslationUnit *unit = file2unit.get(file);
 
     Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
@@ -1483,6 +1494,11 @@ void Xform::introFunCall_stage() {
   foreachSourceFile {
     File *file = files.data();
     maybeSetInputLangFromSuffix(file);
+    if (globalLang.isCplusplus) {
+      // some C++ concerns: implicit function calls
+      throw UserError(USER_ERROR_ExitCode,
+                      "Can't xform intro-fun-call C++ yet.");
+    }
     TranslationUnit *unit = file2unit.get(file);
 
     Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
