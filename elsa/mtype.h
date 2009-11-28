@@ -152,8 +152,9 @@ protected:   // funcs
   bool imatchArraySizeWithExpression(int concSize, Expression *patSize, MatchFlags flags);
 
 private:     // funcs
-  // the only allowed subclass is MType; this justifies a
-  // static_cast in mtype.cc
+  // the only allowed subclass is MType; this justifies a static_cast
+  // in mtype.cc; dsw: see below for why we made the inheritance
+  // public
   friend class MType;
   IMType();
   ~IMType();
@@ -161,7 +162,11 @@ private:     // funcs
 
 
 // the public interface
-class MType : protected IMType {
+class MType :
+  // dsw: Scott, gcc 4.4.1 isn't clever enough to figure out your
+  // cleverness that allows this inheritance to be protected, so I
+  // made it public
+  public IMType {
 private:     // funcs
   // This flag is true if the client is using the non-const interface.
   //
