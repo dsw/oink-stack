@@ -200,6 +200,9 @@ terminals {
   token(StringRef) TOK_TYPE_NAME;
   token(StringRef) TOK_VARIABLE_NAME;
 
+  // and annotations
+  token(StringRef) TOK_ANNOTATION ;
+
   precedence {
     // high precedence
     prec  200 TOK_PREFER_REDUCE;
@@ -970,8 +973,9 @@ nonterm(S_compound*) CompoundStmtHelper {
   // been able to get that..)
   -> "{" empty
        { return new S_compound(loc ENDLOCARG(endloc), NULL); }
-  -> c:CompoundStmtHelper s:Statement
-       { c->stmts.append(s); ENDLOC1(c->endloc = endloc;) return c; }
+  -> c:CompoundStmtHelper s:Statement a:AnnotationOpt
+       { s->annotations = a; c->stmts.append(s);
+         ENDLOC1(c->endloc = endloc;) return c; }
 }
 
 
@@ -2703,5 +2707,20 @@ impl_verbatim {
   }
 }
 
+
+// ------------------------ annotations -----------------------
+nonterm(FakeList<Annotation>*) AnnotationOpt {
+  -> empty               { return FakeList<Annotation>::emptyList(); }
+  -> a:AnnotationList    { return a; }
+}
+
+nonterm(FakeList<Annotation>*) AnnotationList {
+  -> a:TOK_ANNOTATION
+       { return FakeList<Annotation>::makeList(new Annotation(a)); }
+  -> a:TOK_ANNOTATION l:AnnotationList
+       { Annotation *aa = new Annotation(a);
+         aa->setNext(l->first());
+         return FakeList<Annotation>::makeList(aa); }
+}
 
 // EOF

@@ -483,6 +483,9 @@ class Statement (SourceLoc loc, SourceLoc endloc) {
     }
   }
 
+  // allow annotations
+  public FakeList<Annotation> *annotations = NULL;
+
   public string lineColString() const;      // e.g. "4:5"
   public string kindLocString() const;      // e.g. "S_if@4:5"
 
@@ -852,5 +855,12 @@ class NamespaceDecl {
   -> ND_usingDir(PQName name);
 }
 
+
+// -------------------- annotations ----------------------
+class Annotation(StringRef /*nullable*/ text) {
+  // FakeList link
+  public Annotation *next = NULL;
+  public void setNext(Annotation *newNext);
+}
 
 // EOF

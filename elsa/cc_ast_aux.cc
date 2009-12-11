@@ -1682,4 +1682,11 @@ void visitRealVarsF(TranslationUnit *tunit, VisitRealVars &visitReal) {
   tunit->traverse(vis.loweredVisitor);
 }
 
+
+// ------------------- Annotation -------------------------
+void Annotation::setNext(Annotation *newNext)
+{
+  xassert(next == NULL);
+  next = newNext;
+}
 // EOF

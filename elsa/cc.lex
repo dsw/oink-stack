@@ -414,6 +414,12 @@ PPCHAR        ([^\\\n]|{BACKSL}{NOTNL})
   whitespace();
 }
 
+  /* annotation comment */
+  /* we don't match the \n because that way this works at EOF */
+"//*"{NOTNL}*    {
+  return svalTok(TOK_ANNOTATION);
+}
+
   /* C++ comment */
   /* we don't match the \n because that way this works at EOF */
 "//"{NOTNL}*    {

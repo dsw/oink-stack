@@ -1046,6 +1046,9 @@ testparse d0128.cc
 # expressions: "? Foo() : 0"
 testparse d0129.cc
 
+# test annotations
+testparse extension/d0001.c
+
 testparse k0001.cc #"left side of .* must be a class or reference to a class"
 testparse k0002.cc #"template function declared in another class (as a friend)"
 testparse k0003.cc #"template argument from static const member of template class"

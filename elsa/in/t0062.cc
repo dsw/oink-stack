@@ -22,7 +22,7 @@ public:
   Foo(u_short, u_short);
 
   // parse error now
-  //*ERROR(1):*/ Foo x;
+  // /*ERROR(1):*/ Foo x;
 
   // should (eventually) provoke error about incomplete type
   //Foo *y, z;
