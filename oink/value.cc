@@ -16,8 +16,10 @@ Value *Expression::getAbstrValue() {
     // I think most expressions should have their abstract value set
     // during the ValueASTVisitor walk.  This must be here for an
     // exceptional circumstance.  Therefore, I don't think it will be
-    // often that this unknown location will come up.
-    abstrValue = vFac->buildValue(type, SL_UNKNOWN);
+    // often that this unknown location will come up.  UPDATE: we now
+    // have locs on Expressions, but if this goes away, the above
+    // comment applies again.
+    abstrValue = vFac->buildValue(type, this->loc);
   }
   return abstrValue;
 };
