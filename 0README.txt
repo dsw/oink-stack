@@ -1,7 +1,7 @@
 
                       Welcome to Elsa and Oink!
 
-Please see the documentation in http://www.cubewano.org/oink or
+Please see the documentation in http://danielwilkerson.com/oink/ or
 locally in oink/Doc/index.html and in files throughout containing the
 substring "readme" in various capitalizations.
 
