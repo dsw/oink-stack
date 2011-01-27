@@ -14,6 +14,10 @@
 #include "agrampar.codes.h"
 
 #include <string.h>         // strchr, strrchr
+#include <iostream>
+using std::cin;
+using std::cerr;
+using std::cout;
 
 // for maintaining column count
 #define TOKEN_START  tokenStartLoc = fileState.loc /* user ; */

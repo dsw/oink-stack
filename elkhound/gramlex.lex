@@ -20,6 +20,10 @@
 #include "grampar.codes.h"
 
 #include <string.h>     // strchr, strrchr
+#include <iostream>
+using std::cin;
+using std::cout;
+using std::cerr;
 
 // for maintaining column count
 #define TOKEN_START  tokenStartLoc = fileState.loc /* user ; */
