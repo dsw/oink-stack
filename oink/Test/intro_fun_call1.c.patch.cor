@@ -5,7 +5,7 @@
 @@ -12,2 +12,2 @@
 -  int x = f(1);
 -  int y = f(g(x));
-+  int x = ({puts("call\n"); f(1))};
-+  int y = ({puts("call\n"); f(({puts("call\n"); g(x))}))};
++  int x = ({puts("call\n"); f(1)});
++  int y = ({puts("call\n"); f(({puts("call\n"); g(x)}))});
 ---- STOP ----
 

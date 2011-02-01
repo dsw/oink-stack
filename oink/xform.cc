@@ -1308,7 +1308,7 @@ void IntroFunCall_ASTVisitor::postvisitExpression(Expression *obj) {
   // preserve the last one; I think this is safe because two function
   // calls cannot abut
   patcher.insertBefore(call_ploc, newCall_start.c_str());
-  patcher.insertBefore(call_ploc_end, ")}");
+  patcher.insertBefore(call_ploc_end, "})");
 
   // this doesn't work due to bugs and/or missing features in Patcher;
   // doesn't work when run top-down in visitExpression() either
