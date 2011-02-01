@@ -100,7 +100,7 @@ static inline
 unsigned long process_mem_usage_mb()
 {
   // poor man's version; ignores mmap, etc.
-  return (int)sbrk(0) / (1024 *1024);
+  return (long)sbrk(0) / (1024 *1024);
 }
 #endif
 
