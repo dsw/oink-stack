@@ -855,8 +855,8 @@ string locString(char const *fname, int line, int col)
 void testHashMap()
 {
   // run the preprocessor
-  if (0!=system("cpp -DTEST_SRCLOC srcloc.cc >srcloc.tmp 2>/dev/null")) {
-    xbase("failed to preprocess srcloc.cc");
+  if (0!=system("gcc -E -DTEST_SRCLOC srcloc.cc >srcloc.tmp 2>/dev/null")) {
+    xbase("failed to preprocess (gcc -E) srcloc.cc");
   }
 
   SourceLocManager::File *pp = mgr.getInternalFile("srcloc.tmp");
