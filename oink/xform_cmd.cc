@@ -22,7 +22,8 @@ XformCmd::XformCmd()
   , xmalloc_func("xmalloc")
   , verify_func("verify")
   , verify_param_suffix("0")
-  , intro_fun_call_str(NULL)    // there is no good default
+  , intro_fun_call_str("")
+  , intro_fun_ret_str("")
 {}
 
 void XformCmd::readOneArg(int &argc, char **&argv) {
@@ -55,6 +56,11 @@ void XformCmd::readOneArg(int &argc, char **&argv) {
   else if (streq(arg, "-x-intro-fun-call-str")) {
     shift(argc, argv);
     intro_fun_call_str = strdup(shift(argc, argv)); // NOTE: use strdup!
+    return;
+  }
+  else if (streq(arg, "-x-intro-fun-ret-str")) {
+    shift(argc, argv);
+    intro_fun_ret_str = strdup(shift(argc, argv)); // NOTE: use strdup!
     return;
   }
   // please prefix the names of boolean flags with '-fx-'
@@ -99,6 +105,7 @@ void XformCmd::dump() {
   printf("x-verify-func '%s'\n", verify_func);
   printf("x-verify-param-suffix '%s'\n", verify_param_suffix);
   printf("x-intro-fun-call-str '%s'\n", intro_fun_call_str);
+  printf("x-intro-fun-ret-str '%s'\n", intro_fun_ret_str);
 }
 
 void XformCmd::printHelp() {
@@ -168,7 +175,7 @@ void XformCmd::initializeFromFlags() {
        );
   }
 
-  if (intro_fun_call && !intro_fun_call_str) {
+  if (intro_fun_call && !(strlen(intro_fun_call_str)>0 || strlen(intro_fun_ret_str)>0)) {
     throw UserError
       (USER_ERROR_ExitCode,
        "If you specify -fx-intro-fun-call then you"

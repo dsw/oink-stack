@@ -42,6 +42,7 @@ class XformCmd : public virtual OinkCmd {
   const char *verify_param_suffix;
   // the string to introduce function calls with
   const char *intro_fun_call_str;
+  const char *intro_fun_ret_str;
 
   XformCmd();
 

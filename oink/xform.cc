@@ -1301,14 +1301,23 @@ void IntroFunCall_ASTVisitor::postvisitExpression(Expression *obj) {
   // get the current function call string
   CPPSourceLoc call_ploc(obj->loc);
   CPPSourceLoc call_ploc_end(obj->endloc);
+
   // FIX: it is inefficient to do this every time, but orthogonal
-  stringBuilder newCall_start;
-  newCall_start << "({" << xformCmd->intro_fun_call_str;
+  stringBuilder newCall_start, newCall_end;
+
+  // Get the byte-for-byte contents of the function call site.
+  PairLoc call_PairLoc(call_ploc, call_ploc_end);
+  UnboxedPairLoc call_UnboxedPairLoc(call_PairLoc);
+  std::string call_str = patcher.getRange(call_UnboxedPairLoc);
+
+  newCall_start << "({" << xformCmd->intro_fun_call_str << "; typeof(" << call_str.c_str() /*obj->exprToString()*/ << ") ret = ";
+  newCall_end   << "; " << xformCmd->intro_fun_ret_str << "; ret; })";
+
   // note: multiple insertBefore() calls at the same location only
   // preserve the last one; I think this is safe because two function
   // calls cannot abut
   patcher.insertBefore(call_ploc, newCall_start.c_str());
-  patcher.insertBefore(call_ploc_end, "})");
+  patcher.insertBefore(call_ploc_end, newCall_end.c_str());
 
   // this doesn't work due to bugs and/or missing features in Patcher;
   // doesn't work when run top-down in visitExpression() either
