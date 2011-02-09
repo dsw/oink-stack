@@ -35,6 +35,7 @@ l_FLAGS += -lelkhound
 l_FLAGS += -lsmbase
 l_FLAGS += -lqual
 l_FLAGS += -lregion
+l_FLAGS += -lzipios
 
 # dataflow functionality
 DATAFLOW_LOCAL_CC_O :=
