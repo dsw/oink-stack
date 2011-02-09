@@ -111,7 +111,7 @@ EOF
 #                         including forms: -W*, -D*, -O*, -m*
 
 my $enable_archive_srz_zip = 'auto';
-my $enable_llvm = 'auto';
+my $enable_llvm = 'no';
 
 # process command-line arguments
 my $originalArgs = join(' ', @ARGV);
