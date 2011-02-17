@@ -1,9 +1,10 @@
 
                       Welcome to Elsa and Oink!
 
-Please see the documentation in http://danielwilkerson.com/oink/ or
-locally in oink/Doc/index.html and in files throughout containing the
-substring "readme" in various capitalizations.
+Please see the documentation in
+http://danielwilkerson.com/oink/index.html or locally in
+oink/Doc/index.html and in files throughout containing the substring
+"readme" in various capitalizations.
 
 It is our intent that every part of the project be released under a
 BSD-like license/terms-of-use, though the copyrights may differ.
