@@ -28,6 +28,7 @@ class XformCmd : public virtual OinkCmd {
   bool localize_heap_alloc;
   // introduce function calls at the call site
   bool intro_fun_call;
+  bool wrap_fun_call;
 
   // jimmy stage
   bool jimmy;
@@ -43,7 +44,7 @@ class XformCmd : public virtual OinkCmd {
   // the string to introduce function calls with
   const char *intro_fun_call_str;
   const char *intro_fun_ret_str;
-
+  const char *wrap_fun_call_config_file;
   XformCmd();
 
   void readOneArg(int &argc, char **&argv);

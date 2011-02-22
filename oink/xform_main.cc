@@ -75,6 +75,9 @@ int main(int argc, char **argv) {
     if (xformCmd->intro_fun_call) {
       m.introFunCall_stage();
     }
+    if (xformCmd->wrap_fun_call) {
+      m.wrapFunCall_stage(xformCmd->wrap_fun_call_config_file);
+    }
     if (xformCmd->jimmy) {
       m.jimmy_stage();
     }

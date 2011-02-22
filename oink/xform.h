@@ -44,6 +44,7 @@ class Xform : public virtual Oink {
   void verifyCrossModuleParams_stage(IssuesWarnings &warn);
   void localizeHeapAlloc_stage(IssuesWarnings &warn);
   void introFunCall_stage();
+  void wrapFunCall_stage(const char * cnf_file);
 
   void jimmy_stage();
 };

@@ -15,6 +15,7 @@ XformCmd::XformCmd()
   , verify_cross_module_params(false)
   , localize_heap_alloc(false)
   , intro_fun_call(false)
+  , wrap_fun_call(false)
 
   , jimmy(false)
 
@@ -24,6 +25,7 @@ XformCmd::XformCmd()
   , verify_param_suffix("0")
   , intro_fun_call_str("")
   , intro_fun_ret_str("")
+  , wrap_fun_call_config_file("")
 {}
 
 void XformCmd::readOneArg(int &argc, char **&argv) {
@@ -63,6 +65,10 @@ void XformCmd::readOneArg(int &argc, char **&argv) {
     intro_fun_ret_str = strdup(shift(argc, argv)); // NOTE: use strdup!
     return;
   }
+  else if (streq(arg, "-x-wrap-fun-call-config-file")) {
+    shift(argc, argv);
+    wrap_fun_call_config_file = strdup(shift(argc, argv));
+  }
   // please prefix the names of boolean flags with '-fx-'
   HANDLE_FLAG(print_stack_alloc,
               "-fx-", "print-stack-alloc");
@@ -76,6 +82,8 @@ void XformCmd::readOneArg(int &argc, char **&argv) {
               "-fx-", "localize-heap-alloc");
   HANDLE_FLAG(intro_fun_call,
               "-fx-", "intro-fun-call");
+  HANDLE_FLAG(wrap_fun_call,
+              "-fx-", "wrap-fun-call");
   HANDLE_FLAG(jimmy,
               "-fx-", "jimmy");
 }
@@ -98,6 +106,8 @@ void XformCmd::dump() {
          boolToStr(localize_heap_alloc));
   printf("fx-intro-fun-call: %s\n",
          boolToStr(intro_fun_call));
+  printf("fx-wrap-fun-call: %s\n",
+         boolToStr(wrap_fun_call));
   printf("fx-jimmy: %s\n",
          boolToStr(jimmy));
   printf("x-free-func '%s'\n", free_func);
@@ -106,6 +116,7 @@ void XformCmd::dump() {
   printf("x-verify-param-suffix '%s'\n", verify_param_suffix);
   printf("x-intro-fun-call-str '%s'\n", intro_fun_call_str);
   printf("x-intro-fun-ret-str '%s'\n", intro_fun_ret_str);
+  printf("x-wrap-fun-config-file '%s'\n", wrap_fun_call_config_file);
 }
 
 void XformCmd::printHelp() {
@@ -140,6 +151,8 @@ void XformCmd::printHelp() {
      "    malloc\n"
      "  -fx-intro-fun-call :\n"
      "    introduce function calls at the call site\n"
+     "  -fx-wrap-fun-call :\n"
+     "    replace function calls with calls to wrappers\n"
      "  -fx-jimmy :\n"
      "    move over rover and let jimmy take over\n"
      "");
@@ -161,6 +174,7 @@ void XformCmd::initializeFromFlags() {
       verify_cross_module_params +
       localize_heap_alloc +
       intro_fun_call +
+      wrap_fun_call +
       jimmy > 1) {
     throw UserError
       (USER_ERROR_ExitCode,
@@ -171,6 +185,7 @@ void XformCmd::initializeFromFlags() {
        "\t-fx-verify-cross-module-params\n"
        "\t-fx-localize-heap-alloc\n"
        "\t-fx-intro-fun-call\n"
+       "\t-fx-wrap-fun-call\n"
        "\t-fx-jimmy\n"
        );
   }
@@ -180,5 +195,11 @@ void XformCmd::initializeFromFlags() {
       (USER_ERROR_ExitCode,
        "If you specify -fx-intro-fun-call then you"
        " must also set -x-intro-fun-call-str\n");
+  }
+  if (wrap_fun_call && ! strlen(wrap_fun_call_config_file)>0) {
+    throw UserError
+      (USER_ERROR_ExitCode,
+          "If you specify -fx-wrap-fun-call then you"
+          " must also set -x-wrap-fun-call-config-file\n");
   }
 }
