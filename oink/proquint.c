@@ -22,10 +22,10 @@ static char const uint2vowel[] = {
   'a', 'i', 'o', 'u'
 };
 
-void uint2quint(char *quint /*output*/, uint32_t i, int sepChar) {
+void uint2quint(char *quint /*output*/, proquint_uint32_t i, int sepChar) {
   /* K&R section 2.9: "Right shifting an unsigned quantity always
      fills vacated it with zero." */
-  uint32_t j;
+  proquint_uint32_t j;
 
 # define APPEND(X) *quint = (X); ++quint
 
@@ -65,8 +65,8 @@ void uint2quint(char *quint /*output*/, uint32_t i, int sepChar) {
 # undef MASK_FIRST4
 }
 
-uint32_t quint2uint(char const *quint) {
-  uint32_t res = 0;
+proquint_uint32_t quint2uint(char const *quint) {
+  proquint_uint32_t res = 0;
   char c;
 
   for(; (c=*quint); ++quint) {
