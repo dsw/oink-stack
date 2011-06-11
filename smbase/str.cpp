@@ -10,14 +10,16 @@
 #include <string.h>         // strcmp
 #include <iostream>         // ostream << char*
 #include <assert.h>         // assert
+#ifndef _WIN32
 #include <unistd.h>         // write
-
+#else
+#include <io.h>
+#endif
 #include "xassert.h"        // xassert
 #include "ckheap.h"         // checkHeapNode
 #include "flatten.h"        // Flatten
 #include "nonport.h"        // vnprintf
 #include "array.h"          // Array
-
 
 // ----------------------- string ---------------------
 

@@ -688,7 +688,7 @@ bool IMType::equalWithAppliedCV(Type const *conc, Binding *binding, CVFlags cv, 
     if (!( flags & MF_OK_DIFFERENT_CV )) {
       // The 'cv' flags supplied are subtracted from those in 'conc'.
       CVFlags concCV = conc->getCVFlags();
-      if (concCV >= cv) {
+      if (superset(concCV, cv)) {
         // example:
         //   conc = 'struct B volatile const'
         //   binding = 'struct B'
@@ -934,7 +934,7 @@ bool IMType::imatchCVFlags(CVFlags conc, CVFlags pat, MatchFlags flags)
     // TODO: this is wrong, as it does not correctly implement
     // 14.8.2.1; I am only implementing this because it emulates
     // what matchtype does right now
-    if (pat >= conc) {
+    if (superset(pat, conc)) {
       return true;
     }
     else {
@@ -966,7 +966,7 @@ bool IMType::imatchReferenceType(ReferenceType const *conc, ReferenceType const 
     // this only approximates 14.8.2.1, but emulates current matchtype
     // behavior (actually, it emulates only the intended matchtype
     // behavior; see comment added 2005-08-03 to MatchTypes::match_ref)
-    if (pat->atType->getCVFlags() >= conc->atType->getCVFlags()) {
+    if (superset(pat->atType->getCVFlags(), conc->atType->getCVFlags())) {
       // disable further comparison of these cv-flags
       flags |= MF_IGNORE_TOP_CV;
     }

@@ -6,7 +6,7 @@
 #include <stdlib.h>      // abort, exit
 #include <string.h>      // strncpy
 
-#ifdef __WIN32__
+#if defined(__WIN32__) || defined(_WIN32)
 #  ifdef USE_MINWIN_H
 #    include "minwin.h"   // api
 #  else
@@ -35,12 +35,12 @@
 #  define DIRSLASHES "\\/"
 
 #else   // unix
+#  include <unistd.h>         // write, mkdir, sleep, chdir, geteuid
 #  include <sys/time.h>   // struct timeval, gettimeofday
+#  include <pwd.h>        // getpwuid, struct passwd
 #  include <sys/types.h>  // mkdir constants, DIR, struct dirent
 #  include <fcntl.h>      // mkdir constants
-#  include <unistd.h>     // mkdir, sleep, chdir, geteuid
 #  include <errno.h>      // errno
-#  include <pwd.h>        // getpwuid, struct passwd
 #  define DIRSLASH '/'
 #  define DIRSLASHES "/"
 
@@ -48,10 +48,13 @@
 
 #include <sys/stat.h>     // chmod, mode macros
 #include <time.h>         // tzset, localtime, time
+#include <fcntl.h>        // mkdir constants
 #include <iostream>       // cout
 
 #if !defined(__WIN32__) || defined(__BORLANDC__)
-  #include <dirent.h>       // opendir
+# ifndef _WIN32
+#  include <dirent.h>       // opendir
+# endif
 #endif
 
 #include "nonport.h"      // this module
@@ -115,7 +118,7 @@ char getConsoleChar()
 // constant for the life of the program, event
 long getMilliseconds()
 {
-# ifdef __WIN32__
+#if defined(__WIN32__) || defined(_WIN32)
     // # of milliseconds since program started
     return GetTickCount();
 
@@ -151,7 +154,7 @@ bool limitFileAccess(char const *fname)
 bool createDirectory(char const *dirname)
 {
   int res;
-# ifdef __WIN32__
+# if defined(__WIN32__) || defined(_WIN32)
     // no 'mode' argument
     res = mkdir(dirname);
 # else   // unix
@@ -235,7 +238,7 @@ void portableSleep(unsigned seconds)
 
 void getCurrentUsername(char *buf, int buflen)
 {
-  #ifdef __WIN32__
+# if defined(__WIN32__) || defined(_WIN32)
     DWORD len = buflen;
     if (!GetUserName(buf, &len)) {
       fail("GetUserName");
@@ -330,7 +333,7 @@ void applyToDirContents(char const *dirName,
   //     trash section)
   // DOB: VC doesn't have opendir-
   //  I think this is the only way to do it in the Win32 API
-  #if defined(__WIN32__) && !defined(__BORLANDC__)
+  #if (defined(__WIN32__) && !defined(__BORLANDC__)) || defined(_WIN32)
     struct _finddata_t fb;
     char* buf = new char[strlen(dirName)+5];
     strcpy(buf, dirName);
@@ -384,7 +387,7 @@ bool isDirectory(char const *path)
     fail("stat", path);
     return false;
   }
-  #if defined(__WIN32__) && !defined(__BORLANDC__)
+  #if (defined(__WIN32__) && !defined(__BORLANDC__)) || defined(_WIN32)
     return !!(st.st_mode & _S_IFDIR); // this is how it works for VC
   #else
     return S_ISDIR(st.st_mode);
@@ -485,7 +488,7 @@ bool hasSystemCryptoRandom()
 // of things hasSystemCryptoRandom checks)
 unsigned getSystemCryptoRandom()
 {
-  #if !defined(__WIN32__)     // unix
+  #if !(defined(__WIN32__) || defined(_WIN32))
     // open /dev/random
     int fd = open("/dev/random", O_RDONLY);
     if (!fd) {
@@ -530,7 +533,7 @@ unsigned getSystemCryptoRandom()
 
 int getProcessId()
 {
-  #ifdef __WIN32__
+  #if defined(__WIN32__) || defined(_WIN32)
     return GetCurrentProcessId();
 
   #else  // unix

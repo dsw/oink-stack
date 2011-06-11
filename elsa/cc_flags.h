@@ -68,7 +68,8 @@ void fromXml(CVFlags &out, char const *str);
 ENUM_BITWISE_OPS(CVFlags, CV_ALL)
 
 // experiment: superset operator
-inline bool operator>= (CVFlags cv1, CVFlags cv2)
+// replaced 'operator >=' with 'superset()' to solve VisualStudio enum operator overloading bug
+inline bool superset(CVFlags cv1, CVFlags cv2)
   { return (cv1 & cv2) == cv2; }
 
 
@@ -143,7 +144,8 @@ void fromXml(DeclFlags &out, char const *str);
 
 ENUM_BITWISE_OPS(DeclFlags, ALL_DECLFLAGS)
 
-inline bool operator>= (DeclFlags df1, DeclFlags df2)
+// replaced 'operator >=' with 'superset()' to solve VisualStudio enum operator overloading bug
+inline bool superset(DeclFlags df1, DeclFlags df2)
   { return (df1 & df2) == df2; }
 
 // helper of possibly general purpose

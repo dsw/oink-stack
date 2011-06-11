@@ -938,7 +938,7 @@ STATICDEF bool GLR
 
     // some debugging streams so the TRSPARSE etc. macros work
     bool trParse       = glr.trParse;
-    ostream &trsParse  = glr.trsParse;
+    std::ostream &trsParse  = glr.trsParse;
   #endif
   for (;;) {
     // debugging

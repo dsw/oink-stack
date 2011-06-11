@@ -37,6 +37,8 @@
 # library classes other than those two.
 #
 # 4. Emit proper #line directives for merged extensions.
+#
+# 5. Added -win flag for GnuWin32 flex 2.5.4 for VisualStudio2010 build.
 
 # Given that I make so many changes, and they are so dependent on
 # the details of the generated file, it might seem easier to just
@@ -53,6 +55,7 @@ $nobackup = 0;           # if true, require the scanner to be backup-free
 $makeMethodCopies = 0;   # if true, do step 2b above
 $outputFile = "";        # name of eventual output file
 $inputFile = "";         # name if input file
+$win = 0;                # hack for GnuWin32 flex 2.5.4
 @flexArgs = ("flex");    # arguments to pass to flex
 
 if (@ARGV == 0) {
@@ -81,6 +84,11 @@ for (; @ARGV; shift @ARGV) {
 
   if ($ARGV[0] eq "-copies") {
     $makeMethodCopies = 1;
+    next;
+  }
+
+  if ($ARGV[0] eq "-win") {
+    $win = 1;
     next;
   }
 
@@ -172,6 +180,24 @@ for ($i=0; $i < @lines; $i++) {
   if ($line =~ m/class istream;/) {
     $lineno++;
     print OUT ("#include <iostream>        // class istream\n");
+    if ($win != 0) {
+      $lineno++;
+      print OUT ("using std::istream;\n");
+      $lineno++;
+      print OUT ("using std::ostream;\n");
+      $lineno++;
+      print OUT ("using std::cin;\n");
+      $lineno++;
+      print OUT ("using std::cout;\n");
+      $lineno++;
+      print OUT ("using std::cerr;\n");
+    }
+    next;
+  }
+
+  if ($win != 0 && $line =~ m/#include <unistd.h>/) {
+    $lineno++;
+    print OUT ("#include <io.h>\n");
     next;
   }
 

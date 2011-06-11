@@ -41,6 +41,7 @@ if ($smcv < $req_smcv) {
 
 # defaults
 @LDFLAGS = ("-g -Wall");
+@CCFLAGS = "-DXML";
 $AST = "../ast";
 $ELKHOUND = "../elkhound";
 $USE_GNU = "1";
@@ -152,6 +153,7 @@ $summary = getStandardConfigSummary();
 $summary .= <<"OUTER_EOF";
 cat <<EOF
   LDFLAGS:     @LDFLAGS
+  CCFLAGS:     @CCFLAGS
   SMBASE:      $SMBASE
   AST:         $AST
   ELKHOUND:    $ELKHOUND
@@ -169,6 +171,7 @@ writeConfigSummary($summary);
 
 # ------------------- config.status ------------------
 writeConfigStatus("LDFLAGS" => "@LDFLAGS",
+                  "CCFLAGS" => "@CCFLAGS",
                   "SMBASE" => "$SMBASE",
                   "AST" => "$AST",
                   "ELKHOUND" => "$ELKHOUND",
