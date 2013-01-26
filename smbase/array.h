@@ -258,7 +258,7 @@ public:
   T      & operator[] (int i)       { return GrowArray<T>::operator[](i); }
 
   void push(T const &val)
-    { setIndexDoubler(len++, val); }
+    { this->setIndexDoubler(len++, val); }
   T pop()
     { return operator[](--len); }
   T const &top() const
