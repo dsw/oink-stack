@@ -6,6 +6,7 @@
 // Provides useful utility functions
 
 #include "cc_print.h"
+#include <unistd.h>	// readlink
 
 // Convenient func to print out arbitrary AST nodes
 template<class T> inline void print(std::ostream &ostream, T *m) {

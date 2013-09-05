@@ -11,7 +11,8 @@
 #include "gramlex.h"
 
 // pull in the bison-generated token codes
-#include "agrampar.codes.h"
+#define YYSTYPE_IS_DECLARED
+#include "agrampar.tab.h"
 
 #include <string.h>         // strchr, strrchr
 

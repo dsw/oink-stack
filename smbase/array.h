@@ -251,29 +251,23 @@ public:
     return *this;
   }
 
-  // element access; these declarations are necessary because
-  // the uses of 'operator[]' below are not "dependent", hence
-  // they can't use declarations inherited from GrowArray<T>
-  T const& operator[] (int i) const { return GrowArray<T>::operator[](i); }
-  T      & operator[] (int i)       { return GrowArray<T>::operator[](i); }
-
   void push(T const &val)
-    { setIndexDoubler(len++, val); }
+    { this->setIndexDoubler(len++, val); }
   T pop()
-    { return operator[](--len); }
+    { return this->operator[](--len); }
   T const &top() const
-    { return operator[](len-1); }
+    { return this->operator[](len-1); }
   T &top()
-    { return operator[](len-1); }
+    { return this->operator[](len-1); }
   T &nth(int which)
-    { return operator[](len-1-which); }
+    { return this->operator[](len-1-which); }
 
   // alternate interface, where init/deinit is done explicitly
   // on returned references
   T &pushAlt()    // returns newly accessible item
-    { GrowArray<T>::ensureIndexDoubler(len++); return top(); }
+    { this->ensureIndexDoubler(len++); return top(); }
   T &popAlt()     // returns item popped
-    { return operator[](--len); }
+    { return this->operator[](--len); }
 
   // items stored
   int length() const
@@ -303,7 +297,7 @@ public:
   }
 
   void sort(int (*compare)(T const *t1, T const *t2)) {
-    qsort(GrowArray<T>::getArrayNC(), len, sizeof(T),
+    qsort(this->getArrayNC(), len, sizeof(T),
           (int (*)(void const*, void const*))compare );
   }
 };
