@@ -21,6 +21,7 @@
 #include <fstream>       // ofstream
 #include <stdlib.h>      // getenv
 #include <stdio.h>       // printf
+#include <stdint.h>      // uintptr_t
 
 // for ParseTables::emitConstructionCode:
 //   linkdepend: parsetables.cc
@@ -2232,7 +2233,7 @@ STATICDEF ItemSet const *ItemSet::dataToKey(ItemSet *data)
 
 STATICDEF unsigned ItemSet::hash(ItemSet const *key)
 {
-  unsigned crc = key->kernelItemsCRC;
+  uintptr_t crc = key->kernelItemsCRC;
   return HashTable::lcprngHashFn((void*)crc);
 }
 
@@ -3302,6 +3303,7 @@ void GrammarAnalysis::computeParseTables(bool allowAmbig)
       //     (rationale: eagerly reduce "E -> E + E")
       // UPDATE: removed last condition because it actually makes things
       // worse..
+#if 0 // this is actually not used anywhere later
       bool delayed = false;
       if (reductions.isNotEmpty()) {    // no reductions: eager (irrelevant, actually)
         SFOREACH_PRODUCTION(reductions, prodIter) {
@@ -3315,6 +3317,7 @@ void GrammarAnalysis::computeParseTables(bool allowAmbig)
           }
         }
       }
+#endif
     }
 
     // ---- fill in this row in the goto table ----
