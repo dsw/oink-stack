@@ -1,0 +1,153 @@
+                                                                                                                                                                                                                                                               
+Delivered-To: daniel.wilkerson@gmail.com
+Received: by 10.229.73.132 with SMTP id q4csp306318qcj;
+        Thu, 5 Sep 2013 16:25:16 -0700 (PDT)
+X-Received: by 10.14.109.201 with SMTP id s49mr8000077eeg.54.1378423515965;
+        Thu, 05 Sep 2013 16:25:15 -0700 (PDT)
+Return-Path: <pip88nl@gmail.com>
+Received: from mail-ea0-f178.google.com (mail-ea0-f178.google.com [209.85.215.178])
+        by mx.google.com with ESMTPS id k49si25703636een.52.1969.12.31.16.00.00
+        (version=TLSv1 cipher=ECDHE-RSA-RC4-SHA bits=128/128);
+        Thu, 05 Sep 2013 16:25:15 -0700 (PDT)
+Received-SPF: pass (google.com: domain of pip88nl@gmail.com designates 209.85.215.178 as permitted sender) client-ip=209.85.215.178;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of pip88nl@gmail.com designates 209.85.215.178 as permitted sender) smtp.mail=pip88nl@gmail.com;
+       dkim=pass header.i=@gmail.com;
+       dmarc=pass (p=NONE dis=NONE) d=gmail.com
+Received: by mail-ea0-f178.google.com with SMTP id a15so1231499eae.37
+        for <daniel.wilkerson@gmail.com>; Thu, 05 Sep 2013 16:25:15 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=date:from:to:subject:message-id:references:mime-version
+         :content-type:content-disposition:in-reply-to:user-agent;
+        bh=Mde2I1fmUFQC0wlFxAxhYEhkHYnlSxgJmDqMT0K6+N8=;
+        b=tBglkJ/PLydaX0Aka9MyMbOAL38d5kbJz/Mc9O5eBDpN+ycLqHaj9Ad22t/q2VD+8K
+         vvycGetHg9gNB5xGabZQaVAAH7qrvNftmwYVqJxIAT2TGFJUog+vG+4LGtdxnZhK01wV
+         C0XzTQCtHHzyWtKVbnw/1z7SggtRTz9z7LwcbAKHDVRDmLM+5BQZt3R4rp/ZjBjjF1jC
+         2b0A0AKcZ0b9SsKt+YX56WYA9egIOoi8IUka2vVFiIlQhwk2q65UerhmmU0Kr4g9yLx0
+         SzheJx/tCUdB5ar6DQf5Mn9OLBOhVD4x1FniGdXePLp/6+IkXWMXzag5Gs9V25jFQ5jo
+         kmBg==
+X-Received: by 10.14.108.9 with SMTP id p9mr17429303eeg.8.1378423515439;
+        Thu, 05 Sep 2013 16:25:15 -0700 (PDT)
+Return-Path: <pip88nl@gmail.com>
+Received: from localhost (xinutec.org. [85.214.219.2])
+        by mx.google.com with ESMTPSA id d8sm52583361eeh.8.1969.12.31.16.00.00
+        (version=TLSv1.2 cipher=RC4-SHA bits=128/128);
+        Thu, 05 Sep 2013 16:25:14 -0700 (PDT)
+Date: Thu, 5 Sep 2013 23:25:10 +0000
+From: Pippijn van Steenhoven <pip88nl@gmail.com>
+To: Daniel Wilkerson <daniel.wilkerson@gmail.com>
+Subject: Re: [oink-stack] Compile fixes (#8)
+Message-ID: <20130905232510.GC4945@xinutec.org>
+References: <dsw/oink-stack/pull/8@github.com>
+ <CALzRTRn5=0Wk41-+_Nfz6zRWzfF=VY3s8qH4c3t-awbSdJdG8w@mail.gmail.com>
+ <20130905221709.GA4945@xinutec.org>
+ <CALzRTRk7wR+iOUpZVRF3SJyFG8sYNtY=9XJXDgxvbN6ZTb9TUg@mail.gmail.com>
+ <20130905225002.GB4945@xinutec.org>
+ <CALzRTRkP-gLf_ifbtHSDv8QyUsAx_XJRs2tJ9QreG60D_5asng@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	      protocol="application/pgp-signature"; boundary="Y5rl02BVI9TCfPar"
+Content-Disposition: inline
+In-Reply-To: <CALzRTRkP-gLf_ifbtHSDv8QyUsAx_XJRs2tJ9QreG60D_5asng@mail.gmail.com>
+User-Agent: Mutt/1.5.21 (2010-09-15)
+
+
+--Y5rl02BVI9TCfPar
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+My contributions to Elsa/Oink (including those referred to in the
+quotation at the bottom of the email) are hereby placed into the public
+domain.
+
+On Thu, Sep 05, 2013 at 04:12:03PM -0700, Daniel Wilkerson wrote:
+> Ok, well for my records, can you reply saying: "My contributions to
+> Elsa/Oink (including those referred to in the quotation at the bottom
+> of the email) are hereby placed into the public domain."  Sorry for
+> the formality, but I have to be pretty careful about these things.
+>=20
+> Fixes for bison 2.5 (used on the current Ubuntu LTS) and for newer GCC
+> versions (4.8).
+>=20
+> ________________________________
+>=20
+> You can merge this Pull Request by running
+>=20
+>   git pull https://github.com/pippijn/oink-stack compile-fixes
+>=20
+> Or view, comment on, or merge it at:
+>=20
+>   https://github.com/dsw/oink-stack/pull/8
+>=20
+> Commit Summary
+>=20
+> compile fixes
+> don't use the .codes.h files, they are broken
+>=20
+> File Changes
+>=20
+> M ast/agramlex.lex (3)
+> M elkhound/gramanl.cc (5)
+> M elkhound/gramlex.lex (3)
+> M oink/Pork/squash_util.h (1)
+> M smbase/array.h (22)
+>=20
+> Patch Links:
+>=20
+> https://github.com/dsw/oink-stack/pull/8.patch
+> https://github.com/dsw/oink-stack/pull/8.diff
+>=20
+>=20
+> On Thu, Sep 5, 2013 at 3:50 PM, Pippijn van Steenhoven
+> <pip88nl@gmail.com> wrote:
+> > On Thu, Sep 05, 2013 at 03:36:38PM -0700, Daniel Wilkerson wrote:
+> >> Can you please tell me your situation with respect to your legal right
+> >> to contribute changes?  In the U.S. at least people often work for an
+> >> organization where they have signed over the rights to anything they
+> >> create to their employer and therefore they have to get lawyers to
+> >> sign things in order to make contributions.  Even Universities work
+> >> this way.  Before I pull your changes and merge them into the tree, I
+> >> just need to talk to you about your situation.
+> >
+> > I am in no situation. This is my private for-fun work which I do for
+> > nobody but myself. You can consider these particular contributions, as
+> > they are trivial, public domain (I don't think we need a copyright
+> > transferral procedure for these). Further, less trivial contributions,
+> > are owned by me personally, not by a university, company or other
+> > institution.
+
+--=20
+B.Sc. Pippijn van Steenhoven, Projektleitung
+Tel.: +49-721-486995-20, Fax: +49-721-486995-21
+Mobil: +49-176-78131934, E-Mail: pippijn@openexperience.de
+
+Open Experience GmbH, Postfach: 111014, 76060 Karlsruhe
+Besucher: Zirkel 2 (im Rechenzentrum, Geb. 20.20), 76131 Karlsruhe
+Handelsregister: Mannheim HRB 706815, Ust-IdNr.: DE264743573
+Vertretungsberechtigter Gesch=E4ftsf=FChrer: Konstantin Krahtov
+
+--Y5rl02BVI9TCfPar
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.14 (GNU/Linux)
+
+iQIcBAEBAgAGBQJSKRLVAAoJEAfZIxi2zgu/r+cP/1c7bkg1+KZE5j/Vbbqlm2Iw
+ouIHuMS7w3pSdTxi75NqdpD7lDaPTv8KmEBVqq5h1NsS7dkv1C5jZHKSBQa3pX/v
+g4SFZQUj+NsSQ6EhK8WgGFHMWr7AAlCopnxivATNBh/83FGVWa0Q+CPAW/9wECPa
+xafO8aUQFuQb2fVl0KqSVvEkVD2eautlXGF3X+hXrC7fLDEFGSGvQM4y359VeaPe
+rVtv/2LtVe0TwO41LKntY0SwQP16QRM0l44nSP6ue9zUOFCyc2z3OsIgyavzgd92
+1QmvqnjHRrpNrvB6rDjey69nVOarqDs61RpEqE5BhbNnSUtGlu47gc9EW9H82GX2
+lNSbimx3oHcW9BdFUwEKcdwuSe8bLF+cvUmE4ZvIU+F7a5vst7LfDVgHwVy/QFk9
+3UF+6Sea+jlK8BhixEISCF8xKYbDSYBC0p1VHwtUlkhMFgi63bhQwolKCFqxqny3
+InENoSp7WQwT8pv4EhkM8i0N+8z/au7xwfjiHcBtbhVKJQb5d9z5UA7mE0SWPHCF
+1TaFDF98efSmbdSebIaKSeN6tW4HiIcUqwbUWy030pg1rv/a2nm7El4vMt5iciXc
+D6VQ9CigoBvweUxsU7qMm0nc6By6JiQZ1uueqazq/GY6d+Z7o10jNKSJrIeqyDmw
+qf5dGFR5V1iKAM8lvbwY
+=jXnA
+-----END PGP SIGNATURE-----
+
+--Y5rl02BVI9TCfPar--
