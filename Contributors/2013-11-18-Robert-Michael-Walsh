@@ -1,0 +1,439 @@
+Delivered-To: daniel.wilkerson@gmail.com
+Received: by 10.229.101.69 with SMTP id b5csp160846qco;
+        Mon, 18 Nov 2013 04:46:49 -0800 (PST)
+X-Received: by 10.14.210.8 with SMTP id t8mr12604123eeo.39.1384778808669;
+        Mon, 18 Nov 2013 04:46:48 -0800 (PST)
+Return-Path: <Robert.Walsh.2008@live.rhul.ac.uk>
+Received: from emea01-am1-obe.outbound.protection.outlook.com (mail-am1lp0016.outbound.protection.outlook.com. [213.199.154.16])
+        by mx.google.com with ESMTPS id 2si5884450eer.116.2013.11.18.04.46.47
+        for <multiple recipients>
+        (version=TLSv1 cipher=ECDHE-RSA-AES128-SHA bits=128/128);
+        Mon, 18 Nov 2013 04:46:48 -0800 (PST)
+Received-SPF: pass (google.com: domain of Robert.Walsh.2008@live.rhul.ac.uk designates 213.199.154.16 as permitted sender) client-ip=213.199.154.16;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of Robert.Walsh.2008@live.rhul.ac.uk designates 213.199.154.16 as permitted sender) smtp.mail=Robert.Walsh.2008@live.rhul.ac.uk
+Received: from AMSPR01MB050.eurprd01.prod.exchangelabs.com (10.255.173.22) by
+ AMSPR01MB051.eurprd01.prod.exchangelabs.com (10.255.173.23) with Microsoft
+ SMTP Server (TLS) id 15.0.820.5; Mon, 18 Nov 2013 12:46:46 +0000
+Received: from AMSPR01MB050.eurprd01.prod.exchangelabs.com ([169.254.10.188])
+ by AMSPR01MB050.eurprd01.prod.exchangelabs.com ([169.254.10.188]) with mapi
+ id 15.00.0820.005; Mon, 18 Nov 2013 12:46:46 +0000
+From: "Walsh, Robert (2008)" <Robert.Walsh.2008@live.rhul.ac.uk>
+To: Daniel Wilkerson <daniel.wilkerson@gmail.com>
+CC: rhul <rhul@plancomps.org>, Scott McPeak <scott.g.mcpeak@gmail.com>
+Subject: RE: Elkhound/Oink
+Thread-Topic: Elkhound/Oink
+Thread-Index: AQHO0XLBAeYgI9M2bE2v47aRYZQArJoFte4AgAATOQD///RAgIAAEmMA///xQACAABKagIAAPEeAgAP7gOWAA/3ggIACoFWAgAAnawCABFfVAIAActuAgAABDgCAFXd/OQ==
+Date: Mon, 18 Nov 2013 12:46:45 +0000
+Message-ID: <ebb56f16b3104c87bd6c1b1fb9a29141@AMSPR01MB050.eurprd01.prod.exchangelabs.com>
+References: <526A518A.7040804@live.rhul.ac.uk>
+ <CALzRTRkLMi7m=SuHOV_A6GRTTJh3=fr22TgBFL4c9z-OPRJdYQ@mail.gmail.com>
+ <526AB458.6000507@live.rhul.ac.uk>
+ <CALzRTRmRNJ=_owL_Qxww=TmXueSnwgMwj2bB_t_ZxT+MnPxJNQ@mail.gmail.com>
+ <526AB9EA.4030904@live.rhul.ac.uk>
+ <CALzRTR=mNDC3XzQp3sdV0NHuH2+0rJ2Q++p8NQqU2Es92pP-sQ@mail.gmail.com>
+ <526ABD25.2000404@live.rhul.ac.uk>
+ <CALzRTRku2h9vkByyBVQ_fBkAmQK21UyayVkRC2qa1AZvB=iWUg@mail.gmail.com>
+ <6f3c8d783422424db0200a6f325eb0a7@AMSPR01MB050.eurprd01.prod.exchangelabs.com>
+ <CALzRTR=jXNH+LACjuvbbXFZsmu99FAyziHb=Ob_=k0-NguP=3Q@mail.gmail.com>
+ <5273E231.4080102@live.rhul.ac.uk>
+ <CALzRTRkcxEGm3bCQAcMzbqDuhXieYBrJg7AXxmBy7J+cs6tojQ@mail.gmail.com>
+ <5277A7EE.2010506@live.rhul.ac.uk>
+ <CALzRTR=a50a4qUwLV7a+Xia5=9j3ePcC_0FiyDzHmzHbCRBkoQ@mail.gmail.com>,<CALzRTRm20h=7uNwUdYN4BzKgXMUjKk0C2ZBp7+8fMh2ROri_FA@mail.gmail.com>
+In-Reply-To: <CALzRTRm20h=7uNwUdYN4BzKgXMUjKk0C2ZBp7+8fMh2ROri_FA@mail.gmail.com>
+Accept-Language: en-GB, en-US
+Content-Language: en-GB
+X-MS-Has-Attach:
+X-MS-TNEF-Correlator:
+x-originating-ip: [134.219.205.140]
+x-forefront-prvs: 00342DD5BC
+x-forefront-antispam-report: SFV:NSPM;SFS:(52314003)(189002)(199002)(479174003)(377454003)(24454002)(43784003)(46034005)(469094003)(51704005)(66654002)(53484002)(79102001)(54316002)(63696002)(80022001)(33646001)(66066001)(47976001)(50986001)(31966008)(19580395003)(81816001)(74662001)(80976001)(81542001)(83072001)(53806001)(74876001)(65816001)(51856001)(54356001)(59766001)(77982001)(56816003)(46102001)(77096001)(76796001)(76786001)(87936001)(74706001)(81342001)(76482001)(56776001)(555904002)(83322001)(4396001)(19580405001)(87266001)(2656002)(74316001)(74502001)(81686001)(47446002)(74482001)(49866001)(74366001)(69226001)(47736001)(85306002)(24736002);DIR:OUT;SFP:;SCL:1;SRVR:AMSPR01MB051;H:AMSPR01MB050.eurprd01.prod.exchangelabs.com;CLIP:134.219.205.140;FPR:;RD:InfoNoRecords;MX:1;A:0;LANG:en;
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+X-OriginatorOrg: live.rhul.ac.uk
+
+Dear Daniel,=0A=
+=0A=
+We hereby put the contribution to the oink-stack project submitted to githu=
+b on 18th November 2013 into the public domain.=0A=
+=0A=
+PS. Sorry this took so long, I must admit that my main experience of versio=
+n control is with SVN, so it took some time to understand the git way of wo=
+rking.=0A=
+=0A=
+Best Regards=0A=
+=0A=
+Robert=0A=
+--=0A=
+Mr Robert Michael Walsh=0A=
+PhD Computer Science=0A=
+Royal Holloway, University of London=0A=
+=0A=
+________________________________________=0A=
+From: Daniel Wilkerson <daniel.wilkerson@gmail.com>=0A=
+Sent: 04 November 2013 20:52=0A=
+To: Walsh, Robert (2008)=0A=
+Cc: rhul; Scott McPeak=0A=
+Subject: Re: Elkhound/Oink=0A=
+=0A=
+Oh, and if you do push your changes to github, which again would be=0A=
+quite handy for me, if you could just put them into the public domain=0A=
+it makes things simplest for me.  I suppose there might be a github=0A=
+way to do that, if so please use it; also sending me an email saying=0A=
+"We hereby put the contribution to the oink-stack project submitted to=0A=
+github on DATE into the public domain" would be great.  Anyway, would=0A=
+love to have your fixes.=0A=
+=0A=
+On Mon, Nov 4, 2013 at 12:49 PM, Daniel Wilkerson=0A=
+<daniel.wilkerson@gmail.com> wrote:=0A=
+> Wow, great.  Yea, this kind of problem is an ongoing headache for the pro=
+ject:=0A=
+>=0A=
+> (1) different notions by different versions of the compiler as to=0A=
+> where it should look for .h files (I think changing meanings of the=0A=
+> '-I' flag) and=0A=
+>=0A=
+> (2) different notions by the flex or yacc generated code of exactly=0A=
+> what YY-whatever stuff it should generate.=0A=
+>=0A=
+> I recently got a fix from someone else in the Netherlands on something=0A=
+> similar; I didn't follow it exactly, but it worked on my machine.=0A=
+>=0A=
+> If you get a version that works on OS X and the latest version of=0A=
+> Linux, could you just commit it to github and then send me a pull=0A=
+> request?=0A=
+>=0A=
+> Daniel=0A=
+>=0A=
+> On Mon, Nov 4, 2013 at 5:58 AM, Robert Michael Walsh=0A=
+> <robert.walsh.2008@live.rhul.ac.uk> wrote:=0A=
+>> Dear Daniel,=0A=
+>>=0A=
+>> After working with my colleague (who has a macbook handy) we managed to =
+get=0A=
+>> Elkhound to compile.=0A=
+>>=0A=
+>> So on Mac OS systems, the oink-stack compiles without any modification. =
+ On=0A=
+>> the Linux system we used however, some modifications were required:=0A=
+>> - First, we copied all .h files from the smbase subdirectory to the elkh=
+ound=0A=
+>> directory (apart from 'flatutil.h' which already exists)=0A=
+>> - We then copied all .h files from the ast subdirectory to the elkhound=
+=0A=
+>> directory=0A=
+>> - We then modified elkhound's Makefile and commented out lines 159 to 16=
+2=0A=
+>> (otherwise we receive the compilation error "grampar.tab.c:1332:19: erro=
+r:=0A=
+>> conversion from 'int' to non-scalar type 'YYSTYPE' requested").=0A=
+>>=0A=
+>> After this elkhound is able to compile correctly.  The good news is that=
+=0A=
+>> this fix works even on Bison 2.6.5 and gcc 4.7.2.=0A=
+>>=0A=
+>> Best Regards=0A=
+>>=0A=
+>> Robert=0A=
+>>=0A=
+>>=0A=
+>> On 01/11/13 19:38, Daniel Wilkerson wrote:=0A=
+>>>=0A=
+>>> Weird.  On my machine it works:=0A=
+>>>=0A=
+>>> localhost:~ dsw$ bison --version=0A=
+>>> bison (GNU Bison) 2.3=0A=
+>>> . . .=0A=
+>>>=0A=
+>>> localhost:~ dsw$ gcc --version=0A=
+>>> i686-apple-darwin10-gcc-4.2.1 (GCC) 4.2.1 (Apple Inc. build 5666) (dot =
+3)=0A=
+>>>=0A=
+>>>=0A=
+>>> I'll see if I can get to it this weekend.  I have something I really=0A=
+>>> want to get done for a meeting on Tuesday.=0A=
+>>>=0A=
+>>> What is your timeline?=0A=
+>>>=0A=
+>>> Daniel=0A=
+>>>=0A=
+>>>=0A=
+>>> On Fri, Nov 1, 2013 at 10:17 AM, Robert Michael Walsh=0A=
+>>> <robert.walsh.2008@live.rhul.ac.uk> wrote:=0A=
+>>>>=0A=
+>>>> Dear Daniel,=0A=
+>>>>=0A=
+>>>> I have just tried compiling Elkhound under gcc 4.2.1 and bison 2.3. Th=
+is=0A=
+>>>> still does not compile however some progress is made in that the error=
+=0A=
+>>>> reporting appears much more verbose.  At this point, beyond OS and=0A=
+>>>> architectural differences (and perhaps maybe different versions of fle=
+x),=0A=
+>>>> the setup should theoretically be similar to one that works so I am=0A=
+>>>> unsure=0A=
+>>>> what continues to be the issue.=0A=
+>>>>=0A=
+>>>> I have attached the new nohup.out to help.=0A=
+>>>>=0A=
+>>>> Best Regards=0A=
+>>>>=0A=
+>>>> Robert=0A=
+>>>>=0A=
+>>>>=0A=
+>>>> On 31/10/13 01:11, Daniel Wilkerson wrote:=0A=
+>>>>>=0A=
+>>>>> I will look into fixing this so that others don't have this problem,=
+=0A=
+>>>>> but to get it working for you for now, have you tried another version=
+=0A=
+>>>>> of gcc?=0A=
+>>>>>=0A=
+>>>>> If you are doing a comparison of parser generators, it would be reall=
+y=0A=
+>>>>> too bad to not include Elkhound.=0A=
+>>>>>=0A=
+>>>>> Daniel=0A=
+>>>>>=0A=
+>>>>> On Mon, Oct 28, 2013 at 5:19 AM, Walsh, Robert (2008)=0A=
+>>>>> <Robert.Walsh.2008@live.rhul.ac.uk> wrote:=0A=
+>>>>>>=0A=
+>>>>>> Dear Daniel,=0A=
+>>>>>>=0A=
+>>>>>> I have attached the nohup.out output from running './configure && ma=
+ke=0A=
+>>>>>> clean all check' on a fresh checkout from the repository.=0A=
+>>>>>>=0A=
+>>>>>> The error message given by the make command is:=0A=
+>>>>>> g++ -c -g -o grampar.tab.o -O2 -DNDEBUG -Wall  grampar.tab.c=0A=
+>>>>>> In file included from grampar.y:8:0:=0A=
+>>>>>> grampar.h:7:34: fatal error: typ.h: No such file or directory=0A=
+>>>>>> compilation terminated.=0A=
+>>>>>>=0A=
+>>>>>> Which corresponds to the line:=0A=
+>>>>>> #include "typ.h"          // NULL=0A=
+>>>>>> in elkhound/grampar.h=0A=
+>>>>>>=0A=
+>>>>>> I hope this helps.=0A=
+>>>>>>=0A=
+>>>>>> Best Regards=0A=
+>>>>>>=0A=
+>>>>>> Robert=0A=
+>>>>>>    --=0A=
+>>>>>>    Mr Robert Michael Walsh=0A=
+>>>>>>    PhD Computer Science=0A=
+>>>>>>    Royal Holloway, University of London=0A=
+>>>>>> ________________________________________=0A=
+>>>>>> From: Daniel Wilkerson [daniel.wilkerson@gmail.com]=0A=
+>>>>>> Sent: 26 October 2013 00:24=0A=
+>>>>>> To: Walsh, Robert (2008)=0A=
+>>>>>> Cc: rhul; Scott McPeak=0A=
+>>>>>> Subject: Re: Elkhound/Oink=0A=
+>>>>>>=0A=
+>>>>>> You can download your own copy of gcc and build it from scratch=0A=
+>>>>>> without a whole lot of difficulty; I've done it before and it just=
+=0A=
+>>>>>> take a while for it to build but it isn't hard to configure.  I=0A=
+>>>>>> recommend doing that.  When you configure it, just do so to install=
+=0A=
+>>>>>> the executables in a local directory rather than in some global plac=
+e;=0A=
+>>>>>> NOTE that you CAN NOT move the gcc executable once it has been built=
+=0A=
+>>>>>> or it will not work.  Other than that, this procedure is=0A=
+>>>>>> straightforward.=0A=
+>>>>>>=0A=
+>>>>>> You are not being annoying: I say I'm the maintainer here and if it=
+=0A=
+>>>>>> isn't building out of the box on a standard distro, then it is my=0A=
+>>>>>> problem.  You are actually helping me by letting me know.  Could you=
+=0A=
+>>>>>> do me a favor and send me the entire line that fails to build as wel=
+l=0A=
+>>>>>> as the whole error message?  Could you do it by running the whole=0A=
+>>>>>> build procedure under nohup and then sending me the nohup.out ?  Eve=
+n=0A=
+>>>>>> if this is a gcc problem and the short term fix is for you to use an=
+=0A=
+>>>>>> older version of gcc, I do want to fix this problem.  When you first=
+=0A=
+>>>>>> wrote me I wasn't sure that you weren't just doing something silly s=
+o=0A=
+>>>>>> I wanted to check some simple things first, but now it looks like a=
+=0A=
+>>>>>> real problem.=0A=
+>>>>>>=0A=
+>>>>>> Daniel=0A=
+>>>>>>=0A=
+>>>>>> On Fri, Oct 25, 2013 at 11:49 AM, Robert Michael Walsh=0A=
+>>>>>> <robert.walsh.2008@live.rhul.ac.uk> wrote:=0A=
+>>>>>>>=0A=
+>>>>>>> Hmm, I think I have an old Ubuntu 8.04 virtual machine lying around=
+=0A=
+>>>>>>> somewhere, I might try that.=0A=
+>>>>>>>=0A=
+>>>>>>> Thank you ever so much for your help. I hope I haven't been too=0A=
+>>>>>>> annoying.=0A=
+>>>>>>>=0A=
+>>>>>>> Best Regards=0A=
+>>>>>>>=0A=
+>>>>>>> Robert=0A=
+>>>>>>>=0A=
+>>>>>>>=0A=
+>>>>>>> On 25/10/13 19:42, Daniel Wilkerson wrote:=0A=
+>>>>>>>>=0A=
+>>>>>>>> I'm pretty sure this is a gcc problem.  One thing I can think of i=
+s=0A=
+>>>>>>>> that I think gcc/g++ was going to or has already changed the=0A=
+>>>>>>>> semantics=0A=
+>>>>>>>> of the -I command for where it looks for header files.  You could =
+try=0A=
+>>>>>>>> using an older version of gcc and see if that works.  I'm using=0A=
+>>>>>>>>=0A=
+>>>>>>>> $ g++ --version=0A=
+>>>>>>>> i686-apple-darwin10-g++-4.2.1 (GCC) 4.2.1 (Apple Inc. build 5666)=
+=0A=
+>>>>>>>> (dot=0A=
+>>>>>>>> 3)=0A=
+>>>>>>>>=0A=
+>>>>>>>> Daniel=0A=
+>>>>>>>>=0A=
+>>>>>>>> On Fri, Oct 25, 2013 at 11:35 AM, Robert Michael Walsh=0A=
+>>>>>>>> <robert.walsh.2008@live.rhul.ac.uk> wrote:=0A=
+>>>>>>>>>=0A=
+>>>>>>>>> Dear Daniel,=0A=
+>>>>>>>>>=0A=
+>>>>>>>>> I made sure to follow the instructions to the letter, since in my=
+=0A=
+>>>>>>>>> experience=0A=
+>>>>>>>>> deviating tends to get very messy.  So yes, I started from the ro=
+ot=0A=
+>>>>>>>>> of=0A=
+>>>>>>>>> the=0A=
+>>>>>>>>> project and called the same command you did.=0A=
+>>>>>>>>>=0A=
+>>>>>>>>> Best Regards=0A=
+>>>>>>>>>=0A=
+>>>>>>>>> Robert=0A=
+>>>>>>>>>=0A=
+>>>>>>>>>=0A=
+>>>>>>>>> On 25/10/13 19:29, Daniel Wilkerson wrote:=0A=
+>>>>>>>>>>=0A=
+>>>>>>>>>> Did you try to build the whole project or just part of it?  I=0A=
+>>>>>>>>>> always=0A=
+>>>>>>>>>> build the whole project from the top level makefile:=0A=
+>>>>>>>>>>=0A=
+>>>>>>>>>> ./configure && make clean all check=0A=
+>>>>>>>>>>=0A=
+>>>>>>>>>> Daniel=0A=
+>>>>>>>>>>=0A=
+>>>>>>>>>>=0A=
+>>>>>>>>>> On Fri, Oct 25, 2013 at 11:11 AM, Robert Michael Walsh=0A=
+>>>>>>>>>> <robert.walsh.2008@live.rhul.ac.uk> wrote:=0A=
+>>>>>>>>>>>=0A=
+>>>>>>>>>>> Dear Daniel,=0A=
+>>>>>>>>>>>=0A=
+>>>>>>>>>>> I am currently using a OpenSUSE 12.3 machine with gcc 4.7.2.=0A=
+>>>>>>>>>>>=0A=
+>>>>>>>>>>> Thanks again for your help.=0A=
+>>>>>>>>>>>=0A=
+>>>>>>>>>>> Best Regards=0A=
+>>>>>>>>>>>=0A=
+>>>>>>>>>>> Robert=0A=
+>>>>>>>>>>>=0A=
+>>>>>>>>>>>=0A=
+>>>>>>>>>>> On 25/10/13 19:02, Daniel Wilkerson wrote:=0A=
+>>>>>>>>>>>>=0A=
+>>>>>>>>>>>> I just checked out a clean copy of the project on my OS X 10.6=
+=0A=
+>>>>>>>>>>>> box=0A=
+>>>>>>>>>>>> and=0A=
+>>>>>>>>>>>> build it from scratch; it worked fine.=0A=
+>>>>>>>>>>>>=0A=
+>>>>>>>>>>>> What OS are you using?=0A=
+>>>>>>>>>>>>=0A=
+>>>>>>>>>>>> Daniel=0A=
+>>>>>>>>>>>>=0A=
+>>>>>>>>>>>> On Fri, Oct 25, 2013 at 4:10 AM, Robert Michael Walsh=0A=
+>>>>>>>>>>>> <robert.walsh.2008@live.rhul.ac.uk> wrote:=0A=
+>>>>>>>>>>>>>=0A=
+>>>>>>>>>>>>> Dear Daniel,=0A=
+>>>>>>>>>>>>>=0A=
+>>>>>>>>>>>>> Hello, my name is Robert, I am currently a research student a=
+t=0A=
+>>>>>>>>>>>>> Royal=0A=
+>>>>>>>>>>>>> Holloway, University of London working with Professor Johnsto=
+ne=0A=
+>>>>>>>>>>>>> and=0A=
+>>>>>>>>>>>>> Professor Scott.=0A=
+>>>>>>>>>>>>>=0A=
+>>>>>>>>>>>>> I am really sorry to bother you, however I am currently=0A=
+>>>>>>>>>>>>> performing=0A=
+>>>>>>>>>>>>> an=0A=
+>>>>>>>>>>>>> investigation into the relative performance of parser generat=
+ors=0A=
+>>>>>>>>>>>>> (particular=0A=
+>>>>>>>>>>>>> those that implement generalised parsing algorithms). One of =
+the=0A=
+>>>>>>>>>>>>> parser=0A=
+>>>>>>>>>>>>> generators I am considering investigating is Elkhound, which =
+I=0A=
+>>>>>>>>>>>>> noticed=0A=
+>>>>>>>>>>>>> was=0A=
+>>>>>>>>>>>>> included as part of the Oink toolkit. I was wondering if I co=
+uld=0A=
+>>>>>>>>>>>>> enquire=0A=
+>>>>>>>>>>>>> as=0A=
+>>>>>>>>>>>>> to the current developmnt status of this project?=0A=
+>>>>>>>>>>>>>=0A=
+>>>>>>>>>>>>> I have tried checking out the project, however I am currently=
+=0A=
+>>>>>>>>>>>>> facing=0A=
+>>>>>>>>>>>>> difficulties getting the code compile on my system (specifica=
+lly=0A=
+>>>>>>>>>>>>> I=0A=
+>>>>>>>>>>>>> receive=0A=
+>>>>>>>>>>>>> "grampar.h:7:34: fatal error: typ.h: No such file or director=
+y=0A=
+>>>>>>>>>>>>> compilation terminated.")  I was wondering what the=0A=
+>>>>>>>>>>>>> best/recommended=0A=
+>>>>>>>>>>>>> workaround for this would be?=0A=
+>>>>>>>>>>>>>=0A=
+>>>>>>>>>>>>> Many thanks for any help you can provide,=0A=
+>>>>>>>>>>>>>=0A=
+>>>>>>>>>>>>> Best Regards=0A=
+>>>>>>>>>>>>>=0A=
+>>>>>>>>>>>>> Robert=0A=
+>>>>>>>>>>>>>=0A=
+>>>>>>>>>>>>> --=0A=
+>>>>>>>>>>>>> Mr Robert Michael Walsh=0A=
+>>>>>>>>>>>>> PhD Computer Science=0A=
+>>>>>>>>>>>>> Royal Holloway, University of London=0A=
+>>>>>>>>>>>>>=0A=
+>>>>>>>>>>> --=0A=
+>>>>>>>>>>> Mr Robert Michael Walsh=0A=
+>>>>>>>>>>> PhD Computer Science=0A=
+>>>>>>>>>>> Royal Holloway, University of London=0A=
+>>>>>>>>>>>=0A=
+>>>>>>>>> --=0A=
+>>>>>>>>> Mr Robert Michael Walsh=0A=
+>>>>>>>>> PhD Computer Science=0A=
+>>>>>>>>> Royal Holloway, University of London=0A=
+>>>>>>>>>=0A=
+>>>>>>> --=0A=
+>>>>>>> Mr Robert Michael Walsh=0A=
+>>>>>>> PhD Computer Science=0A=
+>>>>>>> Royal Holloway, University of London=0A=
+>>>>>>>=0A=
+>>>> --=0A=
+>>>> Mr Robert Michael Walsh=0A=
+>>>> PhD Computer Science=0A=
+>>>> Royal Holloway, University of London=0A=
+>>>>=0A=
+>>=0A=
+>> --=0A=
+>> Mr Robert Michael Walsh=0A=
+>> PhD Computer Science=0A=
+>> Royal Holloway, University of London=0A=
+>>=0A=
