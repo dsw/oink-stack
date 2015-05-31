@@ -3,7 +3,7 @@
 #include <stdlib.h>             // malloc
 #include <string.h>             // memcpy
 
-char *strndup0(char const *s, int const n) {
+char *strndup0(char const *s, long const n) {
   // what is the length to copy?
   int n2 = 0;
   while (n2 < n && s[n2] != '\0') {

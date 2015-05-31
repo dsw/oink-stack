@@ -6,6 +6,6 @@
 #define LIBC_MISSING_H
 
 // Copy at most n chars of string s.
-char *strndup0(char const *s, int const n);
+char *strndup0(char const *s, long const n);
 
 #endif // LIBC_MISSING_H

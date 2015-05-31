@@ -41,7 +41,7 @@ public:     // types
     string const &key() const { return iter.key(); }
     long &value() const { return (long &)iter.value(); }
 
-    int private_getCurrent() const { return iter.private_getCurrent(); }
+    long private_getCurrent() const { return iter.private_getCurrent(); }
   };
   friend class Iter;
 
@@ -60,7 +60,7 @@ public:     // types
     string const &key() const { return iter.key(); }
     long value() const { return (long)iter.value(); }
 
-    int private_getCurrent() const { return iter.private_getCurrent(); }
+    long private_getCurrent() const { return iter.private_getCurrent(); }
   };
   friend class IterC;
 
@@ -179,7 +179,7 @@ public:
 
   // ------------ misc --------------
   // debugging
-  int private_getTopAddr() const { return dict.private_getTopAddr(); }
+  long private_getTopAddr() const { return dict.private_getTopAddr(); }
 };
 
 

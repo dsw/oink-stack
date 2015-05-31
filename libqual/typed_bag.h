@@ -34,7 +34,7 @@ static inline name empty_ ## name(region r) { return dd_new_list(r); } \
 static inline name name ## _copy(region r, name s) { if (s == NULL) return NULL; return dd_copy(r, s); } \
 static inline bool name ## _empty(name s) { return s == NULL || dd_is_empty(s); } \
 static inline bool name ## _member(int (*cmp)(element_type, element_type), name s, element_type elt) { return s != NULL && dd_search(s, (dd_cmp_fn) cmp, (void *) elt) != NULL; } \
-static inline int name ## _size(name s) { if (s == NULL) return 0; return dd_length(s); } \
+static inline long name ## _size(name s) { if (s == NULL) return 0; return dd_length(s); } \
 static inline bool name ## _insert(region r, name *s, element_type elt) { *s = dd_fix_null(r, *s); dd_add_first(r, *s, (void *) elt); return TRUE; } \
 static inline bool name ## _insert_last(region r, name *s, element_type elt) { *s = dd_fix_null(r, *s); dd_add_last(r, *s, (void *) elt); return TRUE; } \
 static inline name name ## _union(name s1, name s2) { if (s1 == NULL) return s2; else if (s2 == NULL) return s1; dd_append(s1, s2); return s1; } \

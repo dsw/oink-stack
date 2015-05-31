@@ -101,7 +101,7 @@ CodeOutStream & CodeOutStream::operator << (std::ostream& (*manipfunc)(std::ostr
 
 CodeOutStream & CodeOutStream::operator << (char const *message)
 {
-  int len = strlen(message);
+  long len = strlen(message);
   if (len<1) return *this;
   string message1 = message;
 

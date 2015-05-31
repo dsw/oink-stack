@@ -99,7 +99,7 @@ outputCond([[[m4_dnl
     string const &key() const { return iter.key(); }
     TPTR &value() const { return (TPTR &)iter.value(); }
 
-    int private_getCurrent() const { return iter.private_getCurrent(); }
+    long private_getCurrent() const { return iter.private_getCurrent(); }
   };
   friend class Iter;
 
@@ -118,7 +118,7 @@ outputCond([[[m4_dnl
     string const &key() const { return iter.key(); }
     TPTR value() const { return (TPTR)iter.value(); }
 
-    int private_getCurrent() const { return iter.private_getCurrent(); }
+    long private_getCurrent() const { return iter.private_getCurrent(); }
   };
   friend class IterC;
 ]]],[[[m4_dnl
@@ -138,7 +138,7 @@ outputCond([[[m4_dnl
     string const &key() const { return iter.key(); }
     TCPTR &value() const { return (TCPTR &)iter.value(); }
 
-    int private_getCurrent() const { return iter.private_getCurrent(); }
+    long private_getCurrent() const { return iter.private_getCurrent(); }
   };
   friend class Iter;
   typedef Iter IterC;

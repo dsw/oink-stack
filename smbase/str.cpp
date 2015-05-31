@@ -84,7 +84,7 @@ bool string::contains(char c) const
 }
 
 
-string string::substring(int startIndex, int len) const
+string string::substring(long startIndex, long len) const
 {
   xassert(startIndex >= 0 &&
           len >= 0 &&

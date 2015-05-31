@@ -47,7 +47,8 @@ void ControlStream::splitLine(string const &line, string &name, string &value) {
   }
   name = line.substring(0, eqPos-line.c_str());
   name = trimWhitespace(name);
-  int valueStart = eqPos-line.c_str() + 1; // the plus one is to skip over the "="
+  // the plus one is to skip over the "="
+  long valueStart = eqPos-line.c_str() + 1;
   value = line.substring(valueStart, line.length()-valueStart);
   value = trimWhitespace(value);
 }

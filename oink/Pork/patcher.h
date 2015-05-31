@@ -181,7 +181,7 @@ public:
   void insertBefore(char const *file, UnboxedLoc const &loc,
                     std::string const &str);
   void insertBefore(CPPSourceLoc const &csl, std::string const &str,
-                    int offset = 0);
+                    long offset = 0);
 private:
   void printHunkHeaderAndDeletedLines
   (unsigned int minLine,

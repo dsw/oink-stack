@@ -94,7 +94,7 @@ public:	       // funcs
   char operator[] (int i) const { return s[i]; }
 
   // substring
-  string substring(int startIndex, int length) const;
+  string substring(long startIndex, long length) const;
 
   // conversions
   #if 0    // removing these for more standard compliace
@@ -236,7 +236,7 @@ public:
   stringBuilder& operator= (string const &s) { return operator= (s.c_str()); }
   stringBuilder& operator= (stringBuilder const &s) { return operator= (s.c_str()); }
 
-  int length() const { return end-s; }
+  long length() const { return end-s; }
   bool isempty() const { return length()==0; }
 
   // unlike 'string' above, I will allow stringBuilder to convert to

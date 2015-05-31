@@ -30,7 +30,7 @@ public:      // funcs
 
     string const &data() const { return iter.key(); }
 
-    int private_getCurrent() const { return iter.private_getCurrent(); }
+    long private_getCurrent() const { return iter.private_getCurrent(); }
   };
   friend class Iter;
 
@@ -48,7 +48,7 @@ public:      // funcs
 
     string const &data() const { return iter.key(); }
 
-    int private_getCurrent() const { return iter.private_getCurrent(); }
+    long private_getCurrent() const { return iter.private_getCurrent(); }
   };
   friend class IterC;
 

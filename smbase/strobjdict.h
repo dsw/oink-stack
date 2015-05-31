@@ -42,7 +42,7 @@ public:     // types
     string const &key() const { return iter.key(); }
     T const * &value() const { return (T const * &)iter.value(); }
 
-    int private_getCurrent() const { return iter.private_getCurrent(); }
+    long private_getCurrent() const { return iter.private_getCurrent(); }
   };
   friend class Iter;
   typedef Iter IterC;

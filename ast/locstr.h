@@ -45,7 +45,7 @@ public:    // funcs
   operator StringRef () const { return str; }
   char operator [] (int index) const { return str[index]; }
   bool equals(char const *other) const;    // string comparison
-  int length() const { return strlen(str); }
+  long length() const { return strlen(str); }
 
   // experimenting with allowing 'str' to be null, which is convenient
   // when the string table isn't available

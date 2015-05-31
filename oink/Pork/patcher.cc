@@ -352,7 +352,7 @@ void Patcher::insertBefore(char const *file, UnboxedLoc const &loc,
 }
 
 void Patcher::insertBefore
-(CPPSourceLoc const &csl, std::string const &str, int offset)
+(CPPSourceLoc const &csl, std::string const &str, long offset)
 {
   UnboxedLoc loc;
   char const *file = loc.set(csl.loc());

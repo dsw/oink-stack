@@ -54,7 +54,7 @@ static inline bool name ## _member(name s, type elt) \
 { \
     return s != NULL && dd_search(s, (dd_cmp_fn) cmpfn, (void *) elt) != NULL; \
 } \
-static inline int  name ## _size(name s) \
+static inline long  name ## _size(name s) \
 { \
     if (s == NULL) \
       return 0; \
