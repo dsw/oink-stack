@@ -116,7 +116,7 @@ TOCLEAN += TAGS
 # turn this on if you want etags built for you by default; FIX: make
 # this a configure option
 # all: TAGS
-TAGS:; etags --members --typedefs *.cc *.h
+TAGS:; etags --members *.cc *.h
 
 # count source lines ****
 
