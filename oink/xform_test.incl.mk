@@ -9,8 +9,9 @@ endif
 .PHONY: xform-check
 xform-check: xform-check-basic
 xform-check: xform-check-reject-cpp
-xform-check: xform-check-heapify
-xform-check: xform-check-heapify3
+xform-check: xform-check-heapify-stack-alloc-addr-taken
+xform-check: xform-check-heapify-stack-alloc-addr-taken-2
+xform-check: xform-check-heapify-stack-arrays
 xform-check: xform-check-verify
 xform-check: xform-check-localize
 xform-check: xform-check-intro-fun-call0
@@ -46,8 +47,8 @@ xform-check-reject-cpp:
            2>&1 | grep "Can't xform intro-fun-call C++ yet." > /dev/null
 
 # check -fx-heapify-stack-alloc-addr-taken
-.PHONY: xform-check-heapify
-xform-check-heapify:
+.PHONY: xform-check-heapify-stack-alloc-addr-taken
+xform-check-heapify-stack-alloc-addr-taken:
 	@echo; echo $@
 # check handles declarators
 	./xform -fx-heapify-stack-alloc-addr-taken \
@@ -63,14 +64,30 @@ xform-check-heapify:
            > Test/heapify2.c.patch.out; test $$? -eq 32
 	diff Test/heapify2.c.patch.cor Test/heapify2.c.patch.out
 
-.PHONY: xform-check-heapify3
-xform-check-heapify3: Test/heapify3.i
+.PHONY: xform-check-heapify-stack-alloc-addr-taken-2
+xform-check-heapify-stack-alloc-addr-taken-2: Test/heapify3.i
 	@echo; echo $@
 # check handles Derrick's concerns
 	./xform -fx-heapify-stack-alloc-addr-taken $< \
            -o-mod-spec foo:$(<:.i=.c) -o-mod-default default \
             > Test/heapify3.c.patch.out; test $$? -eq 32
 	diff Test/heapify3.c.patch.cor Test/heapify3.c.patch.out
+
+# check -fx-heapify-stack-arrays
+.PHONY: xform-check-heapify-stack-arrays
+xform-check-heapify-stack-arrays:
+	@echo; echo $@
+# check handles declarators
+	./xform -fx-heapify-stack-arrays \
+           Test/hsa1.c \
+           -o-mod-spec foo:Test/hsa1.c -o-mod-default default \
+           > Test/hsa1.c.patch.out
+# if we get any warnings, we will have to start using this
+# ; test $$? -eq 32
+	diff Test/hsa1.c.patch.cor Test/hsa1.c.patch.out
+	../elsa/chop_out '---- START ---- Test/hsa1.c' '---- STOP ----' < Test/hsa1.c.patch.out > Test/hsa1.c.patch-chopped.out
+	patch -p0 -o Test/hsa1_b.c.out < Test/hsa1.c.patch-chopped.out
+	diff Test/hsa1_b.c.cor Test/hsa1_b.c.out
 
 # check -fx-verify-cross-module-params
 .PHONY: xform-check-verify

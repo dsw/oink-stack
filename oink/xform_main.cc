@@ -61,6 +61,9 @@ int main(int argc, char **argv) {
 
     // transforms
     IssuesWarnings warn;
+    if (xformCmd->heapify_stack_arrays) {
+      m.heapifyStackArrays_stage(warn);
+    }
     if (xformCmd->heapify_stack_alloc_addr_taken) {
       m.heapifyStackAllocAddrTaken_stage(warn);
     }

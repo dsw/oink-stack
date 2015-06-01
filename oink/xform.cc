@@ -549,9 +549,33 @@ bool PrintStackAllocAddrTakenVars_ASTVisitor::pass(Variable *var) {
   return addrTaken.contains(var);
 }
 
-// **** HeapifyStackAllocAddrTakenVars_ASTVisitor
+// **** HeapifyVars_ASTVisitor
 
 // FIX: we should handle alloca()
+
+struct StackAllocAddrTaken_VarPredicate : public VarPredicate {
+
+  SObjSet<Variable*> &addrTaken;
+
+  explicit StackAllocAddrTaken_VarPredicate
+  (SObjSet<Variable*> &addrTaken0)
+    : addrTaken(addrTaken0)
+  {}
+
+  virtual bool pass(Variable * const var) const {
+    if (!allocatedOnStack(var)) return false;
+    return addrTaken.contains(var);
+  }
+
+};
+
+struct StackArray_VarPredicate : public VarPredicate {
+
+  virtual bool pass(Variable * const var) const {
+    return var->type->isArrayType() && allocatedOnStack(var);
+  }
+
+};
 
 // the scope created by an S_compound
 class S_compound_Scope {
@@ -562,26 +586,24 @@ public:
   explicit S_compound_Scope() {}
 };
 
-class HeapifyStackAllocAddrTakenVars_ASTVisitor
+class HeapifyVars_ASTVisitor
   : public OnlyDecltorsOfRealVars_ASTVisitor {
 public:
+  VarPredicate const &heapify_var_predicate;
   IssuesWarnings &warn;
-  SObjSet<Variable*> &addrTaken;
   Patcher &patcher;
   Function *root;               // root of the traversal
   SObjSet<Variable*> xformedVars;
   SObjStack<S_compound_Scope> scopeStack;
 
-  HeapifyStackAllocAddrTakenVars_ASTVisitor
-  (IssuesWarnings &warn0, SObjSet<Variable*> &addrTaken0,
-   Patcher &patcher0, Function *root0)
-    : warn(warn0)
-    , addrTaken(addrTaken0)
+  explicit HeapifyVars_ASTVisitor
+  (VarPredicate const &_heapify_var_predicate,
+   IssuesWarnings &warn0, Patcher &patcher0, Function *root0)
+    : heapify_var_predicate(_heapify_var_predicate)
+    , warn(warn0)
     , patcher(patcher0)
     , root(root0)
   {}
-
-  bool pass(Variable *);
 
   virtual bool visitFunction(Function *);
   virtual bool visitStatement(Statement *);
@@ -596,12 +618,7 @@ public:
   char *xformDeclarator(Declarator *);
 };
 
-bool HeapifyStackAllocAddrTakenVars_ASTVisitor::pass(Variable *var) {
-  if (!allocatedOnStack(var)) return false;
-  return addrTaken.contains(var);
-}
-
-bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
+bool HeapifyVars_ASTVisitor::
 visitFunction(Function *obj) {
   // get the module for this function
   SourceLoc loc = obj->nameAndParams->decl->loc;
@@ -624,7 +641,7 @@ visitFunction(Function *obj) {
   SFOREACH_OBJLIST_NC(Variable, obj->funcType->params, iter) {
     Variable *paramVar = iter.data();
     xassert(paramVar->getScopeKind() == SK_PARAMETER);
-    if (pass(paramVar)) {
+    if (heapify_var_predicate.pass(paramVar)) {
       // we can't transform these so we just tell the user about them
       warn.warn(paramVar->loc,
                 stringc << "param decl needs heapifying " << paramVar->name);
@@ -632,14 +649,14 @@ visitFunction(Function *obj) {
   }
 
   // re-launch the traversal
-  HeapifyStackAllocAddrTakenVars_ASTVisitor newEnv
-    (this->warn, this->addrTaken,
-     this->patcher, obj /*skip this node the second time*/);
+  HeapifyVars_ASTVisitor newEnv
+    (this->heapify_var_predicate, this->warn, this->patcher,
+     obj /*skip this node the second time*/);
   obj->traverse(newEnv.loweredVisitor);
   return false;         // IMPORTANT: prune the rest of the visitation
 }
 
-bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
+bool HeapifyVars_ASTVisitor::
 visitStatement(Statement *obj) {
   if (obj->isS_compound()) {
     scopeStack.push(new S_compound_Scope());
@@ -667,7 +684,7 @@ visitStatement(Statement *obj) {
   return true;
 }
 
-void HeapifyStackAllocAddrTakenVars_ASTVisitor::
+void HeapifyVars_ASTVisitor::
 postvisitStatement(Statement *obj) {
   if (obj->isS_compound()) {
     S_compound_Scope *scopeStackTop = scopeStack.pop();
@@ -698,7 +715,7 @@ postvisitStatement(Statement *obj) {
 
 // emit the free() expressions for all vars on the var stack of for
 // all scopes on the scope stack
-bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
+bool HeapifyVars_ASTVisitor::
 subVisitS_return(S_return *obj) {
   // get the current return string
   CPPSourceLoc ret_ploc(obj->loc);
@@ -722,13 +739,13 @@ subVisitS_return(S_return *obj) {
   return true;
 }
 
-bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
+bool HeapifyVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
   Declaration *declaration = obj->decl;
 
   // find a Declarator to transform
   Declarator *declarator0 = NULL;
   FAKELIST_FOREACH_NC(Declarator, declaration->decllist, declarator) {
-    if (pass(declarator->var)) {
+    if (heapify_var_predicate.pass(declarator->var)) {
 
       // skip those where we can't handle the initializer
       if (declarator->init) {
@@ -819,12 +836,12 @@ bool HeapifyStackAllocAddrTakenVars_ASTVisitor::subVisitS_decl(S_decl *obj) {
 
 // Note: caller is responsible for freeing the return value; note: we
 // optimize the empty string by just returning NULL
-char *HeapifyStackAllocAddrTakenVars_ASTVisitor::
+char *HeapifyVars_ASTVisitor::
 xformDeclarator(Declarator *obj) {
   xassert(obj->context == DC_S_DECL);
 
   Variable_O *var = asVariable_O(obj->var);
-  xassert(pass(var));
+  xassert(heapify_var_predicate.pass(var));
   xassert(var->getScopeKind() == SK_FUNCTION);
   xassert(var->name);
 
@@ -903,7 +920,7 @@ xformDeclarator(Declarator *obj) {
   return oldInit_c_str;
 }
 
-bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
+bool HeapifyVars_ASTVisitor::
 visitExpression(Expression *obj) {
   if (obj->isE_variable()) {
     return subVisitE_variable(obj->asE_variable());
@@ -922,14 +939,14 @@ visitExpression(Expression *obj) {
   return true;
 }
 
-bool HeapifyStackAllocAddrTakenVars_ASTVisitor::
+bool HeapifyVars_ASTVisitor::
 subVisitE_variable(E_variable *evar) {
   // Note: if you compile without locations for expressions this will
   // stop working.
   Variable_O *var = asVariable_O(evar->var);
 
   // FIX: get rid of this
-  if (pass(var)) {
+  if (heapify_var_predicate.pass(var)) {
     if (var->getScopeKind() == SK_PARAMETER) {
       // note that this is not a warning
       printLoc(evar->loc);
@@ -1414,6 +1431,30 @@ void Xform::printStackAllocAddrTaken_stage() {
   }
 }
 
+void Xform::heapifyStackArrays_stage(IssuesWarnings &warn) {
+  printStage("heapify stack-allocated array vars");
+  foreachSourceFile {
+    File *file = files.data();
+    maybeSetInputLangFromSuffix(file);
+    if (globalLang.isCplusplus) {
+      // some C++ concerns: objects that should use new instead of
+      // malloc()
+      throw UserError(USER_ERROR_ExitCode, "Can't xform heapify C++ yet.");
+    }
+    TranslationUnit * const unit = file2unit.get(file);
+
+    Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
+    StackArray_VarPredicate soga_var_predicate;
+    HeapifyVars_ASTVisitor env
+      (soga_var_predicate, warn, patcher, NULL /*root*/);
+    unit->traverse(env.loweredVisitor);
+
+    printStart(file->name.c_str());
+    patcher.flush();
+    printStop();
+  }
+}
+
 void Xform::heapifyStackAllocAddrTaken_stage(IssuesWarnings &warn) {
   printStage("heapify stack-allocated addr-taken vars");
   foreachSourceFile {
@@ -1424,7 +1465,7 @@ void Xform::heapifyStackAllocAddrTaken_stage(IssuesWarnings &warn) {
       // malloc()
       throw UserError(USER_ERROR_ExitCode, "Can't xform heapify C++ yet.");
     }
-    TranslationUnit *unit = file2unit.get(file);
+    TranslationUnit * const unit = file2unit.get(file);
 
     // optimization: while a variable in one translation unit may have
     // its address taken in another, this cannot happen to
@@ -1436,8 +1477,9 @@ void Xform::heapifyStackAllocAddrTaken_stage(IssuesWarnings &warn) {
     unit->traverse(at_env.loweredVisitor);
 
     Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
-    HeapifyStackAllocAddrTakenVars_ASTVisitor env
-      (warn, addrTaken, patcher, NULL /*root*/);
+    StackAllocAddrTaken_VarPredicate saat_var_predicate(addrTaken);
+    HeapifyVars_ASTVisitor env
+      (saat_var_predicate, warn, patcher, NULL /*root*/);
     unit->traverse(env.loweredVisitor);
 
     printStart(file->name.c_str());

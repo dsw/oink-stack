@@ -11,6 +11,7 @@ XformCmd::XformCmd()
   : print_stack_alloc(false)
   , print_stack_alloc_addr_taken(false)
 
+  , heapify_stack_arrays(false)
   , heapify_stack_alloc_addr_taken(false)
   , verify_cross_module_params(false)
   , localize_heap_alloc(false)
@@ -62,6 +63,8 @@ void XformCmd::readOneArg(int &argc, char **&argv) {
               "-fx-", "print-stack-alloc");
   HANDLE_FLAG(print_stack_alloc_addr_taken,
               "-fx-", "print-stack-alloc-addr-taken");
+  HANDLE_FLAG(heapify_stack_arrays,
+              "-fx-", "heapify-stack-arrays");
   HANDLE_FLAG(heapify_stack_alloc_addr_taken,
               "-fx-", "heapify-stack-alloc-addr-taken");
   HANDLE_FLAG(verify_cross_module_params,
@@ -84,6 +87,8 @@ void XformCmd::dump() {
          boolToStr(print_stack_alloc));
   printf("fx-print-stack-alloc-addr-taken: %s\n",
          boolToStr(print_stack_alloc_addr_taken));
+  printf("fx-heapify-stack-arrays: %s\n",
+         boolToStr(heapify_stack_arrays));
   printf("fx-heapify-stack-alloc-addr-taken: %s\n",
          boolToStr(heapify_stack_alloc_addr_taken));
   printf("fx-verify-cross-module-params: %s\n",
@@ -150,6 +155,7 @@ void XformCmd::initializeFromFlags() {
 
   if (print_stack_alloc +
       print_stack_alloc_addr_taken +
+      heapify_stack_arrays +
       heapify_stack_alloc_addr_taken +
       verify_cross_module_params +
       localize_heap_alloc +

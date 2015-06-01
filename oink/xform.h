@@ -27,7 +27,7 @@ public:
 // interface for computing a predicate on variables
 class VarPredicate {
 public:
-  virtual bool pass(Variable *var) = 0;
+  virtual bool pass(Variable *var) const = 0;
   virtual ~VarPredicate() {}
 };
 
@@ -40,6 +40,7 @@ class Xform : public virtual Oink {
   void printStackAlloc_stage();
   void printStackAllocAddrTaken_stage();
 
+  void heapifyStackArrays_stage(IssuesWarnings &warn);
   void heapifyStackAllocAddrTaken_stage(IssuesWarnings &warn);
   void verifyCrossModuleParams_stage(IssuesWarnings &warn);
   void localizeHeapAlloc_stage(IssuesWarnings &warn);
