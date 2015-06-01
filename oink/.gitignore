@@ -72,6 +72,7 @@ Test/*.out.ctl
 .serialno
 
 # directories to hide temp files in
+Diff*
 Hide*
 
 # compiled Python
