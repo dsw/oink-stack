@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# copy in reverse: useful for accepting the output of regression tests
+
+cp $2 $1
