@@ -26,15 +26,31 @@ my %eolcomment = (
    'Build.incl.mk' => '#',
   );
 
+my($COMPONENTS) = _init_components([
+    [smbase => 'nonport.h'],
+    [ast => 'asthelp.h'],
+    [elkhound => 'glr.h'],
+    [elsa => 'cc_type.h'],
+    [libqual => 'quals.h'],
+    [libregion => 'regions.h'],
+    [llvm => 'include/llvm/AbstractTypeUser.h'],
+]);
+
+sub _init_components {
+    my($components) = @_;
+    return {map({
+        my($name, $sentinel) = @$_;
+        my($default) = "../$name";
+        ($name => {
+            sentinel => $sentinel,
+            default => $default,
+            value => $default,
+            varname => ($name eq 'elkhound' ? 'EHD' : uc($name)) . '_DIR',
+        });
+    } @$components)};
+}
+
 my @config_vars = qw(
-  SMBASE_DIR
-  AST_DIR
-  EHD_DIR
-  ELSA_DIR
-  LIBQUAL_DIR
-  LIBREGION_DIR
-  LLVM_DIR
-  TMP_DIR
   CFLAGS_EXTRA
   USE_ZIPIOS
   USE_LLVM
@@ -63,14 +79,6 @@ my $debug = 0;
 my $use_dash_g = 1;
 my $allow_dash_O2 = 1;
 
-my $SMBASE_DIR  = "../smbase";
-my $AST_DIR     = "../ast";
-my $EHD_DIR     = "../elkhound";
-my $ELSA_DIR    = "../elsa";
-my $LIBQUAL_DIR = "../libqual";
-my $LIBREGION_DIR = "../libregion";
-my $LLVM_DIR    = "../llvm";
-
 my $TMP_DIR = ".";
 if (-d '/dev/shm' && -w '/dev/shm') {
     # quarl 2006-06-03: use a tmpfs if possible; it's incredibly fast!
@@ -80,7 +88,7 @@ if (-d '/dev/shm' && -w '/dev/shm') {
 }
 
 sub usage {
-  print(<<"EOF");
+  print(<<"EOF", _component_usage());
 usage: ./configure [options]
 options:
   -h:                print this message
@@ -97,18 +105,19 @@ options:
   --enable-llvm=no   disable llvm
   --enable-llvm=auto enable llvm if available
 
-  -smbase=<dir>:     specify where the smbase library is [$SMBASE_DIR]
-  -ast=<dir>:        specify where the ast system is [$AST_DIR]
-  -elkhound=<dir>:   specify where the elkhound system is [$EHD_DIR]
-  -elsa=<dir>:       specify where the elsa system is [$ELSA_DIR]
-  -libqual=<dir>:    specify where the libqual library is [$LIBQUAL_DIR]
-  -libregion=<dir>:  specify where the libregion library is [$LIBREGION_DIR]
-  -llvm=<dir>:       specify where the llvm library is [$LLVM_DIR]
 EOF
 }
 #    -devel             add options useful while developing
 #    <op>:              add a given option to the gcc command line,
 #                         including forms: -W*, -D*, -O*, -m*
+
+sub _component_usage {
+    return map({
+        my($d) = $COMPONENTS->{$_}->{default};
+        my($flag) = sprintf('  -%s=<dir>', $_);
+        sprintf("%-20s specify where the %s library is [%s]\n", $flag, $_, $d);
+    } sort(keys(%$COMPONENTS)));
+}
 
 my $enable_archive_srz_zip = 'auto';
 my $enable_llvm = 'no';
@@ -167,20 +176,8 @@ while (@ARGV) {
     push @CFLAGS_EXTRA, "-Werror";
   }
 
-  elsif (($tmp) = ($arg =~ m/^-smbase=(.*)$/)) {
-    $SMBASE_DIR = $tmp;
-  } elsif (($tmp) = ($arg =~ m/^-ast=(.*)$/)) {
-    $AST_DIR = $tmp;
-  } elsif (($tmp) = ($arg =~ m/^-elkhound=(.*)$/)) {
-    $EHD_DIR = $tmp;
-  } elsif (($tmp) = ($arg =~ m/^-elsa=(.*)$/)) {
-    $ELSA_DIR = $tmp;
-  } elsif (($tmp) = ($arg =~ m/^-libqual=(.*)$/)) {
-    $LIBQUAL_DIR = $tmp;
-  } elsif (($tmp) = ($arg =~ m/^-libregion=(.*)$/)) {
-    $LIBREGION_DIR = $tmp;
-  } elsif (($tmp) = ($arg =~ m/^-llvm=(.*)$/)) {
-    $LLVM_DIR = $tmp;
+  elsif ($arg =~ m/^-(.+)=(.+)$/ && $COMPONENTS->{$1}) {
+      $COMPONENTS->{$1}->{value} = $2;
   }
 
   elsif ($arg eq "-useSerialNumbers") {
@@ -293,7 +290,7 @@ EOF
     print "LLVM enabled and seems to work.\n\n";
 } elsif ($enable_llvm eq 'auto') {
 #     my $have_llvm = (0==system("./configure-check-llvm"));
-    my $have_llvm = -d $LLVM_DIR;
+    my $have_llvm = -d $COMPONENTS->{llvm}->{value};
     if ($have_llvm) {
         print "LLVM seems to work so enabling it.\n\n";
         $enable_llvm = 'yes';
@@ -335,55 +332,19 @@ my $CFLAGS_EXTRA = join(' ', @CFLAGS_EXTRA);
 
 # ------------------ check for needed components ----------------
 # smbase
-if (! -f "$SMBASE_DIR/nonport.h") {
-  die "I cannot find nonport.h in `$SMBASE_DIR'.\n" .
-      "The smbase library is required for oink.\n" .
-      "If it's in a different location, use the -smbase=<dir> option.\n";
-}
-
-# ast
-if (! -f "$AST_DIR/asthelp.h") {
-  die "I cannot find asthelp.h in `$AST_DIR'.\n" .
-      "The ast system is required for oink.\n" .
-      "If it's in a different location, use the -ast=<dir> option.\n";
-}
-
-# elkhound
-if (! -f "$EHD_DIR/glr.h") {
-  die "I cannot find glr.h in `$EHD_DIR'.\n" .
-      "The elkhound system is required for oink.\n" .
-      "If it's in a different location, use the -elkhound=<dir> option.\n";
-}
-
-# elsa
-if (! -f "$ELSA_DIR/cc_type.h") {
-  die "I cannot find cc_type.h in `$ELSA_DIR'.\n" .
-      "The elsa system is required for oink.\n" .
-      "If it's in a different location, use the -elsa=<dir> option.\n";
-}
-
-# libqual
-if (! -f "$LIBQUAL_DIR/quals.h") {
-  die "I cannot find quals.h in `$LIBQUAL_DIR'.\n" .
-      "The libqual library is required for oink.\n" .
-      "If it's in a different location, use the -libqual=<dir> option.\n";
-}
-
-# libregion
-if (! -f "$LIBREGION_DIR/regions.h") {
-  die "I cannot find regions.h in `$LIBREGION_DIR'.\n" .
-      "The libregion library is required for oink.\n" .
-      "If it's in a different location, use the -libregion=<dir> option.\n";
-}
-
-# llvm; FIX: add something here to check (1) the version of llvm and
-# (2) that it is built
-if ($USE_LLVM &&
-    ! -f "$LLVM_DIR/include/llvm/AbstractTypeUser.h")
-{
-  die "I cannot find include/llvm/AbstractTypeUser.h in `$LLVM_DIR'.\n" .
+while (my($name, $decl) = each(%$COMPONENTS)) {
+    next
+        if -f "$decl->{value}/$decl->{sentinel}";
+    # llvm; FIX: add something here to check (1) the version of llvm and
+    # (2) that it is built
+    my($is_llvm) = $name eq 'llvm';
+    next
+        if $is_llvm && !$USE_LLVM;
+    die "I cannot find nonport.h in `$decl->{value}'.\n" .
       "You enabled llvm but you didn't tell me where to find it.\n" .
-      "If it's in a different location, use the -llvm=<dir> option.\n";
+      ($is_llvm ? "You enabled llvm but you didn't tell me where to find it.\n"
+       : "The $name library is required for oink.\n") .
+      "If it's in a different location, use the -$name=<dir> option.\n";
 }
 
 #  # use smbase's $BASE_FLAGS if I can find them
@@ -409,15 +370,7 @@ cat <<EOF
 
 Oink configuration summary:
 
-Location flags:
-  SMBASE_DIR:    $SMBASE_DIR
-  AST_DIR:       $AST_DIR
-  EHD_DIR:       $EHD_DIR
-  ELSA_DIR:      $ELSA_DIR
-  LIBQUAL_DIR:   $LIBQUAL_DIR
-  LIBREGION_DIR: $LIBREGION_DIR
-  LLVM_DIR:      $LLVM_DIR
-
+Location flags:@{[_component_summary()]}
   TMP_DIR:       $TMP_DIR
 
 Compile flags:
@@ -428,6 +381,17 @@ Compile flags:
 EOF
 
 OUTER_EOF
+
+sub _component_summary {
+    return join(
+        "\n  ",
+        '',
+        map(
+            sprintf('%-13s %s', $_->{varname} . ':', $_->{value}),
+            map($COMPONENTS->{$_}, sort(keys(%$COMPONENTS))),
+        ),
+    )
+}
 # ' " EOF "OUTER_EOF"
 
 #  Compile flags:
@@ -445,9 +409,16 @@ chmod 0555, "config.summary";
 #  $CFLAGS_EXTRA = "$BASE_FLAGS $CFLAGS_EXTRA";
 
 my $substitutions = "";
-for my $varname (@config_vars) {
-  my $value = eval "\$${varname}";
-  $substitutions .= "    -e \"s|\\\@${varname}\\\@|${value}|g; \" \\\n";
+for my $varname (sort(keys(%$COMPONENTS)), @config_vars) {
+    my($value);
+    if (my $v = $COMPONENTS->{$varname}) {
+        $value = $v->{value};
+        $varname = $v->{varname};
+    }
+    else {
+        $value = eval "\$${varname}";
+    }
+    $substitutions .= "    -e \"s|\\\@${varname}\\\@|${value}|g; \" \\\n";
 }
 
 # create a program which will create the Makefile
