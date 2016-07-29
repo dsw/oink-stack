@@ -106,7 +106,7 @@ sub translate_modes_to_flags {
 sub configure_dir {
     my ($repo, $flags_list_ref) = @_;
     my @flags = @{$flags_list_ref};
-    if (defined @{$subdir2extraargs{$repo}}) {
+    if (defined $subdir2extraargs{$repo} && @{$subdir2extraargs{$repo}}) {
         @flags = (@flags, @{$subdir2extraargs{$repo}});
     }
     my $fulldir = "$stackdir/$repo";
