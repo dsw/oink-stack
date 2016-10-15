@@ -38,9 +38,9 @@ public:    // funcs
 
   // (read-only) string-like behavior
   friend std::ostream& operator<< (std::ostream &os, LocString const &loc)
-    { return os << loc.str; }
-  friend stringBuilder& operator<< (stringBuilder &sb, LocString const &loc)
-    { return sb << loc.str; }
+    { return os << (loc.isNonNull() ? loc.str : "NULL"); }
+ friend stringBuilder& operator<< (stringBuilder &sb, LocString const &loc)
+    { return sb << (loc.isNonNull() ? loc.str : "NULL"); }
   StringRef strref() const { return str; }
   operator StringRef () const { return str; }
   char operator [] (int index) const { return str[index]; }
