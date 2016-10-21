@@ -71,6 +71,8 @@ struct page *single_pages;
 /* free pages (not including those in single_pages) */
 struct page *unused_pages;
 
+static void set_region_range(void *from, void *to, region r);
+
 static void init_pages(void)
 {
   pages_byaddress.next_address = &pages_byaddress;
