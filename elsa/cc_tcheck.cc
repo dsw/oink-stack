@@ -457,7 +457,7 @@ void Function::tcheck(Env &env, Variable *instV)
 
   // supply DF_DEFINITION?
   DeclFlags dfDefn = (checkBody? DF_DEFINITION : DF_NONE);
-  if (dflags >= (DF_EXTERN | DF_INLINE) &&
+  if (superset(dflags, (DF_EXTERN | DF_INLINE)) &&
       env.lang.handleExternInlineSpecially &&
       handleExternInline_asPrototype()) {
     // gcc treats extern-inline function definitions specially:
@@ -674,7 +674,7 @@ void Function::tcheckBody(Env &env)
   // stop extending the named scope, if there was one
   env.retractScopeSeq(qualifierScopes);
 
-  if (dflags >= (DF_EXTERN | DF_INLINE) &&
+  if (superset(dflags, (DF_EXTERN | DF_INLINE)) &&
       env.lang.handleExternInlineSpecially &&
       handleExternInline_asPrototype()) {
     // more extern-inline nonsense; skip 'funcDefn' setting
@@ -3572,7 +3572,7 @@ void Declarator::mid_tcheck(Env &env, Tcheck &dt)
   // DF_FRIEND gets turned off by 'declareNewVariable' ...
   bool isFriend = !!(dt.dflags & DF_FRIEND);
 
-  if ((dt.dflags >= (DF_EXTERN | DF_INLINE)) && env.lang.handleExternInlineSpecially) {
+  if (superset(dt.dflags, (DF_EXTERN | DF_INLINE)) && env.lang.handleExternInlineSpecially) {
     // dsw: We want to add a flag saying that this isn't really an
     // extern inline.  This is necessary because sometimes we still
     // need to know later that it started off as an extern inline even
@@ -8467,7 +8467,7 @@ Type *attemptCondConversion(Env &env, ImplicitConversion &ic /*OUT*/,
        t2Class->hasBaseClass(t1Class))) {
     // bullet 2.1
     if (t1Class->hasBaseClass(t2Class) &&
-        t2->asRval()->getCVFlags() >= t1->asRval()->getCVFlags()) {
+        superset(t2->asRval()->getCVFlags(), t1->asRval()->getCVFlags())) {
       ic.addStdConv(SC_IDENTITY);
       return t2->asRval();
     }

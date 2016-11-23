@@ -17,6 +17,8 @@ void getCycles(unsigned *lowp, unsigned *highp);
 // if we're using gcc, so the 'long long' type is available,
 // here's a more convenient version
 unsigned long long getCycles_ll(void);
+#else
+inline unsigned long long getCycles_ll(void) { return 0; } // !!!
 #endif
 
 

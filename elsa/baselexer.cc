@@ -20,11 +20,11 @@
 #else
   // should work on any compiler that implements the C++98 standard
   // (istrstream is deprecated but still standard)
-  #include <strstream.h>   // istrstream
+  #include <strstream>   // istrstream
 
   inline std::istream *construct_istrstream(char const *buf, int len)
   {
-    return new istrstream(buf, len);
+    return new std::istrstream(buf, len);
   }
 #endif
 

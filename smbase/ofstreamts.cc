@@ -6,7 +6,11 @@
 #include "exc.h"
 
 #include <stdio.h>
+#ifndef _WIN32
 #include <unistd.h>
+#else
+#include <io.h>
+#endif
 
 size_t getFileSize(std::istream &i)
 {

@@ -25,10 +25,12 @@
 #include "smregexp.h"     // regexpMatch
 #include "cc_elaborate.h" // ElabVisitor
 #include "integrity.h"    // IntegrityVisitor
-#include "xml_file_writer.h" // XmlFileWriter
-#include "xml_reader.h"   // xmlDanglingPointersAllowed
-#include "xml_do_read.h"  // xmlDoRead()
-#include "xml_type_writer.h" // XmlTypeWriter
+#if XML
+#  include "xml_file_writer.h" // XmlFileWriter
+#  include "xml_reader.h"   // xmlDanglingPointersAllowed
+#  include "xml_do_read.h"  // xmlDoRead()
+#  include "xml_type_writer.h" // XmlTypeWriter
+#endif
 #include "bpprint.h"      // bppTranslationUnit
 #include "cc2c.h"         // cc_to_c
 
@@ -395,6 +397,7 @@ void doit(int argc, char **argv)
 
   int parseWarnings = 0;
   long parseTime = 0;
+#if XML
   if (tracingSys("parseXml")) {
     if (tracingSys("parseXml-no-danglingPointers")) {
       xmlDanglingPointersAllowed = false;
@@ -402,7 +405,9 @@ void doit(int argc, char **argv)
     unit = xmlDoRead(strTable, inputFname);
     if (!unit) return;
   }
-  else {
+  else
+#endif  
+  {
     SectionTimer timer(parseTime);
     SemanticValue treeTop;
     ParseTreeAndTokens tree(lang, treeTop, strTable, inputFname);
@@ -723,6 +728,7 @@ void doit(int argc, char **argv)
     bppTranslationUnit(std::cout, *unit);
   }
 
+#if XML
   // dsw: xml printing of the raw ast
   if (tracingSys("xmlPrintAST")) {
     traceProgress() << "dsw xml print...\n";
@@ -762,6 +768,7 @@ void doit(int argc, char **argv)
     std::cout << "---- STOP ----" << std::endl;
     traceProgress() << "dsw xml print... done\n";
   }
+#endif
 
   // test AST cloning
   if (tracingSys("testClone")) {
