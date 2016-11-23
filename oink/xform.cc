@@ -12,8 +12,9 @@
 
 extern "C" {
 #  include "proquint.h"         // proquint converters
+#include <stdio.h>
 }
-
+#include <set>
 #include <string.h>             // memset
 #include <ctype.h>              // isalnum
 
@@ -1318,14 +1319,23 @@ void IntroFunCall_ASTVisitor::postvisitExpression(Expression *obj) {
   // get the current function call string
   CPPSourceLoc call_ploc(obj->loc);
   CPPSourceLoc call_ploc_end(obj->endloc);
+
   // FIX: it is inefficient to do this every time, but orthogonal
-  stringBuilder newCall_start;
-  newCall_start << "({" << xformCmd->intro_fun_call_str;
+  stringBuilder newCall_start, newCall_end;
+
+  // Get the byte-for-byte contents of the function call site.
+  PairLoc call_PairLoc(call_ploc, call_ploc_end);
+  UnboxedPairLoc call_UnboxedPairLoc(call_PairLoc);
+  std::string call_str = patcher.getRange(call_UnboxedPairLoc);
+
+  newCall_start << "({" << xformCmd->intro_fun_call_str << "; typeof(" << call_str.c_str() /*obj->exprToString()*/ << ") ret = ";
+  newCall_end   << "; " << xformCmd->intro_fun_ret_str << "; ret; })";
+
   // note: multiple insertBefore() calls at the same location only
   // preserve the last one; I think this is safe because two function
   // calls cannot abut
   patcher.insertBefore(call_ploc, newCall_start.c_str());
-  patcher.insertBefore(call_ploc_end, "})");
+  patcher.insertBefore(call_ploc_end, newCall_end.c_str());
 
   // this doesn't work due to bugs and/or missing features in Patcher;
   // doesn't work when run top-down in visitExpression() either
@@ -1342,6 +1352,494 @@ void IntroFunCall_ASTVisitor::postvisitExpression(Expression *obj) {
 //   // replace it
 //   patcher.printPatch(newCall.c_str(), call_UnboxedPairLoc);
 }
+
+class WrapFunCall_ASTVisitor : private ASTVisitor {
+private:
+  std::set<std::string> wrapped_funcs;
+  typedef std::pair<std::string, std::string> val;
+  typedef std::pair<std::string, val > pair;
+  std::map<std::string, val> known_types;
+
+public:
+  LoweredASTVisitor loweredVisitor;
+  Patcher &patcher;
+
+  WrapFunCall_ASTVisitor(Patcher &patcher0, const char * configFile)
+    : loweredVisitor(this)
+    , patcher(patcher0)
+  {
+
+    FILE * config = fopen(configFile, "r");
+    char * lineptr = NULL;
+    size_t lenptr = 0;
+    ssize_t sz;
+    while(-1 != (sz = getline(&lineptr, &lenptr, config))) {
+      // the -1 strips the newline
+      std::string s(lineptr, sz -1);
+      wrapped_funcs.insert(s);
+    }
+    known_types.insert(pair("timeval", val("%lld, %lld", "(long long)%.tv_sec, (long long)%.tv_usec")));
+    known_types.insert(pair("timespec", val("%lld, %lld", "(long long)%.tv_sec, (long long)%.tv_nsec")));
+
+    known_types.insert(pair("recordid", val("%lld, %d, %d", "%.page, %.slot, %.size")));
+    known_types.insert(pair("page_impl", val("%d, %d", "%.page_type, %.has_header")));
+    known_types.insert(pair("stasis_operation_impl", val("%d, %d, %d, %d", "%.id, %.page_type, %.redo, %.undo")));
+    known_types.insert(pair("stasis_transaction_table_entry_t", val("%d, %d, %lld, %lld, %ld, %ld, %ld, %d",
+                            "%.xid, %.xidWhenFree, %.prevLSN, %.recLSN, %.commitArgs[0], %.commitArgs[1], %.commitArgs[2], %.tid")));
+    fclose(config);
+
+  }
+#define WRAP_PREFIX "___wrapper_"
+  virtual ~WrapFunCall_ASTVisitor() {}
+
+  virtual void postvisitExpression(Expression *);
+  virtual void postvisitTopForm(TopForm *);
+  virtual void postvisitFunctionTF(TopForm *);
+  virtual void postvisitDeclarationTF(TopForm *);
+private:
+//#define STRESS_TEST
+
+  const IDeclarator *  derefDeclarator(const IDeclarator * deref_decl);
+  const IDeclarator *  derefDeclaratorGrouping(const IDeclarator * deref_decl);
+  bool resolve_stripped_type(
+      const IDeclarator * decl,   // Contains line number for error messages.
+      const TypeSpecifier * spec, // Use the AST to get info about names types (structs, typedefs, etc)..
+      const Type * type,          // Use the output from the typechecker for everything else.
+      // The following three are OUT params.  TODO: For now, we just leak the memory assocaited with them.
+      const char ** ret_param_name,  // This is the name of the parameter.
+      const char ** ret_fmt_string,  // This is the format string for printf.
+      const char ** ret_param_call); // This string contains the argument(s) that should be passed to printf.
+  bool resolve_stripped_type(
+      const IDeclarator * decl,    // Contains line number for error messages
+      FakeList<ASTTypeId>* ast_params, // Information from AST.
+      SObjList<Variable>* type_params, // Information from type checker.
+      int i,           // index into ast_params, type_params.  Must be a valid index into type_params (ie: callers must strip "void" from f(void) by observing that the length of type_params is zero.).
+      const char ** param_name, const char ** fmt_string, const char ** param_call // OUT params, as above.
+      );
+};
+
+// Given the AST of a function parameter, and a pointer to a type, compute a type id, format strings, etc..
+const IDeclarator * WrapFunCall_ASTVisitor::derefDeclarator(const IDeclarator * deref_decl) {
+  while(deref_decl->isD_pointer() || deref_decl->isD_grouping()) {
+    while(deref_decl->isD_grouping()) {
+      deref_decl = deref_decl->asD_groupingC()->base;
+    }
+    while(deref_decl->isD_pointer()) {
+      deref_decl = deref_decl->asD_pointerC()->base;
+    }
+  }
+  return deref_decl;
+}
+const IDeclarator * WrapFunCall_ASTVisitor::derefDeclaratorGrouping(const IDeclarator * deref_decl) {
+  while(deref_decl->isD_grouping()) {
+    deref_decl = deref_decl->asD_groupingC()->base;
+  }
+  return deref_decl;
+}
+
+bool WrapFunCall_ASTVisitor::resolve_stripped_type(
+    const IDeclarator * decl,
+    FakeList<ASTTypeId>* ast_params,
+    SObjList<Variable> * type_params,
+    int i,
+    const char ** ret_param_name,
+    const char ** ret_fmt_string,
+    const char ** ret_param_call) {
+
+  // try to find a name
+  // strip pointers and groupings from name
+  const IDeclarator * deref_decl = derefDeclarator(ast_params->nthC(i)->decl->decl);
+  const char * param_name;
+  bool is_void = false;
+  bool ok = true;
+
+  if(deref_decl->isD_name()) {
+    const PQName * nm = deref_decl->asD_nameC()->name;
+    if(nm == 0) {
+      // OK, this is an unnamed parameter.  We don't really handle these in definitions, but the most common (only possible?)
+      // case is f(void), which we special case.
+      is_void = true;
+      std::cerr << decl->loc << " Dead(?) code reached." << std::endl; // TODO remove dead code (callers handle this case...)
+    } else {
+      param_name = nm->getName();
+    }
+  } else if(deref_decl->isD_func()) {
+    param_name = type_params->nthC(i)->name; // presumably, since this parameter type is not void, there will be a name.
+  } else {
+    std::cerr << decl->loc << " WTF is a " << deref_decl->kindName() << " doing in a param list?" << std::endl;
+    ok = false;
+  }
+  if(ok) {
+    *ret_param_name = is_void ? NULL : param_name;
+    return resolve_stripped_type(decl, ast_params->nthC(i)->spec, type_params->nthC(i)->type, ret_param_name, ret_fmt_string, ret_param_call);
+  } else {
+    return false;
+  }
+}
+bool WrapFunCall_ASTVisitor::resolve_stripped_type(
+    const IDeclarator * decl,
+    const TypeSpecifier * spec,
+    const Type * type,
+    const char ** ret_param_name,
+    const char ** ret_fmt_string,
+    const char ** ret_param_call) {
+  static const std::string fmt_strings[] = {
+      "%c",  //  ST_CHAR,
+      "%c",  //  ST_UNSIGNED_CHAR,
+      "%c",  //  ST_SIGNED_CHAR,
+      "%d",  //  ST_BOOL,
+      "%d",  //  ST_INT,
+      "%u",  //  ST_UNSIGNED_INT,
+      "%ld", //  ST_LONG_INT,
+      "%lu", //  ST_UNSIGNED_LONG_INT,
+      "%lld",//  ST_LONG_LONG,              // GNU/C99 extension
+      "%llu",//  ST_UNSIGNED_LONG_LONG,     // GNU/C99 extension
+      "%hd", //  ST_SHORT_INT,
+      "%hu", //  ST_UNSIGNED_SHORT_INT,
+      "%hu", //  ST_WCHAR_T,
+      "%f",  //  ST_FLOAT,
+      "%f",  //  ST_DOUBLE,
+      "%lf", //  ST_LONG_DOUBLE,
+      "%f",  //  ST_FLOAT_COMPLEX,          // GNU/C99 (see doc/complex.txt) // XXX how to printf complex types?
+      "%f",  //  ST_DOUBLE_COMPLEX,         // GNU/C99
+      "%lf", //  ST_LONG_DOUBLE_COMPLEX,    // GNU/C99
+      "%f",  //  ST_FLOAT_IMAGINARY,        // C99
+      "%f",  //  ST_DOUBLE_IMAGINARY,       // C99
+      "%lf", //  ST_LONG_DOUBLE_IMAGINARY,  // C99
+      "void" //  ST_VOID,                   // last concrete type (see 'isConcreteSimpleType')
+  };
+  bool ok = true;
+
+  SimpleTypeId id  = ST_NOTFOUND;
+  const char * typedefed_name  = 0;
+
+  // We have a type already, but it could be that we need to get a name from some typedef junk, so check for that first.
+  if(type->isPointerOrArrayRValueType()) {
+    // skip the rest of this conditional
+  } else if (spec->isTS_simple()) {
+    // good
+    id = spec->asTS_simpleC()->id;
+    if(!isConcreteSimpleType(id)) {
+      std::cerr << decl->loc << " WTF got a non-concrete simple type! " << std::endl;
+      ok = false;
+    }
+  } else if(spec->isTS_name()) {
+    // fall back on the type params, but remember the name
+    typedefed_name = spec->asTS_nameC()->name->getName();
+  } else if(spec->isTS_elaborated()) {
+    // no-op; hopefully we'll do the right thing below.
+  } else {
+    std::cerr << decl->loc << " WTF is a " << spec->kindName() << " typespec?" << std::endl;
+    ok = false;
+  }
+  if(ok && id == ST_NOTFOUND) { // we fell back on the type parameter
+    if(type->isPointerOrArrayRValueType()) {
+      id = ST_LONG_INT;
+    } else if(type->isSimpleType()) {
+      id = type->asSimpleTypeC()->type;
+      if(!isConcreteSimpleType(id)) {
+        std::cerr << decl->loc << " WTF got a non concrete simple type! " << type->toString() << " " << simpleTypeName(id) << std::endl;
+        ok = false;
+      }
+    } else if(type->isEnumType()) {
+      id = ST_INT; // XXX is this always (ever) true?
+    } else if(type->isStructType()) {
+      // handle this case below
+    } else {
+      std::cerr << decl->loc << " WTF got a type that I don't know about: " << type->toString() << std::endl;
+      ok = false;
+    }
+    if(id == ST_VOID) {
+      std::cerr << decl->loc << " WTF decided a type was void!" << type->toString() << std::endl;
+    }
+  }
+
+  if(ok) {
+    if(id == ST_NOTFOUND) {
+      if(typedefed_name == 0) {
+        std::string s = toCStr(type->toString());
+        size_t i;
+        if(std::string::npos != (i = s.find(' '))) {
+          s = s.substr(0,i); // handle types like foo const.  TODO If ever there could be a const foo, then this will break.
+        }
+        typedefed_name = strdup(s.c_str());  // XXX memory leak
+      }
+      if(known_types.find(typedefed_name) != known_types.end()) {
+        // look fmt_string and param_call up, return them.
+        val v = (*known_types.find(typedefed_name)).second;
+        *ret_fmt_string = v.first.c_str();
+        std::string param = v.second.c_str();
+        size_t i;
+        while(std::string::npos != (i = param.find('%'))) {
+          param.replace(i, 1, *ret_param_name ? *ret_param_name : "___ret");
+        }
+        *ret_param_call = strdup(param.c_str()); /// XXX memory leak
+      } else {
+        std::cerr << decl->loc << " WTF Encountered struct that I don't know how to print: " << typedefed_name << std::endl;
+        ok = false;
+      }
+    } else {
+      *ret_fmt_string = fmt_strings[id].c_str();
+      if(*ret_param_name) {
+        *ret_param_call = *ret_param_name; // XXX this can't be good for memory management, since we malloc return values above
+      } else {
+        *ret_param_call = "___ret"; // XXX is returning this even legal?
+      }
+    }
+  }
+  return ok;
+}
+
+void WrapFunCall_ASTVisitor::postvisitTopForm(TopForm * tf) {
+  if(tf->isTF_func()) {
+    postvisitFunctionTF(tf);
+  } else if(tf->isTF_decl()) {
+    postvisitDeclarationTF(tf);
+  } else {
+    return;
+  }
+}
+void WrapFunCall_ASTVisitor::postvisitFunctionTF(TopForm * tf) {
+  const Function * obj = tf->asTF_funcC()->f;
+  bool ok = true;
+
+  const IDeclarator * deref_decl = derefDeclarator(obj->nameAndParams->decl);
+
+  if(!deref_decl->isD_func()) {
+    std::cerr << deref_decl->loc << ": WTF is a " << deref_decl->kindName() << std::endl;
+    ok = false;
+  }
+
+  const D_func * dfunc = 0;
+  const char * name = 0;
+  if(ok) {
+    dfunc = deref_decl->asD_funcC();
+    name = dfunc->base->asD_nameC()->name->getName();
+  }
+
+#ifndef STRESS_TEST
+  if(wrapped_funcs.find(name) == wrapped_funcs.end()) {
+    return; // not interested in this function.
+  }
+#endif
+
+  int paramcount;
+
+  if(ok) {
+    if(obj->funcType->acceptsVarargs()) {
+      std::cerr << deref_decl->loc << "WTF Function " << name << " wants varargs " << std::endl;
+      ok = false;
+    } else {
+      paramcount = obj->funcType->params.count(); //dfunc->params->count() would return one for f(void), so use funcType instead.
+    }
+  }
+
+  std::string retstr;
+
+  if(ok) {
+    // Build the part of declaration before the function name.
+
+    // obj->retspec->loc is sporadically before or after static inline. use topform instead.
+    PairLoc ret_range = PairLoc(tf->loc, dfunc->loc);
+    if(!ret_range.hasExactPosition()) {
+      std::cerr << "Warning: Cannot patch function " << name << "; could not figure out where it was defined." << std::endl;
+      ok = false;
+    } else {
+      retstr = patcher.getRange(UnboxedPairLoc(ret_range));
+    }
+  }
+
+  std::string paramstr;
+
+  if(ok) {
+    // Build the part of the declaration after the function name.
+    if(paramcount > 0) {
+      // Can't use obj->body->loc, since it includes any c prepreprocessor stuff between the ) and the {.
+      // XXX this line of code hits a bug in oink.  The decl->endloc is sometimes one character too late.
+      SourceLoc endofdecl = dfunc->params->nthC(dfunc->params->count() - 1)->decl->endloc;
+      PairLoc range = PairLoc(dfunc->base->asD_name()->endloc, endofdecl);
+      if(!range.hasExactPosition()) {
+        std::cerr << " Error: Cannot patch function " << name << "; could not figure out where it was defined." << std::endl;
+        ok = false;
+      } else {
+        paramstr = patcher.getRange(UnboxedPairLoc(range)) + ")";
+      }
+    } else {
+      paramstr = "()";
+    }
+  }
+
+  // Build printf invocation
+
+  // This code is kind of nasty.  Ideally, we'd walk the type information,
+  // and round-trip it from the type checker into a string that would
+  // compile.  Unfortunately, the type checker erased the typedef
+  // information at this point in the game, so we get all hacky, and resort
+  // to string manipulation instead.
+  const char * name_str = 0;
+  const char * fmt_str = 0;
+  const char * param_str = 0;
+  bool returns_value;
+  stringBuilder beforePrintf;
+  stringBuilder afterPrintf;
+  stringBuilder retArg;
+  stringBuilder retFromWrapper;
+  if(ok) {
+    ok = resolve_stripped_type(deref_decl, obj->retspec, obj->funcType->retType, &name_str, &fmt_str, &param_str);
+  }
+  if(ok) {
+    beforePrintf << "printf(\"call_" << name << "(%lld";
+    if(strcmp (fmt_str, "void") == 0) {
+      returns_value = false;
+      afterPrintf << "printf(\"ret_" << name << "(%lld";
+    } else {
+      returns_value = true;
+      afterPrintf  << "printf(\"ret_"  << name << "(%lld, " << fmt_str;
+      retArg << ", " << param_str;
+      retFromWrapper << "return ___ret;\n";
+    }
+  }
+
+  stringBuilder invocationParams;
+  if(ok) {  // Build printf strings and arguments.
+    invocationParams << "(";
+    typeof(obj->funcType->params) type_params = obj->funcType->params;
+
+    stringBuilder printfArgs;
+    printfArgs << ", *stasis_dbug_timestamp";
+    for(int i = 0; ok && i < paramcount; i++) {
+      ok = resolve_stripped_type(deref_decl, dfunc->params, &type_params, i, &name_str, &fmt_str, &param_str);
+      if(ok) {
+        if(i > 0) {
+          beforePrintf << ", ";
+          invocationParams << ", ";
+        }
+        if(i > 0 || returns_value) {
+          afterPrintf  << ", ";
+        }
+        beforePrintf << fmt_str;
+        afterPrintf  << fmt_str;
+        printfArgs << ", " << param_str;
+        invocationParams << name_str;
+      }
+    }
+    beforePrintf << ")\\n\"" << printfArgs <<  ");";
+    afterPrintf  << ")\\n\"" << retArg << printfArgs << ");";
+    invocationParams << ")";
+  }
+
+  if(ok) {
+
+    // Actually assemble the patch.
+
+    stringBuilder invocation;
+    invocation << name << invocationParams;
+
+    stringBuilder p = "\n";
+
+    p << retstr.c_str() << WRAP_PREFIX << name << paramstr.c_str() << "{\n"
+      <<   "\t" << beforePrintf << "\n";
+
+    if(returns_value) {
+      p << "\ttypeof(" << invocation.c_str() << ") ___ret = ";
+    } else {
+      p << "\t";
+    }
+    p         << invocation.c_str() << ";\n"
+      << "\t" << afterPrintf.c_str() << "\n"
+      << "\t" << retFromWrapper
+      << "}\n";
+
+    patcher.insertBefore(obj->body->endloc, p.c_str()); // TODO Make sure this is always right.  (Can there be trailing crap after the body?)
+  } else {
+    std::cerr << deref_decl->loc << " Error: Cannot patch function " << name << std::endl;
+  }
+}
+// XXX this misses function declarations inside of structs and function bodies.
+// For now, this is preferable to losing the "static" and "inline" modifiers, but is still painful.
+// We could use a normal postvisitDeclarationTF, except that we to copy strings like "static" and
+// "inline" from in front of the declaration.
+void WrapFunCall_ASTVisitor::postvisitDeclarationTF(TopForm *tf) {
+  Declaration * obj = tf->asTF_declC()->decl;
+  // iterate over the decllist.  TODO why is it a list? is this code doing the right thing if it is a list?
+  int funcidx = -1;
+  for(int i = 0; i < obj->decllist->count(); i++) {
+    // We avoid function pointers for now.
+    if(derefDeclaratorGrouping(obj->decllist->nthC(i)->decl)->isD_func()) {
+      if(funcidx != -1) {
+        std::cerr << obj->spec->loc << "WTF found multiple func decls" << std::endl;
+      }
+      funcidx = i;
+    }
+  }
+  if(funcidx == -1) return;
+
+  if(funcidx != 0) { std::cerr << obj->spec->loc << " postvisitDeclarationTF found func later on in list.  Check patch output." << std::endl; }
+  const D_func * func = derefDeclaratorGrouping(obj->decllist->nth(funcidx)->decl)->asD_funcC();
+  const IDeclarator * deref_base = derefDeclaratorGrouping(func->base);
+  if(deref_base->isD_name()) {
+    const D_name * name = deref_base->asD_nameC();
+    const char* pqname = name->name->getName();
+#ifndef STRESS_TEST
+    if(wrapped_funcs.find(pqname) != wrapped_funcs.end()) {
+#endif
+      PairLoc firstPairLoc(tf->loc,
+                           name->loc       // should be OK.
+                           );
+      PairLoc secondPairLoc(name->endloc,   // should be OK.
+                            obj->decllist->nth(obj->decllist->count()-1)->endloc // XXX sometimes suffers from off by one error (one too early).  We work around this by sprinkling stray ; below.
+                            );
+
+      if(firstPairLoc.hasExactPosition() && secondPairLoc.hasExactPosition()) {
+        UnboxedPairLoc firstUnboxedPairLoc(firstPairLoc);
+        UnboxedPairLoc secondUnboxedPairLoc(secondPairLoc);
+        std::string decl_prefix = patcher.getRange(firstUnboxedPairLoc);
+        std::string decl_suffix = patcher.getRange(secondUnboxedPairLoc);
+        patcher.insertBefore(tf->loc, decl_prefix + WRAP_PREFIX + pqname + decl_suffix + ";\n");
+      } else {
+        std::cerr << tf->loc << "WTF cannot patch " << pqname << " no exact position for declaration" << std::endl;
+      }
+#ifndef STRESS_TEST
+    }
+#endif
+  } else if(deref_base->isD_pointer()) {
+    // do nothing.  we don't wrap pointers yet.
+  } else {
+    std::cerr << tf->loc << " WTF is this function declaration base type " << deref_base->kindName() << std::endl;
+  }
+}
+
+void WrapFunCall_ASTVisitor::postvisitExpression(Expression *obj) {
+  if (!obj->isE_funCall()) return;
+
+  const E_funCall* funCall= obj->asE_funCallC();
+  if(funCall->func->isE_variable()) {
+    const E_variable * var = funCall->func->asE_variableC();
+    if(var->name->isPQ_name()) {
+      std::string nm(var->name->asPQ_nameC()->name);
+      if(wrapped_funcs.find(nm) != wrapped_funcs.end()) {
+        PairLoc call_PairLoc(obj->loc, obj->endloc);
+        if(!call_PairLoc.hasExactPosition()) {
+          std::cerr << "D'oh! Found matching function call " << nm << " without exact location.  Not patching this sucker; good luck locating it." << std::endl;
+        } else {
+          patcher.insertBefore(obj->loc, WRAP_PREFIX);
+        }
+      }
+    } else {
+      std::cerr << "WTF type of a variable is a " << var->name->kindName() << "??" << std::endl;
+    }
+  }
+  else if (funCall->func->isE_fieldAcc()) {
+    // TODO
+  }
+  else if (funCall->func->isE_deref()) {
+    // TODO
+  }
+  else {
+    std::cerr << "WTF type of a func is a " << funCall->func->kindName() << "??" << std::endl;
+  }
+}
+
 
 // **** Jimmy_ASTVisitor
 
@@ -1552,6 +2050,29 @@ void Xform::introFunCall_stage() {
     printStop();
   }
 }
+
+void Xform::wrapFunCall_stage(const char * cnf_file) {
+  printStage("introduce function call");
+  foreachSourceFile {
+    File *file = files.data();
+    maybeSetInputLangFromSuffix(file);
+    if (globalLang.isCplusplus) {
+      // some C++ concerns: implicit function calls
+      throw UserError(USER_ERROR_ExitCode,
+                      "Can't xform intro-fun-call C++ yet.");
+    }
+    TranslationUnit *unit = file2unit.get(file);
+
+    Patcher patcher(std::cout /*ostream for the diff*/, true /*recursive*/);
+    WrapFunCall_ASTVisitor env(patcher, cnf_file);
+    unit->traverse(env.loweredVisitor);
+
+    printStart(file->name.c_str());
+    patcher.flush();
+    printStop();
+  }
+}
+
 
 void Xform::jimmy_stage() {
   printStage("jimmy");

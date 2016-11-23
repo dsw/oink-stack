@@ -8,6 +8,11 @@
 #include "lexer.h"       // Lexer class
 #include "cc_lang.h"     // CCLang (actually gnu.lex needs CCLang, but can't add the #include by itself due to the way lexer extensions work ...)
 
+#include <iostream>
+using std::cin;
+using std::cout;
+using std::cerr;
+
 // this works around a problem with cygwin & fileno
 #define YY_NEVER_INTERACTIVE 1
 

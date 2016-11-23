@@ -30,6 +30,8 @@ int main(int argc, char **argv) {
   m.parseUserActions = &ccParse;
   m.parseEnv = &ccParse;
   m.typePrinter = &typePrinterCQ;
+  m.initArchiveSrzManager(".xdir", ".xz"); // RCS no idea what this does, but it avoids segfault when a bad filename is passed on the command line.
+
   try {
     m.init_stage(argc, argv);
 
@@ -75,6 +77,9 @@ int main(int argc, char **argv) {
     }
     if (xformCmd->intro_fun_call) {
       m.introFunCall_stage();
+    }
+    if (xformCmd->wrap_fun_call) {
+      m.wrapFunCall_stage(xformCmd->wrap_fun_call_config_file);
     }
     if (xformCmd->jimmy) {
       m.jimmy_stage();
