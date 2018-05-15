@@ -9,9 +9,9 @@
 #include <fstream>       // cout, ifstream
 
 
-// workaround for flex-2.5.31
-#ifdef FLEX_STD    // detect later versions of flex
-  // copied from flex's output
+// workaround for flex-2.5.31 and later
+#ifndef yy_current_buffer    // FlexLexer.h changed function
+  // check for macro definition
   #define YY_CURRENT_BUFFER ( (yy_buffer_stack) \
                             ? (yy_buffer_stack)[(yy_buffer_stack_top)] \
                             : NULL)
@@ -19,7 +19,7 @@
   // the 'yy_current_buffer' field was replaced by the buffer stack
   // alluded to above
   #define yy_current_buffer YY_CURRENT_BUFFER
-#endif // FLEX_STD
+#endif // yy_current_buffer
 
 
 // ----------------- GrammarLexer::AltReportError ---------------
