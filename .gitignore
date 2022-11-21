@@ -3,3 +3,6 @@ nohup.out
 
 local_malloc
 llvm
+
+build*/
+.cache/

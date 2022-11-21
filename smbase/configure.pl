@@ -2,6 +2,7 @@
 # configure script for smbase
 
 use strict 'subs';
+use lib '.';
 
 require sm_config;
 

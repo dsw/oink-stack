@@ -116,8 +116,11 @@
 #include "sobjlist.h"    // SObjList
 #include "owner.h"       // Owner
 
+#include <ostream>
 #include <stdio.h>       // FILE
 #include <stdlib.h>      // getenv
+
+using std::ostream;
 
 // ACTION(..) is code to execute for action trace diagnostics, i.e. "-tr action"
 #ifndef ACTION_TRACE

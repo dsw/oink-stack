@@ -18,15 +18,11 @@
   #define YYDEBUG 1
 #endif
 
-// name of extra parameter to yylex
-#define YYLEX_PARAM parseParam
-
 // make it call my yylex
 #define yylex(lv, param) grampar_yylex(lv, param)
 
-// Bison calls yyerror(msg) on error; we need the extra
-// parameter too, so the macro shoehorns it in there
-#define yyerror(msg) grampar_yyerror(msg, YYPARSE_PARAM)
+// Bison calls yyerror(<params>, msg) on error
+#define yyerror(param, msg) grampar_yyerror(msg, param)
 
 // rename the externally-visible parsing routine to make it
 // specific to this instance, so multiple bison-generated
@@ -59,7 +55,10 @@ AssocKind whichKind(LocString * /*owner*/ kind);
 
 /* ================== bison declarations =================== */
 // don't use globals
-%pure_parser
+%define api.pure full
+
+// extra parameter to both parser and lexer
+%param {void *parseParam}
 
 
 /* ===================== tokens ============================ */

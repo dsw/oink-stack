@@ -5,6 +5,9 @@
 #include "../smbase/astlist.h"
 #include "../smbase/objlist.h"
 #include "locstr.h"
+#include "srcloc.h"
+
+using namespace std;
 
 int main() {
   // **** build the thing
