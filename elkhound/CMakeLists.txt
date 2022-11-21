@@ -56,7 +56,7 @@ target_link_libraries(elkhound-support PUBLIC smbase ast)
 target_include_directories(elkhound-support PUBLIC . ${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(
-    elkhound-lib
+    libelkhound
     # glr-set
     cyctimer.cc
     glr.cc
@@ -65,9 +65,11 @@ add_library(
     # util-set
     ptreenode.cc
     ptreeact.cc)
-target_include_directories(elkhound-lib PUBLIC . ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(elkhound-lib PUBLIC smbase ast)
+target_include_directories(libelkhound PUBLIC . ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(libelkhound PUBLIC smbase ast)
 
+# since we manually put "lib" on the fron
+set_target_properties(libelkhound PROPERTIES PREFIX "")
 
 add_executable(
     elkhound
@@ -103,5 +105,5 @@ if(FALSE)
         lrtable)
 
     add_executable(cc2t cc2/cc2main.cc ${CC2T_GEN_OUTPUTS})
-    target_link_libraries(cc2t PUBLIC elkhound-lib)
+    target_link_libraries(cc2t PUBLIC libelkhound)
 endif()

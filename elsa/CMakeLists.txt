@@ -103,7 +103,7 @@ add_library(
 # otherwise conflict with methods in lexer.yy.cc; they have identical
 # implementations
 target_compile_definitions(elsa_xml_objs PRIVATE NO_YYFLEXLEXER_METHODS)
-target_link_libraries(elsa_xml_objs PUBLIC smbase elkhound-lib ast)
+target_link_libraries(elsa_xml_objs PUBLIC smbase libelkhound ast)
 target_include_directories(elsa_xml_objs PUBLIC . ${CMAKE_CURRENT_BINARY_DIR})
 
 # generate token lists
@@ -152,7 +152,7 @@ add_library(
     ${CMAKE_CURRENT_BINARY_DIR}/cc_tokens.cc
     ${CMAKE_CURRENT_BINARY_DIR}/lexer.yy.cc
     cc_lang.cc)
-target_link_libraries(elsa_lexer_objs PUBLIC smbase elkhound-lib ast)
+target_link_libraries(elsa_lexer_objs PUBLIC smbase libelkhound ast)
 target_include_directories(elsa_lexer_objs PUBLIC . ${CMAKE_CURRENT_BINARY_DIR})
 
 add_elkhound_command(
@@ -206,7 +206,7 @@ add_library(
     lookupset.cc
     ccparse.cc
     cc2c.cc)
-target_link_libraries(ccparse_objs PUBLIC smbase ast elkhound-lib)
+target_link_libraries(ccparse_objs PUBLIC smbase ast libelkhound)
 target_include_directories(ccparse_objs PUBLIC . ${CMAKE_CURRENT_BINARY_DIR})
 if(USE_GNU)
     target_sources(ccparse_objs PRIVATE gnu.cc)
