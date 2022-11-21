@@ -23,7 +23,7 @@
 
 /* ================== bison declarations =================== */
 // don't use globals
-%pure_parser
+%define api.pure
 
 
 /* ===================== tokens ============================ */
