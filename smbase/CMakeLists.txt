@@ -95,7 +95,10 @@ if(NOT MINGW)
             smregexp.h)
 endif()
 
-target_include_directories(smbase PRIVATE .)
+target_include_directories(smbase PUBLIC .)
+if(NOT MSVC)
+    target_compile_options(smbase PUBLIC -Wno-deprecated)
+endif()
 # These are M4 inputs:
 # xassert.h
 # xobjlist.h

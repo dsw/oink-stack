@@ -6,7 +6,9 @@ project(oink-stack)
 include(CTest)
 
 find_package(BISON REQUIRED)
+find_package(FLEX REQUIRED)
 
 # find_package(M4)
 
 add_subdirectory(smbase)
+add_subdirectory(ast)
