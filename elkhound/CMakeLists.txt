@@ -51,6 +51,7 @@ target_link_libraries(elkhound-support PUBLIC smbase ast)
 target_include_directories(elkhound-support PUBLIC .)
 
 add_library(elkhound-lib $<TARGET_OBJECTS:elkhound-glr> $<TARGET_OBJECTS:elkhound-util>)
+target_include_directories(elkhound-lib PUBLIC .)
 target_link_libraries(elkhound-lib PUBLIC smbase ast)
 
 add_executable(
