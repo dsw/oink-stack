@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 project(oink-stack)
 
 include(CTest)
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)

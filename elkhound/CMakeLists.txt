@@ -4,6 +4,15 @@
 if(NOT MSVC)
     add_compile_options(-fno-strict-aliasing)
 endif()
+
+# Configure header
+set(GLR_SOURCELOC 1)
+set(eef 0)
+set(gcs 0)
+set(gcsc 0)
+set(crs 0)
+configure_file(glrconfig.h.in ${CMAKE_CURRENT_BINARY_DIR}/glrconfig.h @ONLY)
+
 add_compile_definitions(USE_ENDSOURCELOC=1)
 add_library(elkhound-grammar OBJECT asockind.cc grammar.cc)
 target_link_libraries(elkhound-grammar PUBLIC ast)
@@ -32,13 +41,15 @@ add_library(
     # gramlex.yy.cc
     ${FLEX_gramlex_OUTPUTS})
 target_link_libraries(elkhound-grampar PUBLIC smbase ast)
-target_include_directories(elkhound-grampar PUBLIC .)
+target_include_directories(elkhound-grampar PUBLIC . ${CMAKE_CURRENT_BINARY_DIR})
 
-add_library(elkhound-glr OBJECT cyctimer.cc glr.cc parsetables.cc useract.cc)
-target_link_libraries(elkhound-glr PUBLIC smbase)
+# add_library(elkhound-glr OBJECT )
+# target_link_libraries(elkhound-glr PUBLIC smbase)
+# target_include_directories(elkhound-glr PUBLIC  ${CMAKE_CURRENT_BINARY_DIR})
 
-add_library(elkhound-util OBJECT ptreenode.cc ptreeact.cc)
-target_link_libraries(elkhound-util PUBLIC smbase)
+# add_library(elkhound-util OBJECT )
+# target_link_libraries(elkhound-util PUBLIC smbase)
+# target_include_directories(elkhound-util PUBLIC  ${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(
     elkhound-support OBJECT
@@ -48,10 +59,19 @@ add_library(
     c/lexer1yy.cc
     c/lexer2.cc)
 target_link_libraries(elkhound-support PUBLIC smbase ast)
-target_include_directories(elkhound-support PUBLIC .)
+target_include_directories(elkhound-support PUBLIC . ${CMAKE_CURRENT_BINARY_DIR})
 
-add_library(elkhound-lib $<TARGET_OBJECTS:elkhound-glr> $<TARGET_OBJECTS:elkhound-util>)
-target_include_directories(elkhound-lib PUBLIC .)
+add_library(
+    elkhound-lib
+    # glr-set
+    cyctimer.cc
+    glr.cc
+    parsetables.cc
+    useract.cc
+    # util-set
+    ptreenode.cc
+    ptreeact.cc)
+target_include_directories(elkhound-lib PUBLIC . ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(elkhound-lib PUBLIC smbase ast)
 
 add_executable(
@@ -64,6 +84,7 @@ add_executable(
     parsetables.cc)
 target_compile_definitions(elkhound PRIVATE GRAMANL_MAIN)
 target_link_libraries(elkhound PUBLIC smbase ast)
+target_include_directories(elkhound PUBLIC . ${CMAKE_CURRENT_BINARY_DIR})
 
 if(FALSE)
     # can't find c.tok
