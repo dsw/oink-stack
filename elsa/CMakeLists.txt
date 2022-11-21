@@ -80,15 +80,16 @@ add_custom_command(
 # run flex on the lexer description for ast xml parser
 # flex_target(xml_lex ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.lex
 #             ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.yy.cc COMPILE_FLAGS "-v")
-set(RUN_FLEX ${CMAKE_CURRENT_SOURCE_DIR}/../smbase/run-flex.pl)
-add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.yy.cc
-    COMMAND
-        ${PERL_EXECUTABLE} ${RUN_FLEX} -nobackup -copies
-        -o${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.yy.cc ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.lex
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.lex ${RUN_FLEX}
-    COMMENT "Running run-flex.pl wrapper to generate xml_lex.gen.yy.cc"
-    VERBATIM)
+add_wrapped_flex(xml_lex ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.lex xml_lex.gen.yy.cc)
+# set(RUN_FLEX ${CMAKE_CURRENT_SOURCE_DIR}/../smbase/run-flex.pl)
+# add_custom_command(
+#     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.yy.cc
+#     COMMAND
+#         ${PERL_EXECUTABLE} ${RUN_FLEX} -nobackup -copies
+#         -o${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.yy.cc ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.lex
+#     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.lex ${RUN_FLEX}
+#     COMMENT "Running run-flex.pl wrapper to generate xml_lex.gen.yy.cc"
+#     VERBATIM)
 
 # add_library(elsa_xml_flex OBJECT )
 # target_include_directories(elsa_xml_flex PRIVATE . ${CMAKE_CURRENT_BINARY_DIR})
