@@ -12,3 +12,4 @@ find_package(FLEX REQUIRED)
 
 add_subdirectory(smbase)
 add_subdirectory(ast)
+add_subdirectory(elkhound)

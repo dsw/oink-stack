@@ -29,6 +29,8 @@ add_library(
     ccsstr.h
     embedded.cc
     embedded.h
+    locstr.cc
+    locstr.h
     gramlex.cc
     gramlex.h
     reporterr.cc
