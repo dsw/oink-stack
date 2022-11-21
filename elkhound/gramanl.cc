@@ -16,7 +16,6 @@
 #include "strutil.h"     // replace
 #include "ckheap.h"      // numMallocCalls
 #include "genml.h"       // emitMLActionCode
-#include "ofstreamts.h"  // ofstreamTS
 
 #include <fstream>       // ofstream
 #include <stdlib.h>      // getenv
@@ -2530,7 +2529,7 @@ void GrammarAnalysis::constructLRItemSets()
 
   if (tracingSys("itemset-graph")) {
     // write this info to a graph applet file
-    ofstreamTS out("lrsets.g");
+    std::ofstream out("lrsets.g");
     if (!out) {
       xsyserror("ofstream open");
     }
@@ -5050,7 +5049,7 @@ int inner_entry(int argc, char **argv)
   if (tracingSys("bison")) {
     string bisonFname = stringc << prefix << ".y";
     traceProgress() << "writing bison-compatible grammar to " << bisonFname << std::endl;
-    ofstreamTS out(bisonFname.c_str());
+    std::ofstream out(bisonFname.c_str());
     g.printAsBison(out);
   }
 

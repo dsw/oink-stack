@@ -13,10 +13,9 @@
 #include "strtokp.h"       // StrtokParse
 #include "exc.h"           // xfatal
 #include "strdict.h"       // StringDict
-#include "ofstreamts.h"    // ofstreamTS
 
 #include <string.h>        // strncmp
-#include <fstream>         // ofstream
+#include <fstream>         // std::ofstream
 #include <ctype.h>         // isalnum
 
 // propertly a member of ListClass below, but I don't like nested
@@ -106,7 +105,7 @@ protected:        // data
   string srcFname;                  // name of source file
   ObjList<string> const &modules;   // extension modules
   string destFname;                 // name of output file
-  ofstreamTS out;                   // output stream
+  std::ofstream out;                // output stream
   ASTSpecFile const &file;          // AST specification
 
 public:           // funcs
@@ -982,11 +981,11 @@ public:
 class XmlParserGen {
   StringSet attributeNames;     // names of attributes of AST nodes
 
-  ofstreamTS tokensOut;
-  ofstreamTS parser0_decls;
-  ofstreamTS parser1_defs;
-  ofstreamTS parser2_ctorCalls;
-  ofstreamTS parser3_registerCalls;
+  std::ofstream tokensOut;
+  std::ofstream parser0_decls;
+  std::ofstream parser1_defs;
+  std::ofstream parser2_ctorCalls;
+  std::ofstream parser3_registerCalls;
 
   public:
   XmlParserGen(string &xmlParserName)

@@ -36,8 +36,8 @@ add_library(
     missing.h
     nonport.cpp
     nonport.h
-    ofstreamts.cc
-    ofstreamts.h
+    # ofstreamts.cc
+    # ofstreamts.h
     point.cc
     point.h
     pprint.cc
