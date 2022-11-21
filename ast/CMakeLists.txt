@@ -3,7 +3,7 @@
 
 bison_target(
     agrampar agrampar.y ${CMAKE_CURRENT_BINARY_DIR}/agrampar.tab.cc
-    COMPILE_FLAGS "--token-table" # -Dapi.prefix={agrampar}"
+    COMPILE_FLAGS "--token-table"
     DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/agrampar.tab.h)
 
 flex_target(agramlex agramlex.lex ${CMAKE_CURRENT_BINARY_DIR}/agramlex.yy.cc)
@@ -44,7 +44,6 @@ target_link_libraries(ast PUBLIC smbase)
 add_executable(
     astgen
     agrampar.cc
-    # ast.ast.cc
     ast.ast.h
     ast.hand.cc
     ast.hand.h
