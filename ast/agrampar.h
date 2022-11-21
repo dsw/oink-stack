@@ -13,7 +13,6 @@ class GrammarLexer;
 // name of extra parameter to yyparse (i.e. the context in
 // which the parser operates, instead of that being stored
 // in some collection of globals)
-#define YYPARSE_PARAM parseParam
 
 // type of thing extra param points at
 struct ASTParseParams {
@@ -30,8 +29,7 @@ public:
 // caller interface to Bison-generated parser; starts parsing
 // (whatever stream lexer is reading) and returns 0 for success and
 // 1 for error; the extra parameter is available to actions to use
-#define YYPARSE_PARAM parseParam
-int agrampar_yyparse(void *YYPARSE_PARAM);
+int agrampar_yyparse(void *parseParam);
 
 // when this is set to true, bison parser emits info about
 // actions as it's taking them
@@ -53,7 +51,7 @@ CtorArg *parseCtorArg(rostring str);
 
 // error routine
 void agrampar_yyerror(char const *msg, void *parseParam);
-#define yyerror(m) agrampar_yyerror(m, YYPARSE_PARAM)
+#define yyerror(param, m) agrampar_yyerror(m, param)
 
 // parser's view of the lexer
 int agrampar_yylex(union YYSTYPE *lvalp, void *parseParam);
