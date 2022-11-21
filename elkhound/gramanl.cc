@@ -23,6 +23,8 @@
 #include <stdio.h>       // printf
 #include <stdint.h>      // uintptr_t
 
+using std::cout;
+
 // for ParseTables::emitConstructionCode:
 //   linkdepend: parsetables.cc
 
