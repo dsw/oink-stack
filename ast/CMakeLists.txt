@@ -54,17 +54,20 @@ add_executable(
 target_include_directories(astgen PUBLIC ${CMAKE_CURRENT_BINARY_DIR} .)
 target_link_libraries(astgen PRIVATE ast)
 
+install(TARGETS astgen RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 if(FALSE)
     # TODO refactor in progress, doesn't build
     set(EXAMPLE_CC ${CMAKE_CURRENT_BINARY_DIR}/example.cc)
     set(EXAMPLE_H ${CMAKE_CURRENT_BINARY_DIR}/example.h)
-    add_custom_command(
-        OUTPUT ${EXAMPLE_CC} ${EXAMPLE_H}
-        COMMAND
-            astgen -v -o${CMAKE_CURRENT_BINARY_DIR}/example ${CMAKE_CURRENT_SOURCE_DIR}/example.ast
-        DEPENDS example.ast
-        USES_TERMINAL VERBATIM)
-    # add_test(NAME astgen-example COMMAND astgen ${CMAKE_CURRENT_SOURCE_DIR}/example.ast)
+    add_astgen_command(
+        INPUTS
+        ${CMAKE_CURRENT_SOURCE_DIR}/example.ast
+        OUTPUT_PREFIX
+        ${CMAKE_CURRENT_BINARY_DIR}/example
+        OUTPUTS
+        ${EXAMPLE_CC}
+        ${EXAMPLE_H})
 
     add_executable(
         exampletest

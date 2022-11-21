@@ -5,6 +5,8 @@ find_package(Perl REQUIRED)
 set(USE_GNU TRUE)
 set(USE_KANDR TRUE)
 
+add_compile_definitions($<IF:$<CONFIG:Debug>,USE_SERIAL_NUMBERS=1,>)
+
 set(TOK_MODS ${CMAKE_CURRENT_SOURCE_DIR}/cc_tokens.tok)
 set(LEXER_MODS ${CMAKE_CURRENT_SOURCE_DIR}/cc.lex)
 set(CC_AST_MODS
@@ -40,13 +42,16 @@ set(XML_ASTGEN
     ${CMAKE_CURRENT_BINARY_DIR}/xml_ast_reader_1defn.gen.cc
     ${CMAKE_CURRENT_BINARY_DIR}/xml_ast_reader_2ctrc.gen.cc)
 
-add_custom_command(
-    OUTPUT ${XML_ASTGEN}
-    # COMMAND ${CMAKE_COMMAND} -E rm -f ${XML_ASTGEN}
-    COMMAND astgen -tr no_ast.gen,xmlParser -v -o${CMAKE_CURRENT_BINARY_DIR}/xml_ast ${CC_AST_MODS}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS ${CC_AST_MODS}
-    VERBATIM)
+add_astgen_command(
+    INPUTS
+    ${CC_AST_MODS}
+    OUTPUTS
+    ${XML_ASTGEN}
+    OUTPUT_PREFIX
+    ${CMAKE_CURRENT_BINARY_DIR}/xml_ast
+    TRANSLATE_OPTIONS
+    no_ast.get
+    xmlParser)
 
 #### single-source of lexing token definitions:
 
@@ -78,25 +83,8 @@ add_custom_command(
     VERBATIM)
 
 # run flex on the lexer description for ast xml parser
-# flex_target(xml_lex ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.lex
-#             ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.yy.cc COMPILE_FLAGS "-v")
 add_wrapped_flex(xml_lex ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.lex xml_lex.gen.yy.cc)
-# set(RUN_FLEX ${CMAKE_CURRENT_SOURCE_DIR}/../smbase/run-flex.pl)
-# add_custom_command(
-#     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.yy.cc
-#     COMMAND
-#         ${PERL_EXECUTABLE} ${RUN_FLEX} -nobackup -copies
-#         -o${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.yy.cc ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.lex
-#     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/xml_lex.gen.lex ${RUN_FLEX}
-#     COMMENT "Running run-flex.pl wrapper to generate xml_lex.gen.yy.cc"
-#     VERBATIM)
 
-# add_library(elsa_xml_flex OBJECT )
-# target_include_directories(elsa_xml_flex PRIVATE . ${CMAKE_CURRENT_BINARY_DIR})
-# target_link_libraries(elsa_xml_flex PUBLIC smbase elkhound-lib)
-
-# the cc files in here are included from within another cc, so hard to make a clean dep
-# add_dependencies(elsa_xml_flex elsa_xml_generated_files)
 add_library(
     elsa_xml_objs OBJECT
     xml_lexer.cc
@@ -142,22 +130,19 @@ add_custom_command(
     VERBATIM)
 
 # run flex on the lexer description
-# flex_target(lexer ${CMAKE_CURRENT_BINARY_DIR}/lexer.lex ${CMAKE_CURRENT_BINARY_DIR}/lexer.yy.cc)
-add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lexer.yy.cc
-    COMMAND
-        ${PERL_EXECUTABLE} ${RUN_FLEX} -nobackup -copies -o${CMAKE_CURRENT_BINARY_DIR}/lexer.yy.cc
-        ${CMAKE_CURRENT_BINARY_DIR}/lexer.lex
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/lexer.lex ${RUN_FLEX}
-    COMMENT "Running run-flex.pl wrapper to generate lexer.yy.cc"
-    VERBATIM)
+
+add_wrapped_flex(lexer ${CMAKE_CURRENT_BINARY_DIR}/lexer.lex
+                 ${CMAKE_CURRENT_BINARY_DIR}/lexer.yy.cc)
 
 # run astgen to generate the AST implementation
-add_custom_command(
-    OUTPUT ${CC_AST_CC} ${CC_AST_H}
-    COMMAND astgen -v -o${CMAKE_CURRENT_BINARY_DIR}/cc.ast.gen ${CC_AST_MODS}
-    DEPENDS ${CC_AST_MODS}
-    VERBATIM)
+add_astgen_command(
+    INPUTS
+    ${CC_AST_MODS}
+    OUTPUTS
+    ${CC_AST_CC}
+    ${CC_AST_H}
+    OUTPUT_PREFIX
+    ${CMAKE_CURRENT_BINARY_DIR}/cc.ast.gen)
 
 add_library(
     elsa_lexer_objs OBJECT
@@ -165,23 +150,23 @@ add_library(
     baselexer.cc
     lexer.cc
     ${CMAKE_CURRENT_BINARY_DIR}/cc_tokens.cc
-    # ${FLEX_lexer_OUTPUTS}
     ${CMAKE_CURRENT_BINARY_DIR}/lexer.yy.cc
     cc_lang.cc)
 target_link_libraries(elsa_lexer_objs PUBLIC smbase elkhound-lib ast)
 target_include_directories(elsa_lexer_objs PUBLIC . ${CMAKE_CURRENT_BINARY_DIR})
 
-set(GR_GEN_OUTPUTS ${CMAKE_CURRENT_BINARY_DIR}/cc.gr.gen.cc ${CMAKE_CURRENT_BINARY_DIR}/cc.gr.gen.h
-                   ${CMAKE_CURRENT_BINARY_DIR}/cc.gr.gen.y)
-add_custom_command(
-    OUTPUT ${GR_GEN_OUTPUTS} ${CMAKE_CURRENT_BINARY_DIR}/cc.gr.gen.out
-    COMMAND ${CMAKE_COMMAND} -E rm -f ${GR_GEN_OUTPUTS}
-    COMMAND elkhound -v -tr lrtable -o ${CMAKE_CURRENT_BINARY_DIR}/cc.gr.gen ${CC_GR_MODS}
-    DEPENDS ${CC_GR_MODS} ${CMAKE_CURRENT_BINARY_DIR}/cc_tokens.ids
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Running elkhound to generate ${GR_GEN_OUTPUTS}"
-    USES_TERMINAL VERBATIM)
-add_library(ccparse_objs STATIC
+add_elkhound_command(
+    INPUTS
+    ${CC_GR_MODS}
+    OUTPUT_PREFIX
+    ${CMAKE_CURRENT_BINARY_DIR}/cc.gr.gen
+    CC_OUTPUT_VAR
+    CC_GR_GEN_OUTPUTS
+    EXTRA_DEPENDS
+    ${CMAKE_CURRENT_BINARY_DIR}/cc_tokens.ids)
+
+add_library(
+    ccparse_objs STATIC
     bpprint.cc
     ia64mangle.cc
     mtype.cc
@@ -199,11 +184,7 @@ add_library(ccparse_objs STATIC
     ast_build.cc
     ${CC_AST_H}
     $<TARGET_OBJECTS:elsa_xml_objs>
-    # $<TARGET_OBJECTS:elsa_xml_flex>
     $<TARGET_OBJECTS:elsa_lexer_objs>
-    #   $(LEXER_OBJS)
-    #   $(XML_OBJS)
-    #   $(EXT_OBJS)
     builtinops.cc
     cfg.cc
     sprint.cc
@@ -216,7 +197,7 @@ add_library(ccparse_objs STATIC
     typelistiter.cc
     ${CC_AST_CC}
     ${CC_AST_H}
-    ${GR_GEN_OUTPUTS}
+    ${CC_GR_GEN_OUTPUTS}
     parssppt.cc
     cc_flags.cc
     cc_print.cc
@@ -234,16 +215,13 @@ if(USE_KANDR)
     target_sources(ccparse_objs PRIVATE kandr.cc)
 endif()
 
-add_executable(
-    ccparse
-    main.cc)
+add_executable(ccparse main.cc)
 target_link_libraries(ccparse PRIVATE ccparse_objs)
 
-
-add_executable(
-    semgrep
-    semgrep.cc)
+add_executable(semgrep semgrep.cc)
 target_link_libraries(semgrep PRIVATE ccparse_objs)
+
+install(TARGETS ccparse semgrep RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # TODO needs a flex invocation
 # add_executable(
